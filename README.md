@@ -12,10 +12,10 @@
 * サブモジュールのフォルダごとにテスト用のモジュール（例：`CPLib.IO.Test`）を作成し、ルートの"test.fix"から呼び出してください。
 * "fix docs"で適宜ドキュメントを更新してください。
 
-## Fixでの競技プログラミングTips（あるいは、このライブラリの概要）
+## このライブラリの概要
 
 * 入出力・パース
-  * `Std::IO::input_line_s : IO String` で標準入力から1行を文字列として読み込みます。
+  * （`Std::IO::input_line_s : IO String` で標準入力から1行を文字列として読み込みます。）
   * `CPLib.IO.input_line_i : IO I64` で標準入力から1行を符号付き整数として読み込みます。
   * `CPLib.IO.input_line_u : IO U64` で標準入力から1行を符号なし整数として読み込みます。
   * `CPLib.IO.input_line_ia : IO (Array I64)` で標準入力から1行を整数の配列"x y z"として読み込みます。
