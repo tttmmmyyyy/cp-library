@@ -14,3 +14,15 @@ stoi = |s| s.from_string.as_ok;
 // - `s`: 変換したい文字列
 stoui : String -> U64;
 stoui = |s| s.from_string.as_ok;
+
+// "X Y Z"というフォーマットの文字列をパースして`I64`の配列`[X, Y, Z]`に変換する。
+// 
+// "stoia" = "String TO Integer Array"
+stoia : String -> Array I64;
+stoia = |s| if s.is_empty { [] } else { s.split(" ").map(stoi).to_array };
+
+// "X Y Z"というフォーマットの文字列をパースして`U64`の配列`[X, Y, Z]`に変換する。
+//
+// "stouia" = "String TO Unsigned Integer Array"
+stouia : String -> Array U64;
+stouia = |s| if s.is_empty { [] } else { s.split(" ").map(stoui).to_array };

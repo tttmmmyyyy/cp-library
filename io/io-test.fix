@@ -6,6 +6,8 @@ test : IO ();
 test = (
     test_stoi;;
     test_stoui;;
+    test_stoia;;
+    test_stouia;;
 
     pure()
 );
@@ -24,5 +26,22 @@ test_stoui : IO ();
 test_stoui = (
     assert_eq(|_|"stoui 1", stoui("18446744073709551615"), 18446744073709551615_U64);;
 
+    pure()
+);
+
+test_stoia : IO ();
+test_stoia = (
+    assert_eq(|_|"stoia 3", stoia(""), []);;
+    assert_eq(|_|"stoia 3", stoia("42"), [42]);;
+    assert_eq(|_|"stoia 1", stoia("1 2 3"), [1, 2, 3]);;
+    assert_eq(|_|"stoia 2", stoia("-1 -2 -3"), [-1, -2, -3]);;
+    pure()
+);
+
+test_stouia : IO ();
+test_stouia = (
+    assert_eq(|_|"stouia 1", stouia(""), []);;
+    assert_eq(|_|"stouia 2", stouia("18446744073709551615"), [18446744073709551615_U64]);;
+    assert_eq(|_|"stouia 3", stouia("18446744073709551615 18446744073709551615"), [18446744073709551615_U64, 18446744073709551615_U64]);;
     pure()
 );
