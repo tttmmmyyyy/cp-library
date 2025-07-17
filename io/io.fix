@@ -18,11 +18,45 @@ stoui = |s| s.from_string.as_ok;
 // "X Y Z"というフォーマットの文字列をパースして`I64`の配列`[X, Y, Z]`に変換する。
 // 
 // "stoia" = "String TO Integer Array"
+//
+// # Parameters
+// - `s`: 変換したい文字列
 stoia : String -> Array I64;
 stoia = |s| if s.is_empty { [] } else { s.split(" ").map(stoi).to_array };
 
 // "X Y Z"というフォーマットの文字列をパースして`U64`の配列`[X, Y, Z]`に変換する。
 //
 // "stouia" = "String TO Unsigned Integer Array"
+// 
+// # Parameters
+// - `s`: 変換したい文字列
 stouia : String -> Array U64;
 stouia = |s| if s.is_empty { [] } else { s.split(" ").map(stoui).to_array };
+
+// 標準入力から1行読み込み、`I64`として返す。
+input_line_i : IO I64;
+input_line_i = (
+    let line = *input_line_s;
+    line.stoi.pure
+);
+
+// 標準入力から1行読み込み、`U64`として返す。
+input_line_u : IO U64;
+input_line_u = (
+    let line = *input_line_s;
+    line.stoui.pure
+);
+
+// "X Y Z"というフォーマットの行を標準入力から読み込み、`I64`の配列`[X, Y, Z]`として返す。
+input_line_ia : IO (Array I64);
+input_line_ia = (
+    let line = *input_line_s;
+    line.stoia.pure
+);
+
+// "X Y Z"というフォーマットの行を標準入力から読み込み、`U64`の配列`[X, Y, Z]`として返す。
+input_line_uia : IO (Array U64);
+input_line_uia = (
+    let line = *input_line_s;
+    line.stouia.pure
+);
