@@ -1,3 +1,9 @@
 // 入出力や数値のパースを楽にする機能のためのモジュール
 module CPLib.IO;
 
+// 文字列をパースして`I64`整数に変換する
+//
+// # Parameters
+// - `s`: 変換したい文字列
+stoi : String -> I64;
+stoi = |s| s.from_string.as_ok;

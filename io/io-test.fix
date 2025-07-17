@@ -1,0 +1,20 @@
+module CPLib.IO.Test;
+
+import CPLib.IO;
+
+test : IO ();
+test = (
+    test_stoi;;
+
+    pure()
+);
+
+test_stoi : IO ();
+test_stoi = (
+    assert_eq(|_|"stoi 1", stoi("123"), 123);;
+    assert_eq(|_|"stoi 2", stoi("-123"), -123);;
+    assert_eq(|_|"stoi 3", stoi("9223372036854775807"), 9223372036854775807);;
+    assert_eq(|_|"stoi 4", stoi("-9223372036854775808"), -9223372036854775808);;
+
+    pure()
+);
