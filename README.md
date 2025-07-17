@@ -16,3 +16,4 @@
 * 入出力
   * `Std::IO::input_line_s : IO String` で標準入力から1行を文字列として読み込みます。
   * `CPLib.IO::stoi : String -> I64`で文字列を符号付き整数に変換できます。
+  * `CPLib.IO::stoui : String -> U64`で文字列を符号なし整数に変換できます。

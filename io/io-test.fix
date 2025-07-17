@@ -5,6 +5,7 @@ import CPLib.IO;
 test : IO ();
 test = (
     test_stoi;;
+    test_stoui;;
 
     pure()
 );
@@ -15,6 +16,13 @@ test_stoi = (
     assert_eq(|_|"stoi 2", stoi("-123"), -123);;
     assert_eq(|_|"stoi 3", stoi("9223372036854775807"), 9223372036854775807);;
     assert_eq(|_|"stoi 4", stoi("-9223372036854775808"), -9223372036854775808);;
+
+    pure()
+);
+
+test_stoui : IO ();
+test_stoui = (
+    assert_eq(|_|"stoui 1", stoui("18446744073709551615"), 18446744073709551615_U64);;
 
     pure()
 );

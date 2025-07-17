@@ -7,3 +7,10 @@ module CPLib.IO;
 // - `s`: 変換したい文字列
 stoi : String -> I64;
 stoi = |s| s.from_string.as_ok;
+
+// 文字列をパースして`U64`整数に変換する
+//
+// # Parameters
+// - `s`: 変換したい文字列
+stoui : String -> U64;
+stoui = |s| s.from_string.as_ok;
