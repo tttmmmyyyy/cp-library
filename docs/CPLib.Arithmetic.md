@@ -34,6 +34,19 @@ Type: `Std::I64 -> Std::I64 -> (Std::I64, (Std::I64, Std::I64))`
 - `a`: 整数
 - `b`: 整数
 
+#### inv_mod
+
+Type: `Std::I64 -> Std::I64 -> Std::I64`
+
+`ax = 1 mod m`なる`x`のうち、`0 <= x < |m|`を満たすものを返す
+
+制約：`a != 0 mod m`
+
+##### Parameters
+
+- `a`: 整数
+- `m`: 法
+
 #### pmod
 
 Type: `Std::I64 -> Std::I64 -> Std::I64`
