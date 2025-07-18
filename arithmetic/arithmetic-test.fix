@@ -1,0 +1,25 @@
+module CPLib.Arithmetic.Test;
+
+import CPLib.Arithmetic;
+
+test : IO ();
+test = (
+    test_gcd;;
+
+    pure()
+);
+
+test_gcd : IO ();
+test_gcd = (
+    assert_eq(|_|"gcd 1", calc_gcd(12, 15), 3);;
+    assert_eq(|_|"gcd 1", calc_gcd(-12, 15), 3);;
+    assert_eq(|_|"gcd 2", calc_gcd(12, -15), 3);;
+    assert_eq(|_|"gcd 3", calc_gcd(-12, -15), 3);;
+    assert_eq(|_|"gcd 4", calc_gcd(0, 15), 15);;
+    assert_eq(|_|"gcd 5", calc_gcd(15, 0), 15);;
+    assert_eq(|_|"gcd 6", calc_gcd(0, 0), 0);;
+    assert_eq(|_|"gcd 7", calc_gcd(17, 19), 1);;
+    assert_eq(|_|"gcd 8", calc_gcd(17, 17), 17);;
+
+    pure()
+);

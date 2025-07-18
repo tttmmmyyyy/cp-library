@@ -18,7 +18,12 @@ description = "A library for competitive programming in Fixlang."
 license = "MIT"
 
 [build]
-files = ["main.fix", "io/io.fix", "zp/zp.fix"]
+files = ["main.fix", "io/io.fix", "zp/zp.fix", "arithmetic/arithmetic.fix"]
 
 [build.test]
-files = ["test.fix", "io/io-test.fix", "zp/zp-test.fix"]
+files = [
+    "test.fix",
+    "io/io-test.fix",
+    "zp/zp-test.fix",
+    "arithmetic/arithmetic-test.fix",
+]

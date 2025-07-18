@@ -2,11 +2,13 @@ module Test;
 
 import CPLib.IO.Test;
 import CPLib.ZP.Test;
+import CPLib.Arithmetic.Test;
 
 test : IO ();
 test = (
     CPLib.IO.Test::test;;
     CPLib.ZP.Test::test;;
+    CPLib.Arithmetic.Test::test;;
 
     pure()
 );

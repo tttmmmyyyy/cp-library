@@ -1,0 +1,12 @@
+module CPLib.Arithmetic;
+
+// 2つの整数の最大公約数（非負整数）を計算する
+// 
+// # Parameters
+// - `a`: 整数
+// - `b`: 整数
+calc_gcd : I64 -> I64 -> I64;
+calc_gcd = |a, b| (
+    if b == 0 { a.abs };
+    calc_gcd(b, a % b)
+);
