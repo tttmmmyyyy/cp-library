@@ -1,9 +1,12 @@
 module Test;
 
 import CPLib.IO.Test;
+import CPLib.ZP.Test;
 
 test : IO ();
 test = (
     CPLib.IO.Test::test;;
+    CPLib.ZP.Test::test;;
+
     pure()
 );

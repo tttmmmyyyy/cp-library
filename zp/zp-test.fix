@@ -1,0 +1,91 @@
+module CPLib.ZP.Test;
+
+import CPLib.ZP;
+
+type P17 = unbox struct {};
+
+impl P17 : PrimeProvider {
+    create = P17 {};
+    value = |p| 17_U32;
+}
+
+test : IO ();
+test = (
+    test_basic;;
+    test_power;;
+
+    pure()
+);
+
+test_basic : IO ();
+test_basic = (
+    assert_eq(|_|"test_zp_basic 1", 
+        ZP::make(1e9) + ZP::make(2e9),
+        ZP::make(999999986) : ZP P1000000007);;
+    assert_eq(|_|"test_zp_basic 2", 
+        ZP::make(1e9) * ZP::make(2e9), 
+        ZP::make(98) : ZP P1000000007);;
+    assert_eq(|_|"test_zp_basic 3", 
+        ZP::make(1e9) / ZP::make(1e9),
+        ZP::make(1) : ZP P1000000007);;
+    assert_eq(|_|"test_zp_basic 4",
+        ZP::make(1e9) - ZP::make(1e9),
+        ZP::make(0) : ZP P1000000007);;
+    assert_eq(|_|"test_zp_basic 5",
+        ZP::make(1e9) + (-ZP::make(1e9)),
+        ZP::make(0) : ZP P1000000007);;
+    assert_eq(|_|"test_zp_basic 6",
+        ZP::make(1e9) + ZP::make(-1e9-1),
+        ZP::make(1000000006) : ZP P1000000007);;
+
+    pure()
+
+);
+
+test_power : IO ();
+test_power = (
+
+    let cases = [
+        (0, 1, 0),
+        (0, 2, 0),
+        (0, 3, 0),
+        (1, 0, 1),
+        (1, 1, 1),
+        (1, 2, 1),
+        (1, 3, 1),
+        (1, 20, 1),
+        (1, -1, 1),
+        (1, -2, 1),
+        (1, -3, 1),
+        (1, -20, 1),
+        (2, 0, 1),
+        (2, 1, 2),
+        (2, 2, 4),
+        (2, 3, 8),
+        (2, 20, 16),
+        (2, -1, 9),
+        (2, -2, 13),
+        (2, -3, 15),
+        (2, -20, 16),
+        (-5, 0, 1),
+        (-5, 1, -5),
+        (-5, 2, 8),
+        (-5, 3, 11),
+        (-5, 4, 13),
+        (-5, 20, 13),
+        (-5, -1, 10),
+        (-5, -2, 15),
+        (-5, -3, 14),
+        (-5, -20, 4)
+    ];
+
+    cases.to_iter.fold_m((), |(x, e, ans), _|
+        let res = ZP::make(x).power(e) : ZP P17;
+        assert_eq(|_|"test_zp_power " + x.to_string + "^" + e.to_string + " = " + res.to_string + " != " + ans.to_string,
+            res,
+            ZP::make(ans)
+        )
+    );;
+
+    pure()
+);

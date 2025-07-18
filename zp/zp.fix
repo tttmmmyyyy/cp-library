@@ -1,0 +1,171 @@
+// 素数`p`を法とする整数の環の型`ZP p`を与えるモジュール。
+//
+// 素数`p`は静的でなければならない（コンパイル時に決まる必要がある）。
+// 
+// 素数`p`は型パラメータとして与える。例として、p = 17 としたい場合、
+// - 空の型（フィールドを持たないunboxedな型）`P17`を作成：`type P17 = unbox struct {}`.
+// - `P17 : PrimeProvider`を実装する。この際`PrimeProvider::value`関数で17を返すようにする：`value = |_| 17_U32;`
+// すると`ZP P17`が環"Z/(17)"を表す型となる。
+//
+// `P100000007`、`P1000000009`, `P998244353` はこのモジュールに定義されている。
+// 
+// 使用例：
+// ```
+// module Main;
+//
+// import CPLib.ZP;
+//
+// type P17 = unbox struct {};
+//
+// impl P17 : PrimeProvider {
+//     create = P17 {};
+//     value = |p| 17_U32;
+// }
+//
+// main : IO ();
+// main = (
+//     let zp = ZP::make(-5) : ZP P17;
+//     let zp = zp * zp;
+//     assert_eq(|_|"case 1", zp.@value, 8_U32);; // (-5)*(-5) = 25 = 8 mod 17
+//     pure()
+// );
+// ```
+
+module CPLib.ZP;
+
+// 素数`p`を法とする整数の環
+type ZP p = struct { value : U32, prime : p };
+
+trait p : PrimeProvider {
+    create : p;
+    value : p -> U32;
+}
+
+type P1000000007 = unbox struct {};
+
+impl P1000000007 : PrimeProvider {
+    create = P1000000007 {};
+    value = |p| 1000000007_U32;
+}
+
+type P1000000009 = unbox struct {};
+
+impl P1000000009 : PrimeProvider {
+    create = P1000000009 {};
+    value = |p| 1000000009_U32;
+}
+
+type P998244353 = unbox struct {};
+
+impl P998244353 : PrimeProvider {
+    create = P998244353 {};
+    value = |p| 998244353_U32;
+}
+
+namespace ZP {
+    // `I64`から素数を作成する
+    // 
+    // # Parameters
+    // - `x` : `I64`型の整数
+    make : [p : PrimeProvider] I64 -> ZP p;
+    make = |x| (
+        let pp = PrimeProvider::create;
+        let p = pp.value;
+        let x = x % p.to_I64;
+        let x = if x < 0 { x + p.to_I64 } else { x };
+        ZP { value : x.to_U32, prime : pp }
+    );
+
+    // x^e mod p を計算する。
+    // 
+    // xが0かつeが負のときはプログラムを終了する。
+    // 
+    // # Parameters
+    // - `x` : `ZP p`型の数
+    // - `e` : `I64`型の指数
+    power : [p : PrimeProvider] I64 -> ZP p -> ZP p;
+    power = |e, x| (
+        if x.@value == 0_U32 && e < 0 {
+            undefined("[ZP::power] divide by zero!")
+        };
+        let p = x.@prime.value;
+        let p1 = p.to_I64 - 1;
+        let e = e % p1;
+        let e = if e < 0 { e + p1 } else { e };
+        x._power_unsigned(e.to_U64)
+    );
+
+    // x^e mod p を計算する（eが非負整数のとき）
+    // 
+    // # Parameters
+    // - `x` : `ZP p`型の数
+    // - `e` : `I64`型の指数
+    _power_unsigned : [p : PrimeProvider] U64 -> ZP p -> ZP p;
+    _power_unsigned = |e, x| (
+        if e == 0_U64 { ZP::make(1) };
+        if e % 2_U64 == 0_U64 {
+            let half = ZP::_power_unsigned(e / 2_U64, x);
+            half * half
+        } else {
+            let half = ZP::_power_unsigned((e - 1_U64) / 2_U64, x);
+            x * half * half
+        }
+    );
+
+
+    // `ZP p`の逆元を求める。
+    // 
+    // 0を与えた場合はプログラムを終了する。
+    //
+    // # Parameters
+    // - `x` : `ZP p`型の整数
+    inv : [p : PrimeProvider] ZP p -> ZP p;
+    inv = |x| (
+        let p = x.@prime.value;
+        if x.@value == 0_U32 { undefined("[ZP::inv] divide by zero!") };
+        x.power(p.to_I64 - 2)
+    );
+}
+
+impl [p : PrimeProvider] ZP p : Eq {
+    eq = |this, that| (
+        let p = this.@prime.value;
+        this.@value == that.@value
+    );
+}
+
+impl [p : PrimeProvider] ZP p : Add {
+    add = |this, that| (
+        let p = this.@prime.value;
+        ZP { value : (this.@value + that.@value) % p, prime : this.@prime }
+    );
+}
+
+impl [p : PrimeProvider] ZP p : Neg {
+    neg = |this| (
+        let p = this.@prime.value;
+        ZP { value : (p - this.@value) % p, prime : this.@prime }
+    );
+}
+
+impl [p : PrimeProvider] ZP p : Sub {
+    sub = |this, that| (
+        let p = this.@prime.value;
+        ZP { value : (this.@value + p - that.@value) % p, prime : this.@prime }
+    );
+}
+
+impl [p : PrimeProvider] ZP p : Mul {
+    mul = |this, that| (
+        let p = this.@prime.value.to_U64;
+        ZP { value : ((this.@value.to_U64 * that.@value.to_U64) % p).to_U32, prime : this.@prime }
+    );
+}
+
+impl [p : PrimeProvider] ZP p : Div {
+    div = |this, that| this * that.inv;
+}
+
+impl ZP p : ToString {
+    to_string = |this| this.@value.to_string;
+}
