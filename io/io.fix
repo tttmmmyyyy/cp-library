@@ -15,6 +15,13 @@ stoi = |s| s.from_string.as_ok;
 stoui : String -> U64;
 stoui = |s| s.from_string.as_ok;
 
+// 文字列をパースして`F64`整数に変換する
+//
+// # Parameters
+// - `s`: 変換したい文字列
+stof : String -> F64;
+stof = |s| s.from_string.as_ok;
+
 // "X Y Z"というフォーマットの文字列をパースして`I64`の配列`[X, Y, Z]`に変換する。
 // 
 // "stoia" = "String TO Integer Array"
@@ -33,6 +40,15 @@ stoia = |s| if s.is_empty { [] } else { s.split(" ").map(stoi).to_array };
 stouia : String -> Array U64;
 stouia = |s| if s.is_empty { [] } else { s.split(" ").map(stoui).to_array };
 
+// "X Y Z"というフォーマットの文字列をパースして`F64`の配列`[X, Y, Z]`に変換する。
+//
+// "stofa" = "String TO Float Array"
+//
+// # Parameters
+// - `s`: 変換したい文字列
+stofa : String -> Array F64;
+stofa = |s| if s.is_empty { [] } else { s.split(" ").map(stof).to_array };
+
 // 標準入力から1行読み込み、`I64`として返す。
 input_line_i : IO I64;
 input_line_i = (
@@ -41,8 +57,8 @@ input_line_i = (
 );
 
 // 標準入力から1行読み込み、`U64`として返す。
-input_line_u : IO U64;
-input_line_u = (
+input_line_ui : IO U64;
+input_line_ui = (
     let line = *input_line_s;
     line.stoui.pure
 );
@@ -59,4 +75,11 @@ input_line_uia : IO (Array U64);
 input_line_uia = (
     let line = *input_line_s;
     line.stouia.pure
+);
+
+// "X Y Z"というフォーマットの行を標準入力から読み込み、`F64`の配列`[X, Y, Z]`として返す。
+input_line_fa : IO (Array F64);
+input_line_fa = (
+    let line = *input_line_s;
+    line.stofa.pure
 );

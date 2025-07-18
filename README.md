@@ -17,13 +17,17 @@
 * 入出力・パース
   * （`Std::IO::input_line_s : IO String` で標準入力から1行を文字列として読み込みます。）
   * `CPLib.IO.input_line_i : IO I64` で標準入力から1行を符号付き整数として読み込みます。
-  * `CPLib.IO.input_line_u : IO U64` で標準入力から1行を符号なし整数として読み込みます。
+  * `CPLib.IO.input_line_ui : IO U64` で標準入力から1行を符号なし整数として読み込みます。
+  * `CPLib.IO.input_line_f : IO F64` で標準入力から1行を浮動小数点数として読み込みます。
   * `CPLib.IO.input_line_ia : IO (Array I64)` で標準入力から1行を整数の配列"x y z"として読み込みます。
   * `CPLib.IO.input_line_uia : IO (Array U64)` で標準入力から1行を符号なし整数の配列"x y z"として読み込みます。
+  * `CPLib.IO.input_line_fa : IO (Array F64)` で標準入力から1行を浮動小数点数の配列"x y z"として読み込みます。
   * `CPLib.IO::stoi : String -> I64`で文字列を符号付き整数に変換できます。
   * `CPLib.IO::stoui : String -> U64`で文字列を符号なし整数に変換できます。
+  * `CPLib.IO::stof : String -> F64`で文字列を浮動小数点数に変換できます。
   * `CPLib.IO::stoia : String -> Array I64`で文字列を整数の配列に変換できます。
   * `CPLib.IO::stouia : String -> Array U64`で文字列を符号なし整数の配列に変換できます。
+  * `CPLib.IO::stofa : String -> Array F64`で文字列を浮動小数点数の配列に変換できます。
   * 文字列を文字（`U8`）の配列に変換するときは`get_bytes : String -> Array U8`を使います。ただし、得られる配列はnull終端文字を含みます。
 
 ## 競技プログラミングで有用な他のライブラリ

@@ -8,6 +8,8 @@ test = (
     test_stoui;;
     test_stoia;;
     test_stouia;;
+    test_stof;;
+    test_stofa;;
 
     pure()
 );
@@ -29,6 +31,18 @@ test_stoui = (
     pure()
 );
 
+test_stof : IO ();
+test_stof = (
+    assert_eq(|_|"stof 1", stof("3.14"), 3.14);;
+    assert_eq(|_|"stof 2", stof("-2.71828"), -2.71828);;
+    assert_eq(|_|"stof 3", stof("1.7976931348623157e308"), 1.7976931348623157e308);;
+    assert_eq(|_|"stof 4", stof("-1.7976931348623157e308"), -1.7976931348623157e308);;
+    assert_eq(|_|"stof 5", stof("0"), 0.0);;
+    assert_eq(|_|"stof 6", stof("1"), 1.0);;
+    assert_eq(|_|"stof 7", stof("-1"), -1.0);;
+    pure()
+);
+
 test_stoia : IO ();
 test_stoia = (
     assert_eq(|_|"stoia 3", stoia(""), []);;
@@ -43,5 +57,14 @@ test_stouia = (
     assert_eq(|_|"stouia 1", stouia(""), []);;
     assert_eq(|_|"stouia 2", stouia("18446744073709551615"), [18446744073709551615_U64]);;
     assert_eq(|_|"stouia 3", stouia("18446744073709551615 18446744073709551615"), [18446744073709551615_U64, 18446744073709551615_U64]);;
+    pure()
+);
+
+test_stofa : IO ();
+test_stofa = (
+    assert_eq(|_|"stofa 1", stofa(""), []);;
+    assert_eq(|_|"stofa 2", stofa("3.14"), [3.14]);;
+    assert_eq(|_|"stofa 2", stofa("3.14 -2.72"), [3.14, -2.72]);;
+    assert_eq(|_|"stofa 3", stofa("1.0 2 -3"), [1.0, 2.0, -3.0]);;
     pure()
 );
