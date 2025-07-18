@@ -50,3 +50,5 @@
   * `Minilib.Collection.TreeSet`
 * binary-heap
   * `BinaryHeap`: 二分ヒープ（優先順位付きキュー）
+* bool-array
+  * `BoolArray`: bool型の配列を空間効率良く扱うモジュール
