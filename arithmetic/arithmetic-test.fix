@@ -8,6 +8,7 @@ test = (
     test_gcd;;
     test_ext_gcd;;
     test_pow_mod;;
+    test_inv_mod;;
 
     pure()
 );
@@ -103,5 +104,18 @@ test_pow_mod = (
     // 特殊なケース
     assert_eq(|_|"pow_mod 12 (0^0 mod any)", 0.pow_mod(0, 5), 1);;
 
+    pure()
+);
+
+test_inv_mod : IO ();
+test_inv_mod = (
+    let m = 17;
+    range(-30, 30).filter(|x| x.pmod(m) != 0).fold_m((), |a, _|
+        let x = a.inv_mod(m);
+        let ax = (a * x).pmod(m);
+        assert_eq(|_|"test_inv_mod ax mod m - 1, x = " + x.to_string, ax, 1);;
+        assert(|_|"test_inv_mod 0 <= x < m, x = " + x.to_string, 0 <= x && x < m);;
+        pure()
+    );;
     pure()
 );

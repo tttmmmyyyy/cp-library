@@ -74,3 +74,20 @@ _pow_mod_internal = |e, m, x| (
         ((x * half) % m * half) % m
     }
 );
+
+// `ax = 1 mod m`なる`x`のうち、`0 <= x < |m|`を満たすものを返す
+//
+// 制約：`a != 0 mod m`
+//
+// # Parameters
+// - `a`: 整数
+// - `m`: 法
+inv_mod : I64 -> I64 -> I64;
+inv_mod = |m, a| (
+    let m = m.abs;
+    let (d, (inv_x, _)) = ext_gcd(a.pmod(m), m);
+    if d != 1 {
+        undefined("[inv_mod] `a` is not coprime to `m`!")
+    };
+    inv_x.pmod(m)
+);
