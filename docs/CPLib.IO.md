@@ -8,6 +8,12 @@ Defined in cp-library@0.1.0
 
 ### namespace CPLib.IO
 
+#### input_line_fa
+
+Type: `Std::IO (Std::Array Std::F64)`
+
+"X Y Z"というフォーマットの行を標準入力から読み込み、`F64`の配列`[X, Y, Z]`として返す。
+
 #### input_line_i
 
 Type: `Std::IO Std::I64`
@@ -20,7 +26,7 @@ Type: `Std::IO (Std::Array Std::I64)`
 
 "X Y Z"というフォーマットの行を標準入力から読み込み、`I64`の配列`[X, Y, Z]`として返す。
 
-#### input_line_u
+#### input_line_ui
 
 Type: `Std::IO Std::U64`
 
@@ -31,6 +37,28 @@ Type: `Std::IO Std::U64`
 Type: `Std::IO (Std::Array Std::U64)`
 
 "X Y Z"というフォーマットの行を標準入力から読み込み、`U64`の配列`[X, Y, Z]`として返す。
+
+#### stof
+
+Type: `Std::String -> Std::F64`
+
+文字列をパースして`F64`整数に変換する
+
+##### Parameters
+
+- `s`: 変換したい文字列
+
+#### stofa
+
+Type: `Std::String -> Std::Array Std::F64`
+
+"X Y Z"というフォーマットの文字列をパースして`F64`の配列`[X, Y, Z]`に変換する。
+
+"stofa" = "String TO Float Array"
+
+##### Parameters
+
+- `s`: 変換したい文字列
 
 #### stoi
 
