@@ -32,7 +32,7 @@
 * Mod Int
   * `CPLib.ZP.Static` : 静的な（すなわち、コンパイル時に決まる）素数を法とする整数の剰余環（体）の演算を提供します。
 * 整数論
-  * `CPLib.ZP.Arithmetic` : GCD, 拡張ユークリッドの互除法, mod nでのpow, invなど。
+  * `CPLib.ZP.Arithmetic` : GCD, 拡張ユークリッドの互除法, mod nでのpow, inv (←TODO)など。
 
 ## 競技プログラミングで有用な他のライブラリ
 
