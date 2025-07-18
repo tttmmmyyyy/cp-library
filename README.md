@@ -26,11 +26,21 @@
   * `CPLib.IO::stouia : String -> Array U64`で文字列を符号なし整数の配列に変換できます。
   * 文字列を文字（`U8`）の配列に変換するときは`get_bytes : String -> Array U8`を使います。ただし、得られる配列はnull終端文字を含みます。
 
-## 有用な他のライブラリ
+## 競技プログラミングで有用な他のライブラリ
+
+それぞれ
+```
+* project-name
+  * module-name
+```
+という形式で書いています。
+`fix deps add {project-name}` して、ソースコード中で`import {module-name}` することで使えるようになります。
 
 * minilib-collection
-  * Minilib.Collection.Deque
-  * Minilib.Collection.OrderedMap
-  * Minilib.Collection.RBTree
-  * Minilib.Collection.TreeMap
-  * Minilib.Collection.TreeSet
+  * `Minilib.Collection.Deque`
+  * `Minilib.Collection.OrderedMap`
+  * `Minilib.Collection.RBTree`
+  * `Minilib.Collection.TreeMap`
+  * `Minilib.Collection.TreeSet`
+* binary-heap
+  * `BinaryHeap`: 二分ヒープ（優先順位付きキュー）
