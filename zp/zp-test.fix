@@ -1,6 +1,7 @@
 module CPLib.ZP.Test;
 
 import CPLib.ZP;
+import CPLib.Arithmetic::pmod;
 
 type P17 = unbox struct {};
 
@@ -37,6 +38,35 @@ test_basic = (
     assert_eq(|_|"test_zp_basic 6",
         ZP::make(1e9) + ZP::make(-1e9-1),
         ZP::make(1000000006) : ZP P1000000007);;
+    
+    range(-30, 30).product(range(-30, 30)).fold_m((), |(x, y), _|
+        // Addition
+        assert_eq(|_|"test_zp_basic " + x.to_string + " + " + y.to_string,
+            ZP::make(x) + ZP::make(y),
+            ZP::make((x + y).pmod(17)) : ZP P17);;
+
+        // Subtraction
+        assert_eq(|_|"test_zp_basic " + x.to_string + " - " + y.to_string,
+            ZP::make(x) - ZP::make(y),
+            ZP::make((x - y).pmod(17)) : ZP P17);;
+
+        // Multiplication
+        assert_eq(|_|"test_zp_basic " + x.to_string + " * " + y.to_string,
+            ZP::make(x) * ZP::make(y),
+            ZP::make((x * y).pmod(17)) : ZP P17);;
+
+        pure()
+    ).forget;;
+
+    // Inversion
+    range(-30, 30).filter(|x| x.pmod(17) != 0).fold_m((), |x, _|
+        let zp = ZP::make(x) : ZP P17;
+        let zpinv = zp.inv;
+        assert_eq(|_|"test_zp_basic inv " + x.to_string,
+            zp * zpinv,
+            ZP::make(1) : ZP P17);;
+        pure()
+    ).forget;;
 
     pure()
 
