@@ -136,21 +136,28 @@ impl [p : PrimeProvider] ZP p : Eq {
 impl [p : PrimeProvider] ZP p : Add {
     add = |this, that| (
         let p = this.@prime.value;
-        ZP { value : (this.@value + that.@value) % p, prime : this.@prime }
+        let v = this.@value + that.@value;
+        let v = if v >= p { v - p } else { v };
+        ZP { value : v, prime : this.@prime }
     );
 }
 
 impl [p : PrimeProvider] ZP p : Neg {
     neg = |this| (
         let p = this.@prime.value;
-        ZP { value : (p - this.@value) % p, prime : this.@prime }
+        let v = p - this.@value;
+        let v = if v >= p { v - p } else { v };
+        ZP { value : v, prime : this.@prime }
     );
 }
 
 impl [p : PrimeProvider] ZP p : Sub {
     sub = |this, that| (
         let p = this.@prime.value;
-        ZP { value : (this.@value + p - that.@value) % p, prime : this.@prime }
+        let v = this.@value;
+        let v = if v < that.@value { v + p } else { v };
+        let v = v - that.@value;
+        ZP { value : v, prime : this.@prime }
     );
 }
 

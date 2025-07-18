@@ -1,0 +1,76 @@
+module CPLib.Arithmetic;
+
+// `x`を`m`で割った余りを非負で返す
+//
+// C言語の%演算子とは異なり、負の数に対しても正の余りを返す
+//
+// # Parameters
+// - `m`: 除数
+// - `x`: 被除数
+pmod : I64 -> I64 -> I64;
+pmod = |m, x| (
+    let m = m.abs;
+    let r = x % m;
+    if r < 0 { r + m } else { r }
+);
+
+// 2つの整数の最大公約数（非負整数）を計算する
+// 
+// # Parameters
+// - `a`: 整数
+// - `b`: 整数
+calc_gcd : I64 -> I64 -> I64;
+calc_gcd = |a, b| (
+    if b == 0 { a.abs };
+    calc_gcd(b, a % b)
+);
+
+// 拡張ユークリッドの互除法
+// 
+// 2つの整数 `a`, `b` に対して、その最大公約数 `d >= 0` および、`ax + by = d` を満たす整数 `x`, `y` を求める
+//
+// # Returns 
+// `(d, (x, y))`
+// 
+// # Parameters
+// - `a`: 整数
+// - `b`: 整数
+ext_gcd : I64 -> I64 -> (I64, (I64, I64));
+ext_gcd = |a, b| (
+    if b == 0 { 
+        if a >= 0 { (a, (1, 0)) } else { (-a, (-1, 0)) }
+    };
+    let (d, (x1, y1)) = ext_gcd(b, a % b);
+    (d, (y1, x1 - (a / b) * y1))
+);
+
+// `x^e`を`n`で割った余りを計算する
+//
+// # Parameters
+// - `x`: 底
+// - `e`: 指数 >= 0
+// - `m`: 法
+pow_mod : I64 -> I64 -> I64 -> I64;
+pow_mod = |e, m, x| (
+    let m = m.abs;
+    let x = x.pmod(m);
+    x._pow_mod_internal(e, m)
+);
+
+// `x^e`を`n`で割った余りを計算する
+//
+// # Parameters
+// - `x`: 底. 0 <= x < m
+// - `e`: 指数 >= 0
+// - `m`: 法 > 0
+_pow_mod_internal : I64 -> I64 -> I64 -> I64;
+_pow_mod_internal = |e, m, x| (
+    if e == 0 { 1 };
+    if e % 2 == 0 {
+        let half = x._pow_mod_internal(e / 2, m);
+        (half * half) % m
+    } else {
+        let half = x._pow_mod_internal((e - 1) / 2, m);
+        ((x * half) % m * half) % m
+    }
+);
