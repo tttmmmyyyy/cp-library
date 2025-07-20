@@ -30,7 +30,7 @@
   * `CPLib.IO::stofa : String -> Array F64`で文字列を浮動小数点数の配列に変換できます。
   * 文字列を文字（`U8`）の配列に変換するときは`get_bytes : String -> Array U8`を使います。ただし、得られる配列はnull終端文字を含みます。
 * Mod Int
-  * `CPLib.ZP.Static` : 静的な（すなわち、コンパイル時に決まる）素数を法とする整数の剰余環（体）の演算を提供します。
+  * `CPLib.ZP` : 静的な（すなわち、コンパイル時に決まる）素数を法とする整数の剰余環（体）の演算を提供します。
 * 整数論
   * `CPLib.ZP.Arithmetic` : GCD, 拡張ユークリッドの互除法, pow_mod, inv_modなど。
 
