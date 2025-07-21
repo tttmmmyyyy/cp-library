@@ -29,6 +29,7 @@
   * `CPLib.IO::stouia : String -> Array U64`で文字列を符号なし整数の配列に変換できます。
   * `CPLib.IO::stofa : String -> Array F64`で文字列を浮動小数点数の配列に変換できます。
   * 文字列を文字（`U8`）の配列に変換するときは`get_bytes : String -> Array U8`を使います。ただし、得られる配列はnull終端文字を含みます。
+    * なお、バイト配列`Array U8`を文字列に変換するときは`from_bytes(bytes).as_ok` と書きます（`from_bytes`は`FromBytes`トレイトのメンバで、`String`は`FromBytes`トレイトを実装している）。
 * Mod Int
   * `CPLib.ZP` : 静的な（すなわち、コンパイル時に決まる）素数を法とする整数の剰余環（体）の演算を提供します。
 * 整数論
