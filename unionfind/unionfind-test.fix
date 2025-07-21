@@ -52,6 +52,9 @@ test_by_hand = (
     assert_eq(|_|"", uf.is_united(4, 5).@1, false);;
     let (uf, grps) = uf.get_groups;
     assert_eq(|_|"", grps.get_size, 3);;
+    let grps = grps.sort_by(|(a, b)| a.get_size > b.get_size);
+    let grps = grps.map(|grp| grp.sort_by(|(a, b)| a < b));
+    assert_eq(|_|"", grps, [[0, 1, 2], [3, 4], [5]]);;
 
     let uf = uf.unite(2, 3);
     assert_eq(|_|"", uf.is_united(1, 2).@1, true);;
