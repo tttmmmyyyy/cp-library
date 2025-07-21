@@ -208,7 +208,7 @@ act_range = |l, r, a, tree| (
     let tree = tree._propagate_above(l0);
     let tree = tree._propagate_above(r0);
 
-    loop((l, r, tree), |(l, r, tree)|
+    let tree = loop((l, r, tree), |(l, r, tree)|
         if l >= r { break $ tree };
         let (l, tree) = if l % 2 == 0 { (l, tree) } else {
             let act = tree.@lazy.@(l);
@@ -227,5 +227,7 @@ act_range = |l, r, a, tree| (
         let l = l / 2;
         let r = r / 2;
         continue $ (l, r, tree)
-    )
+    );
+
+    tree._recalc_at(l0)._recalc_at(r0)
 );

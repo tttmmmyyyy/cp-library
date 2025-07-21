@@ -25,6 +25,7 @@ files = [
     "arithmetic/arithmetic.fix",
     "segtree/segtree.fix",
     "segtree/dsegtree.fix",
+    "segtree/lsegtree.fix",
     "trait/trait.fix",
 ]
 
@@ -36,4 +37,5 @@ files = [
     "arithmetic/arithmetic-test.fix",
     "segtree/segtree-test.fix",
     "segtree/dsegtree-test.fix",
+    "segtree/lsegtree-test.fix",
 ]
