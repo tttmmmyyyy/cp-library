@@ -37,7 +37,7 @@ init = |n| (
 // 
 // # Parameters
 // - `elems` : セグメント木の要素を格納する配列
-build : [m : Monoid, a : Monoid] Array m -> LSegtree m a;
+build : [m : Monoid, a : Monoid, a : Action, Set a = m] Array m -> LSegtree m a;
 build = |elems| (
     let n = elems.get_size;
     let tree = Array::fill(n * 2, Monoid::unit);
@@ -125,7 +125,7 @@ _recalc_at = |i, tree| (
 // # Parameters
 // - `i` : インデックス（0-indexed）
 // - `tree` : セグメント木
-@ : I64 -> LSegtree m a -> m;
+@ : [a : Action, Set a = m] I64 -> LSegtree m a -> m;
 @ = |i, tree| (
     let i = i + tree.@n; // 内部配列のインデックスに変換
     tree._eval_at(i)
