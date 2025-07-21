@@ -27,7 +27,7 @@ test : IO ();
 test = (
     let rng = Random::init_by_seed(0_U64);
     let rng = *test_random(false, rng);
-    // let rng = *test_random(true, rng);
+    let rng = *test_random(true, rng);
 
     pure()
 );
@@ -46,9 +46,9 @@ impl ShiftAlphabet : Monoid {
         let c = rhs.@a;
         let d = rhs.@b;
         // lhs(x) = ax + b, rhs(x) = cx + d,
-        // lhs(rhs(x)) = a(cx + d) + b = acx + ad + b
-        let e = (a * c).pmod(26);
-        let f = (a * d + b).pmod(26);
+        // x・lhs・rhs = rhs(lhs(x)) = c(ax + b) + d = cax + cb + d
+        let e = (c * a).pmod(26);
+        let f = (c * b + d).pmod(26);
         make(e, f)
     );
 }
@@ -73,32 +73,50 @@ impl ShiftAlphabet : Action {
     );
 }
 
+// ランダムな数文字のアルファベット文字列を生成する
+gen_random_alphabetical_string : Random -> (Random, String);
+gen_random_alphabetical_string = |rng| (
+    let (rng, len) = rng.generate_I64_nonneg;
+    let len = len % 6; // 0～5文字
+    let (bytes, rng) = range(0, len).fold(([], rng), |_, (bytes, rng)|
+        let (rng, c) = rng.generate_I64_nonneg;
+        let c = (c % 26).to_U8 + 'a';
+        let bytes = bytes.push_back(c);
+        (bytes, rng)
+    );
+    let bytes = bytes.push_back('\0');
+    let s = String::_unsafe_from_c_str(bytes);
+    (rng, s)
+);
+
 test_random : Bool -> Random -> IO Random;
 test_random = |is_build, rng| (
     // n要素のセグメント木に対してランダムな操作を行う
-    let n = 10;
+    let n = 100;
 
     let (tree, arr) = if !is_build {
         let arr = Array::fill(n, StrConcat::make(""));
         (LSegtree::init(n), arr)
     } else {
-        let arr = range(0, n).map(|i| StrConcat::make(i.to_U8.to_string)).to_array;
+        let arr = range(0, n).map(|i| 
+            let v = String::from_U8('a' + (i % 26).to_U8);
+            StrConcat::make(v)
+        ).to_array;
         (LSegtree::build(arr), arr)
     };
-    // println $ "arr : {}".populate([arr.to_string]);;
 
-    let (_1, _2, rng) = *range(0, 10).fold_m((tree, arr, rng), |_, (tree, arr, rng)|
+    let (_1, _2, rng) = *range(0, 1000).fold_m((tree, arr, rng), |_, (tree, arr, rng)|
         let (rng, dice) = rng.generate_I64_nonneg;
         let dice = dice % 2;
-        let (tree, arr, rng) = if dice == 0 {
+        let (tree, arr, rng) = *if dice == 0 {
             // setによる更新
             let (rng, i) = rng.generate_I64_nonneg;
             let i = i % n;
-            let (rng, v) = rng.generate_I64_nonneg;
-            let v = StrConcat::make(v.to_U8.to_string);
+            let (rng, v) = rng.gen_random_alphabetical_string;
+            let v = StrConcat::make(v);
             let tree = tree.set(i, v);
             let arr = arr.set(i, v);
-            (tree, arr, rng)
+            pure $ (tree, arr, rng)
         } else {
             // 範囲作用による更新
             let (rng, l) = rng.generate_I64_nonneg;
@@ -110,7 +128,7 @@ test_random = |is_build, rng| (
             let a = ShiftAlphabet::make(a, b);
             let tree = tree.act_range(l, r, a);
             let arr = range(l, r).fold(arr, |i, arr| arr.set(i, act(a, arr.@(i))));
-            (tree, arr, rng)
+            pure $ (tree, arr, rng)
         };
 
         // foldを実行
