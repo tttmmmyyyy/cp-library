@@ -63,6 +63,13 @@ input_line_ui = (
     line.stoui.pure
 );
 
+// 標準入力から1行読み込み、`F64`として返す。
+input_line_f : IO F64;
+input_line_f = (
+    let line = *input_line_s;
+    line.stof.pure
+);
+
 // "X Y Z"というフォーマットの行を標準入力から読み込み、`I64`の配列`[X, Y, Z]`として返す。
 input_line_ia : IO (Array I64);
 input_line_ia = (
