@@ -1,6 +1,63 @@
 module CPLib.LSegtree.Test;
 
+import CPLib.Trait;
+import CPLib.Arithmetic::pmod;
+import CPLib.LSegtree;
+
+// 文字列の結合に関するモノイド
+type StrConcat = struct { v : String };
+namespace StrConcat {
+    make : String -> StrConcat;
+    make = |v| StrConcat { v : v };
+}
+impl StrConcat : Monoid {
+    unit = make("");
+    op = |lhs, rhs| make $ lhs.@v + rhs.@v;
+}
+impl StrConcat : Eq {
+    eq = |lhs, rhs| lhs.@v == rhs.@v;
+}
+
 test : IO ();
 test = (
+    test_hand;;
+
+    pure()
+);
+
+// 「アルファベットを1文字ずらす」作用が生成する可換モノイド
+type ShiftAlphabet = struct { v : I64 };
+namespace ShiftAlphabet {
+    make : I64 -> ShiftAlphabet;
+    make = |v| let v = v.pmod(26); ShiftAlphabet { v : v };
+}
+impl ShiftAlphabet : Monoid {
+    unit = make(0);
+    op = |lhs, rhs| make((lhs.@v + rhs.@v).pmod(26));
+}
+impl ShiftAlphabet : ToString {
+    to_string = |a| a.@v.to_string;
+}
+
+// 作用の定義
+impl ShiftAlphabet : Action {
+    type Set ShiftAlphabet = StrConcat;
+    act = |a, s| (
+        let bytes = s.@v.get_bytes;
+        let bytes = bytes.map(|b| 
+            if b == '\0' { b };
+            (b.to_I64 - 'a'.to_I64 + a.@v).pmod(26).to_U8 + 'a'
+        );
+        let s = String { _data : bytes };
+        StrConcat::make(s)
+    );
+}
+
+test_hand : IO ();
+test_hand = (
+    let tree = LSegtree::build(["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"].map(make));
+    let tree = tree.act_range(0, 3, ShiftAlphabet::make(1));
+    let (tree, value) = tree.fold(0, 10);
+
     pure()
 );

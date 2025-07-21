@@ -1,5 +1,7 @@
 // 遅延伝番セグメント木（右作用）
 // 
+// ある要素の値を取得する関数`@`はないので、もし必要なら`fold(i, i+1)`を使うこと。
+// 
 // 謝辞：
 // この実装にあたっては、[maspyさんの記事](https://maspypy.com/segment-tree-%e3%81%ae%e3%81%8a%e5%8b%89%e5%bc%b72) を参考にしました。良質な解説をありがとうございます。
 module CPLib.LSegtree;
@@ -109,8 +111,8 @@ _propagate_above = |i, tree| (
 // 内部配列のノードiより上の部分の値を再計算する
 // 
 // 作用の単位元へのリセットは行わないので、非自明な作用がついているノードあるいはその子ノードに対して呼び出してはならない。
-_recalc_at : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> LSegtree m a -> LSegtree m a;
-_recalc_at = |i, tree| (
+_recalc_above : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> LSegtree m a -> LSegtree m a;
+_recalc_above = |i, tree| (
     loop((i, tree), |(i, tree)|
         if i <= 1 { break $ tree }; // ルートノードに到達したら終了
         let i = i / 2; // 親ノードに移動
@@ -118,17 +120,6 @@ _recalc_at = |i, tree| (
         let tree = tree.mod_elems(set(i, elem));
         continue $ (i, tree)
     )
-);
-
-// セグメント木の要素を取得する
-// 
-// # Parameters
-// - `i` : インデックス（0-indexed）
-// - `tree` : セグメント木
-@ : [a : Action, Set a = m] I64 -> LSegtree m a -> m;
-@ = |i, tree| (
-    let i = i + tree.@n; // 内部配列のインデックスに変換
-    tree._eval_at(i)
 );
 
 // セグメント木の要素を設定する
@@ -146,7 +137,7 @@ set = |i, value, tree| (
     let tree = tree.mod_elems(set(i, value));
     let tree = tree.mod_lazy(set(i, Monoid::unit));
     // iの親ノードをすべて再計算
-    tree._recalc_at(i)
+    tree._recalc_above(i)
 );
 
 // 半開区間[l, r)にある要素の畳み込みを計算する
@@ -229,5 +220,5 @@ act_range = |l, r, a, tree| (
         continue $ (l, r, tree)
     );
 
-    tree._recalc_at(l0)._recalc_at(r0)
+    tree._recalc_above(l0)._recalc_above(r0)
 );
