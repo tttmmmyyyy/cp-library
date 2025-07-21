@@ -102,7 +102,7 @@ fold = |l, r, tree| (
             break $ (acc_l, acc_r)
         };
         let (l, acc_l) = if l % 2 == 0 { (l, acc_l) } else {
-            let acc_l = tree.@op $ (tree.@elems.@(l), acc_l);
+            let acc_l = tree.@op $ (acc_l, tree.@elems.@(l));
             let l = l + 1;
             (l, acc_l)
         };
