@@ -153,7 +153,7 @@ test_random = |is_build, rng| (
         let arr = Array::fill(n, Monoid::unit);
         (Segtree::init(n), arr)
     } else {
-        let arr = range(0, n).map(|i| StrConcat::make(i.to_string)).to_array;
+        let arr = range(0, n).map(|i| StrConcat::make(i.to_U8.to_string)).to_array;
         (Segtree::build(arr), arr)
     };
 

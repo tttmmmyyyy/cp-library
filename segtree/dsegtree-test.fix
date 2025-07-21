@@ -137,7 +137,7 @@ test_random = |is_build, rng| (
         let arr = Array::fill(n, "");
         (DSegtree::init(n, "", |(lhs, rhs)| lhs + rhs), arr)
     } else {
-        let arr = range(0, n).map(to_string).to_array;
+        let arr = range(0, n).map(|i| i.to_U8.to_string).to_array;
         (DSegtree::build(arr, "", |(lhs, rhs)| lhs + rhs), arr)
     };
 

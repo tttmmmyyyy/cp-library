@@ -39,10 +39,11 @@ init = |n| (
 // 
 // # Parameters
 // - `elems` : セグメント木の要素を格納する配列
-build : [m : Monoid, a : Monoid, a : Action, Set a = m] Array m -> LSegtree m a;
+build : [m : Monoid, a : Monoid] Array m -> LSegtree m a;
 build = |elems| (
     let n = elems.get_size;
-    let tree = Array::fill(n * 2, Monoid::unit);
+    let lazy = Array::fill(n * 2, Monoid::unit) : Array a;
+    let tree = Array::fill(n * 2, Monoid::unit) : Array m;
     // [n, 2n)に要素をセット
     let tree = range(0, n).fold(tree, |i, tree| tree.set(n + i, elems.@(i)) );
     // [1, n)の範囲を計算
@@ -51,13 +52,13 @@ build = |elems| (
         let right = tree.@(i * 2 + 1);
         tree.set(i, Monoid::op(left, right))
     );
-    LSegtree { elems : tree, lazy : Array::fill(n * 2, Monoid::unit), n : n }
+    LSegtree { elems : tree, lazy : lazy, n : n }
 );
 
 // セグメント木の内部配列の要素に、遅延されている作用を適用した値を取得する
 //
 // # Parameters
-// - `i` : 内部配列のインデックス（0-indexed）
+// - `i` : 内部配列のインデックス
 // - `tree` : セグメント木
 _eval_at : [a : Action, Set a = m] I64 -> LSegtree m a -> m;
 _eval_at = |i, tree| (
@@ -71,7 +72,7 @@ _eval_at = |i, tree| (
 // そのノードの値に作用を適用して、子ノードに非自明な作用を設定する
 //
 // # Parameters
-// - `i` : 内部配列のインデックス（0-indexed）
+// - `i` : 内部配列のインデックス
 // - `tree` : セグメント木
 _propagate_at : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> LSegtree m a -> LSegtree m a;
 _propagate_at = |i, tree| (
