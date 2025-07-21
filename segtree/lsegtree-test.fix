@@ -1,0 +1,6 @@
+module CPLib.LSegtree.Test;
+
+test : IO ();
+test = (
+    pure()
+);

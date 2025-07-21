@@ -52,7 +52,7 @@ init = |n| (
     Segtree { elems : elems, n : n }
 );
 
-// セグメント木を作成する
+// 要素の配列からセグメント木を作成する
 // 
 // # Parameters
 // - `elems` : セグメント木の要素を格納する配列
@@ -72,6 +72,7 @@ build = |elems| (
 );
 
 // セグメント木の要素を取得する
+// 
 // # Parameters
 // - `i` : インデックス（0-indexed）
 // - `tree` : セグメント木
@@ -119,13 +120,13 @@ fold = |l, r, tree| (
             break $ (acc_l, acc_r)
         };
         let (l, acc_l) = if l % 2 == 0 { (l, acc_l) } else {
-            let acc_l = Monoid::op(tree.@elems.@(l), acc_l);
+            let acc_l = Monoid::op(acc_l, tree.@elems.@(l));
             let l = l + 1;
             (l, acc_l)
         };
         let (r, acc_r) = if r % 2 == 0 { (r, acc_r) } else {
             let r = r - 1;
-            let acc_r = Monoid::op(acc_r, tree.@elems.@(r));
+            let acc_r = Monoid::op(tree.@elems.@(r), acc_r);
             (r, acc_r)
         };
         let l = l / 2;
