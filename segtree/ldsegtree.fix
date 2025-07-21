@@ -7,7 +7,7 @@ module CPLib.LDSegtree;
 // 遅延伝搬セグメント木の型。
 // 
 // パラメータ`m`は「値」となるモノイドの型、`a`は「右作用」するモノイドの型。
-type LSegtree m a = struct {
+type LDSegtree m a = struct {
     // 要素数
     n : I64,
     // 値モノイドの単位元
@@ -39,11 +39,11 @@ type LSegtree m a = struct {
 // - `act_unit` : 作用モノイドの単位元
 // - `act_op` : 作用モノイドの演算子
 // - `act` : 右作用
-init : I64 -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((m, a) -> m) -> LSegtree m a;
+init : I64 -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((m, a) -> m) -> LDSegtree m a;
 init = |n, unit, op, act_unit, act_op, act| (
     let elems = Array::fill(n * 2, unit);
     let lazy = Array::fill(n * 2, act_unit);
-    LSegtree { elems : elems, lazy : lazy, n : n, unit : unit, op : op, act_unit : act_unit, act_op : act_op, act : act }
+    LDSegtree { elems : elems, lazy : lazy, n : n, unit : unit, op : op, act_unit : act_unit, act_op : act_op, act : act }
 );
 
 // 要素の配列からセグメント木を作成する
@@ -55,7 +55,7 @@ init = |n, unit, op, act_unit, act_op, act| (
 // - `act_unit` : 作用モノイドの単位元
 // - `act_op` : 作用モノイドの演算子
 // - `act` : 右作用
-build : Array m -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((m, a) -> m) -> LSegtree m a;
+build : Array m -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((m, a) -> m) -> LDSegtree m a;
 build = |elems, unit, op, act_unit, act_op, act| (
     let n = elems.get_size;
     let lazy = Array::fill(n * 2, act_unit) : Array a;
@@ -68,7 +68,7 @@ build = |elems, unit, op, act_unit, act_op, act| (
         let right = tree.@(i * 2 + 1);
         tree.set(i, op $ (left, right))
     );
-    LSegtree { elems : tree, lazy : lazy, n : n, unit : unit, op : op, act_unit : act_unit, act_op : act_op, act : act }
+    LDSegtree { elems : tree, lazy : lazy, n : n, unit : unit, op : op, act_unit : act_unit, act_op : act_op, act : act }
 );
 
 // セグメント木の内部配列の要素に、遅延されている作用を適用した値を取得する
@@ -76,7 +76,7 @@ build = |elems, unit, op, act_unit, act_op, act| (
 // # Parameters
 // - `i` : 内部配列のインデックス
 // - `tree` : セグメント木
-_eval_at : I64 -> LSegtree m a -> m;
+_eval_at : I64 -> LDSegtree m a -> m;
 _eval_at = |i, tree| (
     let x = tree.@elems.@(i);
     let a = tree.@lazy.@(i);
@@ -90,7 +90,7 @@ _eval_at = |i, tree| (
 // # Parameters
 // - `i` : 内部配列のインデックス
 // - `tree` : セグメント木
-_propagate_at : I64 -> LSegtree m a -> LSegtree m a;
+_propagate_at : I64 -> LDSegtree m a -> LDSegtree m a;
 _propagate_at = |i, tree| (
     // iを更新
     let elem = tree._eval_at(i);
@@ -116,7 +116,7 @@ _propagate_at = |i, tree| (
 // 内部配列のノードiより上において作用を伝搬させる。
 // 
 // ルートから指定されたノードiの一つ上までの各ノードにおいて_propagate_atを呼び出す。
-_propagate_above : I64 -> LSegtree m a -> LSegtree m a;
+_propagate_above : I64 -> LDSegtree m a -> LDSegtree m a;
 _propagate_above = |i, tree| (
     let bit_length = loop((i, 0), |(i, n)| if i == 0 { break $ n } else { continue $ (i / 2, n + 1) });
     let height = bit_length - 1;
@@ -129,7 +129,7 @@ _propagate_above = |i, tree| (
 // 内部配列のノードiより上の部分の値を再計算する
 // 
 // 作用の単位元へのリセットは行わないので、非自明な作用がついているノードあるいはその子ノードに対して呼び出してはならない。
-_recalc_above : I64 -> LSegtree m a -> LSegtree m a;
+_recalc_above : I64 -> LDSegtree m a -> LDSegtree m a;
 _recalc_above = |i, tree| (
     loop((i, tree), |(i, tree)|
         if i <= 1 { break $ tree }; // ルートノードに到達したら終了
@@ -146,7 +146,7 @@ _recalc_above = |i, tree| (
 // - `i` : インデックス（0-indexed）
 // - `value` : 設定する値
 // - `tree` : セグメント木
-set : I64 -> m -> LSegtree m a -> LSegtree m a;
+set : I64 -> m -> LDSegtree m a -> LDSegtree m a;
 set = |i, value, tree| (
     let act_unit = tree.@act_unit;
 
@@ -167,7 +167,7 @@ set = |i, value, tree| (
 // # Parameters
 // - `l` : 区間の左端 (0-indexed)
 // - `r` : 区間の右端 (0-indexed, exclusive)
-fold : I64 -> I64 -> LSegtree m a -> (LSegtree m a, m);
+fold : I64 -> I64 -> LDSegtree m a -> (LDSegtree m a, m);
 fold = |l, r, tree| (
     let l = l + tree.@n;
     let r = r + tree.@n;
@@ -210,7 +210,7 @@ fold = |l, r, tree| (
 // - `r` : 区間の右端 (0-indexed, exclusive)
 // - `a` : 適用する作用
 // - `tree` : セグメント木
-act_range : I64 -> I64 -> a -> LSegtree m a -> LSegtree m a;
+act_range : I64 -> I64 -> a -> LDSegtree m a -> LDSegtree m a;
 act_range = |l, r, a, tree| (
     let l = l + tree.@n;
     let r = r + tree.@n;
