@@ -1,0 +1,116 @@
+// モノイド構造が動的に決まる際に使えるセグメント木。
+// 
+// コンストラクタでモノイド（unitおよびop）を指定する点以外は、`CPLib.Segtree`と同じです。
+// モノイド構造が静的に決まる場合は`CPLib.Segtree`の方が高速です。
+module CPLib.DSegtree;
+
+// セグメント木
+type DSegtree m = struct {
+    // 要素数
+    n : I64,
+    // ユニット
+    unit : m,
+    // 演算子
+    op : (m, m) -> m,
+    // 内部配列
+    // 
+    // 1-indexedで運用する：長さは`2n`、第0インデックスは使用しない。
+    elems : Array m,
+};
+
+// すべての要素が単位元であるようなセグメント木を作成する
+//
+// # Parameters
+// - `unit` : モノイドの単位元
+// - `op` : モノイドの演算子
+// - `n` : セグメント木の要素数
+make_unit : I64 -> m -> ((m, m) -> m) -> DSegtree m;
+make_unit = |n, unit, op| (
+    let elems = Array::fill(n * 2, unit);
+    DSegtree { elems : elems, n : n, unit : unit, op : op }
+);
+
+// セグメント木を作成する
+// 
+// # Parameters
+// - `unit` : モノイドの単位元
+// - `op` : モノイドの演算子
+// - `elems` : セグメント木の要素を格納する配列
+make : Array m -> m -> ((m, m) -> m) -> DSegtree m;
+make = |elems, unit, op| (
+    let n = elems.get_size;
+    let tree = Array::fill(n * 2, unit);
+    // [n, 2n)に要素をセット
+    let tree = range(0, n).fold(tree, |i, tree| tree.set(n + i, elems.@(i)) );
+    // [1, n)の範囲を計算
+    let tree = range_step(n-1, 0, -1).fold(tree, |i, tree|
+        let left = tree.@(i * 2);
+        let right = tree.@(i * 2 + 1);
+        tree.set(i, op((left, right)))
+    );
+    DSegtree { elems : tree, n : n, unit : unit, op : op }
+);
+
+// セグメント木の要素を取得する
+// # Parameters
+// - `i` : インデックス（0-indexed）
+// - `tree` : セグメント木
+@ : I64 -> DSegtree m -> m;
+@ = |i, tree| (
+    let n = tree.@n;
+    tree.@elems.@(n + i)
+);
+
+// 要素を設定する
+// 
+// # Parameters
+// - `i` : インデックス（0-indexed）
+// - `value` : 設定する値
+// - `tree` : セグメント木
+set : I64 -> m -> DSegtree m -> DSegtree m;
+set = |i, value, tree| (
+    let n = tree.@n;
+    let i = i + n;
+    let tree = tree.mod_elems(set(i, value));
+    // `i`の親ノードをすべて更新
+    loop((i, tree), |(i, tree)|
+        if i == 0 { break $ tree }; // ルートノードに到達したら終了
+        let i = i / 2; // 親ノードに移動
+        let left = tree.@elems.@(i * 2);
+        let right = tree.@elems.@(i * 2 + 1);
+        let value = tree.@op $ (left, right);
+        let tree = tree.mod_elems(set(i, value));
+        continue $ (i, tree)
+    )
+);
+
+// 半開区間[l, r)にある要素の畳み込みを計算する
+//
+// # Parameters
+// - `l` : 区間の左端 (0-indexed)
+// - `r` : 区間の右端 (0-indexed, exclusive)
+fold : I64 -> I64 -> DSegtree m -> m;
+fold = |l, r, tree| (
+    let n = tree.@n;
+    let l = l + n;
+    let r = r + n;
+    let (acc_l, acc_r) = loop((l, r, tree.@unit, tree.@unit), |(l, r, acc_l, acc_r)|
+        if l >= r {
+            break $ (acc_l, acc_r)
+        };
+        let (l, acc_l) = if l % 2 == 0 { (l, acc_l) } else {
+            let acc_l = tree.@op $ (tree.@elems.@(l), acc_l);
+            let l = l + 1;
+            (l, acc_l)
+        };
+        let (r, acc_r) = if r % 2 == 0 { (r, acc_r) } else {
+            let r = r - 1;
+            let acc_r = tree.@op $ (tree.@elems.@(r), acc_r);
+            (r, acc_r)
+        };
+        let l = l / 2;
+        let r = r / 2;
+        continue $ (l, r, acc_l, acc_r)
+    );
+    tree.@op $ (acc_l, acc_r)
+);

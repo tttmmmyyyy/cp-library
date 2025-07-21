@@ -3,12 +3,16 @@ module Test;
 import CPLib.IO.Test;
 import CPLib.ZP.Test;
 import CPLib.Arithmetic.Test;
+import CPLib.Segtree.Test;
+import CPLib.DSegtree.Test;
 
 test : IO ();
 test = (
     CPLib.IO.Test::test;;
     CPLib.ZP.Test::test;;
     CPLib.Arithmetic.Test::test;;
+    CPLib.Segtree.Test::test;;
+    CPLib.DSegtree.Test::test;;
 
     pure()
 );
