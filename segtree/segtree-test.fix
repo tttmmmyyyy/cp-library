@@ -162,7 +162,7 @@ test_random = |is_build, rng| (
         let (rng, i) = rng.generate_I64_nonneg;
         let i = i % n;
         let (rng, v) = rng.generate_I64_nonneg;
-        let v = StrConcat::make(v.to_string);
+        let v = StrConcat::make(v.to_U8.to_string);
         let tree = tree.set(i, v);
         let arr = arr.set(i, v);
 

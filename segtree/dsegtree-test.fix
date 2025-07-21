@@ -1,12 +1,17 @@
 module CPLib.DSegtree.Test;
 
 import CPLib.DSegtree;
+import Random;
 
 test : IO ();
 test = (
     test_one;;
     test_two;;
     test_three;;
+
+    let rng = Random::init_by_seed(0_U64);
+    let rng = *test_random(false, rng);
+    let rng = *test_random(true, rng);
 
     pure()
 );
@@ -116,4 +121,46 @@ test_three = (
     assert_eq(|_|"", tree.fold(0, 3), "abc");;
 
     pure()
+);
+
+// ランダムにテストを行う
+// 
+// # Parameters
+// - `is_build` : セグメント木をbuildで構築するかどうか。そうでないときはinitで構築する
+// - `rng` : 乱数生成器
+test_random : Bool -> Random -> IO Random;
+test_random = |is_build, rng| (
+    // n要素のセグメント木に対してランダムな操作を行う    
+    let n = 100;
+
+    let (tree, arr) = if !is_build {
+        let arr = Array::fill(n, "");
+        (DSegtree::init(n, "", |(lhs, rhs)| lhs + rhs), arr)
+    } else {
+        let arr = range(0, n).map(to_string).to_array;
+        (DSegtree::build(arr, "", |(lhs, rhs)| lhs + rhs), arr)
+    };
+
+    let (_1, _2, rng) = *range(0, 1000).fold_m((tree, arr, rng), |_, (tree, arr, rng)|
+        // setを実行
+        let (rng, i) = rng.generate_I64_nonneg;
+        let i = i % n;
+        let (rng, v) = rng.generate_I64_nonneg;
+        let v = v.to_U8.to_string;
+        let tree = tree.set(i, v);
+        let arr = arr.set(i, v);
+
+        // foldを実行
+        let (rng, l) = rng.generate_I64_nonneg;
+        let (rng, r) = rng.generate_I64_nonneg;
+        let l = l % n;
+        let r = l + r % (n - l + 1);
+        let v = tree.fold(l, r);
+        let w = range(l, r).fold("", |i, acc| acc + arr.@(i));
+        assert_eq(|_|"", v, w);;
+
+        pure $ (tree, arr, rng)
+    );
+
+    pure $ rng
 );
