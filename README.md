@@ -34,8 +34,9 @@
 * 整数論
   * `CPLib.ZP.Arithmetic` : GCD, 拡張ユークリッドの互除法, pow_mod, inv_modなど。
 * セグメント木
-  * `CPLib.Segtree` : 静的にモノイド構造が決まる場合のセグメント木の実装。
-  * `CPLib.DSegtree` : 動的にモノイド構造が決まる場合のセグメント木の実装。
+  * `CPLib.Segtree` : 静的にモノイド構造が決まる場合のセグメント木。
+  * `CPLib.DSegtree` : 動的にモノイド構造が決まる場合のセグメント木。
+  * `CPLib.LSegtree` : 遅延作用を持つセグメント木（モノイドおよび作用が静的に決まる場合）。
 * トレイト
   * `CPLib.Trait` : 複数のモジュールで使われる可能性があるトレイトの定義。Monoidなど。
 
