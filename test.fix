@@ -6,6 +6,7 @@ import CPLib.Arithmetic.Test;
 import CPLib.Segtree.Test;
 import CPLib.DSegtree.Test;
 import CPLib.LSegtree.Test;
+import CPLib.LDSegtree.Test;
 
 test : IO ();
 test = (
@@ -15,6 +16,7 @@ test = (
     CPLib.Segtree.Test::test;;
     CPLib.DSegtree.Test::test;;
     CPLib.LSegtree.Test::test;;
+    CPLib.LDSegtree.Test::test;;
 
     pure()
 );

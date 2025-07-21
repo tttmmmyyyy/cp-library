@@ -1,56 +1,8 @@
-// 遅延伝番セグメント木（右作用）
-// 
-// ある要素の値を取得する関数`@`はないので、もし必要なら`fold(i, i+1)`を使うこと。
+// モノイド構造および作用が動的に決められる遅延伝搬セグメント木
 //
-// 使用例
-// ```
-// // 最大値モノイド
-// type I64Max = struct { v : I64 };
-// namespace I64Max {
-//     make : I64 -> I64Max;
-//     make = |v| I64Max { v : v };
-// }
-// impl I64Max : Monoid {
-//     unit = make(I64::minimum);
-//     op = |lhs, rhs| make $ lhs.@v.max(rhs.@v);
-// }
-// 
-// // 加法モノイド
-// type I64Add = struct { v : I64 };
-// namespace I64Add {
-//     make : I64 -> I64Add;
-//     make = |v| I64Add { v : v };
-// }
-// impl I64Add : Monoid {
-//     unit = make(0);
-//     op = |lhs, rhs| make $ lhs.@v + rhs.@v;
-// }
-// 
-// // 加法モノイドの最大値モノイドに対する作用
-// impl I64Add : Action {
-//     type Set I64Add = I64Max; // 作用を受ける集合の型
-//     act = |a, x| I64Max::make(x.@v + a.@v);
-// }
-// 
-// main : IO ();
-// main = (
-//     let tree = LSegtree::init(3) : LSegtree I64Max I64Add;
-//     let tree = tree.set(0, I64Max::make(1));
-//     let tree = tree.set(1, I64Max::make(2));
-//     let tree = tree.set(2, I64Max::make(3));
-//     let (tree, res) = tree.fold(0, 3); // res.@v == 3
-//     let tree = tree.set(1, I64Max::make(3)); // [1, 3, 3]
-//     let tree = tree.act_range(0, 2, I64Add::make(1)); // [2, 4, 4]
-//     let (tree, res) = tree.fold(0, 2); // res.@v == 4
-//     pure()
-// );
-// ```
-// 
-// 謝辞：
-// この実装にあたっては、[maspyさんの記事](https://maspypy.com/segment-tree-%e3%81%ae%e3%81%8a%e5%8b%89%e5%bc%b72) を参考にしました。良質な解説をありがとうございます。
-module CPLib.LSegtree;
-
-import CPLib.Trait::{Monoid, Monoid::*, Action, Action::*};
+// コンストラクタでモノイドおよび作用を指定する点以外は、`CPLib.LSegtree`と同じです。
+// モノイド構造・作用が静的に決まる場合は`CPLib.LSegtree`の方が高速です。
+module CPLib.LDSegtree;
 
 // 遅延伝搬セグメント木の型。
 // 
@@ -58,6 +10,16 @@ import CPLib.Trait::{Monoid, Monoid::*, Action, Action::*};
 type LSegtree m a = struct {
     // 要素数
     n : I64,
+    // 値モノイドの単位元
+    unit : m,
+    // 値モノイドの演算子
+    op : (m, m) -> m,
+    // 作用モノイドの単位元
+    act_unit : a,
+    // 作用モノイドの演算子
+    act_op : (a, a) -> a,
+    // 右作用
+    act : (m, a) -> m,
     // 値の配列
     // 
     // 1-indexedで運用する：長さは`2n`、第0インデックスは使用しない。
@@ -72,31 +34,41 @@ type LSegtree m a = struct {
 // 
 // # Parameters
 // - `n` : セグメント木の要素数
-init : [m : Monoid, a : Monoid] I64 -> LSegtree m a;
-init = |n| (
-    let elems = Array::fill(n * 2, Monoid::unit);
-    let lazy = Array::fill(n * 2, Monoid::unit);
-    LSegtree { elems : elems, lazy : lazy, n : n }
+// - `unit` : 値モノイドの単位元
+// - `op` : 値モノイドの演算子
+// - `act_unit` : 作用モノイドの単位元
+// - `act_op` : 作用モノイドの演算子
+// - `act` : 右作用
+init : I64 -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((m, a) -> m) -> LSegtree m a;
+init = |n, unit, op, act_unit, act_op, act| (
+    let elems = Array::fill(n * 2, unit);
+    let lazy = Array::fill(n * 2, act_unit);
+    LSegtree { elems : elems, lazy : lazy, n : n, unit : unit, op : op, act_unit : act_unit, act_op : act_op, act : act }
 );
 
 // 要素の配列からセグメント木を作成する
 // 
 // # Parameters
 // - `elems` : セグメント木の要素を格納する配列
-build : [m : Monoid, a : Monoid] Array m -> LSegtree m a;
-build = |elems| (
+// - `unit` : 値モノイドの単位元
+// - `op` : 値モノイドの演算子
+// - `act_unit` : 作用モノイドの単位元
+// - `act_op` : 作用モノイドの演算子
+// - `act` : 右作用
+build : Array m -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((m, a) -> m) -> LSegtree m a;
+build = |elems, unit, op, act_unit, act_op, act| (
     let n = elems.get_size;
-    let lazy = Array::fill(n * 2, Monoid::unit) : Array a;
-    let tree = Array::fill(n * 2, Monoid::unit) : Array m;
+    let lazy = Array::fill(n * 2, act_unit) : Array a;
+    let tree = Array::fill(n * 2, unit) : Array m;
     // [n, 2n)に要素をセット
     let tree = range(0, n).fold(tree, |i, tree| tree.set(n + i, elems.@(i)) );
     // [1, n)の範囲を計算
     let tree = range_step(n-1, 0, -1).fold(tree, |i, tree|
         let left = tree.@(i * 2);
         let right = tree.@(i * 2 + 1);
-        tree.set(i, Monoid::op(left, right))
+        tree.set(i, op $ (left, right))
     );
-    LSegtree { elems : tree, lazy : lazy, n : n }
+    LSegtree { elems : tree, lazy : lazy, n : n, unit : unit, op : op, act_unit : act_unit, act_op : act_op, act : act }
 );
 
 // セグメント木の内部配列の要素に、遅延されている作用を適用した値を取得する
@@ -104,11 +76,11 @@ build = |elems| (
 // # Parameters
 // - `i` : 内部配列のインデックス
 // - `tree` : セグメント木
-_eval_at : [a : Action, Set a = m] I64 -> LSegtree m a -> m;
+_eval_at : I64 -> LSegtree m a -> m;
 _eval_at = |i, tree| (
     let x = tree.@elems.@(i);
     let a = tree.@lazy.@(i);
-    act(a, x)
+    tree.@act $ (x, a)
 );
 
 // セグメント木の内部配列の作用を伝搬させる
@@ -118,7 +90,7 @@ _eval_at = |i, tree| (
 // # Parameters
 // - `i` : 内部配列のインデックス
 // - `tree` : セグメント木
-_propagate_at : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> LSegtree m a -> LSegtree m a;
+_propagate_at : I64 -> LSegtree m a -> LSegtree m a;
 _propagate_at = |i, tree| (
     // iを更新
     let elem = tree._eval_at(i);
@@ -127,15 +99,16 @@ _propagate_at = |i, tree| (
     let a = tree.@lazy.@(i);
 
     // iの子2iに作用を追加
-    let b = Monoid::op(tree.@lazy.@(i * 2), a);
+    let b = tree.@act_op $ (tree.@lazy.@(i * 2), a);
     let tree = tree.mod_lazy(set(i * 2, b));
     
     // iの子2i+1に作用を追加
-    let b = Monoid::op(tree.@lazy.@(i * 2 + 1), a);
+    let b = tree.@act_op $ (tree.@lazy.@(i * 2 + 1), a);
     let tree = tree.mod_lazy(set(i * 2 + 1, b));
 
     // iの作用を単位元に戻す
-    let tree = tree.mod_lazy(set(i, Monoid::unit));
+    let act_unit = tree.@act_unit;
+    let tree = tree.mod_lazy(set(i, act_unit));
 
     tree
 );
@@ -143,7 +116,7 @@ _propagate_at = |i, tree| (
 // 内部配列のノードiより上において作用を伝搬させる。
 // 
 // ルートから指定されたノードiの一つ上までの各ノードにおいて_propagate_atを呼び出す。
-_propagate_above : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> LSegtree m a -> LSegtree m a;
+_propagate_above : I64 -> LSegtree m a -> LSegtree m a;
 _propagate_above = |i, tree| (
     let bit_length = loop((i, 0), |(i, n)| if i == 0 { break $ n } else { continue $ (i / 2, n + 1) });
     let height = bit_length - 1;
@@ -156,12 +129,12 @@ _propagate_above = |i, tree| (
 // 内部配列のノードiより上の部分の値を再計算する
 // 
 // 作用の単位元へのリセットは行わないので、非自明な作用がついているノードあるいはその子ノードに対して呼び出してはならない。
-_recalc_above : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> LSegtree m a -> LSegtree m a;
+_recalc_above : I64 -> LSegtree m a -> LSegtree m a;
 _recalc_above = |i, tree| (
     loop((i, tree), |(i, tree)|
         if i <= 1 { break $ tree }; // ルートノードに到達したら終了
         let i = i / 2; // 親ノードに移動
-        let elem = Monoid::op(tree._eval_at(i * 2), tree._eval_at(i * 2 + 1));
+        let elem = tree.@op $ (tree._eval_at(i * 2), tree._eval_at(i * 2 + 1));
         let tree = tree.mod_elems(set(i, elem));
         continue $ (i, tree)
     )
@@ -173,14 +146,16 @@ _recalc_above = |i, tree| (
 // - `i` : インデックス（0-indexed）
 // - `value` : 設定する値
 // - `tree` : セグメント木
-set : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> m -> LSegtree m a -> LSegtree m a;
+set : I64 -> m -> LSegtree m a -> LSegtree m a;
 set = |i, value, tree| (
+    let act_unit = tree.@act_unit;
+
     let i = i + tree.@n;
     // iの祖先ノードで作用伝搬を実行しておく（iの直上の「周辺」に遅延作用を散らすのが目的）
     let tree = tree._propagate_above(i);
     // ノードiの値を設定し、作用を単位元に戻す
     let tree = tree.mod_elems(set(i, value));
-    let tree = tree.mod_lazy(set(i, Monoid::unit));
+    let tree = tree.mod_lazy(set(i, act_unit));
     // iの親ノードをすべて再計算
     tree._recalc_above(i)
 );
@@ -192,7 +167,7 @@ set = |i, value, tree| (
 // # Parameters
 // - `l` : 区間の左端 (0-indexed)
 // - `r` : 区間の右端 (0-indexed, exclusive)
-fold : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> I64 -> LSegtree m a -> (LSegtree m a, m);
+fold : I64 -> I64 -> LSegtree m a -> (LSegtree m a, m);
 fold = |l, r, tree| (
     let l = l + tree.@n;
     let r = r + tree.@n;
@@ -206,18 +181,18 @@ fold = |l, r, tree| (
     let tree = tree._propagate_above(r0);
 
     // 区間積を計算
-    let (acc_l, acc_r) = loop((l, r, Monoid::unit, Monoid::unit), |(l, r, acc_l, acc_r)|
+    let (acc_l, acc_r) = loop((l, r, tree.@unit, tree.@unit), |(l, r, acc_l, acc_r)|
         if l >= r {
             break $ (acc_l, acc_r)
         };
         let (l, acc_l) = if l % 2 == 0 { (l, acc_l) } else {
-            let acc_l = Monoid::op(acc_l, tree._eval_at(l));
+            let acc_l = tree.@op $ (acc_l, tree._eval_at(l));
             let l = l + 1;
             (l, acc_l)
         };
         let (r, acc_r) = if r % 2 == 0 { (r, acc_r) } else {
             let r = r - 1;
-            let acc_r = Monoid::op(tree._eval_at(r), acc_r);
+            let acc_r = tree.@op $ (tree._eval_at(r), acc_r);
             (r, acc_r)
         };
         let l = l / 2;
@@ -225,7 +200,7 @@ fold = |l, r, tree| (
         continue $ (l, r, acc_l, acc_r)
     );
 
-    (tree, Monoid::op(acc_l, acc_r))
+    (tree, tree.@op $ (acc_l, acc_r))
 );
 
 // 半開区間[l, r)に右から作用を適用する
@@ -235,7 +210,7 @@ fold = |l, r, tree| (
 // - `r` : 区間の右端 (0-indexed, exclusive)
 // - `a` : 適用する作用
 // - `tree` : セグメント木
-act_range : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> I64 -> a -> LSegtree m a -> LSegtree m a;
+act_range : I64 -> I64 -> a -> LSegtree m a -> LSegtree m a;
 act_range = |l, r, a, tree| (
     let l = l + tree.@n;
     let r = r + tree.@n;
@@ -248,7 +223,7 @@ act_range = |l, r, a, tree| (
         if l >= r { break $ tree };
         let (l, tree) = if l % 2 == 0 { (l, tree) } else {
             let act = tree.@lazy.@(l);
-            let act = Monoid::op(act, a); // 右作用
+            let act = tree.@act_op $ (act, a); // 右作用
             let tree = tree.mod_lazy(set(l, act));
             let l = l + 1;
             (l, tree)
@@ -256,7 +231,7 @@ act_range = |l, r, a, tree| (
         let (r, tree) = if r % 2 == 0 { (r, tree) } else {
             let r = r - 1;
             let act = tree.@lazy.@(r);
-            let act = Monoid::op(act, a); // 右作用
+            let act = tree.@act_op $ (act, a); // 右作用
             let tree = tree.mod_lazy(set(r, act));
             (r, tree)
         };

@@ -26,6 +26,7 @@ files = [
     "segtree/segtree.fix",
     "segtree/dsegtree.fix",
     "segtree/lsegtree.fix",
+    "segtree/ldsegtree.fix",
     "trait/trait.fix",
 ]
 
@@ -38,6 +39,7 @@ files = [
     "segtree/segtree-test.fix",
     "segtree/dsegtree-test.fix",
     "segtree/lsegtree-test.fix",
+    "segtree/ldsegtree-test.fix",
 ]
 
 
