@@ -4,6 +4,14 @@ Defined in cp-library@0.1.0
 
 ## Values
 
+### namespace CPLib.Trait::Action
+
+#### act
+
+Type: `[a : CPLib.Trait::Action] a -> CPLib.Trait::Action::Set a -> CPLib.Trait::Action::Set a`
+
+作用
+
 ### namespace CPLib.Trait::Monoid
 
 #### op
@@ -26,6 +34,24 @@ Type: `[a : CPLib.Trait::Monoid] a`
 ## Traits and aliases
 
 ### namespace CPLib.Trait
+
+#### trait `a : Action`
+
+作用のトレイト
+
+右作用なのか左作用なのかは使う側が決める
+
+##### type `Set`
+
+Defined as: `Set a`
+
+作用を受ける集合の型
+
+##### method `act`
+
+Type: `a -> CPLib.Trait::Action::Set a -> CPLib.Trait::Action::Set a`
+
+作用
 
 #### trait `a : Monoid`
 
