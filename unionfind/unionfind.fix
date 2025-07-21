@@ -1,0 +1,102 @@
+module CPLib.UnionFind;
+
+import HashMap;
+
+type UnionFind = struct {
+    parent : Array I64,
+    rank : Array I64,
+};
+
+// UnionFind木を作成する
+// 
+// `0`から`size - 1`までの`size`個の要素を持つUnionFind木を作成する
+// 
+// # Parameters
+// - `size` : UnionFind木のサイズ
+create : I64 -> UnionFind;
+create = |size| UnionFind {
+    parent : range(0, size).to_array,
+    rank : Array::fill(size, 0)
+};
+
+// 指定された要素の親を取得する
+// 
+// パス圧縮を行うため、UnionFindの状態も変化する
+// 
+// # Parameters
+// - `x` : 対象となる要素
+// - `uf` : UnionFind木
+_find_parent : I64 -> UnionFind -> (UnionFind, I64);
+_find_parent = |x, uf| (
+    let y = uf.@parent.@(x);
+    if y == x {
+        (uf, x)
+    } else {
+        let (uf, y) = uf._find_parent(y);
+        let uf = uf.mod_parent(set(x, y));
+        (uf, y)
+    }
+);
+
+// 2つの要素を同じグループにする
+// 
+// # Parameters
+// - `x` : 1つ目の要素
+// - `y` : 2つ目の要素
+// - `uf` : UnionFind木
+unite : I64 -> I64 -> UnionFind -> UnionFind;
+unite = |x, y, uf| (
+    let (uf, px) = uf._find_parent(x);
+    let (uf, py) = uf._find_parent(y);
+    if px == py {
+        uf // すでに同じグループに属している場合は何もしない
+    };
+    let px_rank = uf.@rank.@(px);
+    let py_rank = uf.@rank.@(py);
+    if px_rank < py_rank {
+        uf.mod_parent(set(px, py))
+    } else if px_rank > py_rank {
+        uf.mod_parent(set(py, px))
+    } else { // rank[px] == rank[py]
+        let uf = uf.mod_parent(set(py, px));
+        uf.mod_rank(set(px, px_rank + 1))
+    }
+);
+
+// 2つの要素が同じグループに属しているかどうかを判定する
+// 
+// パス圧縮を行うため、UnionFindの状態も変化する
+// 
+// # Parameters
+// - `x` : 1つ目の要素 
+// - `y` : 2つ目の要素
+// - `uf` : UnionFind木
+is_united : I64 -> I64 -> UnionFind -> (UnionFind, Bool);
+is_united = |x, y, uf| (
+    let (uf, px) = uf._find_parent(x);
+    let (uf, py) = uf._find_parent(y);
+    (uf, px == py)
+);
+
+// グループの配列を取得する
+// 
+// グループの配列[g0, g1, g2, ...]を返す
+// 
+// パス圧縮を行うため、UnionFindの状態も変化する
+// 
+// # Parameters
+// - `uf` : UnionFind木
+get_groups : UnionFind -> (UnionFind, Array (Array I64));
+get_groups = |uf| (
+    let grps = HashMap::empty(0);
+    let (uf, grps) = range(0, uf.@parent.get_size).fold((uf, grps), |i, (uf, grps)| 
+        let (uf, p) = uf._find_parent(i);
+        let grp = grps.find_or(p, []);
+        let grps = grps.insert(p, []); // 下でgrpにpush_backするときに配列のコピーが行われないよう、空配列を入れておく（HashMapのAPIを改良するべき）。
+        let grp = grp.push_back(i);
+        let grps = grps.insert(p, grp);
+        (uf, grps)
+    );
+    let grps = grps.to_iter.map(|(_, v)| v).to_array;
+    (uf, grps)
+);

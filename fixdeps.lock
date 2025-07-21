@@ -1,4 +1,4 @@
-proj_file_hash = "041945c5b40af72e8c633213cf7eb275"
+proj_file_hash = "53820e24c644d3efd00fa0a388ca4804"
 
 [[dependencies]]
 name = "random"
@@ -8,3 +8,21 @@ path = ".fixlang/deps/random_1.1.1"
 [dependencies.git]
 repo = "https://github.com/tttmmmyyyy/fixlang-random.git"
 rev = "b4f83ee48564e714c0918513dd431f9135493dce"
+
+[[dependencies]]
+name = "hashmap"
+version = "1.1.2"
+path = ".fixlang/deps/hashmap_1.1.2"
+
+[dependencies.git]
+repo = "https://github.com/tttmmmyyyy/fixlang-hashmap.git"
+rev = "33da33ecb5d95d45c29feaeee5dea454fecc89b9"
+
+[[dependencies]]
+name = "hash"
+version = "1.1.0"
+path = ".fixlang/deps/hash_1.1.0"
+
+[dependencies.git]
+repo = "https://github.com/tttmmmyyyy/fixlang-hash.git"
+rev = "40d5d04e9b5f5a11c46151d00a98acb6dfdb4e48"

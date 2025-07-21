@@ -39,8 +39,11 @@
   * `CPLib.DSegtree` : 動的にモノイド構造が決まる場合のセグメント木。
   * `CPLib.LSegtree` : 遅延作用を持つセグメント木（モノイドおよび作用が静的に決まる場合）。
   * `CPLib.LDSegtree` : 遅延作用を持つセグメント木（モノイドおよび作用が動的に決まる場合）。
+* Union-Find木
+  * `CPLib.UnionFind` : Union-Find木の実装。
 * トレイト
   * `CPLib.Trait` : モジュールを超えて使われる可能性があるトレイトの定義。Monoid, Actionなど。
+
 
 ## 競技プログラミングで有用な他のライブラリ
 
