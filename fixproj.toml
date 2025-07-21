@@ -19,7 +19,6 @@ license = "MIT"
 
 [build]
 files = [
-    "main.fix",
     "io/io.fix",
     "zp/zp.fix",
     "arithmetic/arithmetic.fix",
