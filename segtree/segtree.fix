@@ -18,13 +18,16 @@
 // あとは、`make_unit`や`make`を使ってセグメント木を作成し、
 // `@`で要素を取得、`set`で要素を更新、`fold`で区間の畳み込みを計算できます。
 // ```
-// let tree = Segtree::make(["a", "x", "c"].map(StrConcat::make));
+// let tree = Segtree::build(["a", "x", "c"].map(StrConcat::make));
 // let tree = tree.set(1, make("b"));
 // assert_eq(|_|"", tree.@(1), make("b"));;
 // assert_eq(|_|"", tree.fold(0, 3), make("abc"));;
 // ```
 // 
 // モノイド構造が動的に決まる場合は、モジュール`CPLib.DSegtree`を使用してください。
+// 
+// 謝辞：
+// この実装にあたっては、[maspyさんの記事](https://maspypy.com/segment-tree-%E3%81%AE%E3%81%8A%E5%8B%89%E5%BC%B71) を参考にしました。良質な解説をありがとうございます。
 module CPLib.Segtree;
 
 import CPLib.Trait::{Monoid, Monoid::*};
@@ -43,8 +46,8 @@ type Segtree m = struct {
 //
 // # Parameters
 // - `n` : セグメント木の要素数
-make_unit : [m : Monoid] I64 -> Segtree m;
-make_unit = |n| (
+init : [m : Monoid] I64 -> Segtree m;
+init = |n| (
     let elems = Array::fill(n * 2, Monoid::unit);
     Segtree { elems : elems, n : n }
 );
@@ -53,8 +56,8 @@ make_unit = |n| (
 // 
 // # Parameters
 // - `elems` : セグメント木の要素を格納する配列
-make : [m : Monoid] Array m -> Segtree m;
-make = |elems| (
+build : [m : Monoid] Array m -> Segtree m;
+build = |elems| (
     let n = elems.get_size;
     let tree = Array::fill(n * 2, Monoid::unit);
     // [n, 2n)に要素をセット

@@ -30,7 +30,7 @@ impl StrConcat : Eq {
 test_one : IO ();
 test_one = (
     // [""]
-    let tree = Segtree::make_unit(1);
+    let tree = Segtree::init(1);
     assert_eq(|_|"", tree.@n, 1);;
     assert_eq(|_|"", tree.@(0), StrConcat::make(""));;
     assert_eq(|_|"", tree.fold(0, 1), StrConcat::make(""));;
@@ -41,7 +41,7 @@ test_one = (
     assert_eq(|_|"", tree.fold(0, 1), StrConcat::make("a"));;
 
     // build ["a"]
-    let tree = Segtree::make([StrConcat::make("a")]);
+    let tree = Segtree::build([StrConcat::make("a")]);
     assert_eq(|_|"", tree.@n, 1);;
     assert_eq(|_|"", tree.@(0), StrConcat::make("a"));;
     assert_eq(|_|"", tree.fold(0, 1), StrConcat::make("a"));;
@@ -53,7 +53,7 @@ test_one = (
 test_two : IO ();
 test_two = (
     // ["", ""]
-    let tree = Segtree::make_unit(2);
+    let tree = Segtree::init(2);
     assert_eq(|_|"", tree.@n, 2);;
     assert_eq(|_|"", tree.@(0), StrConcat::make(""));;
     assert_eq(|_|"", tree.@(1), StrConcat::make(""));;
@@ -78,7 +78,7 @@ test_two = (
     assert_eq(|_|"", tree.fold(0, 2), StrConcat::make("ab"));;
 
     // build ["a", "b"]
-    let tree = Segtree::make(["a", "b"].map(StrConcat::make));
+    let tree = Segtree::build(["a", "b"].map(StrConcat::make));
     assert_eq(|_|"", tree.@n, 2);;
     assert_eq(|_|"", tree.@(0), StrConcat::make("a"));;
     assert_eq(|_|"", tree.@(1), StrConcat::make("b"));;
@@ -93,7 +93,7 @@ test_two = (
 test_three : IO ();
 test_three = (
     // ["", "", ""]
-    let tree = Segtree::make_unit(3);
+    let tree = Segtree::init(3);
     assert_eq(|_|"", tree.@n, 3);;
     assert_eq(|_|"", tree.@(0), StrConcat::make(""));;
     assert_eq(|_|"", tree.@(1), StrConcat::make(""));;
@@ -118,7 +118,7 @@ test_three = (
     assert_eq(|_|"", tree.fold(0, 3), StrConcat::make("abc"));;
 
     // build ["a", "b", "c"]
-    let tree = Segtree::make(["a", "b", "c"].map(StrConcat::make));
+    let tree = Segtree::build(["a", "b", "c"].map(StrConcat::make));
     assert_eq(|_|"", tree.@n, 3);;
     assert_eq(|_|"", tree.@(0), StrConcat::make("a"));;
     assert_eq(|_|"", tree.@(1), StrConcat::make("b"));;
