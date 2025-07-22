@@ -13,6 +13,9 @@ test = (
     let rng = *test_random(false, rng);
     let rng = *test_random(true, rng);
 
+    let (_, time) = *consumed_time_while_io(test_speed);
+    println("[CPLib.DSegtree.Test] test_speed: time = " + time.to_string);;    
+
     pure()
 );
 
@@ -163,4 +166,35 @@ test_random = |is_build, rng| (
     );
 
     pure $ rng
+);
+
+test_speed : IO ();
+test_speed = (
+    // n=10^5個の要素を持つSegtreeを生成し、n回程度ランダムにクエリを投げる。
+    // もしn^2実装になっていたらこのテストは終わらない。
+    let n = 1e5;
+    println("[CPLib.DSegtree.Test] test_speed: n = " + n.to_string);;
+    let rng = Random::init_by_seed(0_U64);
+    let tree = DSegtree::init(n, 0, |(lhs, rhs)| max(lhs, rhs)) : DSegtree I64;
+    let (tree, rng, fold_sum) = range(0, n).fold((tree, rng, 0), |_, (tree, rng, fold_sum)| (
+        // set
+        let (rng, i) = rng.generate_I64_nonneg;
+        let (rng, v) = rng.generate_I64_nonneg;
+        let i = i % n; // 0 <= i < n
+        let tree = tree.set(i, v);
+
+        // fold
+        let (rng, k) = rng.generate_I64_nonneg;
+        let (rng, l) = rng.generate_I64_nonneg;
+        let k = k % n; // 0 <= k < n
+        let l = l % n; // 0 <= l < n
+        let v = tree.fold(k, l);
+
+        let fold_sum = fold_sum.max(v);
+
+        (tree, rng, fold_sum)
+    ));
+    println("[CPLib.DSegtree.Test] test_speed: fold_sum = " + fold_sum.to_string);;
+
+    pure $ ()
 );
