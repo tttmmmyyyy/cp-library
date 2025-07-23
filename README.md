@@ -46,7 +46,6 @@
 `fix deps add {project-name}` して、ソースコード中で`import {module-name}` することで使えるようになります。
 
 * minilib-collection
-  * `Minilib.Collection.Deque`
   * `Minilib.Collection.OrderedMap`
   * `Minilib.Collection.RBTree`
   * `Minilib.Collection.TreeMap`
@@ -55,3 +54,5 @@
   * `BinaryHeap`: 二分ヒープ（優先順位付きキュー）
 * bool-array
   * `BoolArray`: bool型の配列を空間効率良く扱うモジュール
+* ring-buffer
+  * `RingBuffer`: リングバッファ
