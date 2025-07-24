@@ -1,4 +1,4 @@
-proj_file_hash = "53820e24c644d3efd00fa0a388ca4804"
+proj_file_hash = "d00b76768ea971897b07e01b6bbf933f"
 
 [[dependencies]]
 name = "random"
@@ -26,3 +26,12 @@ path = ".fixlang/deps/hash_1.1.0"
 [dependencies.git]
 repo = "https://github.com/tttmmmyyyy/fixlang-hash.git"
 rev = "40d5d04e9b5f5a11c46151d00a98acb6dfdb4e48"
+
+[[dependencies]]
+name = "binary-heap"
+version = "0.1.1"
+path = ".fixlang/deps/binary-heap_0.1.1"
+
+[dependencies.git]
+repo = "https://github.com/tttmmmyyyy/fixlang-binary-heap.git"
+rev = "3b7972d5ec6ff814db5de4f6ade3c83dd9c8d4e7"

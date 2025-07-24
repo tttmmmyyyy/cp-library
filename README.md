@@ -31,6 +31,8 @@
   * `CPLib.LDSegtree` : 遅延作用を持つセグメント木（モノイドおよび作用が動的に決まる場合）。
 * Union-Find木
   * `CPLib.UnionFind` : Union-Find木の実装。
+* グラフ
+  * `CPLib.Graph` : グラフの表現と基本的なアルゴリズム。ダイクストラ法など。
 * トレイト
   * `CPLib.Trait` : モジュールを超えて使われる可能性があるトレイトの定義。Monoid, Actionなど。
 

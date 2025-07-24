@@ -1,0 +1,118 @@
+module CPLib.Graph;
+
+import BinaryHeap;
+
+// グラフの隣接リストによる表現
+// 
+// 型パラメータ`c`は辺の重みの型です。不要な場合はユニット型`()`や自分で作ったempty typeなどを指定するとメモリの節約になります。
+type Graph c = struct {
+    // `edges.@(s)` は頂点`s`から出る辺のリストです。
+    edges : Array (Array (Edge c))
+};
+
+// グラフの辺を表す型（始点番号はなし）
+type Edge c = struct {
+    // 終点の頂点番号
+    to : I64,
+    // 辺の重み
+    cost : c
+};
+
+namespace Edge {
+    // 辺を作成する
+    make : I64 -> c -> Edge c;
+    make = |to, cost| Edge { to : to, cost : cost };
+}
+
+// 離散的なグラフを作成する
+// 
+// # Parameters
+// - `n` : 頂点数
+create : I64 -> Graph c;
+create = |n| (
+    Graph { edges : Array::fill(n, []) }
+);
+
+// グラフの頂点数を取得する
+//
+// # Parameters
+// - `g` : グラフ
+get_size : Graph c -> I64;
+get_size = |g| g.@edges.get_size;
+
+// グラフに辺を追加する
+// 
+// # Parameters
+// - `g` : グラフ
+// - `from` : 始点の頂点番号
+// - `to` : 終点の頂点番号
+// - `c` : 辺の重み
+add_edge : I64 -> I64 -> c -> Graph c -> Graph c;
+add_edge = |from, to, c, g| (
+    g.mod_edges(mod(from, push_back(Edge::make(to, c))))
+);
+
+// ノードとその距離を表す型（ダイクストラ法などで使用）
+type NodeDistance c = struct {
+    node : I64,
+    dist : c
+};
+
+namespace NodeDistance {
+    make : I64 -> c -> NodeDistance c;
+    make = |node, dist| NodeDistance { node: node, dist: dist };
+}
+
+impl [c : LessThan] NodeDistance c : LessThan {
+    less_than = |x, y| x.@dist < y.@dist;
+}
+
+// グラフと開始ノードが与えられたとき、開始ノードから各ノードに到達するまでの最小コストの配列を返す。
+// 
+// 各辺のコストは非負である必要があります。
+// 
+// # Parameters
+// - `start` : 開始ノードの番号
+// - `inf` : 無限大のコストとして用いる値。到達不可能なノードのコストとして使われる。
+// - `graph` : グラフ
+dijkstra : [c : Additive, c : LessThan] I64 -> c -> Graph c -> Array c;
+dijkstra = |start, inf, graph| (
+    // The number of nodes in the graph.
+    let nn = graph.get_size;
+
+    // The array of distances to reach each node from the starting node.
+    let dists = Array::fill(nn, inf);
+    let dists = dists.set(start, zero);
+
+    // The binary heap to store the nodes to visit.
+    let visit_list = MinBinaryHeap::empty.push(NodeDistance::make(start, zero));
+
+    // The main loop.
+    loop((dists, visit_list), |(dists, visit_list)| (
+        // If there is no node to visit, break the loop.
+        if visit_list.get_size == 0 { break $ dists };
+
+        // Get the node with the smallest distance.
+        let NodeDistance { node : node, dist : dist } = visit_list.get_top.as_some;
+        let visit_list = visit_list.pop;
+        if dists.@(node) < dist {
+            // The node is already visited.
+            continue $ (dists, visit_list)
+        };
+        // `dists.@(node) == dist` holds.
+
+        // See all the neighbors of the node.
+        let edges = graph.@edges.@(node);
+        continue $ edges.to_iter.loop_iter((dists, visit_list), |Edge { to : to, cost : cost}, (dists, visit_list)|
+            // If the path using the current edge is not better than the previous one, skip.
+            let new_dist = dist + cost;
+            if !(new_dist < dists.@(to)) { continue $ (dists, visit_list) };
+
+            // Update the distance to the node.
+            let dists = dists.set(to, new_dist);
+            let visit_list = visit_list.push(NodeDistance::make(to, new_dist));
+
+            continue $ (dists, visit_list)
+        )
+    ))
+);

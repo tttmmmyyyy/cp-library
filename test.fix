@@ -8,6 +8,7 @@ import CPLib.DSegtree.Test;
 import CPLib.LSegtree.Test;
 import CPLib.LDSegtree.Test;
 import CPLib.UnionFind.Test;
+import CPLib.Graph.Test;
 
 test : IO ();
 test = (
@@ -19,6 +20,7 @@ test = (
     CPLib.LSegtree.Test::test;;
     CPLib.LDSegtree.Test::test;;
     CPLib.UnionFind.Test::test;;
+    CPLib.Graph.Test::test;;
 
     pure()
 );

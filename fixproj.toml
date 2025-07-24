@@ -41,6 +41,8 @@ files = [
     "segtree/lsegtree-test.fix",
     "segtree/ldsegtree-test.fix",
     "unionfind/unionfind-test.fix",
+    "graph/graph.fix",
+    "graph/graph-test.fix",
 ]
 
 
@@ -54,3 +56,9 @@ git = { url = "https://github.com/tttmmmyyyy/fixlang-random.git" }
 name = "hashmap"
 version = "1.1.2"
 git = { url = "https://github.com/tttmmmyyyy/fixlang-hashmap.git" }
+
+
+[[dependencies]]
+name = "binary-heap"
+version = "0.1.1"
+git = { url = "https://github.com/tttmmmyyyy/fixlang-binary-heap.git" }
