@@ -116,3 +116,65 @@ dijkstra = |start, inf, graph| (
         )
     ))
 );
+
+// グラフの強連結成分分解を求める
+//
+// 戻り値は、各強連結成分を構成する頂点のリストの配列です。
+// また、戻り値はトポロジカルソートされています：uとvが異なる強連結成分cu, cvに属するとき、uからvに到達できるなら、cuはcvの前に現れます。
+//
+// # Parameters
+// - `g` : グラフ
+compute_sccs : Graph c -> Array (Array I64);
+compute_sccs = |g| (
+    if g.get_size == 0 { [] };
+
+    // DFSして、各頂点の訪問完了順にスタックに積む。
+    let visited = Array::fill(g.get_size, false);
+    let stack = Array::empty(g.get_size);
+    let (visited, stack) = g._scc_dfs1(0, visited, stack);
+
+    // 反転グラフを作成
+    let rg = Graph::create(g.get_size) : Graph (); // コストは不要なのでユニット型を使用
+    let rg = range(0, g.get_size).fold(rg, |from, rg|
+        g.@edges.@(from).to_iter.fold(rg, |Edge { to : to, cost : _ }, rg|
+            rg.add_edge(to, from, ())
+        )
+    );
+
+    // 反転グラフを`stack`の逆順にDFSして、各強連結成分を求める。
+    let sccs = [];
+    let visited = range(0, visited.get_size).fold(visited, |i, visited| visited.set(i, false)); // `visited`を初期化
+    let (visited, sccs) = range_step(stack.get_size - 1, -1, -1).fold((visited, sccs), |stack_i, (visited, sccs)|
+        let node = stack.@(stack_i);
+        if visited.@(node) { (visited, sccs) };
+        let scc = []; // 新しい強連結成分を作成
+        let (visited, scc) = rg._scc_dfs2(node, visited, scc);
+        let sccs = sccs.push_back(scc);
+        (visited, sccs)
+    );
+
+    sccs
+);
+
+// DFS1の実装
+_scc_dfs1 : I64 -> Array Bool -> Array I64 -> Graph c -> (Array Bool, Array I64);
+_scc_dfs1 = |node, visited, stack, g| (
+    let visited = visited.set(node, true);
+    let (visited, stack) = g.@edges.@(node).to_iter.loop_iter((visited, stack), |Edge { to : to, cost : _ }, (visited, stack)| (
+        if visited.@(to) { continue $ (visited, stack) };
+        continue $ g._scc_dfs1(to, visited, stack)
+    ));
+    let stack = stack.push_back(node);
+    (visited, stack)
+);
+
+// DFS2の実装
+_scc_dfs2 : I64 -> Array Bool -> Array I64 -> Graph c -> (Array Bool, Array I64);
+_scc_dfs2 = |node, visited, scc, g| (
+    let visited = visited.set(node, true);
+    let scc = scc.push_back(node);
+    g.@edges.@(node).to_iter.loop_iter((visited, scc), |Edge { to : to, cost : _ }, (visited, scc)| (
+        if visited.@(to) { continue $ (visited, scc) };
+        continue $ g._scc_dfs2(to, visited, scc)
+    ))
+);
