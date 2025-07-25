@@ -131,7 +131,12 @@ compute_sccs = |g| (
     // DFSして、各頂点の訪問完了順にスタックに積む。
     let visited = Array::fill(g.get_size, false);
     let stack = Array::empty(g.get_size);
-    let (visited, stack) = g._scc_dfs1(0, visited, stack);
+    let (visited, stack) = range(0, g.get_size).fold((visited, stack), |i, (visited, stack)|
+        if visited.@(i) { (visited, stack) };
+        g._scc_dfs1(i, visited, stack)
+    );
+
+    eval debug_println $ "Stack after DFS1: " + stack.to_string;
 
     // 反転グラフを作成
     let rg = Graph::create(g.get_size) : Graph (); // コストは不要なのでユニット型を使用
