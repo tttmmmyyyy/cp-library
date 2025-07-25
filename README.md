@@ -32,7 +32,7 @@
 * Union-Find木
   * `CPLib.UnionFind` : Union-Find木の実装。
 * グラフ
-  * `CPLib.Graph` : グラフの表現と基本的なアルゴリズム。ダイクストラ法など。
+  * `CPLib.Graph` : グラフの表現と基本的なアルゴリズム。ダイクストラ法、連結成分分解+トポロジカルソートなど。
 * トレイト
   * `CPLib.Trait` : モジュールを超えて使われる可能性があるトレイトの定義。Monoid, Actionなど。
 
