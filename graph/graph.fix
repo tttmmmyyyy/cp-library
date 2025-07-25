@@ -136,8 +136,6 @@ compute_sccs = |g| (
         g._scc_dfs1(i, visited, stack)
     );
 
-    eval debug_println $ "Stack after DFS1: " + stack.to_string;
-
     // 反転グラフを作成
     let rg = Graph::create(g.get_size) : Graph (); // コストは不要なのでユニット型を使用
     let rg = range(0, g.get_size).fold(rg, |from, rg|

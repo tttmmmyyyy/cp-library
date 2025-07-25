@@ -6,11 +6,19 @@ test : IO ();
 test = (
     test_dijkstra;;
     test_scc;;
+    test_scc_self_loop;;
+    test_scc_multiple_edges;;
     pure()
 );
 
 test_dijkstra : IO ();
 test_dijkstra = (
+    test_dijkstra_basic;;
+    pure()
+);
+
+test_dijkstra_basic : IO ();
+test_dijkstra_basic = (
     let graph = Graph::create(6);
     let graph = graph.add_edge(0, 1, 10);
     let graph = graph.add_edge(0, 2, 3);
@@ -26,6 +34,7 @@ test_dijkstra = (
 test_scc : IO ();
 test_scc = (
     test_scc_basic;;
+    test_scc_empty;;
     pure()
 );
 
@@ -70,14 +79,57 @@ test_scc_basic = (
     // {0, 1} -> {4, 5, 6}
     let graph = graph.add_edge(1, 4, ());
 
+    // {0, 1} -> {7}
+    let graph = graph.add_edge(0, 7, ());
+    let graph = graph.add_edge(1, 7, ());
+
     // {7} -> {2, 3}
     let graph = graph.add_edge(7, 2, ());
+    let graph = graph.add_edge(7, 3, ());
 
     // {8} -> {9}
     let graph = graph.add_edge(8, 9, ());
 
     let sccs = graph.compute_sccs;
-    sccs.to_string.println;;
+    // 順序は保証されないのでソートして比較
+    let sccs = sccs.map(|scc| scc.sort_by(|(lhs, rhs)| lhs < rhs));
 
+    // 良いことではないが面倒なので現在の実装の結果でassert。
+    assert_eq(|_|"test_scc_basic", sccs, [[10, 11, 12], [8], [9], [0, 1], [7], [4, 5, 6], [2, 3]]);;
+
+    pure()
+);
+
+test_scc_empty : IO ();
+test_scc_empty = (
+    let graph = Graph::create(0) : Graph ();
+    let sccs = graph.compute_sccs;
+    assert_eq(|_|"test_scc_empty", sccs, []);;
+    pure()
+);
+
+test_scc_self_loop : IO ();
+test_scc_self_loop = (
+    let graph = Graph::create(3);
+    let graph = graph.add_edge(0, 0, ());
+    let graph = graph.add_edge(1, 1, ());
+    let graph = graph.add_edge(2, 2, ());
+    let graph = graph.add_edge(0, 1, ());
+    let graph = graph.add_edge(1, 2, ());
+    let sccs = graph.compute_sccs;
+    assert_eq(|_|"test_scc_self_loop", sccs, [[0], [1], [2]]);;
+    pure()
+);
+
+test_scc_multiple_edges : IO ();
+test_scc_multiple_edges = (
+    let graph = Graph::create(3);
+    let graph = graph.add_edge(0, 1, ());
+    let graph = graph.add_edge(0, 1, ()); // 重複
+    let graph = graph.add_edge(1, 2, ());
+    let graph = graph.add_edge(2, 0, ());
+    let sccs = graph.compute_sccs;
+    let sccs = sccs.map(|scc| scc.sort_by(|(lhs, rhs)| lhs < rhs)); // 順序は保証されないのでソートして比較
+    assert_eq(|_|"test_scc_multiple_edges", sccs, [[0, 1, 2]]);;
     pure()
 );
