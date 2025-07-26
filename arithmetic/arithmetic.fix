@@ -14,6 +14,23 @@ pmod = |m, x| (
     if r < 0 { r + m } else { r }
 );
 
+// 64ビット整数の平方根の整数部分を計算する
+//
+// # Parameters
+// - `x`: 64ビット整数
+isqrt : U64 -> U64;
+isqrt = |s| (
+    if s <= 1_U64 { s };
+    let x0 = s / 2_U64;
+    let x1 = (x0 + s / x0) / 2_U64;
+    loop((x0, x1), |(x0, x1)| 
+        if x1 >= x0 { break $ x0 };
+        let x0 = x1;
+        let x1 = (x0 + s / x0) / 2_U64;
+        continue $ (x0, x1)
+    )
+);
+
 // 2つの整数の最大公約数（非負整数）を計算する
 // 
 // # Parameters

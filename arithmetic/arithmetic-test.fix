@@ -5,6 +5,7 @@ import CPLib.Arithmetic;
 test : IO ();
 test = (
     test_pmod;;
+    test_isqrt;;
     test_gcd;;
     test_ext_gcd;;
     test_pow_mod;;
@@ -19,6 +20,33 @@ test_pmod = (
     assert_eq(|_|"pmod 2", -12.pmod(5), 3);;
     assert_eq(|_|"pmod 3", 12.pmod(-5), 2);;
     assert_eq(|_|"pmod 4", -12.pmod(-5), 3);;
+
+    pure()
+);
+
+test_isqrt : IO ();
+test_isqrt = (
+    let isqrt_bs : U64 -> U64 = |x| (
+        loop((0_U64, U64::maximum), |(l, r)|
+            // l*l <= x < r*r
+            if r - l <= 1_U64 { break $ l };
+            let m = l + (r - l) / 2_U64;
+            continue $ if m <= x / m {
+                (m, r)
+            } else {
+                (l, m)
+            }
+        )
+    );
+
+    assert_eq(|_|"isqrt 1", isqrt(0_U64), 0_U64);;
+    assert_eq(|_|"isqrt 2", isqrt(1_U64), 1_U64);;
+    assert_eq(|_|"isqrt 2", isqrt(2_U64), 1_U64);;
+    assert_eq(|_|"isqrt 3", isqrt(3_U64), 1_U64);;
+    assert_eq(|_|"isqrt 4", isqrt(4_U64), 2_U64);;
+    assert_eq(|_|"isqrt 5", isqrt(5_U64), 2_U64);;
+    assert_eq(|_|"isqrt 5", isqrt(2000000_U64), 1414_U64);;
+    assert_eq(|_|"isqrt 5", isqrt(U64::maximum), (1.shift_left(32) - 1).to_U64);;
 
     pure()
 );
