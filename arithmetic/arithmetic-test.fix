@@ -13,6 +13,8 @@ test = (
     test_inv_mod;;
     test_prime_table;;
     test_prime_list;;
+    test_miller_rabin_u64;;
+    test_miller_rabin_u32;;
 
     pure()
 );
@@ -183,5 +185,29 @@ test_prime_list = (
     let (res, time) = consumed_time_while_lazy(|_| create_prime_list(1e8));
     assert_eq(|_|"test_prime_list 2", res.get_size, 5761455);;
     println $ "create_prime_list(1e8) took " + time.to_string + " s";;
+    pure()
+);
+
+test_miller_rabin_u64 : IO ();
+test_miller_rabin_u64 = (
+    let _N = 1e5;
+    let prime_table = create_prime_table(_N);
+    range(0, _N).fold_m((), |n, _|
+        assert_eq(|_|"check_is_prime_u64: " + n.to_string, prime_table.@(n), is_prime(n.to_U64))
+    );;
+    assert_eq(|_|"2^61-1 is prime", is_prime(1_U64.shift_left(61_U64) - 1_U64), true);;
+    assert_eq(|_|"2^59-1 is not prime", is_prime(1_U64.shift_left(59_U64) - 1_U64), false);;
+    pure()
+);
+
+test_miller_rabin_u32 : IO ();
+test_miller_rabin_u32 = (
+    let _N = 1e5;
+    let prime_table = create_prime_table(_N);
+    range(0, _N).fold_m((), |n, _|
+        assert_eq(|_|"check_is_prime_u32: " + n.to_string, prime_table.@(n), is_prime_32(n.to_U32))
+    );;
+    assert_eq(|_|"2^31-1 is prime", is_prime_32(1_U32.shift_left(31_U32) - 1_U32), true);;
+    assert_eq(|_|"2^29-1 is not prime", is_prime_32(1_U32.shift_left(29_U32) - 1_U32), false);;
     pure()
 );

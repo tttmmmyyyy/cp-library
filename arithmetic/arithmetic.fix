@@ -151,3 +151,76 @@ create_prime_list = |n| (
     );
     list
 );
+
+// n-1 = 2^s * d (d: 奇数)に対し、2 <= a <= n-2 を使ってnが合成数かどうかを調べる。
+// 
+// a^d = 1 (mod n) または、a^(2^r * d) = -1 (mod n) (0 <= r < s) のいずれかが成り立つならば、nは素数である可能性があるので、falseを返す。
+// そうでない場合は、nは合成数であるので、trueを返す。
+// 
+// # Parameters
+// - `n`: 調べる数
+// - `a`: 2 <= a <= n-2 の範囲の整数
+// - `d`: n-1 = 2^s * d の 奇数d
+// - `s`: n-1 = 2^s * d の 2の指数部分
+_check_composite_miller_rabin : U64 -> U64 -> U64 -> I64 -> Bool;
+_check_composite_miller_rabin = |n, a, d, s| (
+    let x = a.pow_mod_u(d, n); // a^d
+    if x == 1_U64 || x == n - 1_U64 { false }; // a^d = 1,  or  a^(2^r * d) = -1 for r = 0
+    range(1, s).loop_iter_s(x, |_r, x|
+        let x = x.pow_mod_u(2_U64, n); // a^(2^r * d)
+        if x == n - 1_U64 { break $ () };
+        continue $ x
+    ).is_continue
+);
+
+// Miller-Rabin 素数判定法（64bit版）
+// 
+// https://cp-algorithms.com/algebra/primality_tests.html#deterministic-version
+// 
+// # Parameters
+// - `n`: 調べる数
+is_prime : U64 -> Bool;
+is_prime = |n| (
+    if n < 2_U64 { false };
+    let (s, d) = loop((0, n-1_U64), |(s, d)|
+        if d % 2_U64 == 0_U64 {
+            continue $ (s + 1, d / 2_U64)
+        } else {
+            break $ (s, d)
+        }
+    );
+    match [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37].to_iter.loop_iter_s((), |a, _|
+        if n == a.to_U64 { break $ true };
+        if _check_composite_miller_rabin(n, a.to_U64, d, s) { break $ false };
+        continue $ ()
+    ) {
+        break(r) => r,
+        continue(_) => true
+    }
+);
+
+// Miller-Rabin 素数判定法（32bit版）
+// 
+// https://cp-algorithms.com/algebra/primality_tests.html#deterministic-version
+// 
+// # Parameters
+// - `n`: 調べる数
+is_prime_32 : U32 -> Bool;
+is_prime_32 = |n| (
+    if n < 2_U32 { false };
+    let (s, d) = loop((0, n-1_U32), |(s, d)|
+        if d % 2_U32 == 0_U32 {
+            continue $ (s + 1, d / 2_U32)
+        } else {
+            break $ (s, d)
+        }
+    );
+    match [2, 3, 5, 7].to_iter.loop_iter_s((), |a, _|
+        if n == a.to_U32 { break $ true };
+        if _check_composite_miller_rabin(n.to_U64, a.to_U64, d.to_U64, s) { break $ false };
+        continue $ ()
+    ) {
+        break(r) => r,
+        continue(_) => true
+    }
+);
