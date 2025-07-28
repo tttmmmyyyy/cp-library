@@ -29,6 +29,8 @@ files = [
     "trait/trait.fix",
     "unionfind/unionfind.fix",
 ]
+objects = ["lib.o"]
+preliminary_commands = [["make", "lib.o"]]
 
 [build.test]
 files = [

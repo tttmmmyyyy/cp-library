@@ -71,32 +71,36 @@ ext_gcd = |a, b| (
 // - `m`: 法
 pow_mod : I64 -> I64 -> I64 -> I64;
 pow_mod = |e, m, x| (
+    let e = e.to_U64;
     let m = m.abs;
-    let x = x.pmod(m);
-    x._pow_mod_internal(e, m)
+    let x = x.pmod(m).to_U64;
+    x.pow_mod_u(e, m.to_U64).to_I64
 );
 
-// `x^e`を`n`で割った余りを計算する
+// `x^e`を`n`で割った余りを計算する（unsigned版）
 //
 // # Parameters
-// - `x`: 底. 0 <= x < m
+// - `x`: 底 >= 0
 // - `e`: 指数 >= 0
 // - `m`: 法 > 0
-_pow_mod_internal : I64 -> I64 -> I64 -> I64;
-_pow_mod_internal = |e, m, x| (
-    if e == 0 { 1 };
-    if e % 2 == 0 {
-        let half = x._pow_mod_internal(e / 2, m);
-        (half * half) % m
+pow_mod_u : U64 -> U64 -> U64 -> U64;
+pow_mod_u = |e, m, x| (
+    if e == 0_U64 { 1_U64 };
+    if e % 2_U64 == 0_U64 {
+        let half = x.pow_mod_u(e / 2_U64, m);
+        let hh = FFI_CALL[U64 cp_lib_mul_mod(U64, U64, U64), half, half, m];
+        hh
     } else {
-        let half = x._pow_mod_internal((e - 1) / 2, m);
-        ((x * half) % m * half) % m
+        let half = x.pow_mod_u((e - 1_U64) / 2_U64, m);
+        let hh = FFI_CALL[U64 cp_lib_mul_mod(U64, U64, U64), half, half, m];
+        let xhh = FFI_CALL[U64 cp_lib_mul_mod(U64, U64, U64), x, hh, m];
+        xhh
     }
 );
 
 // `ax = 1 mod m`なる`x`のうち、`0 <= x < |m|`を満たすものを返す
 //
-// 制約：`a != 0 mod m`
+// 制約：gcd(a, m) = 1
 //
 // # Parameters
 // - `a`: 整数

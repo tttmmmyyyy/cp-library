@@ -1,2 +1,3 @@
 .fixlang
 *.out
+*.o
