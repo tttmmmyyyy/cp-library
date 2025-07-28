@@ -1,5 +1,7 @@
 module CPLib.Arithmetic;
 
+import BoolArray;
+
 // `x`を`m`で割った余りを非負で返す
 //
 // C言語の%演算子とは異なり、負の数に対しても正の余りを返す
@@ -107,4 +109,39 @@ inv_mod = |m, a| (
         undefined("[inv_mod] `a` is not coprime to `m`!")
     };
     inv_x.pmod(m)
+);
+
+// [0, n)の範囲での素数テーブルを作成する
+//
+// 配列（`BoolArray`）`table`は素数テーブルであり、`table.@(n)`が`true`の場合に`n`が素数であることを意味する。
+//
+// # Parameters
+// - `n` : 素数テーブルの上限（exclusive）
+create_prime_table : I64 -> BoolArray;
+create_prime_table = |size| (
+    let table = BoolArray::make(size).fill_true;
+    let size = table.get_size;
+    let table = table.set(0, false).set(1, false);
+    let table = Iterator::range(2, size).loop_iter(table, |n, table|
+        if n > (size - 1) / n { break $ table };
+        if !table.@(n) { continue $ table };
+        let table = Iterator::range_step(2 * n, size, n).fold(table, |m, table| table.set(m, false));
+        continue $ table
+    );
+    table
+);
+
+// [0, n)の範囲での素数リストを作成する
+//
+// # Parameters
+// - `n` : 素数リストの上限（exclusive）
+create_prime_list : I64 -> Array U32;
+create_prime_list = |n| (
+    let table = create_prime_table(n);
+    let count = Iterator::range(0, n).fold(0, |i, cnt| if table.@(i) { cnt + 1 } else { cnt });
+    let list = Array::empty(count);
+    let list = Iterator::range(0, n).fold(list, |p, list|
+        if table.@(p) { list.push_back(p.to_U32) } else { list }
+    );
+    list
 );

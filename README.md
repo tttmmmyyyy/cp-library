@@ -23,7 +23,7 @@
 * Mod Int
   * `CPLib.ZP` : 静的な（すなわち、コンパイル時に決まる）素数を法とする整数の剰余環（体）の演算を提供します。
 * 整数論
-  * `CPLib.ZP.Arithmetic` : GCD, 拡張ユークリッドの互除法, pow_mod, inv_modなど。
+  * `CPLib.ZP.Arithmetic` : GCD, 拡張ユークリッドの互除法, pow_mod, inv_mod, 素数リスト（篩）
 * セグメント木
   * `CPLib.Segtree` : 静的にモノイド構造が決まる場合のセグメント木。
   * `CPLib.DSegtree` : 動的にモノイド構造が決まる場合のセグメント木。

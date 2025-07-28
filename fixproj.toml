@@ -3,7 +3,7 @@
 name = "cp-library"
 
 ## Project version (in semver). This is a required field.
-version = "0.1.6"
+version = "0.1.7"
 
 ## Fix version requirement. Default is "*".
 fix_version = "1.1.0"
@@ -62,3 +62,9 @@ git = { url = "https://github.com/tttmmmyyyy/fixlang-hashmap.git" }
 name = "binary-heap"
 version = "0.1.1"
 git = { url = "https://github.com/tttmmmyyyy/fixlang-binary-heap.git" }
+
+
+[[dependencies]]
+name = "bool-array"
+version = "0.1.1"
+git = { url = "https://github.com/tttmmmyyyy/bool-array.git" }
