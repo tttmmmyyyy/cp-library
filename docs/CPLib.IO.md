@@ -1,12 +1,18 @@
 # CPLib.IO
 
-Defined in cp-library@0.1.0
+Defined in cp-library@0.1.9
 
 入出力や数値のパースを楽にする機能のためのモジュール
 
 ## Values
 
 ### namespace CPLib.IO
+
+#### input_line_f
+
+Type: `Std::IO Std::F64`
+
+標準入力から1行読み込み、`F64`として返す。
 
 #### input_line_fa
 

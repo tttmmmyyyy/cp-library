@@ -1,6 +1,6 @@
 # CPLib.LDSegtree
 
-Defined in cp-library@0.1.0
+Defined in cp-library@0.1.9
 
 モノイド構造および作用が動的に決められる遅延伝搬セグメント木
 
@@ -13,7 +13,7 @@ Defined in cp-library@0.1.0
 
 #### act_range
 
-Type: `Std::I64 -> Std::I64 -> a -> CPLib.LDSegtree::LSegtree m a -> CPLib.LDSegtree::LSegtree m a`
+Type: `Std::I64 -> Std::I64 -> a -> CPLib.LDSegtree::LDSegtree m a -> CPLib.LDSegtree::LDSegtree m a`
 
 半開区間[l, r)に右から作用を適用する
 
@@ -26,7 +26,7 @@ Type: `Std::I64 -> Std::I64 -> a -> CPLib.LDSegtree::LSegtree m a -> CPLib.LDSeg
 
 #### build
 
-Type: `Std::Array m -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((m, a) -> m) -> CPLib.LDSegtree::LSegtree m a`
+Type: `Std::Array m -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((m, a) -> m) -> CPLib.LDSegtree::LDSegtree m a`
 
 要素の配列からセグメント木を作成する
 
@@ -41,7 +41,7 @@ Type: `Std::Array m -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((m, a) -> m)
 
 #### fold
 
-Type: `Std::I64 -> Std::I64 -> CPLib.LDSegtree::LSegtree m a -> (CPLib.LDSegtree::LSegtree m a, m)`
+Type: `Std::I64 -> Std::I64 -> CPLib.LDSegtree::LDSegtree m a -> (CPLib.LDSegtree::LDSegtree m a, m)`
 
 半開区間[l, r)にある要素の畳み込みを計算する
 
@@ -54,7 +54,7 @@ Type: `Std::I64 -> Std::I64 -> CPLib.LDSegtree::LSegtree m a -> (CPLib.LDSegtree
 
 #### init
 
-Type: `Std::I64 -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((m, a) -> m) -> CPLib.LDSegtree::LSegtree m a`
+Type: `Std::I64 -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((m, a) -> m) -> CPLib.LDSegtree::LDSegtree m a`
 
 すべての要素が単位元であるような遅延伝搬セグメント木を作成する
 
@@ -69,7 +69,7 @@ Type: `Std::I64 -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((m, a) -> m) -> 
 
 #### set
 
-Type: `Std::I64 -> m -> CPLib.LDSegtree::LSegtree m a -> CPLib.LDSegtree::LSegtree m a`
+Type: `Std::I64 -> m -> CPLib.LDSegtree::LDSegtree m a -> CPLib.LDSegtree::LDSegtree m a`
 
 セグメント木の要素を設定する
 
@@ -83,9 +83,9 @@ Type: `Std::I64 -> m -> CPLib.LDSegtree::LSegtree m a -> CPLib.LDSegtree::LSegtr
 
 ### namespace CPLib.LDSegtree
 
-#### LSegtree
+#### LDSegtree
 
-Defined as: `type LSegtree m a = unbox struct { ...fields... }`
+Defined as: `type LDSegtree m a = unbox struct { ...fields... }`
 
 遅延伝搬セグメント木の型。
 

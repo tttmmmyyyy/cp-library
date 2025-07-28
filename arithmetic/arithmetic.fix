@@ -118,6 +118,8 @@ inv_mod = |m, a| (
 // [0, n)の範囲での素数テーブルを作成する
 //
 // 配列（`BoolArray`）`table`は素数テーブルであり、`table.@(n)`が`true`の場合に`n`が素数であることを意味する。
+// 
+// 注意：戻り値の要素に`@(n)`でアクセスするには`import BoolArray;`が必要です。
 //
 // # Parameters
 // - `n` : 素数テーブルの上限（exclusive）
