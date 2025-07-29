@@ -1,0 +1,38 @@
+module Main;
+
+import CPLib.IO;
+
+main : IO ();
+main = (
+    let (a, b, c) = (*read_i, *read_i, *read_i);
+    assert(|_|"1", a == 31 && b == 41 && c == -5);;
+
+    let xs = *read_is(10);
+    assert(|_|"2", xs == [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8]);;    
+
+    let (a, b, c) = (*read_u, *read_u, *read_u);
+    assert(|_|"3", a == 31.to_U64 && b == 41.to_U64 && c == -5.to_U64);;
+
+    let xs = *read_us(10);
+    assert(|_|"4", xs == [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8].map(to_U64));;
+
+    let (a, b, c) = (*read_f, *read_f, *read_f);
+    assert(|_|"5", a == 3.1 && b == 4.1 && c == -5.9);;
+
+    let xs = *read_fs(10);
+    assert(|_|"6", xs == [-0.1, 0.0, 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8]);;
+
+    let (a, b) = (*read_s(6), *read_s(256));
+    assert(|_|"7", a == "Hello," && b == "World!");;
+
+    let xs = *read_ss(3, 10);
+    assert(|_|"8", xs == ["foo", "bar", "baz"]);;
+
+    let (a, b, c) = (*read_c, *read_c, *read_c);
+    assert(|_|"9", a == 'Y' && b == 'E' && c == 'S');;  
+
+    let xs = *read_cs(10);
+    assert(|_|"10", xs == ['c', 'h', 'a', 'r', 'a', 'c', 't', 'e', 'r', 's']);;
+    
+    pure()
+);
