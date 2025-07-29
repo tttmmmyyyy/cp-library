@@ -49,44 +49,119 @@ stouia = |s| if s.is_empty { [] } else { s.split(" ").map(stoui).to_array };
 stofa : String -> Array F64;
 stofa = |s| if s.is_empty { [] } else { s.split(" ").map(stof).to_array };
 
-// 標準入力から1行読み込み、`I64`として返す。
-input_line_i : IO I64;
-input_line_i = (
-    let line = *input_line_s;
-    line.stoi.pure
+// `I64`を一つ読み込む
+read_i : IO I64;
+read_i = FFI_CALL_IO[I64 cp_lib_read_i64()];
+
+// `U64`を一つ読み込む
+read_u : IO U64;
+read_u = FFI_CALL_IO[U64 cp_lib_read_u64()];
+
+// `F64`を一つ読み込む
+read_f : IO F64;
+read_f = FFI_CALL_IO[F64 cp_lib_read_double()];
+
+// 空白文字を含まない文字列を一つ読み込む
+// 
+// # Parameters
+// - `n`: 読み込む文字列の長さの上限
+read_s : I64 -> IO String;
+read_s = |n| (
+    let n = if n < 0 { 255 } else { n };
+    let format = "%" + n.to_string + "s";
+    let buf = Array::fill(n + 1, 0_U8);
+    let (buf, _err) = *buf.mutate_boxed_io(|ptr| 
+        format.borrow_c_str_io(|format|
+            FFI_CALL_IO[CInt scanf(Ptr, Ptr), format, ptr]
+        )
+    );
+    String::_unsafe_from_c_str(buf).pure
 );
 
-// 標準入力から1行読み込み、`U64`として返す。
-input_line_ui : IO U64;
-input_line_ui = (
-    let line = *input_line_s;
-    line.stoui.pure
+// 非空白文字を一つ読み込む
+read_c : IO U8;
+read_c = FFI_CALL_IO[U8 cp_lib_read_char()];
+
+// `I64`を指定された個数読み込む
+// 
+// # Parameters
+// - `n`: 読み込む個数
+read_is : I64 -> IO (Array I64);
+read_is = |n| range(0, n).map(|_| read_i).collect_m;
+
+// `U64`を指定された個数読み込む
+// 
+// # Parameters
+// - `n`: 読み込む個数
+read_us : I64 -> IO (Array U64);
+read_us = |n| range(0, n).map(|_| read_u).collect_m;
+
+// `F64`を指定された個数読み込む
+// 
+// # Parameters
+// - `n`: 読み込む個数
+read_fs : I64 -> IO (Array F64);
+read_fs = |n| range(0, n).map(|_| read_f).collect_m;
+
+// 空白文字を含まない文字列を指定された個数読み込む
+// 
+// # Parameters
+// - `n`: 読み込む個数
+// - `m`: 各文字列の長さの上限
+read_ss : I64 -> I64 -> IO (Array String);
+read_ss = |n, m| range(0, n).map(|_| read_s(m)).collect_m;
+
+// 非空白文字を指定された個数読み込む
+//
+// # Parameters
+// - `n`: 読み込む個数
+read_cs : I64 -> IO (Array U8);
+read_cs = |n| range(0, n).map(|_| read_c).collect_m;
+
+/*
+
+_i_format : String;
+_i_format = "%lld";
+
+read_i : IO I64;
+read_i = (
+    let buf = Box { value : 0 };
+    buf.mutate_boxed_io(|ptr|
+        FFI_CALL_IO[CInt scanf(Ptr, Ptr), _i_format._get_c_str, ptr]
+    ).map(|(buf, _)| buf.@value)
 );
 
-// 標準入力から1行読み込み、`F64`として返す。
-input_line_f : IO F64;
-input_line_f = (
-    let line = *input_line_s;
-    line.stof.pure
+_u_format : String;
+_u_format = "%llu\n";
+
+read_u : IO U64;
+read_u = (
+    let buf = Box { value : 0_U64 };
+    buf.mutate_boxed_io(|ptr|
+        FFI_CALL_IO[CInt scanf(Ptr, Ptr), _u_format._get_c_str, ptr]
+    ).map(|(buf, _)| buf.@value)
 );
 
-// "X Y Z"というフォーマットの行を標準入力から読み込み、`I64`の配列`[X, Y, Z]`として返す。
-input_line_ia : IO (Array I64);
-input_line_ia = (
-    let line = *input_line_s;
-    line.stoia.pure
+_f_format : String;
+_f_format = "%lf";
+
+read_f : IO F64;
+read_f = (
+    let buf = Box { value : 0.0 };
+    buf.mutate_boxed_io(|ptr| 
+        FFI_CALL_IO[CInt scanf(Ptr, Ptr), _f_format._get_c_str, ptr]
+    ).map(|(buf, _)| buf.@value)
 );
 
-// "X Y Z"というフォーマットの行を標準入力から読み込み、`U64`の配列`[X, Y, Z]`として返す。
-input_line_uia : IO (Array U64);
-input_line_uia = (
-    let line = *input_line_s;
-    line.stouia.pure
+_c_format : String;
+_c_format = " %c";
+
+read_c : IO U8;
+read_c = (
+    let buf = Box { value : 0_U8 };
+    buf.mutate_boxed_io(|ptr|
+        FFI_CALL_IO[CInt scanf(Ptr, Ptr), _c_format._get_c_str, ptr]
+    ).map(|(buf, _)| buf.@value)
 );
 
-// "X Y Z"というフォーマットの行を標準入力から読み込み、`F64`の配列`[X, Y, Z]`として返す。
-input_line_fa : IO (Array F64);
-input_line_fa = (
-    let line = *input_line_s;
-    line.stofa.pure
-);
+*/

@@ -1,6 +1,6 @@
 # CPLib.IO
 
-Defined in cp-library@0.1.9
+Defined in cp-library@0.2.0
 
 入出力や数値のパースを楽にする機能のためのモジュール
 
@@ -8,41 +8,90 @@ Defined in cp-library@0.1.9
 
 ### namespace CPLib.IO
 
-#### input_line_f
+#### read_c
+
+Type: `Std::IO Std::U8`
+
+非空白文字を一つ読み込む
+
+#### read_cs
+
+Type: `Std::I64 -> Std::IO (Std::Array Std::U8)`
+
+非空白文字を指定された個数読み込む
+
+##### Parameters
+
+- `n`: 読み込む個数
+
+#### read_f
 
 Type: `Std::IO Std::F64`
 
-標準入力から1行読み込み、`F64`として返す。
+`F64`を一つ読み込む
 
-#### input_line_fa
+#### read_fs
 
-Type: `Std::IO (Std::Array Std::F64)`
+Type: `Std::I64 -> Std::IO (Std::Array Std::F64)`
 
-"X Y Z"というフォーマットの行を標準入力から読み込み、`F64`の配列`[X, Y, Z]`として返す。
+`F64`を指定された個数読み込む
 
-#### input_line_i
+##### Parameters
+
+- `n`: 読み込む個数
+
+#### read_i
 
 Type: `Std::IO Std::I64`
 
-標準入力から1行読み込み、`I64`として返す。
+`I64`を一つ読み込む
 
-#### input_line_ia
+#### read_is
 
-Type: `Std::IO (Std::Array Std::I64)`
+Type: `Std::I64 -> Std::IO (Std::Array Std::I64)`
 
-"X Y Z"というフォーマットの行を標準入力から読み込み、`I64`の配列`[X, Y, Z]`として返す。
+`I64`を指定された個数読み込む
 
-#### input_line_ui
+##### Parameters
+
+- `n`: 読み込む個数
+
+#### read_s
+
+Type: `Std::I64 -> Std::IO Std::String`
+
+空白文字を含まない文字列を一つ読み込む
+
+##### Parameters
+
+- `n`: 読み込む文字列の長さの上限
+
+#### read_ss
+
+Type: `Std::I64 -> Std::I64 -> Std::IO (Std::Array Std::String)`
+
+空白文字を含まない文字列を指定された個数読み込む
+
+##### Parameters
+
+- `n`: 読み込む個数
+- `m`: 各文字列の長さの上限
+
+#### read_u
 
 Type: `Std::IO Std::U64`
 
-標準入力から1行読み込み、`U64`として返す。
+`U64`を一つ読み込む
 
-#### input_line_uia
+#### read_us
 
-Type: `Std::IO (Std::Array Std::U64)`
+Type: `Std::I64 -> Std::IO (Std::Array Std::U64)`
 
-"X Y Z"というフォーマットの行を標準入力から読み込み、`U64`の配列`[X, Y, Z]`として返す。
+`U64`を指定された個数読み込む
+
+##### Parameters
+
+- `n`: 読み込む個数
 
 #### stof
 

@@ -1,6 +1,6 @@
 # CPLib.Arithmetic
 
-Defined in cp-library@0.1.9
+Defined in cp-library@0.2.0
 
 ## Values
 
@@ -70,6 +70,30 @@ Type: `Std::I64 -> Std::I64 -> Std::I64`
 
 - `a`: 整数
 - `m`: 法
+
+#### is_prime
+
+Type: `Std::U64 -> Std::Bool`
+
+Miller-Rabin 素数判定法（64bit版）
+
+https://cp-algorithms.com/algebra/primality_tests.html#deterministic-version
+
+##### Parameters
+
+- `n`: 調べる数
+
+#### is_prime_32
+
+Type: `Std::U32 -> Std::Bool`
+
+Miller-Rabin 素数判定法（32bit版）
+
+https://cp-algorithms.com/algebra/primality_tests.html#deterministic-version
+
+##### Parameters
+
+- `n`: 調べる数
 
 #### isqrt
 
