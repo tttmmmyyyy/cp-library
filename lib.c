@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <inttypes.h>
+#include <stdio.h>
 
 // Fixコンパイラが128bit整数をサポートしていないため、64bit整数のmod nでの乗算及び加算をGCCの128bit整数を使用して実装する。
 
