@@ -1,6 +1,6 @@
 # CPLib.LSegtree
 
-Defined in cp-library@0.2.0
+Defined in cp-library@0.2.1
 
 遅延伝番セグメント木（右作用）
 
@@ -92,6 +92,7 @@ Type: `[m : CPLib.Trait::Monoid, a : CPLib.Trait::Monoid, a : CPLib.Trait::Actio
 
 - `l` : 区間の左端 (0-indexed)
 - `r` : 区間の右端 (0-indexed, exclusive)
+- `tree` : セグメント木
 
 #### init
 

@@ -110,6 +110,7 @@ set = |i, value, tree| (
 // # Parameters
 // - `l` : 区間の左端 (0-indexed)
 // - `r` : 区間の右端 (0-indexed, exclusive)
+// - `tree` : セグメント木
 fold : [m : Monoid] I64 -> I64 -> Segtree m -> m;
 fold = |l, r, tree| (
     let n = tree.@n;

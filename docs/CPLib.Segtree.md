@@ -1,6 +1,6 @@
 # CPLib.Segtree
 
-Defined in cp-library@0.2.0
+Defined in cp-library@0.2.1
 
 セグメント木の実装
 
@@ -68,6 +68,7 @@ Type: `[m : CPLib.Trait::Monoid] Std::I64 -> Std::I64 -> CPLib.Segtree::Segtree 
 
 - `l` : 区間の左端 (0-indexed)
 - `r` : 区間の右端 (0-indexed, exclusive)
+- `tree` : セグメント木
 
 #### init
 

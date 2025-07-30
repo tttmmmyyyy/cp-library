@@ -1,6 +1,6 @@
 # CPLib.LDSegtree
 
-Defined in cp-library@0.2.0
+Defined in cp-library@0.2.1
 
 モノイド構造および作用が動的に決められる遅延伝搬セグメント木
 
@@ -51,6 +51,7 @@ Type: `Std::I64 -> Std::I64 -> CPLib.LDSegtree::LDSegtree m a -> (CPLib.LDSegtre
 
 - `l` : 区間の左端 (0-indexed)
 - `r` : 区間の右端 (0-indexed, exclusive)
+- `tree` : セグメント木
 
 #### init
 
