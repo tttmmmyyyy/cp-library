@@ -7,13 +7,48 @@ import BoolArray;
 // C言語の%演算子とは異なり、負の数に対しても正の余りを返す
 //
 // # Parameters
-// - `m`: 除数
+// - `m`: 除数 > 0
 // - `x`: 被除数
 pmod : I64 -> I64 -> I64;
 pmod = |m, x| (
-    let m = m.abs;
     let r = x % m;
     if r < 0 { r + m } else { r }
+);
+
+// `x + y`を`m`で割った余りを（非負で）返す
+//
+// # Parameters
+// - `x`: 整数
+// - `y`: 整数
+// - `m`: 除数 != 0
+add_mod : I64 -> I64 -> I64 -> I64;
+add_mod = |x, y, m| (
+    let m = m.abs.to_U64;
+    FFI_CALL[I64 cp_lib_add_mod_signed(I64, I64, U64), x, y, m]
+);
+
+// `x - y`を`m`で割った余りを（非負で）返す
+// 
+// # Parameters
+// - `x`: 整数
+// - `y`: 整数
+// - `m`: 除数 != 0
+sub_mod : I64 -> I64 -> I64 -> I64;
+sub_mod = |x, y, m| (
+    let m = m.abs.to_U64;
+    FFI_CALL[I64 cp_lib_sub_mod_signed(I64, I64, U64), x, y, m]
+);
+
+// `x * y`を`m`で割った余りを（非負で）返す
+//
+// # Parameters
+// - `x`: 整数
+// - `y`: 整数
+// - `m`: 除数 != 0
+mul_mod : I64 -> I64 -> I64 -> I64;
+mul_mod = |x, y, m| (
+    let m = m.abs.to_U64;
+    FFI_CALL[I64 cp_lib_mul_mod_signed(I64, I64, U64), x, y, m]
 );
 
 // 64ビット整数の平方根の整数部分を計算する
@@ -68,7 +103,7 @@ ext_gcd = |a, b| (
 // # Parameters
 // - `x`: 底
 // - `e`: 指数 >= 0
-// - `m`: 法
+// - `m`: 法 > 0
 pow_mod : I64 -> I64 -> I64 -> I64;
 pow_mod = |e, m, x| (
     let e = e.to_U64;
@@ -104,7 +139,7 @@ pow_mod_u = |e, m, x| (
 //
 // # Parameters
 // - `a`: 整数
-// - `m`: 法
+// - `m`: 法 > 0
 inv_mod : I64 -> I64 -> I64;
 inv_mod = |m, a| (
     let m = m.abs;
@@ -224,3 +259,72 @@ is_prime_32 = |n| (
         continue(_) => true
     }
 );
+
+// @param b `1 <= b`
+// @return pair(g, x) s.t. g = gcd(a, b), xa = g (mod b), 0 <= x < b/g
+// 
+// https://github.com/atcoder/ac-library/blob/master/atcoder/internal_math.hpp#L107
+_inv_gcd : I64 -> I64 -> (I64, I64);
+_inv_gcd = |a, b| (
+    let a = a.pmod(b);
+    if a == 0 { (b, 0) };
+
+    let s = b; let t = a;
+    let m0 = 0; let m1 = 1;
+
+    let (s, m0) = loop((s, t, m0, m1), |(s, t, m0, m1)|
+        if t == 0 { break $ (s, m0) };
+        let u = s / t;
+        let s = s - t * u;
+        let m0 = m0 - m1 * u;
+
+        let tmp = s;
+        let s = t;
+        let t = tmp;
+        let tmp = m0;
+        let m0 = m1;
+        let m1 = tmp;
+        continue $ (s, t, m0, m1)
+    );
+
+    let m0 = if m0 < 0 { m0 + b / s } else { m0 };
+    (s, m0)
+);
+
+/*
+
+constexpr std::pair<long long, long long> inv_gcd(long long a, long long b) {
+    a = safe_mod(a, b);
+    if (a == 0) return {b, 0};
+
+    // Contracts:
+    // [1] s - m0 * a = 0 (mod b)
+    // [2] t - m1 * a = 0 (mod b)
+    // [3] s * |m1| + t * |m0| <= b
+    long long s = b, t = a;
+    long long m0 = 0, m1 = 1;
+
+    while (t) {
+        long long u = s / t;
+        s -= t * u;
+        m0 -= m1 * u;  // |m1 * u| <= |m1| * s <= b
+
+        // [3]:
+        // (s - t * u) * |m1| + t * |m0 - m1 * u|
+        // <= s * |m1| - t * u * |m1| + t * (|m0| + |m1| * u)
+        // = s * |m1| + t * |m0| <= b
+
+        auto tmp = s;
+        s = t;
+        t = tmp;
+        tmp = m0;
+        m0 = m1;
+        m1 = tmp;
+    }
+    // by [3]: |m0| <= b/g
+    // by g != b: |m0| < b/g
+    if (m0 < 0) m0 += b / s;
+    return {s, m0};
+}
+
+*/

@@ -16,6 +16,39 @@ uint64_t cp_lib_add_mod(uint64_t a, uint64_t b, uint64_t mod)
     return (uint64_t)(sum % mod);
 }
 
+uint64_t cp_lib_add_mod_signed(int64_t a, int64_t b, uint64_t mod)
+{
+    __int128_t sum = (__int128_t)a + b;
+    __int128_t r = sum % mod;
+    if (r < 0)
+    {
+        r += mod;
+    }
+    return (uint64_t)(r);
+}
+
+uint64_t cp_lib_sub_mod_signed(int64_t a, int64_t b, uint64_t mod)
+{
+    __int128_t diff = (__int128_t)a - b;
+    __int128_t r = diff % mod;
+    if (r < 0)
+    {
+        r += mod;
+    }
+    return (uint64_t)(r);
+}
+
+uint64_t cp_lib_mul_mod_signed(int64_t a, int64_t b, uint64_t mod)
+{
+    __int128_t product = (__int128_t)a * b;
+    __int128_t r = product % mod;
+    if (r < 0)
+    {
+        r += mod;
+    }
+    return (uint64_t)(r);
+}
+
 int64_t cp_lib_read_i64()
 {
     int64_t value;

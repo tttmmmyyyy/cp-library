@@ -2,10 +2,12 @@ module CPLib.Arithmetic.Test;
 
 import CPLib.Arithmetic;
 import BoolArray::BoolArray::@;
+import Random;
 
 test : IO ();
 test = (
     test_pmod;;
+    test_mod_arithmetic;;
     test_isqrt;;
     test_gcd;;
     test_ext_gcd;;
@@ -15,6 +17,7 @@ test = (
     test_prime_list;;
     test_miller_rabin_u64;;
     test_miller_rabin_u32;;
+    test_inv_gcd;;
 
     pure()
 );
@@ -22,9 +25,32 @@ test = (
 test_pmod : IO ();
 test_pmod = (
     assert_eq(|_|"pmod 1", 12.pmod(5), 2);;
-    assert_eq(|_|"pmod 2", -12.pmod(5), 3);;
-    assert_eq(|_|"pmod 3", 12.pmod(-5), 2);;
-    assert_eq(|_|"pmod 4", -12.pmod(-5), 3);;
+    assert_eq(|_|"pmod 4", -12.pmod(5), 3);;
+    assert_eq(|_|"pmod 5", 0.pmod(5), 0);;
+    assert_eq(|_|"pmod 6", I64::maximum.pmod(I64::maximum), 0);;
+    assert_eq(|_|"pmod 7", I64::minimum.pmod(I64::maximum), I64::maximum-1);;
+
+    pure()
+);
+
+test_mod_arithmetic : IO ();
+test_mod_arithmetic = (
+    assert_eq(|_|"add_mod 1", add_mod(I64::maximum, I64::maximum, I64::maximum), 0);;
+    assert_eq(|_|"add_mod 2", add_mod(I64::minimum, I64::minimum, I64::maximum), I64::maximum-2);;
+    assert_eq(|_|"add_mod 3", add_mod(I64::minimum, I64::maximum, I64::maximum), I64::maximum-1);;
+
+    assert_eq(|_|"sub_mod 1", sub_mod(I64::maximum, I64::maximum, I64::maximum), 0);;
+    assert_eq(|_|"sub_mod 2", sub_mod(I64::minimum, I64::minimum, I64::maximum), 0);;
+    assert_eq(|_|"sub_mod 3", sub_mod(I64::minimum, I64::maximum, I64::maximum), I64::maximum-1);;
+    assert_eq(|_|"sub_mod 4", sub_mod(I64::maximum, I64::minimum, I64::maximum), 1);;
+    assert_eq(|_|"sub_mod 5", sub_mod(I64::maximum, 0, I64::maximum), 0);;
+    assert_eq(|_|"sub_mod 6", sub_mod(0, I64::maximum, I64::maximum), 0);;
+    assert_eq(|_|"sub_mod 7", sub_mod(0, I64::minimum, I64::maximum), 1);;
+    assert_eq(|_|"sub_mod 8", sub_mod(I64::minimum, 0, I64::maximum), I64::maximum-1);;
+
+    assert_eq(|_|"mul_mod 1", mul_mod(I64::maximum, I64::maximum, I64::maximum), 0);;
+    assert_eq(|_|"mul_mod 2", mul_mod(I64::minimum, I64::minimum, I64::maximum), 1);;
+    assert_eq(|_|"mul_mod 3", mul_mod(I64::minimum, I64::maximum, I64::maximum), 0);;
 
     pure()
 );
@@ -209,5 +235,23 @@ test_miller_rabin_u32 = (
     );;
     assert_eq(|_|"2^31-1 is prime", is_prime_32(1_U32.shift_left(31_U32) - 1_U32), true);;
     assert_eq(|_|"2^29-1 is not prime", is_prime_32(1_U32.shift_left(29_U32) - 1_U32), false);;
+    pure()
+);
+
+test_inv_gcd : IO ();
+test_inv_gcd = (
+    let _N = 1e5;
+    let rng = Random::init_by_seed(0_U64);
+    range(0, _N).fold_m(rng, |_, rng|
+        let (rng, a) = rng.generate_U64;
+        let a = a.to_I64;
+        let (rng, b) = rng.generate_I64_nonneg;
+        let b = if b == I64::maximum { 1 } else { b + 1 };        // b >= 1 にする
+        let (g, x) = _inv_gcd(a, b);
+        assert_eq(|_|"[test_inv_gcd] g = gcd(a, b)", g, calc_gcd(a, b));;
+        assert_eq(|_|"[test_inv_gcd] xa = g (mod b)", mul_mod(x, a, b), g.pmod(b));;
+        assert(|_|"[test_inv_gcd] 0 <= x < b/g", 0 <= x && x < b / g);;
+        rng.pure
+    ).forget;;
     pure()
 );
