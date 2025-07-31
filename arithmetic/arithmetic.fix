@@ -297,7 +297,7 @@ _inv_gcd = |a, b| (
 // 
 // 解が存在しない場合は、`(0, 0)`を返します。
 // 
-// https://atcoder.github.io/ac-library/master/document_ja/math.html の`crt`と同様です。
+// 制約や計算量オーダーは https://atcoder.github.io/ac-library/master/document_ja/math.html の`crt`と同様です。
 // 
 // # Parameters
 // - `rs`: r(i)の配列
