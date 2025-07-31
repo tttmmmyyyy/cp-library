@@ -13,7 +13,7 @@
 * Mod Int
   * `CPLib.ZP` : 静的な（すなわち、コンパイル時に決まる）素数を法とする整数の剰余環（体）の演算を提供します。
 * 整数論
-  * `CPLib.ZP.Arithmetic` : GCD、拡張ユークリッドの互除法、pow_mod、inv_mod、素数リスト（篩）、素数判定（Miller-Rabin法）など。
+  * `CPLib.ZP.Arithmetic` : mod演算、GCD、拡張ユークリッドの互除法、pow_mod、inv_mod、中国剰余定理、素数リスト（篩）、素数判定（Miller-Rabin法）。
 * セグメント木
   * `CPLib.Segtree` : 静的にモノイド構造が決まる場合のセグメント木。
   * `CPLib.DSegtree` : 動的にモノイド構造が決まる場合のセグメント木。
@@ -22,7 +22,7 @@
 * Union-Find木
   * `CPLib.UnionFind` : Union-Find木の実装。
 * グラフ
-  * `CPLib.Graph` : グラフの表現と基本的なアルゴリズム。ダイクストラ法、連結成分分解、トポロジカルソートなど。
+  * `CPLib.Graph` : グラフの表現と基本的なアルゴリズム。ダイクストラ法、連結成分分解、トポロジカルソート。
 * トレイト
   * `CPLib.Trait` : モジュールを超えて使われる可能性があるトレイトの定義。Monoid, Actionなど。
 

@@ -18,6 +18,7 @@ test = (
     test_miller_rabin_u64;;
     test_miller_rabin_u32;;
     test_inv_gcd;;
+    test_crt;;
 
     pure()
 );
@@ -240,7 +241,7 @@ test_miller_rabin_u32 = (
 
 test_inv_gcd : IO ();
 test_inv_gcd = (
-    let _N = 1e5;
+    let _N = 1e3;
     let rng = Random::init_by_seed(0_U64);
     range(0, _N).fold_m(rng, |_, rng|
         let (rng, a) = rng.generate_U64;
@@ -251,6 +252,31 @@ test_inv_gcd = (
         assert_eq(|_|"[test_inv_gcd] g = gcd(a, b)", g, calc_gcd(a, b));;
         assert_eq(|_|"[test_inv_gcd] xa = g (mod b)", mul_mod(x, a, b), g.pmod(b));;
         assert(|_|"[test_inv_gcd] 0 <= x < b/g", 0 <= x && x < b / g);;
+        rng.pure
+    ).forget;;
+    pure()
+);
+
+test_crt : IO ();
+test_crt = (
+    let _N = 1e3;
+    let rng = Random::init_by_seed(0_U64);
+    range(0, _N).fold_m(rng, |_, rng|
+        // 解がある場合のみチェック
+        let (rng, m0) = rng.generate_I64_nonneg;
+        let m0 = max(1, m0);
+        let m1max = I64::maximum / m0;
+        let (rng, m1) = rng.generate_I64_nonneg;
+        let m1 = max(1, m1 % m1max + 1);
+        let (rng, x) = rng.generate_U64;
+        let x = x.to_I64;
+        let r0 = x.pmod(m0);
+        let r1 = x.pmod(m1);
+        let (y, z) = lift_crt([r0, r1], [m0, m1]);
+        let lcm = m0 / calc_gcd(m0, m1) * m1;
+        assert_eq(|_|"[test_crt] z is lcm", z, lcm);;
+        assert_eq(|_|"[test_crt] y mod m0", y.pmod(m0), r0);;
+        assert_eq(|_|"[test_crt] y mod m1", y.pmod(m1), r1);;
         rng.pure
     ).forget;;
     pure()

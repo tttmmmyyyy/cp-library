@@ -301,5 +301,37 @@ _inv_gcd = |a, b| (
 // 
 // # Parameters
 // - `rs`: r(i)の配列
-// - `ms`: m(i)の配列。r(i)と同じ長さ。
+// - `ms`: m(i) >= 1の配列。r(i)と同じ長さ。
 lift_crt : Array I64 -> Array I64 -> (I64, I64);
+lift_crt = |r, m| (
+    // if r.get_size != m.get_size { undefined("[lift_crt] `rs` and `ms` must have the same size") };
+    let n = r.get_size;
+    let r0 = 0; let m0 = 1;
+
+    range(0, n).loop_iter((r0, m0), |i, (r0, m0)|
+        // if m.@(i) <= 0 { undefined("[lift_crt] `ms.@(i)` must be positive") };
+        let r1 = r.@(i).pmod(m.@(i));
+        let m1 = m.@(i);
+        let (r0, r1, m0, m1) = if m0 < m1 {
+            (r1, r0, m1, m0)
+        } else {
+            (r0, r1, m0, m1)
+        };
+        if m0 % m1 == 0 {
+            if r0 % m1 != r1 {
+                break $ (0, 0)
+            };
+            continue $ (r0, m0)
+        };
+        let (g, im) = _inv_gcd(m0, m1);
+        let u1 = m1 / g;
+        if (r1 - r0) % g != 0 {
+            break $ (0, 0)
+        };
+        let x = (r1 - r0) / g % u1 * im % u1;
+        let r0 = r0 + x * m0;
+        let m0 = m0 * u1;
+        let r0 = r0 + if r0 < 0 { m0 } else { 0 };
+        continue $ (r0, m0)
+    )
+);
