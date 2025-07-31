@@ -264,14 +264,14 @@ test_crt = (
     range(0, _N).fold_m(rng, |_, rng|
         // 解がある場合のみチェック
         let (rng, m0) = rng.generate_I64_nonneg;
-        let m0 = max(1, m0);
-        let m1max = I64::maximum / m0;
+        let m0 = max(1, m0 % (I32::maximum.to_I64 - 1));
         let (rng, m1) = rng.generate_I64_nonneg;
-        let m1 = max(1, m1 % m1max + 1);
+        let m1 = max(1, m1 % (I32::maximum.to_I64 - 1));
         let (rng, x) = rng.generate_U64;
         let x = x.to_I64;
         let r0 = x.pmod(m0);
         let r1 = x.pmod(m1);
+        // "{} {} {} {}".populate([r0, r1, m0, m1].map(to_string)).println;;
         let (y, z) = lift_crt([r0, r1], [m0, m1]);
         let lcm = m0 / calc_gcd(m0, m1) * m1;
         assert_eq(|_|"[test_crt] z is lcm", z, lcm);;
