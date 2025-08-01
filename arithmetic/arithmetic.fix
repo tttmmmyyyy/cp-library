@@ -340,6 +340,8 @@ lift_crt = |r, m| (
 // 
 // https://cp-algorithms.com/algebra/primitive-root.html#algorithm-for-finding-a-primitive-root
 // 
+// 注意：現状、この関数はp-1の素因数分解を素朴なO(sqrt(p))の方法で行います。
+// 
 // # Parameters
 // - `p`: 素数
 calc_primitive_root : I64 -> I64;
