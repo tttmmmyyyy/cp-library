@@ -7,7 +7,7 @@
 // - `P17 : PrimeProvider`を実装する。この際`PrimeProvider::value`関数で17を返すようにする：`value = |_| 17_U32;`
 // すると`ZP P17`が環"Z/(17)"を表す型となる。
 //
-// `P100000007`、`P1000000009`, `P998244353` はこのモジュールに定義されている。
+// `P1000000007`、`P1000000009`, `P998244353` はこのモジュールに定義されている。
 // 
 // 使用例：
 // ```
@@ -31,6 +31,8 @@
 // );
 // ```
 module CPLib.ZP;
+
+import CPLib.Arithmetic;
 
 // 素数`p`を法とする整数の環
 type ZP p = struct { value : U32, prime : p };
@@ -123,6 +125,15 @@ namespace ZP {
         let p = x.@prime.value;
         if x.@value == 0_U32 { undefined("[ZP::inv] divide by zero!") };
         x.power(p.to_I64 - 2)
+    );
+
+    // 1の原子根を一つ得る
+    primitive_root : [p : PrimeProvider] ZP p;
+    primitive_root = (
+        let pp = PrimeProvider::create;
+        let p = pp.value;
+        let r = calc_primitive_root(p.to_I64);
+        ZP { value : r.to_U32, prime : pp }
     );
 }
 

@@ -335,3 +335,34 @@ lift_crt = |r, m| (
         continue $ (r0, m0)
     )
 );
+
+// 素数pの原始根r（1 <= r < p）を一つ求める。
+// 
+// https://cp-algorithms.com/algebra/primitive-root.html#algorithm-for-finding-a-primitive-root
+// 
+// # Parameters
+// - `p`: 素数
+calc_primitive_root : I64 -> I64;
+calc_primitive_root = |p| (
+    // 各 1 <= g <= p-1 ごとに、g が原子根であるかを調べる。
+    // 全ての φ(p) = p-1 の素因子qに対し g^(φ(p) / q) != 1 であるならば、gは原子根である。
+
+    let factors = loop((2, p-1, []), |(q, n, factors)|
+        if n == 1 { break $ factors };
+        if n % q != 0 { continue $ (q + 1, n, factors) };
+        let factors = factors.push_back(q);
+        let n = loop(n, |n|
+            if n % q != 0 { break $ n };
+            continue $ n / q
+        );
+        continue $ (q + 1, n, factors)
+    );
+
+    range(1, p).filter_map(|g|
+        let ok = factors.to_iter.check_all(|q|
+            let e = (p - 1) / q;
+            g.pow_mod(e, p) != 1
+        );
+        if ok { some(g) } else { none() }
+    ).get_first.as_some
+);

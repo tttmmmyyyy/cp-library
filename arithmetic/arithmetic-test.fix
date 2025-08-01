@@ -19,6 +19,7 @@ test = (
     test_miller_rabin_u32;;
     test_inv_gcd;;
     test_crt;;
+    test_calc_primitive_root;;
 
     pure()
 );
@@ -280,4 +281,14 @@ test_crt = (
         rng.pure
     ).forget;;
     pure()
+);
+
+test_calc_primitive_root : IO ();
+test_calc_primitive_root = (
+    [(2, 1), (3, 2), (5, 2), (7, 3), (11, 2), (13, 2), (17, 3), (19, 2), (1e9 + 7, 5), (998244353, 3)].to_iter.map(|(p, ans)|
+        let r = calc_primitive_root(p);
+        assert_eq(|_|"[test_calc_primitive_root] {}".populate([p.to_string]), r, ans)
+    ).collect_m;;
+    pure()
+
 );
