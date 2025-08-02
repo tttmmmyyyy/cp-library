@@ -120,17 +120,11 @@ pow_mod = |e, m, x| (
 // - `m`: 法 > 0
 pow_mod_u : U64 -> U64 -> U64 -> U64;
 pow_mod_u = |e, m, x| (
-    if e == 0_U64 { 1_U64 };
-    if e % 2_U64 == 0_U64 {
-        let half = x.pow_mod_u(e / 2_U64, m);
-        let hh = FFI_CALL[U64 cp_lib_mul_mod(U64, U64, U64), half, half, m];
-        hh
-    } else {
-        let half = x.pow_mod_u((e - 1_U64) / 2_U64, m);
-        let hh = FFI_CALL[U64 cp_lib_mul_mod(U64, U64, U64), half, half, m];
-        let xhh = FFI_CALL[U64 cp_lib_mul_mod(U64, U64, U64), x, hh, m];
-        xhh
-    }
+    loop((e, 1_U64, x), |(e, pow, x)|
+        if e == 0_U64 { break $ pow };
+        let pow = if e.bit_and(1_U64) == 1_U64 { FFI_CALL[U64 cp_lib_mul_mod(U64, U64, U64), pow, x, m] } else { pow };
+        continue $ (e.shift_right(1_U64), pow, FFI_CALL[U64 cp_lib_mul_mod(U64, U64, U64), x, x, m])
+    )
 );
 
 // `ax = 1 mod m`なる`x`のうち、`0 <= x < |m|`を満たすものを返す

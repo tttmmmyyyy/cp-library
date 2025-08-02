@@ -103,14 +103,11 @@ namespace ZP {
     // - `e` : `I64`型の指数
     _power_unsigned : [p : PrimeProvider] U64 -> ZP p -> ZP p;
     _power_unsigned = |e, x| (
-        if e == 0_U64 { ZP::make(1) };
-        if e % 2_U64 == 0_U64 {
-            let half = ZP::_power_unsigned(e / 2_U64, x);
-            half * half
-        } else {
-            let half = ZP::_power_unsigned((e - 1_U64) / 2_U64, x);
-            x * half * half
-        }
+        loop((e, ZP::make(1), x), |(e, pow, x)|
+            if e == 0_U64 { break $ pow };
+            let pow = if e.bit_and(1_U64) == 1_U64 { pow * x } else { pow };
+            continue $ (e.shift_right(1_U64), pow, x * x)
+        )
     );
 
 
