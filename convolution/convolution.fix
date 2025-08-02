@@ -57,9 +57,9 @@ fft_zp = |dir, x| (
     let (_, x) = range(1, n).fold((0, x), |i, (j, x)|
         // iをビット反転したものをjに設定
         // ループによりiが1増えているので、jには「上位ビット側から1を加える」
-        let bit = n.shift_left(1); 
+        let bit = n.shift_right(1); 
         let j = loop((bit, j), |(bit, j)|
-            if j.bit_and(bit) == 0 { break $ j.bit_xor(j) };
+            if j.bit_and(bit) == 0 { break $ j.bit_xor(bit) };
             let j = j.bit_xor(bit);
             let bit = bit.shift_right(1);
             continue $ (bit, j)
