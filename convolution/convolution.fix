@@ -78,7 +78,7 @@ fft_zp = |dir, x| (
                 let (x, u) = x._unsafe_get_linear(i+j);
                 let (x, v) = x._unsafe_get_linear(i+j+len/2);
                 let v = v * w;
-                let x = x._unsafe_set(i+j, u + v);
+                let x = x.set(i+j, u + v);
                 let x = x._unsafe_set(i+j+len/2, u - v);
                 (w * wlen, x)
             );
