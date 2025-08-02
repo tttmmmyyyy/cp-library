@@ -14,6 +14,7 @@ test : IO ();
 test = (
     test_basic;;
     test_power;;
+    test_primitive_root;;
 
     pure()
 );
@@ -117,5 +118,15 @@ test_power = (
         )
     );;
 
+    pure()
+);
+
+test_primitive_root : IO ();
+test_primitive_root = (
+    // コンパイルできることだけ確認する
+    let r = ZP::primitive_root : ZP P17;
+    assert_eq(|_|"test_zp_primitive_root",
+        r.@value, 3_U32
+    );;
     pure()
 );

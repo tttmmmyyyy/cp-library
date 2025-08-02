@@ -338,14 +338,10 @@ lift_crt = |r, m| (
 
 // 素数pの原始根r（1 <= r < p）を一つ求める。
 // 
-// https://cp-algorithms.com/algebra/primitive-root.html#algorithm-for-finding-a-primitive-root
-// 
-// 注意：現状、この関数はp-1の素因数分解を素朴なO(sqrt(p))の方法で行います。
-// 
 // # Parameters
 // - `p`: 素数
-calc_primitive_root : I64 -> I64;
-calc_primitive_root = |p| (
+_calc_primitive_root : I64 -> I64;
+_calc_primitive_root = |p| (
     // 各 1 <= g <= p-1 ごとに、g が原子根であるかを調べる。
     // 全ての φ(p) = p-1 の素因子qに対し g^(φ(p) / q) != 1 であるならば、gは原子根である。
 
@@ -367,4 +363,18 @@ calc_primitive_root = |p| (
         );
         if ok { some(g) } else { none() }
     ).get_first.as_some
+);
+
+// 素数pの原始根r（1 <= r < p）を一つ求める。
+// 
+// https://cp-algorithms.com/algebra/primitive-root.html#algorithm-for-finding-a-primitive-root
+// 
+// 注意：現状、この関数はp-1の素因数分解を素朴なO(sqrt(p))の方法で行います。
+// 
+// # Parameters
+// - `p`: 素数
+calc_primitive_root : I64 -> I64;
+calc_primitive_root = |p| (
+    if p == 1e9 + 7 { 5 } else if p == 998244353 { 3 };
+    p._calc_primitive_root
 );
