@@ -242,6 +242,8 @@ fft = |dir, x| (
     // 空配列はそのまま返す
     if x.get_size == 0 { x };
 
+    let x = x._unsafe_force_unique;
+
     // xの長さを2のべき乗にする
     let n = x.get_size;
     let pot = _calc_next_pot(n.to_U64).to_I64;
