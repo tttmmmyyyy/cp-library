@@ -38,5 +38,23 @@ test_zp = (
     let z = convolve_zp(x, y);
     assert_eq(|_|"[test_zp] case 7", z, x);;
 
+    // p = 998244353, 基本
+    let x = [ZP::make(1), ZP::make(2), ZP::make(3)] : Array (ZP P998244353);
+    let y = [ZP::make(4), ZP::make(5), ZP::make(6)] : Array (ZP P998244353);
+    let z = convolve_zp(x, y);
+    assert_eq(|_|"[test_zp] case 8", z.@(0), x.@(0) * y.@(0));;
+    assert_eq(|_|"[test_zp] case 9", z.@(1), x.@(0) * y.@(1) + x.@(1) * y.@(0));;
+    assert_eq(|_|"[test_zp] case 10", z.@(2), x.@(0) * y.@(2) + x.@(1) * y.@(1) + x.@(2) * y.@(0));;
+    assert_eq(|_|"[test_zp] case 11", z.@(3), x.@(1) * y.@(2) + x.@(2) * y.@(1));;
+    assert_eq(|_|"[test_zp] case 12", z.@(4), x.@(2) * y.@(2));;
+    assert_eq(|_|"[test_zp] case 13", z.get_size, x.get_size + y.get_size - 1);;
+
+    // p = 998244353, 長さギリギリ
+    let x = range(0, 1.shift_left(23)).map(ZP::make).to_array : Array (ZP P998244353);
+    let y = [ZP::make(1)];
+    let (z, time) = consumed_time_while_lazy(|_| convolve_zp(x, y));
+    assert_eq(|_|"[test_zp] case 14", z, x);;
+    ("time to convolve 2^23 elements: " + time.to_string).println;;
+
     pure()
 );
