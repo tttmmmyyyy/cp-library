@@ -1,6 +1,6 @@
 # CPLib.ZP
 
-Defined in cp-library@0.2.1
+Defined in cp-library@0.3.0
 
 素数`p`を法とする整数の環の型`ZP p`を与えるモジュール。
 
@@ -11,7 +11,7 @@ Defined in cp-library@0.2.1
 - `P17 : PrimeProvider`を実装する。この際`PrimeProvider::value`関数で17を返すようにする：`value = |_| 17_U32;`
 すると`ZP P17`が環"Z/(17)"を表す型となる。
 
-`P100000007`、`P1000000009`, `P998244353` はこのモジュールに定義されている。
+幾つかの有名な素数nに対する PrimeProvider `Pn` はこのモジュールに定義されている。
 
 使用例：
 ```
@@ -37,17 +37,20 @@ main = (
 
 ## Values
 
-### namespace CPLib.ZP::PrimeProvider
+### namespace CPLib.ZP
 
-#### create
+#### fft
 
-Type: `[p : CPLib.ZP::PrimeProvider] p`
+Type: `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::FFTDirection -> Std::Array (CPLib.ZP::ZP p) -> Std::Array (CPLib.ZP::ZP p)`
 
-#### value
+`ZP p`型の配列に対して高速フーリエ変換を行う
 
-Type: `[p : CPLib.ZP::PrimeProvider] p -> Std::U32`
+制約：2^c|(p-1)かつ|x| <= 2^cなるcが存在する
 
-### namespace CPLib.ZP::ZP
+##### Parameters
+
+- `dir` : FFTの方向（順方向か逆方向か）
+- `x` : `ZP p`型の配列
 
 #### inv
 
@@ -84,9 +87,39 @@ xが0かつeが負のときはプログラムを終了する。
 - `x` : `ZP p`型の数
 - `e` : `I64`型の指数
 
+#### primitive_root
+
+Type: `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::ZP p`
+
+1の原始根を一つ得る
+
+### namespace CPLib.ZP::PrimeProvider
+
+#### create
+
+Type: `[p : CPLib.ZP::PrimeProvider] p`
+
+#### value
+
+Type: `[p : CPLib.ZP::PrimeProvider] p -> Std::U32`
+
 ## Types and aliases
 
 ### namespace CPLib.ZP
+
+#### FFTDirection
+
+Defined as: `type FFTDirection = unbox union { ...variants... }`
+
+高速フーリエ変換の方向（順方向か逆方向か）を表す型
+
+##### variant `forward`
+
+Type: `()`
+
+##### variant `inverse`
+
+Type: `()`
 
 #### P1000000007
 
@@ -96,9 +129,29 @@ Defined as: `type P1000000007 = unbox struct { ...fields... }`
 
 Defined as: `type P1000000009 = unbox struct { ...fields... }`
 
+#### P167772161
+
+Defined as: `type P167772161 = unbox struct { ...fields... }`
+
+NTT-friendly prime (2^25 | p-1)
+
+#### P469762049
+
+Defined as: `type P469762049 = unbox struct { ...fields... }`
+
+NTT-friendly prime (2^26 | p-1)
+
+#### P754974721
+
+Defined as: `type P754974721 = unbox struct { ...fields... }`
+
+NTT-friendly prime (2^24 | p-1)
+
 #### P998244353
 
 Defined as: `type P998244353 = unbox struct { ...fields... }`
+
+NTT-friendly prime (2^23 | p-1)
 
 #### ZP
 
@@ -133,6 +186,12 @@ Type: `p -> Std::U32`
 ### impl `CPLib.ZP::P1000000007 : CPLib.ZP::PrimeProvider`
 
 ### impl `CPLib.ZP::P1000000009 : CPLib.ZP::PrimeProvider`
+
+### impl `CPLib.ZP::P167772161 : CPLib.ZP::PrimeProvider`
+
+### impl `CPLib.ZP::P469762049 : CPLib.ZP::PrimeProvider`
+
+### impl `CPLib.ZP::P754974721 : CPLib.ZP::PrimeProvider`
 
 ### impl `CPLib.ZP::P998244353 : CPLib.ZP::PrimeProvider`
 

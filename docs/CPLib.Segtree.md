@@ -1,6 +1,6 @@
 # CPLib.Segtree
 
-Defined in cp-library@0.2.1
+Defined in cp-library@0.3.0
 
 セグメント木の実装
 
@@ -29,9 +29,6 @@ assert_eq(|_|"", tree.fold(0, 3), make("abc"));;
 ```
 
 モノイド構造が動的に決まる場合は、モジュール`CPLib.DSegtree`を使用してください。
-
-謝辞：
-この実装にあたっては、[maspyさんの記事](https://maspypy.com/segment-tree-%E3%81%AE%E3%81%8A%E5%8B%89%E5%BC%B71) を参考にしました。良質な解説をありがとうございます。
 
 ## Values
 

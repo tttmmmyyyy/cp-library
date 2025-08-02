@@ -1,10 +1,22 @@
 # CPLib.Arithmetic
 
-Defined in cp-library@0.2.1
+Defined in cp-library@0.3.0
 
 ## Values
 
 ### namespace CPLib.Arithmetic
+
+#### add_mod
+
+Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::I64`
+
+`x + y`を`m`で割った余りを（非負で）返す
+
+##### Parameters
+
+- `x`: 整数
+- `y`: 整数
+- `m`: 除数 != 0
 
 #### calc_gcd
 
@@ -16,6 +28,20 @@ Type: `Std::I64 -> Std::I64 -> Std::I64`
 
 - `a`: 整数
 - `b`: 整数
+
+#### calc_primitive_root
+
+Type: `Std::I64 -> Std::I64`
+
+素数pの原始根r（1 <= r < p）を一つ求める。
+
+https://cp-algorithms.com/algebra/primitive-root.html#algorithm-for-finding-a-primitive-root
+
+注意：現状、この関数はp-1の素因数分解を素朴なO(sqrt(p))の方法で行います。
+
+##### Parameters
+
+- `p`: 素数
 
 #### create_prime_list
 
@@ -69,7 +95,7 @@ Type: `Std::I64 -> Std::I64 -> Std::I64`
 ##### Parameters
 
 - `a`: 整数
-- `m`: 法
+- `m`: 法 > 0
 
 #### is_prime
 
@@ -105,6 +131,35 @@ Type: `Std::U64 -> Std::U64`
 
 - `x`: 64ビット整数
 
+#### lift_crt
+
+Type: `Std::Array Std::I64 -> Std::Array Std::I64 -> (Std::I64, Std::I64)`
+
+連立合同方程式 P: x = r(i) (mod m(i)) を解きます。
+
+解が存在するときは P <=> x = y (mod z), z = lcm(m(i)) となるような (y, z) を返します。
+
+解が存在しない場合は、`(0, 0)`を返します。
+
+制約や計算量オーダーは https://atcoder.github.io/ac-library/master/document_ja/math.html の`crt`と同様です。
+
+##### Parameters
+
+- `rs`: r(i)の配列
+- `ms`: m(i) >= 1の配列。r(i)と同じ長さ。
+
+#### mul_mod
+
+Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::I64`
+
+`x * y`を`m`で割った余りを（非負で）返す
+
+##### Parameters
+
+- `x`: 整数
+- `y`: 整数
+- `m`: 除数 != 0
+
 #### pmod
 
 Type: `Std::I64 -> Std::I64 -> Std::I64`
@@ -115,7 +170,7 @@ C言語の%演算子とは異なり、負の数に対しても正の余りを返
 
 ##### Parameters
 
-- `m`: 除数
+- `m`: 除数 > 0
 - `x`: 被除数
 
 #### pow_mod
@@ -128,7 +183,7 @@ Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::I64`
 
 - `x`: 底
 - `e`: 指数 >= 0
-- `m`: 法
+- `m`: 法 > 0
 
 #### pow_mod_u
 
@@ -141,6 +196,18 @@ Type: `Std::U64 -> Std::U64 -> Std::U64 -> Std::U64`
 - `x`: 底 >= 0
 - `e`: 指数 >= 0
 - `m`: 法 > 0
+
+#### sub_mod
+
+Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::I64`
+
+`x - y`を`m`で割った余りを（非負で）返す
+
+##### Parameters
+
+- `x`: 整数
+- `y`: 整数
+- `m`: 除数 != 0
 
 ## Types and aliases
 

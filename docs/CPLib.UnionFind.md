@@ -1,6 +1,6 @@
 # CPLib.UnionFind
 
-Defined in cp-library@0.2.1
+Defined in cp-library@0.3.0
 
 ## Values
 

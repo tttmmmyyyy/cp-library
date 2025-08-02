@@ -1,6 +1,6 @@
 # CPLib.LSegtree
 
-Defined in cp-library@0.2.1
+Defined in cp-library@0.3.0
 
 遅延伝番セグメント木（右作用）
 
@@ -49,9 +49,6 @@ main = (
     pure()
 );
 ```
-
-謝辞：
-この実装にあたっては、[maspyさんの記事](https://maspypy.com/segment-tree-%e3%81%ae%e3%81%8a%e5%8b%89%e5%bc%b72) を参考にしました。良質な解説をありがとうございます。
 
 ## Values
 

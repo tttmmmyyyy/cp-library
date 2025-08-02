@@ -1,14 +1,11 @@
 # CPLib.DSegtree
 
-Defined in cp-library@0.2.1
+Defined in cp-library@0.3.0
 
 モノイド構造が動的に決まる際に使えるセグメント木。
 
 コンストラクタでモノイド（unitおよびop）を指定する点以外は、`CPLib.Segtree`と同じです。
 モノイド構造が静的に決まる場合は`CPLib.Segtree`の方が高速です。
-
-謝辞：
-この実装にあたっては、[maspyさんの記事](https://maspypy.com/segment-tree-%E3%81%AE%E3%81%8A%E5%8B%89%E5%BC%B71) を参考にしました。良質な解説をありがとうございます。
 
 ## Values
 
