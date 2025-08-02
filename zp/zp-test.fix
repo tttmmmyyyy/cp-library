@@ -15,6 +15,7 @@ test = (
     test_basic;;
     test_power;;
     test_primitive_root;;
+    test_fft_immutability;;
 
     pure()
 );
@@ -128,5 +129,18 @@ test_primitive_root = (
     assert_eq(|_|"test_zp_primitive_root",
         r.@value, 3_U32
     );;
+    pure()
+);
+
+test_fft_immutability : IO ();
+test_fft_immutability = (
+    // ZPのFFTが不変であることを確認する
+    let x = [1, 2, 3, 4].map(make) : Array (ZP P17);
+    let y = x.fft(forward());
+    assert_eq(|_|"test_fft_immutability",
+        x.get_size, y.get_size
+    );;
+    assert_eq(|_|"test_fft_immutability",
+        x, [1, 2, 3, 4].map(make));;
     pure()
 );

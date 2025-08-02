@@ -85,6 +85,6 @@ convolve_i64 = |a, b| (
         let diff = if diff < 0 { diff + _M1.to_I64 } else { diff };
 
         let x = x - offset.@(diff % 5);
-        c.set(i, x.to_I64)
+        c._unsafe_set(i, x.to_I64)
     )
 );
