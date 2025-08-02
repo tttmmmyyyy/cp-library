@@ -270,7 +270,7 @@ fft = |dir, x| (
             continue $ (bit, j)
         );
         
-        let x = if i < j { x._unsafe_swap(i, j) } else { x };
+        let x = if i < j { x.swap(i, j) } else { x };
         (j, x)
     );
 
@@ -289,11 +289,11 @@ fft = |dir, x| (
         let x = range_step(0, n, len).fold(x, |i, x|
             let w = ZP::make(1);
             let (_w, x) = range(0, len / 2).fold((w, x), |j, (w, x)|
-                let (x, u) = x._unsafe_get_linear(i+j);
-                let (x, v) = x._unsafe_get_linear(i+j+len/2);
+                let u = x.@(i+j);
+                let v = x.@(i+j+len/2);
                 let v = v * w;
                 let x = x.set(i+j, u + v);
-                let x = x._unsafe_set(i+j+len/2, u - v);
+                let x = x.set(i+j+len/2, u - v);
                 (w * wlen, x)
             );
             x

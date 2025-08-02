@@ -28,7 +28,7 @@ convolve_zp = |x, y| (
     let y = y.ZP::fft(forward());
 
     // xとyの各要素を掛け合わせる
-    let x = range(0, pot).fold(x, |i, x| x._unsafe_set(i, x.@(i) * y.@(i)));
+    let x = range(0, pot).fold(x, |i, x| x.set(i, x.@(i) * y.@(i)));
 
     // 逆変換を行う
     let x = x.ZP::fft(inverse());
