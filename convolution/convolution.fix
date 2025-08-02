@@ -51,7 +51,7 @@ fft_zp = |dir, x| (
     if two_k < n { undefined("[fft_zp] p - 1 is not enough for the size of x.") };
     let c = pm1 / two_k;
     let w = ZP::primitive_root._power_unsigned(c.to_U64);
-    let w = match dir { forward => w, inverse => w.inv };
+    let w = match dir { forward() => w, inverse() => w.inv };
 
     // bit-reversal permutation
     let (_, x) = range(1, n).fold((0, x), |i, (j, x)|
@@ -89,8 +89,8 @@ fft_zp = |dir, x| (
 
     // 逆変換の場合は、nで割る
     match dir {
-        forward => x,
-        inverse => (
+        forward() => x,
+        inverse() => (
             let ni = ZP::make(n).inv;
             x.map(|v| v * ni)
         )
