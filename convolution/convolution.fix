@@ -44,13 +44,13 @@ fft_zp = |dir, x| (
     let x = range(n, pot).fold(x, |i, x| x.push_back(ZP::make(0)));
     let n = pot;
 
-    // p - 1 = 2^k * c (c: 奇数) と分解し、2^k >= n であることを確認し、利用する1の2^k乗根を計算する。
+    // p - 1 = 2^k * c (c: 奇数) と分解し、2^k >= n であることを確認し、1のn乗根wを計算する
     let p = x.@(0).@prime.value.to_I64;
     let pm1 = p - 1;
     let two_k = pm1.bit_and(-pm1);
     if two_k < n { undefined("[fft_zp] p - 1 is not enough for the size of x.") };
-    let c = pm1 / two_k;
-    let w = ZP::primitive_root._power_unsigned(c.to_U64);
+    let d = pm1 / n;
+    let w = ZP::primitive_root._power_unsigned(d.to_U64);
     let w = match dir { forward() => w, inverse() => w.inv };
 
     // bit-reversal permutation
@@ -69,9 +69,18 @@ fft_zp = |dir, x| (
         (j, x)
     );
 
-    let x = loop((2, x), |(len, x)|
+    // 2 <= len <= n（lenは2のべき））の範囲で、1のlen乗根を計算しておく（逆順）。
+    let wlens = loop((n, Array::empty(32), w), |(len, wlens, w)|
+        if len == 1 { break $ wlens };
+        let wlens = wlens.push_back(w);
+        let w = w * w;
+        continue $ (len.shift_right(1), wlens, w)
+    );
+
+    let x = loop((1, x), |(log_len, x)|
+        let len = 1.shift_left(log_len);
         if len > n { break $ x };
-        let wlen = w._power_unsigned(two_k.to_U64 / len.to_U64); // 1のlen乗根
+        let wlen = wlens.@(wlens.get_size - log_len); // 1のlen乗根
         let x = range_step(0, n, len).fold(x, |i, x|
             let w = ZP::make(1);
             let (_w, x) = range(0, len / 2).fold((w, x), |j, (w, x)|
@@ -84,7 +93,7 @@ fft_zp = |dir, x| (
             );
             x
         );
-        continue $ (len * 2, x)
+        continue $ (log_len + 1, x)
     );
 
     // 逆変換の場合は、nで割る
