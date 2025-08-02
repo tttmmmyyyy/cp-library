@@ -127,7 +127,7 @@ namespace ZP {
         x.power(p.to_I64 - 2)
     );
 
-    // 1の原子根を一つ得る
+    // 1の原始根を一つ得る
     primitive_root : [p : PrimeProvider] ZP p;
     primitive_root = (
         let pp = PrimeProvider::create;

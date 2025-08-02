@@ -1,0 +1,132 @@
+module CPLib.Convolution;
+
+import CPLib.ZP;
+
+// 与えられた64ビット整数と等しいかより大きい最小の2のべき乗を計算する
+// 
+// # Parameters
+// - `x`: 64ビット整数
+_calc_next_pot : U64 -> U64;
+_calc_next_pot = |n| (
+    if n <= 1_U64 { 1_U64 };
+    let n = n - 1_U64;
+    let n = n.bit_or(n.shift_right(1_U64));
+    let n = n.bit_or(n.shift_right(2_U64));
+    let n = n.bit_or(n.shift_right(4_U64));
+    let n = n.bit_or(n.shift_right(8_U64));
+    let n = n.bit_or(n.shift_right(16_U64));
+    let n = n.bit_or(n.shift_right(32_U64));
+    n + 1_U64
+);
+
+// 高速フーリエ変換の方向（順方向か逆方向か）を表す型
+type FFTDirction = union {
+    forward : (),
+    inverse : (),
+};
+
+// `ZP p`型の配列に対して高速フーリエ変換を行う
+//
+// 制約：2^c|(p-1)かつ|x| <= 2^cなるcが存在する
+//
+// # Parameters
+// - `dir` : FFTの方向（順方向か逆方向か）
+// - `x` : `ZP p`型の配列
+fft_zp : [p : PrimeProvider] FFTDirction -> Array (ZP p) -> Array (ZP p);
+fft_zp = |dir, x| (
+    // 空配列はそのまま返す
+    if x.get_size == 0 { x };
+
+    // xの長さを2のべき乗にする
+    let n = x.get_size;
+    let pot = _calc_next_pot(n.to_U64).to_I64;
+    let x = x.reserve(pot);
+    let x = range(n, pot).fold(x, |i, x| x.push_back(ZP::make(0)));
+    let n = pot;
+
+    // p - 1 = 2^k * c (c: 奇数) と分解し、2^k >= n であることを確認し、利用する1の2^k乗根を計算する。
+    let p = x.@(0).@prime.value.to_I64;
+    let pm1 = p - 1;
+    let two_k = pm1.bit_and(-pm1);
+    if two_k < n { undefined("[fft_zp] p - 1 is not enough for the size of x.") };
+    let c = pm1 / two_k;
+    let w = ZP::primitive_root._power_unsigned(c.to_U64);
+    let w = match dir { forward => w, inverse => w.inv };
+
+    // bit-reversal permutation
+    let (_, x) = range(1, n).fold((0, x), |i, (j, x)|
+        // iをビット反転したものをjに設定
+        // ループによりiが1増えているので、jには「上位ビット側から1を加える」
+        let bit = n.shift_left(1); 
+        let j = loop((bit, j), |(bit, j)|
+            if j.bit_and(bit) == 0 { break $ j.bit_xor(j) };
+            let j = j.bit_xor(bit);
+            let bit = bit.shift_right(1);
+            continue $ (bit, j)
+        );
+        
+        let x = if i < j { x._unsafe_swap(i, j) } else { x };
+        (j, x)
+    );
+
+    let x = loop((2, x), |(len, x)|
+        if len > n { break $ x };
+        let wlen = w._power_unsigned(two_k.to_U64 / len.to_U64); // 1のlen乗根
+        let x = range_step(0, n, len).fold(x, |i, x|
+            let w = ZP::make(1);
+            let (_w, x) = range(0, len / 2).fold((w, x), |j, (w, x)|
+                let (x, u) = x._unsafe_get_linear(i+j);
+                let (x, v) = x._unsafe_get_linear(i+j+len/2);
+                let v = v * w;
+                let x = x._unsafe_set(i+j, u + v);
+                let x = x._unsafe_set(i+j+len/2, u - v);
+                (w * wlen, x)
+            );
+            x
+        );
+        continue $ (len * 2, x)
+    );
+
+    // 逆変換の場合は、nで割る
+    match dir {
+        forward => x,
+        inverse => (
+            let ni = ZP::make(n).inv;
+            x.map(|v| v * ni)
+        )
+    }
+);
+
+// 2つの配列の畳み込みを計算する
+// 
+// 結果は、要素数が`|a| + |b| - 1`の配列になります。
+//
+// 制約：2^c|(p-1)かつ|a| + |b| - 1 <= 2^cなるcが存在する
+// 
+// # Parameters
+// - `a` : 畳み込みの左辺の配列
+// - `b` : 畳み込みの右辺の配列
+convolve_zp : [p : PrimeProvider] Array (ZP p) -> Array (ZP p) -> Array (ZP p);
+convolve_zp = |x, y| (
+    if x.get_size == 0 || y.get_size == 0 { [] };
+
+    // xとyの長さを同じ2のべき乗にする
+    let n = x.get_size + y.get_size - 1;
+    let pot = _calc_next_pot(n.to_U64).to_I64;
+    let x = x.reserve(pot);
+    let x = range(x.get_size, pot).fold(x, |i, x| x.push_back(ZP::make(0)));
+    let y = y.reserve(pot);
+    let y = range(y.get_size, pot).fold(y, |i, y| y.push_back(ZP::make(0)));
+
+    let x = x.fft_zp(forward());
+    let y = y.fft_zp(forward());
+
+    // xとyの各要素を掛け合わせる
+    let x = range(0, pot).fold(x, |i, x| x._unsafe_set(i, x.@(i) * y.@(i)));
+
+    // 逆変換を行う
+    let x = x.fft_zp(inverse());
+
+    // サイズを元に戻す
+    x.truncate(n)
+);

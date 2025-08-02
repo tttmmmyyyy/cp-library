@@ -29,6 +29,7 @@ files = [
     "trait/trait.fix",
     "unionfind/unionfind.fix",
     "graph/graph.fix",
+    "convolution/convolution.fix",
 ]
 objects = ["lib.o"]
 preliminary_commands = [["make", "-s", "lib.o"]]
@@ -45,6 +46,7 @@ files = [
     "segtree/ldsegtree-test.fix",
     "unionfind/unionfind-test.fix",
     "graph/graph-test.fix",
+    "convolution/convolution-test.fix",
 ]
 
 

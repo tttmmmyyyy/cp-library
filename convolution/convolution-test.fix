@@ -1,0 +1,35 @@
+module CPLib.Convolution.Test;
+
+import CPLib.Convolution;
+import CPLib.ZP;
+import CPLib.Arithmetic;
+
+type P17 = unbox struct {};
+
+impl P17 : PrimeProvider {
+    create = P17 {};
+    value = |p| 17_U32;
+}
+
+
+test : IO ();
+test = (
+    test_zp;;
+    // test_i64;;
+    pure()
+);
+
+test_zp : IO ();
+test_zp = (
+    // p = 17, 基本
+    let x = [ZP::make(1), ZP::make(2), ZP::make(3)] : Array (ZP P17);
+    let y = [ZP::make(4), ZP::make(5), ZP::make(6)] : Array (ZP P17);
+    let z = convolve_zp(x, y);
+    assert_eq(|_|"[test_zp] case 1", z.@(0), x.@(0) * y.@(0));;
+    assert_eq(|_|"[test_zp] case 2", z.@(1), x.@(0) * y.@(1) + x.@(1) * y.@(0));;
+    assert_eq(|_|"[test_zp] case 3", z.@(2), x.@(0) * y.@(2) + x.@(1) * y.@(1) + x.@(2) * y.@(0));;
+    assert_eq(|_|"[test_zp] case 4", z.@(3), x.@(1) * y.@(2) + x.@(2) * y.@(1));;
+    assert_eq(|_|"[test_zp] case 5", z.@(4), x.@(2) * y.@(2));;
+
+    pure()
+);
