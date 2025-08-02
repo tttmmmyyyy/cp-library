@@ -20,7 +20,7 @@ _calc_next_pot = |n| (
 );
 
 // 高速フーリエ変換の方向（順方向か逆方向か）を表す型
-type FFTDirction = union {
+type FFTDirection = union {
     forward : (),
     inverse : (),
 };
@@ -32,7 +32,7 @@ type FFTDirction = union {
 // # Parameters
 // - `dir` : FFTの方向（順方向か逆方向か）
 // - `x` : `ZP p`型の配列
-fft_zp : [p : PrimeProvider] FFTDirction -> Array (ZP p) -> Array (ZP p);
+fft_zp : [p : PrimeProvider] FFTDirection -> Array (ZP p) -> Array (ZP p);
 fft_zp = |dir, x| (
     // 空配列はそのまま返す
     if x.get_size == 0 { x };
