@@ -11,11 +11,10 @@ impl P17 : PrimeProvider {
     value = |p| 17_U32;
 }
 
-
 test : IO ();
 test = (
     test_zp;;
-    // test_i64;;
+    test_i64;;
     pure()
 );
 
@@ -55,6 +54,32 @@ test_zp = (
     let (z, time) = consumed_time_while_lazy(|_| convolve_zp(x, y));
     assert_eq(|_|"[test_zp] case 14", z, x);;
     ("time to convolve 2^23 elements: " + time.to_string).println;;
+
+    pure()
+);
+
+test_i64 : IO ();
+test_i64 = (
+    // 基本
+    let x = [1, 2, 3];
+    let y = [4, 5, 6];
+    let z = convolve_i64(x, y);
+    assert_eq(|_|"[test_i64] case 1", z.@(0), x.@(0) * y.@(0));;
+    assert_eq(|_|"[test_i64] case 2", z.@(1), x.@(0) * y.@(1) + x.@(1) * y.@(0));;
+    assert_eq(|_|"[test_i64] case 3", z.@(2), x.@(0) * y.@(2) + x.@(1) * y.@(1) + x.@(2) * y.@(0));;
+    assert_eq(|_|"[test_i64] case 4", z.@(3), x.@(1) * y.@(2) + x.@(2) * y.@(1));;
+    assert_eq(|_|"[test_i64] case 5", z.@(4), x.@(2) * y.@(2));;
+    assert_eq(|_|"[test_i64] case 6", z.get_size, x.get_size + y.get_size - 1);;
+
+    // オーバーフローのテスト
+    let x = [I64::maximum, I64::minimum];
+    let y = [1, 1, 1];
+    let z = convolve_i64(x, y);
+    assert_eq(|_|"[test_i64] case 7", z.@(0), x.@(0) * y.@(0));;
+    assert_eq(|_|"[test_i64] case 8", z.@(1), x.@(0) * y.@(1) + x.@(1) * y.@(0));;
+    assert_eq(|_|"[test_i64] case 9", z.@(2), x.@(0) * y.@(2) + x.@(1) * y.@(1));;
+    assert_eq(|_|"[test_i64] case 10", z.@(3), x.@(1) * y.@(2));;
+    assert_eq(|_|"[test_i64] case 11", z.get_size, x.get_size + y.get_size - 1);;
 
     pure()
 );

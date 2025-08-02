@@ -7,7 +7,7 @@
 // - `P17 : PrimeProvider`を実装する。この際`PrimeProvider::value`関数で17を返すようにする：`value = |_| 17_U32;`
 // すると`ZP P17`が環"Z/(17)"を表す型となる。
 //
-// `P1000000007`、`P1000000009`, `P998244353` はこのモジュールに定義されている。
+// 幾つかの有名な素数nに対する PrimeProvider `Pn` はこのモジュールに定義されている。
 // 
 // 使用例：
 // ```
@@ -56,11 +56,36 @@ impl P1000000009 : PrimeProvider {
     value = |p| 1000000009_U32;
 }
 
+// NTT-friendly prime (2^23 | p-1)
 type P998244353 = unbox struct {};
 
 impl P998244353 : PrimeProvider {
     create = P998244353 {};
     value = |p| 998244353_U32;
+}
+
+// NTT-friendly prime (2^24 | p-1)
+type P754974721 = unbox struct {};
+
+impl P754974721 : PrimeProvider {
+    create = P754974721 {};
+    value = |p| 754974721_U32;
+}
+
+// NTT-friendly prime (2^25 | p-1)
+type P167772161 = unbox struct {};
+
+impl P167772161 : PrimeProvider {
+    create = P167772161 {};
+    value = |p| 167772161_U32;
+}
+
+// NTT-friendly prime (2^26 | p-1)
+type P469762049 = unbox struct {};
+
+impl P469762049 : PrimeProvider {
+    create = P469762049 {};
+    value = |p| 469762049_U32;
 }
 
 // `I64`から素数を作成する

@@ -255,7 +255,7 @@ is_prime_32 = |n| (
 );
 
 // @param b `1 <= b`
-// @return pair(g, x) s.t. g = gcd(a, b), xa = g (mod b), 0 <= x < b/g
+// @return pair (g, x) s.t. g = gcd(a, b), xa = g (mod b), 0 <= x < b/g
 // 
 // https://github.com/atcoder/ac-library/blob/master/atcoder/internal_math.hpp#L107
 _inv_gcd : I64 -> I64 -> (I64, I64);
@@ -369,6 +369,10 @@ _calc_primitive_root = |p| (
 // - `p`: 素数
 calc_primitive_root : I64 -> I64;
 calc_primitive_root = |p| (
-    if p == 1e9 + 7 { 5 } else if p == 998244353 { 3 };
+    if p == 1e9 + 7 { 5 };
+    if p == 998244353 { 3 };
+    if p == 754974721 { 11 };
+    if p == 167772161 { 3 };
+    if p == 469762049 { 3 };
     p._calc_primitive_root
 );
