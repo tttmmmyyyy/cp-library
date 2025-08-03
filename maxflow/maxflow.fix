@@ -178,7 +178,9 @@ namespace DinicState {
                     let self = self.mod_level(set(e.@to, self.@level.@(v) + 1));
                     let queue = queue.push_back(e.@to); // キューに追加
                     (self, queue)
-                } else { (self, queue) }
+                } else { 
+                    (self, queue)
+                }
             )
         )
     );
