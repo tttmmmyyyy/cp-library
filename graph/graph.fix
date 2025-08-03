@@ -14,14 +14,14 @@ type Graph c = struct {
 type Edge c = struct {
     // 終点の頂点番号
     to : I64,
-    // 辺の重み
-    cost : c
+    // 辺のデータ
+    data : c
 };
 
 namespace Edge {
     // 辺を作成する
     make : I64 -> c -> Edge c;
-    make = |to, cost| Edge { to : to, cost : cost };
+    make = |to, data| Edge { to : to, data : data };
 }
 
 // 離散的なグラフを作成する
@@ -103,7 +103,7 @@ dijkstra = |start, inf, graph| (
 
         // See all the neighbors of the node.
         let edges = graph.@edges.@(node);
-        continue $ edges.to_iter.loop_iter((dists, visit_list), |Edge { to : to, cost : cost}, (dists, visit_list)|
+        continue $ edges.to_iter.loop_iter((dists, visit_list), |Edge { to : to, data : cost}, (dists, visit_list)|
             // If the path using the current edge is not better than the previous one, skip.
             let new_dist = dist + cost;
             if !(new_dist < dists.@(to)) { continue $ (dists, visit_list) };
@@ -139,7 +139,7 @@ compute_sccs = |g| (
     // 反転グラフを作成
     let rg = Graph::create(g.get_size) : Graph (); // コストは不要なのでユニット型を使用
     let rg = range(0, g.get_size).fold(rg, |from, rg|
-        g.@edges.@(from).to_iter.fold(rg, |Edge { to : to, cost : _ }, rg|
+        g.@edges.@(from).to_iter.fold(rg, |Edge { to : to, data : _ }, rg|
             rg.add_edge(to, from, ())
         )
     );
@@ -163,7 +163,7 @@ compute_sccs = |g| (
 _scc_dfs1 : I64 -> Array Bool -> Array I64 -> Graph c -> (Array Bool, Array I64);
 _scc_dfs1 = |node, visited, stack, g| (
     let visited = visited.set(node, true);
-    let (visited, stack) = g.@edges.@(node).to_iter.loop_iter((visited, stack), |Edge { to : to, cost : _ }, (visited, stack)| (
+    let (visited, stack) = g.@edges.@(node).to_iter.loop_iter((visited, stack), |Edge { to : to, data : _ }, (visited, stack)| (
         if visited.@(to) { continue $ (visited, stack) };
         continue $ g._scc_dfs1(to, visited, stack)
     ));
@@ -176,7 +176,7 @@ _scc_dfs2 : I64 -> Array Bool -> Array I64 -> Graph c -> (Array Bool, Array I64)
 _scc_dfs2 = |node, visited, scc, g| (
     let visited = visited.set(node, true);
     let scc = scc.push_back(node);
-    g.@edges.@(node).to_iter.loop_iter((visited, scc), |Edge { to : to, cost : _ }, (visited, scc)| (
+    g.@edges.@(node).to_iter.loop_iter((visited, scc), |Edge { to : to, data : _ }, (visited, scc)| (
         if visited.@(to) { continue $ (visited, scc) };
         continue $ g._scc_dfs2(to, visited, scc)
     ))
