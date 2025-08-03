@@ -12,6 +12,7 @@ import CPLib.Graph.Test;
 import CPLib.Convolution.Test;
 import CPLib.MaxFlow.Test;
 import CPLib.Bipartite.Test;
+import CPLib.TwoSat.Test;
 
 test : IO ();
 test = (
@@ -27,6 +28,7 @@ test = (
     CPLib.Convolution.Test::test;;
     CPLib.MaxFlow.Test::test;;
     CPLib.Bipartite.Test::test;;
+    CPLib.TwoSat.Test::test;;
 
     pure()
 );

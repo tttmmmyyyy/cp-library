@@ -1,0 +1,80 @@
+module CPLib.TwoSat;
+
+import CPLib.Graph;
+
+// 2-SAT問題の型
+type TwoSat = struct {
+    // 変数の数
+    n : I64,
+    // グラフ
+    graph : Graph (),
+};
+
+// 2-SAT問題を作る
+//
+// # Parameters
+// - `n` : 変数の数
+create : I64 -> TwoSat;
+create = |n| (
+    TwoSat { n : n, graph : Graph::create(n * 2) }
+);
+
+// 節 (a = f) or (b = g) を追加する
+//
+// # Parameters
+// - `a` : 変数1のインデックス
+// - `f` : 変数1の値（true/false）
+// - `b` : 変数2のインデックス
+// - `g` : 変数2の値（true/false）
+// - `sat` : 2-SAT問題
+add_clause : I64 -> Bool -> I64 -> Bool -> TwoSat -> TwoSat;
+add_clause = |a, f, b, g, sat| (
+    let n = sat.@n;
+    let a = if !f { a._not(n) } else { a };
+    let b = if !g { b._not(n) } else { b };
+    sat.mod_graph(|graph|
+        graph.add_edge(a._not(n), b, ()).add_edge(b._not(n), a, ())
+    )
+);
+
+// 2-SAT問題を解く
+// 
+// # Returns
+// 充足不能な場合は`none()`。充足可能な場合は`some(arr)`を返す。`arr.@(i)`は各リテラルの真偽値を表す。
+//
+// # Parameters
+// - `sat` : 2-SAT問題
+solve : TwoSat -> Option (Array Bool);
+solve = |sat| (
+    let n = sat.@n;
+    let sccs = sat.@graph.calc_sccs;
+    // 各リテラルのSCCグループインデックスを取得
+    let scc_idx = Array::fill(2 * n, 0);
+    let scc_idx = range(0, sccs.get_size).fold(scc_idx, |i, scc_idx|
+        let scc = sccs.@(i);
+        scc.to_iter.fold(scc_idx, |v, scc_idx| scc_idx.set(v, i))
+    );
+    // 答えを構成する
+    let sol = Array::fill(n, false);
+    match range(0, n).loop_iter_s(sol, |i, sol|
+        let a = i;
+        let b = a._not(n);
+        if scc_idx.@(a) == scc_idx.@(b) {
+            // 充足不能
+            break $ none()
+        };
+        // aが属するSCCのインデックスが大きい方をtrueとする
+        continue $ sol.set(i, scc_idx.@(a) > scc_idx.@(b))
+    ) {
+        break(sol) => sol,
+        continue(sol) => some(sol)
+    }
+);
+
+// リテラルを否定する
+// 
+// # Parameters
+// - `n` : 変数の数
+// - `x` : 変数のインデックス
+_not : I64 -> I64 -> I64;
+_not = |n, x| if x < n { x + n } else { x - n };

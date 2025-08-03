@@ -32,6 +32,7 @@ files = [
     "convolution/convolution.fix",
     "maxflow/maxflow.fix",
     "bipartite/bipartite.fix",
+    "twosat/twosat.fix",
 ]
 objects = ["lib.o"]
 preliminary_commands = [["make", "-s", "lib.o"]]
@@ -51,6 +52,7 @@ files = [
     "convolution/convolution-test.fix",
     "maxflow/maxflow-test.fix",
     "bipartite/bipartite-test.fix",
+    "twosat/twosat-test.fix",
 ]
 
 

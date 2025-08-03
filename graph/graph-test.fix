@@ -90,7 +90,7 @@ test_scc_basic = (
     // {8} -> {9}
     let graph = graph.add_edge(8, 9, ());
 
-    let sccs = graph.compute_sccs;
+    let sccs = graph.calc_sccs;
     // 順序は保証されないのでソートして比較
     let sccs = sccs.map(|scc| scc.sort_by(|(lhs, rhs)| lhs < rhs));
 
@@ -103,7 +103,7 @@ test_scc_basic = (
 test_scc_empty : IO ();
 test_scc_empty = (
     let graph = Graph::create(0) : Graph ();
-    let sccs = graph.compute_sccs;
+    let sccs = graph.calc_sccs;
     assert_eq(|_|"test_scc_empty", sccs, []);;
     pure()
 );
@@ -116,7 +116,7 @@ test_scc_self_loop = (
     let graph = graph.add_edge(2, 2, ());
     let graph = graph.add_edge(0, 1, ());
     let graph = graph.add_edge(1, 2, ());
-    let sccs = graph.compute_sccs;
+    let sccs = graph.calc_sccs;
     assert_eq(|_|"test_scc_self_loop", sccs, [[0], [1], [2]]);;
     pure()
 );
@@ -128,7 +128,7 @@ test_scc_multiple_edges = (
     let graph = graph.add_edge(0, 1, ()); // 重複
     let graph = graph.add_edge(1, 2, ());
     let graph = graph.add_edge(2, 0, ());
-    let sccs = graph.compute_sccs;
+    let sccs = graph.calc_sccs;
     let sccs = sccs.map(|scc| scc.sort_by(|(lhs, rhs)| lhs < rhs)); // 順序は保証されないのでソートして比較
     assert_eq(|_|"test_scc_multiple_edges", sccs, [[0, 1, 2]]);;
     pure()

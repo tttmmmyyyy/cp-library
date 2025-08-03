@@ -124,8 +124,8 @@ dijkstra = |start, inf, graph| (
 //
 // # Parameters
 // - `g` : グラフ
-compute_sccs : Graph c -> Array (Array I64);
-compute_sccs = |g| (
+calc_sccs : Graph c -> Array (Array I64);
+calc_sccs = |g| (
     if g.get_size == 0 { [] };
 
     // DFSして、各頂点の訪問完了順にスタックに積む。

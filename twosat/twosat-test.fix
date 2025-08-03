@@ -1,0 +1,12 @@
+module CPLib.TwoSat.Test;
+
+test : IO ();
+test = (
+    test_basic;;
+    pure()
+);
+
+test_basic : IO ();
+test_basic = (
+    pure()
+);
