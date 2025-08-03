@@ -47,7 +47,22 @@ Type: `CPLib.Bipartite::BipartiteGraphFlow -> Std::Array Std::Bool`
 
 ##### Returns
 
-第i番目に追加した辺がマッチングに含まれる場合は`true`、含まれない場合は`false`とする配
+第i番目に追加した辺がマッチングに含まれる場合は`true`、含まれない場合は`false`とする配列
+
+##### Parameters
+
+- `max_flow` : 二部グラフの最大フロー
+
+#### get_min_vertex_cover
+
+Type: `CPLib.Bipartite::BipartiteGraphFlow -> (Std::Array Std::Bool, Std::Array Std::Bool)`
+
+二部グラフの最小点被覆を取得する
+
+##### Returns
+
+左側の頂点の被覆と右側の頂点の被覆をそれぞれ`Array Bool`として返す。
+ある頂点が被覆に含まれる場合は`true`、含まれない場合は`false`となる配列が返される。
 
 ##### Parameters
 
