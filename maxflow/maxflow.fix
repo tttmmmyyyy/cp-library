@@ -90,6 +90,30 @@ namespace MaxFlowGraph {
         (ds.@graph, flow)
     );
 
+    // 最小カットを取得する
+    // 
+    // 先に`maximize_flow`を呼び出しておく必要がある。
+    // 
+    // `s`から到達可能な頂点を`true`、到達不可能な頂点を`false`とする配列を返す。
+    // 
+    // # Parameters
+    // - `graph` : グラフ
+    // - `s` : 開始頂点番号
+    // - `t` : 終了頂点番号
+    get_min_cut : [c : CapacityLike] I64 -> MaxFlowGraph c -> Array Bool;
+    get_min_cut = |s, g| (
+        let ds = DinicState {
+            graph : g,
+            s : s,
+            t : -1, // 使われない
+            level : [],
+            iter : [],
+            queue : some $ RingBuffer::create([]),
+        };
+        let ds = ds.bfs;
+        ds.@level.map(|l| l >= 0)
+    );
+
     // ある辺にフローを流す
     // 
     // # Parameters

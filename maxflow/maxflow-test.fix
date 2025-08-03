@@ -27,5 +27,7 @@ test_basic = (
     assert_eq(|_|"", graph.get_flow(eid4), 5);;
     assert_eq(|_|"", graph.get_flow(eid5), 0);;
     assert_eq(|_|"", graph.get_flow(eid6), 6);;
+    let min_cut = graph.get_min_cut(0);
+    assert_eq(|_|"", min_cut, [true, true, true, false, false]);;
     pure()
 );
