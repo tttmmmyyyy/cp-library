@@ -158,7 +158,7 @@ namespace DinicState {
         let self = self.reset_level;
         // `self.@queue`を`none()`とスワップ
         let (queue, self) = self.act_queue(|q| (q, none()));
-        let queue = queue.as_some : RingBuffer I64;
+        let queue = queue.as_some;
         // 開始地点を訪問
         let self = self.mod_level(set(self.@s, 0));
         let queue = queue.push_back(self.@s);
