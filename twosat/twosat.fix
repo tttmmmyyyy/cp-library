@@ -15,9 +15,7 @@ type TwoSat = struct {
 // # Parameters
 // - `n` : 変数の数
 create : I64 -> TwoSat;
-create = |n| (
-    TwoSat { n : n, graph : Graph::create(n * 2) }
-);
+create = |n| TwoSat { n : n, graph : Graph::create(n * 2) };
 
 // 節 (a = f) or (b = g) を追加する
 //

@@ -1,5 +1,7 @@
 module CPLib.TwoSat.Test;
 
+import CPLib.TwoSat;
+
 test : IO ();
 test = (
     test_basic;;
@@ -8,5 +10,25 @@ test = (
 
 test_basic : IO ();
 test_basic = (
+    // https://drken1215.hatenablog.com/entry/2023/05/07/001800
+    let problem = TwoSat::create(4);
+    let problem = problem.add_clause(0, false, 1, true); // 0 -> 1
+    let problem = problem.add_clause(0, true, 2, false); // -0 -> -2
+    let problem = problem.add_clause(0, true, 3, false); // -0 -> -3
+    let problem = problem.add_clause(1, false, 2, false); // 1 -> -2
+    let problem = problem.add_clause(1, true, 0, false); // -1 -> -0
+    let problem = problem.add_clause(1, true, 3, true); // -1 -> 3
+    let problem = problem.add_clause(2, false, 0, true); // 2 -> 0
+    let problem = problem.add_clause(2, false, 1, false); // 2 -> -1
+    let problem = problem.add_clause(2, true, 3, false); // -2 -> -3
+    let problem = problem.add_clause(3, false, 0, true); // 3 -> 0
+    let problem = problem.add_clause(3, false, 2, true); // 3 -> 2
+    let problem = problem.add_clause(3, true, 1, true); // -3 -> 1
+    let sol = problem.solve;
+    assert_eq(|_|"[2sat test_basic]", sol.as_some, [true, true, false, false]);;
+
+    let problem = problem.add_clause(1, false, 3, true); // 1 -> 3
+    let sol = problem.solve;
+    assert(|_|"[2sat test_basic]", sol.is_none);;
     pure()
 );
