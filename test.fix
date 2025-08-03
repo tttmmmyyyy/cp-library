@@ -11,6 +11,7 @@ import CPLib.UnionFind.Test;
 import CPLib.Graph.Test;
 import CPLib.Convolution.Test;
 import CPLib.MaxFlow.Test;
+import CPLib.Bipartite.Test;
 
 test : IO ();
 test = (
@@ -25,6 +26,7 @@ test = (
     CPLib.Graph.Test::test;;
     CPLib.Convolution.Test::test;;
     CPLib.MaxFlow.Test::test;;
+    CPLib.Bipartite.Test::test;;
 
     pure()
 );
