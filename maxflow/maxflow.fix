@@ -1,3 +1,4 @@
+//　最大フロー問題、最小カット問題
 module CPLib.MaxFlow;
 
 import CPLib.Graph;
@@ -8,7 +9,7 @@ import RingBuffer;
 // これに加えて「最大値」が必要となる。
 trait CapacityLike = Additive + Neg + LessThan + Eq;
 
-// 最大フロー問題を解くためのグラフの型
+// 最大フロー問題のグラフの型
 // 
 // 型パラメータ`c`は容量の型です。
 type MaxFlowGraph c = struct {
@@ -16,22 +17,39 @@ type MaxFlowGraph c = struct {
     graph : Graph (c, I64, c),
     // 容量の型`c`の最大値
     max_cap : c,
+    // 開始地点
+    s : I64,
+    // 終了地点
+    t : I64,
+    // レベル。残余グラフ上での開始地点から任意の地点への距離。到達できない場合は-1。
+    level : Array I64,
+    // DFSにおいて次に調べる辺のインデックス
+    iter : Array I64,
+    // BFSで用いるキュー
+    queue : Option (RingBuffer I64),
 };
 
 // 辺の識別子の型
 type EdgeId = (I64, I64); // (始点インデックス, 辺インデックス)
 
 namespace MaxFlowGraph {
-    // 離散的なグラフを作成する
+    // グラフを作成する
     // 
     // # Parameters
     // - `n` : 頂点数
-    // - `inf_cap` : 容量の型`c`の最大値
-    create : I64 -> c -> MaxFlowGraph c;
-    create = |n, max_cap| (
+    // - `s` : 開始頂点番号
+    // - `t` : 終了頂点番号
+    // - `max_cap` : 容量の型`c`の最大値
+    create : I64 -> I64 -> I64 -> c -> MaxFlowGraph c;
+    create = |n, s, t, max_cap| (
         MaxFlowGraph { 
             graph : Graph::create(n),
-            max_cap : max_cap
+            max_cap : max_cap,
+            s : s,
+            t : t,
+            level : [],
+            iter : [],
+            queue : some $ RingBuffer::create([])
         }
     );
 
@@ -73,22 +91,9 @@ namespace MaxFlowGraph {
     // 残余グラフと流されたフローの量を返す。
     //
     // # Parameters
-    // - `s` : 開始頂点番号
-    // - `t` : 終了頂点番号
     // - `graph` : グラフ
-    maximize_flow : [c : CapacityLike] I64 -> I64 -> MaxFlowGraph c -> (MaxFlowGraph c, c);
-    maximize_flow = |s, t, g| (
-        let ds = DinicState {
-            graph : g,
-            s : s,
-            t : t,
-            level : [],
-            iter : [],
-            queue : some $ RingBuffer::create([]),
-        };
-        let (ds, flow) = ds.solve;
-        (ds.@graph, flow)
-    );
+    maximize_flow : [c : CapacityLike] MaxFlowGraph c -> (MaxFlowGraph c, c);
+    maximize_flow = |graph| graph.Dinic::solve;
 
     // 最小カットを取得する
     // 
@@ -96,23 +101,12 @@ namespace MaxFlowGraph {
     // 
     // `s`から到達可能な頂点を`true`、到達不可能な頂点を`false`とする配列を返す。
     // 
+    // 注：最小カットにおいて除去される辺の容量の和は`maximize_flow`で得られたフローの量に等しい。
+    // 
     // # Parameters
     // - `graph` : グラフ
-    // - `s` : 開始頂点番号
-    // - `t` : 終了頂点番号
-    get_min_cut : [c : CapacityLike] I64 -> MaxFlowGraph c -> Array Bool;
-    get_min_cut = |s, g| (
-        let ds = DinicState {
-            graph : g,
-            s : s,
-            t : -1, // 使われない
-            level : [],
-            iter : [],
-            queue : some $ RingBuffer::create([]),
-        };
-        let ds = ds.bfs;
-        ds.@level.map(|l| l >= 0)
-    );
+    get_min_cut : [c : CapacityLike] MaxFlowGraph c -> Array Bool;
+    get_min_cut = |g| g.@level.map(|l| l >= 0);
 
     // ある辺にフローを流す
     // 
@@ -130,25 +124,10 @@ namespace MaxFlowGraph {
     );
 }
 
-// Dinic法で用いる状態を表す型
-type DinicState c = struct {
-    // グラフ
-    graph : MaxFlowGraph c,
-    // 開始地点
-    s : I64,
-    // 終了地点
-    t : I64,
-    // レベル。残余グラフ上での開始地点から任意の地点への距離。到達できない場合は-1。
-    level : Array I64,
-    // DFSにおいて次に調べる辺のインデックス
-    iter : Array I64,
-    // BFSで用いるキュー
-    queue : Option (RingBuffer I64),
-};
-
-namespace DinicState {
+// Dinicアルゴリズム
+namespace Dinic {
     // 最大フローを求める
-    solve : [c : CapacityLike] DinicState c -> (DinicState c, c);
+    solve : [c : CapacityLike] MaxFlowGraph c -> (MaxFlowGraph c, c);
     solve = |self| (
         let flow = zero; 
         loop((self, flow), |(self, flow)|
@@ -161,7 +140,7 @@ namespace DinicState {
             // DFSを繰り返す
             let self = self.reset_iter;
             continue $ loop((self, flow), |(self, flow)|
-                let (self, f) = self.dfs(self.@s, self.@graph.@max_cap);
+                let (self, f) = self.dfs(self.@s, self.@max_cap);
                 if f == zero { break $ (self, flow) };
                 let flow = flow + f;
                 continue $ (self, flow)
@@ -170,9 +149,9 @@ namespace DinicState {
     );
 
     // `iter`をすべて0にリセットする。
-    reset_iter : DinicState c -> DinicState c;
+    reset_iter : MaxFlowGraph c -> MaxFlowGraph c;
     reset_iter = |self| (
-        let n = self.@graph.@graph.get_size;
+        let n = self.@graph.get_size;
         if self.@iter.get_size != n {
             self.set_iter(Array::fill(n, 0))
         } else {
@@ -181,9 +160,9 @@ namespace DinicState {
     );
 
     // `level`をすべて-1にリセットする。
-    reset_level : DinicState c -> DinicState c;
+    reset_level : MaxFlowGraph c -> MaxFlowGraph c;
     reset_level = |self| (
-        let n = self.@graph.@graph.get_size;
+        let n = self.@graph.get_size;
         if self.@level.get_size != n {
             self.set_level(Array::fill(n, -1))
         } else {
@@ -192,7 +171,7 @@ namespace DinicState {
     );
 
     // 残余グラフ上でBFSしてレベルを更新する
-    bfs : [c : CapacityLike] DinicState c -> DinicState c;
+    bfs : [c : CapacityLike] MaxFlowGraph c -> MaxFlowGraph c;
     bfs = |self| (
         // レベルを初期化
         let self = self.reset_level;
@@ -211,7 +190,7 @@ namespace DinicState {
                 break $ self.set_queue(some $ queue)
             };
             let v = v.as_some;
-            let v_edges = self.@graph.@graph.@edges.@(v);
+            let v_edges = self.@graph.@edges.@(v);
             continue $ v_edges.to_iter.fold((self, queue), |e, (self, queue)|
                 if e.@data.@0 > zero && self.@level.@(e.@to) < 0 {
                     // 残余容量があるかつ未訪問なら、`e.@to`を訪問
@@ -234,12 +213,12 @@ namespace DinicState {
     // # Parameters
     // - `v` : 現在の頂点
     // - `f` : 流してよいフローの量
-    dfs : [c : CapacityLike] I64 -> c -> DinicState c -> (DinicState c, c);
+    dfs : [c : CapacityLike] I64 -> c -> MaxFlowGraph c -> (MaxFlowGraph c, c);
     dfs = |v, f, self| (
         // 終了地点に到達したら終了
         if v == self.@t { (self, f) };
         // 未探索の残余グラフの辺に沿ってループ
-        let v_edges = self.@graph.@graph.@edges.@(v);
+        let v_edges = self.@graph.@edges.@(v);
         match range(self.@iter.@(v), v_edges.get_size).loop_iter_s(self, |i, self|
             let self = self.mod_iter(set(v, i));
             let e = v_edges.@(i);
@@ -254,7 +233,7 @@ namespace DinicState {
                 continue $ self
             };
             // 残余グラフを更新する
-            let self = self.mod_graph(_add_flow(v, i, d));
+            let self = self._add_flow(v, i, d);
             break $ (self, d)
         ) {
             break(self_f) => (

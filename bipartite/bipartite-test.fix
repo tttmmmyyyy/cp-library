@@ -1,0 +1,23 @@
+module CPLib.Bipartite.Test;
+
+import CPLib.Bipartite;
+
+test : IO ();
+test = (
+    test_max_matching;;
+    pure()
+);
+
+test_max_matching : IO ();
+test_max_matching = (
+    let bg = BipartiteGraph::create(3, 3);
+    let bg = bg.add_edge(0, 0);
+    let bg = bg.add_edge(0, 1);
+    let bg = bg.add_edge(1, 0);
+    let bg = bg.add_edge(1, 2);
+    let bg = bg.add_edge(2, 1);
+    let matching = bg.maximize_flow.get_max_matching;
+    assert_eq(|_|"", matching.to_iter.filter(|b|b).get_size, 3);;
+    assert_eq(|_|"", matching, [true, false, false, true, true]);;
+    pure()
+);
