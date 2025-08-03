@@ -18,75 +18,77 @@ type MaxFlowGraph c = struct {
     max_cap : c,
 };
 
-// 離散的なグラフを作成する
-// 
-// # Parameters
-// - `n` : 頂点数
-// - `inf_cap` : 容量の型`c`の最大値
-create : I64 -> c -> MaxFlowGraph c;
-create = |n, max_cap| (
-    MaxFlowGraph { 
-        graph : Graph::create(n),
-        max_cap : max_cap
-    }
-);
+namespace MaxFlowGraph {
+    // 離散的なグラフを作成する
+    // 
+    // # Parameters
+    // - `n` : 頂点数
+    // - `inf_cap` : 容量の型`c`の最大値
+    create : I64 -> c -> MaxFlowGraph c;
+    create = |n, max_cap| (
+        MaxFlowGraph { 
+            graph : Graph::create(n),
+            max_cap : max_cap
+        }
+    );
 
-// グラフに辺を追加する
-// 
-// # Parameters
-// - `graph` : グラフ
-// - `from` : 始点の頂点番号
-// - `to` : 終点の頂点番号
-// - `cap` : 辺の容量
-add_edge : [c : CapacityLike] I64 -> I64 -> c -> MaxFlowGraph c -> MaxFlowGraph c;
-add_edge = |from, to, cap, g| (
-    let n_to_edges = g.@graph.@edges.@(to).get_size;
-    let data = (cap, n_to_edges); // 次に`to`に追加される予定の辺のインデックス
-    let g = g.(mod_graph $ add_edge(from, to, data));
+    // グラフに辺を追加する
+    // 
+    // # Parameters
+    // - `graph` : グラフ
+    // - `from` : 始点の頂点番号
+    // - `to` : 終点の頂点番号
+    // - `cap` : 辺の容量
+    add_edge : [c : CapacityLike] I64 -> I64 -> c -> MaxFlowGraph c -> MaxFlowGraph c;
+    add_edge = |from, to, cap, g| (
+        let n_to_edges = g.@graph.@edges.@(to).get_size;
+        let data = (cap, n_to_edges); // 次に`to`に追加される予定の辺のインデックス
+        let g = g.(mod_graph $ add_edge(from, to, data));
 
-    let n_from_edges = g.@graph.@edges.@(from).get_size;
-    let data = (zero, n_from_edges - 1); // 先ほど`from`に追加した辺のインデックス
-    let g = g.(mod_graph $ add_edge(from, to, data));
+        let n_from_edges = g.@graph.@edges.@(from).get_size;
+        let data = (zero, n_from_edges - 1); // 先ほど`from`に追加した辺のインデックス
+        let g = g.(mod_graph $ add_edge(from, to, data));
 
-    g
-);
+        g
+    );
 
-// 最大フローを計算する
-// 
-// 残余グラフと流されたフローの量を返す。
-//
-// # Parameters
-// - `s` : 開始頂点番号
-// - `t` : 終了頂点番号
-// - `graph` : グラフ
-calc_max_flow : [c : CapacityLike] I64 -> I64 -> MaxFlowGraph c -> (MaxFlowGraph c, c);
-calc_max_flow = |s, t, g| (
-    let ds = DinicState {
-        graph : g,
-        s : s,
-        t : t,
-        level : [],
-        iter : [],
-        queue : some $ RingBuffer::create([]),
-    };
-    let (ds, flow) = ds.solve;
-    (ds.@graph, flow)
-);
+    // 最大フローを計算する
+    // 
+    // 残余グラフと流されたフローの量を返す。
+    //
+    // # Parameters
+    // - `s` : 開始頂点番号
+    // - `t` : 終了頂点番号
+    // - `graph` : グラフ
+    calc_max_flow : [c : CapacityLike] I64 -> I64 -> MaxFlowGraph c -> (MaxFlowGraph c, c);
+    calc_max_flow = |s, t, g| (
+        let ds = DinicState {
+            graph : g,
+            s : s,
+            t : t,
+            level : [],
+            iter : [],
+            queue : some $ RingBuffer::create([]),
+        };
+        let (ds, flow) = ds.solve;
+        (ds.@graph, flow)
+    );
 
-// ある辺にフローを流す
-// 
-// # Parameters
-// - `v` : 始点の頂点番号
-// - `e` : 辺のインデックス
-// - `f` : 流すフローの量
-// - `graph` : グラフ
-_add_flow : [c : CapacityLike] I64 -> I64 -> c -> MaxFlowGraph c -> MaxFlowGraph c;
-_add_flow = |v, e, f, g| (
-    let (rv, re) = g.@graph.@edges.@(v).@(e).|e| (e.@to, e.@data.@1); // 逆辺の(v, e)
-    let g = g.(mod_graph $ mod_edges $ mod(v) $ mod(e) $ mod_data $ mod_0 $ add(-f));
-    let g = g.(mod_graph $ mod_edges $ mod(rv) $ mod(re) $ mod_data $ mod_0 $ add(f));
-    g
-);
+    // ある辺にフローを流す
+    // 
+    // # Parameters
+    // - `v` : 始点の頂点番号
+    // - `e` : 辺のインデックス
+    // - `f` : 流すフローの量
+    // - `graph` : グラフ
+    _add_flow : [c : CapacityLike] I64 -> I64 -> c -> MaxFlowGraph c -> MaxFlowGraph c;
+    _add_flow = |v, e, f, g| (
+        let (rv, re) = g.@graph.@edges.@(v).@(e).|e| (e.@to, e.@data.@1); // 逆辺の(v, e)
+        let g = g.(mod_graph $ mod_edges $ mod(v) $ mod(e) $ mod_data $ mod_0 $ add(-f));
+        let g = g.(mod_graph $ mod_edges $ mod(rv) $ mod(re) $ mod_data $ mod_0 $ add(f));
+        g
+    );
+}
 
 // Dinic法で用いる状態を表す型
 type DinicState c = struct {
@@ -96,7 +98,7 @@ type DinicState c = struct {
     s : I64,
     // 終了地点
     t : I64,
-    // レベル。残余グラフ上での開始地点から終了地点への距離。到達できない場合は-1。
+    // レベル。残余グラフ上での開始地点から任意の地点への距離。到達できない場合は-1。
     level : Array I64,
     // DFSにおいて次に調べる辺のインデックス
     iter : Array I64,
@@ -155,7 +157,7 @@ namespace DinicState {
         // レベルを初期化
         let self = self.reset_level;
         // `self.@queue`を`none()`とスワップ
-        let (queue, self) = self.act_queue(|q| (none(), q));
+        let (queue, self) = self.act_queue(|q| (q, none()));
         let queue = queue.as_some : RingBuffer I64;
         // 開始地点を訪問
         let self = self.mod_level(set(self.@s, 0));

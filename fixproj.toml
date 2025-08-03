@@ -48,6 +48,7 @@ files = [
     "unionfind/unionfind-test.fix",
     "graph/graph-test.fix",
     "convolution/convolution-test.fix",
+    "maxflow/maxflow-test.fix",
 ]
 
 

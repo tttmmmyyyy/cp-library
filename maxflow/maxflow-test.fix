@@ -1,0 +1,24 @@
+module CPLib.MaxFlow.Test;
+
+import CPLib.MaxFlow;
+
+test : IO ();
+test = (
+    test_basic;;
+    pure()
+);
+
+test_basic : IO ();
+test_basic = (
+    let graph = MaxFlowGraph::create(5, I64::maximum);
+    let graph = graph.add_edge(0, 1, 10)
+                     .add_edge(0, 2, 2)
+                     .add_edge(1, 2, 6)
+                     .add_edge(1, 3, 6)
+                     .add_edge(2, 4, 5)
+                     .add_edge(3, 2, 4)
+                     .add_edge(3, 4, 8);
+    let (residual, flow) = graph.calc_max_flow(0, 4);
+    assert_eq(|_|"", flow, 11);;
+    pure()
+);

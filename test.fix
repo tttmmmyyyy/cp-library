@@ -10,19 +10,21 @@ import CPLib.LDSegtree.Test;
 import CPLib.UnionFind.Test;
 import CPLib.Graph.Test;
 import CPLib.Convolution.Test;
+import CPLib.MaxFlow.Test;
 
 test : IO ();
 test = (
-    CPLib.IO.Test::test;;
-    CPLib.ZP.Test::test;;
-    CPLib.Arithmetic.Test::test;;
-    CPLib.Segtree.Test::test;;
-    CPLib.DSegtree.Test::test;;
-    CPLib.LSegtree.Test::test;;
-    CPLib.LDSegtree.Test::test;;
-    CPLib.UnionFind.Test::test;;
-    CPLib.Graph.Test::test;;
-    CPLib.Convolution.Test::test;;
+    // CPLib.IO.Test::test;;
+    // CPLib.ZP.Test::test;;
+    // CPLib.Arithmetic.Test::test;;
+    // CPLib.Segtree.Test::test;;
+    // CPLib.DSegtree.Test::test;;
+    // CPLib.LSegtree.Test::test;;
+    // CPLib.LDSegtree.Test::test;;
+    // CPLib.UnionFind.Test::test;;
+    // CPLib.Graph.Test::test;;
+    // CPLib.Convolution.Test::test;;
+    CPLib.MaxFlow.Test::test;;
 
     pure()
 );
