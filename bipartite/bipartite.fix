@@ -78,6 +78,48 @@ namespace BipartiteGraphFlow {
     get_max_matching : BipartiteGraphFlow -> Array Bool;
     get_max_matching = |flow| flow.@edge_ids.map(|eid| flow.@max_flow.get_flow(eid) > 0);
 
+    // 二部グラフの最小辺カバーを取得する
+    //
+    // # 制約
+    // 二部グラフに孤立点がない
+    //
+    // # Returns
+    // 第i番目に追加した辺がカバーに含まれる場合は`true`、含まれない場合は`false`とする配列
+    //
+    // # Parameters
+    // - `max_flow` : 二部グラフの最大フロー
+    get_min_edge_cover : BipartiteGraphFlow -> Array Bool;
+    get_min_edge_cover = |flow| (
+        let edge_n = flow.@graph.@edges.get_size;
+        let matching = flow.get_max_matching;
+        let l_cov = Array::fill(flow.@graph.@left_size, false);
+        let r_cov = Array::fill(flow.@graph.@right_size, false);
+        // 最大マッチングにカバーされている点を`l_cov`と`r_cov`に反映
+        let (l_cov, r_cov) = matching.to_iter.zip(count_up(0)).fold((l_cov, r_cov), |(matched, ei), (l_cov, r_cov)|
+            if !matched { (l_cov, r_cov) };
+            let (left_v, right_v) = flow.@graph.@edges.@(ei);
+            let l_cov = l_cov.set(left_v, true);
+            let r_cov = r_cov.set(right_v, true);
+            (l_cov, r_cov)
+        );
+        // 最大マッチングから初めて、まだカバーしていない点をカバーできる辺を追加していく。
+        let min_cov = matching;
+        let (min_cov, l_cov, r_cov) = range(0, edge_n).fold((min_cov, l_cov, r_cov), |ei, (min_cov, l_cov, r_cov)|
+            let (left_v, right_v) = flow.@graph.@edges.@(ei);
+            if matching.@(ei) {
+                (min_cov, l_cov, r_cov)
+            };
+            if l_cov.@(left_v) && r_cov.@(right_v) {
+                (min_cov, l_cov, r_cov)
+            };
+            let min_cov = min_cov.set(ei, true);
+            let l_cov = l_cov.set(left_v, true);
+            let r_cov = r_cov.set(right_v, true);
+            (min_cov, l_cov, r_cov)
+        );
+        min_cov
+    );
+
     // 二部グラフの最小点被覆を取得する
     //
     // # Returns
@@ -92,5 +134,21 @@ namespace BipartiteGraphFlow {
         let left_cover = range(0, flow.@graph.@left_size).map(|i| !min_cut.@(i)).to_array;
         let right_cover = range(0, flow.@graph.@right_size).map(|i| min_cut.@(flow.@graph.@left_size + i)).to_array;
         (left_cover, right_cover)
+    );
+
+    // 二部グラフの最大孤立集合（最大安定集合）を取得する
+    // 
+    // # Returns
+    // 左側の頂点の被覆と右側の頂点の被覆をそれぞれ`Array Bool`として返す。
+    // ある頂点が被覆に含まれる場合は`true`、含まれない場合は`false`となる配列が返される。
+    // 
+    // # Parameters
+    // - `max_flow` : 二部グラフの最大フロー
+    get_max_indep_set : BipartiteGraphFlow -> (Array Bool, Array Bool);
+    get_max_indep_set = |flow| (
+        let (left_cover, right_cover) = flow.get_min_vertex_cover;
+        let left_stable = left_cover.map(|x| !x);
+        let right_stable = right_cover.map(|x| !x);
+        (left_stable, right_stable)
     );
 }

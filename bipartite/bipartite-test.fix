@@ -6,6 +6,8 @@ test : IO ();
 test = (
     test_max_matching;;
     test_min_vertex_cover;;
+    test_max_indep_set;;
+    test_min_edge_cover;;
     pure()
 );
 
@@ -13,6 +15,7 @@ test_max_matching : IO ();
 test_max_matching = (
     // https://atcoder.jp/contests/language-test-202505/submissions/68182984
     
+    // 例1 蟻本
     let bg = BipartiteGraph::create(3, 3);
     let bg = bg.add_edge(0, 0);
     let bg = bg.add_edge(0, 1);
@@ -22,11 +25,43 @@ test_max_matching = (
     let matching = bg.maximize_flow.get_max_matching;
     assert_eq(|_|"", matching.to_iter.filter(|b|b).get_size, 3);;
     assert_eq(|_|"", matching, [true, false, false, true, true]);;
+
+    // 例2
+    // https://www.slideshare.net/slideshow/ss-86894312/86894312
+    let bg = BipartiteGraph::create(6, 6);
+    let bg = bg.add_edge(0, 0);
+    let bg = bg.add_edge(1, 1);
+    let bg = bg.add_edge(1, 3);
+    let bg = bg.add_edge(1, 4);
+    let bg = bg.add_edge(2, 5);
+    let bg = bg.add_edge(3, 2);
+    let bg = bg.add_edge(4, 2);
+    let bg = bg.add_edge(5, 5);
+    let matching = bg.maximize_flow.get_max_matching;
+    assert_eq(|_|"", matching, [true, true, false, false, true, true, false, false]);;
+
+    // 例2
+    // https://www.slideshare.net/slideshow/ss-86894312/86894312 の最小辺カバー
+    let bg = BipartiteGraph::create(6, 6);
+    let bg = bg.add_edge(0, 0);
+    let bg = bg.add_edge(0, 1);
+    let bg = bg.add_edge(1, 1);
+    let bg = bg.add_edge(1, 3);
+    let bg = bg.add_edge(1, 4);
+    let bg = bg.add_edge(2, 2);
+    let bg = bg.add_edge(2, 5);
+    let bg = bg.add_edge(3, 2);
+    let bg = bg.add_edge(4, 2);
+    let bg = bg.add_edge(4, 3);
+    let bg = bg.add_edge(5, 5);
+    let matching = bg.maximize_flow.get_max_matching;
+    assert_eq(|_|"", matching, [true, false, true, false, false, true, false, false, false, true, true]);;
     pure()
 );
 
 test_min_vertex_cover : IO ();
 test_min_vertex_cover = (
+    // 例1
     let bg = BipartiteGraph::create(3, 3);
     let bg = bg.add_edge(0, 0);
     let bg = bg.add_edge(0, 1);
@@ -35,5 +70,75 @@ test_min_vertex_cover = (
     let (left_cover, right_cover) = bg.maximize_flow.get_min_vertex_cover;
     assert_eq(|_|"", left_cover, [true, false, false]);;
     assert_eq(|_|"", right_cover, [false, false, true]);;
+
+    // 例2
+    // https://www.slideshare.net/slideshow/ss-86894312/86894312
+    let bg = BipartiteGraph::create(6, 6);
+    let bg = bg.add_edge(0, 0);
+    let bg = bg.add_edge(1, 1);
+    let bg = bg.add_edge(1, 3);
+    let bg = bg.add_edge(1, 4);
+    let bg = bg.add_edge(2, 5);
+    let bg = bg.add_edge(3, 2);
+    let bg = bg.add_edge(4, 2);
+    let bg = bg.add_edge(5, 5);
+    let (left_cover, right_cover) = bg.maximize_flow.get_min_vertex_cover;
+    assert_eq(|_|"", left_cover, [true, true, false, false, false, false]);;
+    assert_eq(|_|"", right_cover, [false, false, true, false, false, true]);;
+    pure()
+);
+
+test_max_indep_set : IO ();
+test_max_indep_set = (
+    // 例1
+    // https://www.slideshare.net/slideshow/ss-86894312/86894312
+    let bg = BipartiteGraph::create(6, 6);
+    let bg = bg.add_edge(0, 0);
+    let bg = bg.add_edge(1, 1);
+    let bg = bg.add_edge(1, 3);
+    let bg = bg.add_edge(1, 4);
+    let bg = bg.add_edge(2, 5);
+    let bg = bg.add_edge(3, 2);
+    let bg = bg.add_edge(4, 2);
+    let bg = bg.add_edge(5, 5);
+    let (left_set, right_set) = bg.maximize_flow.get_max_indep_set;
+    assert_eq(|_|"", left_set, [false, false, true, true, true, true]);;
+    assert_eq(|_|"", right_set, [true, true, false, true, true, false]);;
+    pure()
+);
+
+test_min_edge_cover : IO ();
+test_min_edge_cover = (
+    // 例1, 全辺を使うことになる
+    // https://www.slideshare.net/slideshow/ss-86894312/86894312
+    let bg = BipartiteGraph::create(6, 6);
+    let bg = bg.add_edge(0, 0);
+    let bg = bg.add_edge(1, 1);
+    let bg = bg.add_edge(1, 3);
+    let bg = bg.add_edge(1, 4);
+    let bg = bg.add_edge(2, 5);
+    let bg = bg.add_edge(3, 2);
+    let bg = bg.add_edge(4, 2);
+    let bg = bg.add_edge(5, 5);
+    let edge_cover = bg.maximize_flow.get_min_edge_cover;
+    assert_eq(|_|"", edge_cover, Array::fill(8, true));;
+
+    // 例2
+    // https://www.slideshare.net/slideshow/ss-86894312/86894312
+    let bg = BipartiteGraph::create(6, 6);
+    let bg = bg.add_edge(0, 0);
+    let bg = bg.add_edge(0, 1);
+    let bg = bg.add_edge(1, 1);
+    let bg = bg.add_edge(1, 3);
+    let bg = bg.add_edge(1, 4);
+    let bg = bg.add_edge(2, 2);
+    let bg = bg.add_edge(2, 5);
+    let bg = bg.add_edge(3, 2);
+    let bg = bg.add_edge(4, 2);
+    let bg = bg.add_edge(4, 3);
+    let bg = bg.add_edge(5, 5);
+    let edge_cover = bg.maximize_flow.get_min_edge_cover;
+    assert_eq(|_|"", edge_cover, [true, false, true, false, true, true, false, true, false, true, true]);;
+
     pure()
 );
