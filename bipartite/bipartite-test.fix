@@ -1,17 +1,18 @@
 module CPLib.Bipartite.Test;
 
-// https://atcoder.jp/contests/language-test-202505/submissions/68182984
-
 import CPLib.Bipartite;
 
 test : IO ();
 test = (
     test_max_matching;;
+    test_min_vertex_cover;;
     pure()
 );
 
 test_max_matching : IO ();
 test_max_matching = (
+    // https://atcoder.jp/contests/language-test-202505/submissions/68182984
+    
     let bg = BipartiteGraph::create(3, 3);
     let bg = bg.add_edge(0, 0);
     let bg = bg.add_edge(0, 1);
@@ -21,5 +22,18 @@ test_max_matching = (
     let matching = bg.maximize_flow.get_max_matching;
     assert_eq(|_|"", matching.to_iter.filter(|b|b).get_size, 3);;
     assert_eq(|_|"", matching, [true, false, false, true, true]);;
+    pure()
+);
+
+test_min_vertex_cover : IO ();
+test_min_vertex_cover = (
+    let bg = BipartiteGraph::create(3, 3);
+    let bg = bg.add_edge(0, 0);
+    let bg = bg.add_edge(0, 1);
+    let bg = bg.add_edge(1, 2);
+    let bg = bg.add_edge(2, 2);
+    let (left_cover, right_cover) = bg.maximize_flow.get_min_vertex_cover;
+    assert_eq(|_|"", left_cover, [true, false, false]);;
+    assert_eq(|_|"", right_cover, [false, false, true]);;
     pure()
 );
