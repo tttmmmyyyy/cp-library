@@ -1,5 +1,7 @@
 module CPLib.TwoSat.Test;
 
+// https://atcoder.jp/contests/language-test-202505/submissions/68186286
+
 import CPLib.TwoSat;
 
 test : IO ();
