@@ -47,7 +47,7 @@ namespace MaxFlowGraph {
 
         let n_from_edges = g.@graph.@edges.@(from).get_size;
         let data = (zero, n_from_edges - 1); // 先ほど`from`に追加した辺のインデックス
-        let g = g.(mod_graph $ add_edge(from, to, data));
+        let g = g.(mod_graph $ add_edge(to, from, data));
 
         g
     );
@@ -162,23 +162,23 @@ namespace DinicState {
         // 開始地点を訪問
         let self = self.mod_level(set(self.@s, 0));
         let queue = queue.push_back(self.@s);
-        // DFS
+        // BFS
         loop((self, queue), |(self, queue)|
             let v = queue.get_front;
             let queue = queue.pop_front;            
-            if v.is_none { 
+            if v.is_none {
                 // キューが空なら`self.@queue`に戻して終了
                 break $ self.set_queue(some $ queue)
             };
             let v = v.as_some;
             let v_edges = self.@graph.@graph.@edges.@(v);
             continue $ v_edges.to_iter.fold((self, queue), |e, (self, queue)|
-                let queue = if e.@data.@0 > zero && self.@level.@(e.@to) < 0 {
+                if e.@data.@0 > zero && self.@level.@(e.@to) < 0 {
                     // 残余容量があるかつ未訪問なら、`e.@to`を訪問
                     let self = self.mod_level(set(e.@to, self.@level.@(v) + 1));
-                    queue.push_back(e.@to) // キューに追加
-                } else { queue };
-                (self, queue)
+                    let queue = queue.push_back(e.@to); // キューに追加
+                    (self, queue)
+                } else { (self, queue) }
             )
         )
     );
