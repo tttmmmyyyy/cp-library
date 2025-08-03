@@ -23,7 +23,7 @@
   * `CPLib.UnionFind` : Union-Find木の実装。
 * 最大フロー・最小カット・二部グラフ
   * `CPLib.MaxFlow` : 最大フロー・最小カット（Dinic法）
-  * `CPLib.Bipartite` : 二部グラフの最大マッチング
+  * `CPLib.Bipartite` : 二部グラフの最大マッチング、最小辺被覆、最大独立集合、最小点被覆。
 * グラフ
   * `CPLib.Graph` : グラフの表現と基本的なアルゴリズム。ダイクストラ法、連結成分分解、トポロジカルソート。
 * 畳み込み
