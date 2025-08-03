@@ -30,6 +30,7 @@ files = [
     "unionfind/unionfind.fix",
     "graph/graph.fix",
     "convolution/convolution.fix",
+    "maxflow/maxflow.fix",
 ]
 objects = ["lib.o"]
 preliminary_commands = [["make", "-s", "lib.o"]]
@@ -72,3 +73,9 @@ git = { url = "https://github.com/tttmmmyyyy/fixlang-binary-heap.git" }
 name = "bool-array"
 version = "0.1.1"
 git = { url = "https://github.com/tttmmmyyyy/bool-array.git" }
+
+
+[[dependencies]]
+name = "ring-buffer"
+version = "0.1.0"
+git = { url = "https://github.com/tttmmmyyyy/ring-buffer.git" }

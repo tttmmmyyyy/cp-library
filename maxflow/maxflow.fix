@@ -1,0 +1,226 @@
+module CPLib.MaxFlow;
+
+import CPLib.Graph;
+import RingBuffer;
+
+// 容量に要求されるトレイト
+// 
+// これに加えて「最大値」が必要となる。
+trait CapacityLike = Additive + Neg + LessThan + Eq;
+
+// 最大フロー問題を解くためのグラフの型
+// 
+// 型パラメータ`c`は容量の型です。
+type MaxFlowGraph c = struct {
+    // グラフ。`(容量, 逆辺のインデックス)`
+    graph : Graph (c, I64),
+    // 容量の型`c`の最大値
+    max_cap : c,
+};
+
+// 離散的なグラフを作成する
+// 
+// # Parameters
+// - `n` : 頂点数
+// - `inf_cap` : 容量の型`c`の最大値
+create : I64 -> c -> MaxFlowGraph c;
+create = |n, max_cap| (
+    MaxFlowGraph { 
+        graph : Graph::create(n),
+        max_cap : max_cap
+    }
+);
+
+// グラフに辺を追加する
+// 
+// # Parameters
+// - `graph` : グラフ
+// - `from` : 始点の頂点番号
+// - `to` : 終点の頂点番号
+// - `cap` : 辺の容量
+add_edge : [c : CapacityLike] I64 -> I64 -> c -> MaxFlowGraph c -> MaxFlowGraph c;
+add_edge = |from, to, cap, g| (
+    let n_to_edges = g.@graph.@edges.@(to).get_size;
+    let data = (cap, n_to_edges); // 次に`to`に追加される予定の辺のインデックス
+    let g = g.(mod_graph $ add_edge(from, to, data));
+
+    let n_from_edges = g.@graph.@edges.@(from).get_size;
+    let data = (zero, n_from_edges - 1); // 先ほど`from`に追加した辺のインデックス
+    let g = g.(mod_graph $ add_edge(from, to, data));
+
+    g
+);
+
+// 最大フローを計算する
+// 
+// 残余グラフと流されたフローの量を返す。
+//
+// # Parameters
+// - `s` : 開始頂点番号
+// - `t` : 終了頂点番号
+// - `graph` : グラフ
+calc_max_flow : [c : CapacityLike] I64 -> I64 -> MaxFlowGraph c -> (MaxFlowGraph c, c);
+calc_max_flow = |s, t, g| (
+    let ds = DinicState {
+        graph : g,
+        s : s,
+        t : t,
+        level : [],
+        iter : [],
+        queue : some $ RingBuffer::create([]),
+    };
+    let (ds, flow) = ds.solve;
+    (ds.@graph, flow)
+);
+
+// ある辺にフローを流す
+// 
+// # Parameters
+// - `v` : 始点の頂点番号
+// - `e` : 辺のインデックス
+// - `f` : 流すフローの量
+// - `graph` : グラフ
+_add_flow : [c : CapacityLike] I64 -> I64 -> c -> MaxFlowGraph c -> MaxFlowGraph c;
+_add_flow = |v, e, f, g| (
+    let (rv, re) = g.@graph.@edges.@(v).@(e).|e| (e.@to, e.@data.@1); // 逆辺の(v, e)
+    let g = g.(mod_graph $ mod_edges $ mod(v) $ mod(e) $ mod_data $ mod_0 $ add(-f));
+    let g = g.(mod_graph $ mod_edges $ mod(rv) $ mod(re) $ mod_data $ mod_0 $ add(f));
+    g
+);
+
+// Dinic法で用いる状態を表す型
+type DinicState c = struct {
+    // グラフ
+    graph : MaxFlowGraph c,
+    // 開始地点
+    s : I64,
+    // 終了地点
+    t : I64,
+    // レベル。残余グラフ上での開始地点から終了地点への距離。到達できない場合は-1。
+    level : Array I64,
+    // DFSにおいて次に調べる辺のインデックス
+    iter : Array I64,
+    // BFSで用いるキュー
+    queue : Option (RingBuffer I64),
+};
+
+namespace DinicState {
+    // 最大フローを求める
+    solve : [c : CapacityLike] DinicState c -> (DinicState c, c);
+    solve = |self| (
+        let flow = zero; 
+        loop((self, flow), |(self, flow)|
+            // BFSしてレベルを更新
+            let self = self.bfs;
+            // 残余グラフ上で開始地点から終了地点に到達できない場合は終了
+            if self.@level.@(self.@t) < 0 { 
+                break $ (self, flow)
+            };
+            // DFSを繰り返す
+            let self = self.reset_iter;
+            continue $ loop((self, flow), |(self, flow)|
+                let (self, f) = self.dfs(self.@s, self.@graph.@max_cap);
+                if f == zero { break $ (self, flow) };
+                let flow = flow + f;
+                continue $ (self, flow)
+            )
+        )
+    );
+
+    // `iter`をすべて0にリセットする。
+    reset_iter : DinicState c -> DinicState c;
+    reset_iter = |self| (
+        let n = self.@graph.@graph.get_size;
+        if self.@iter.get_size != n {
+            self.set_iter(Array::fill(n, 0))
+        } else {
+            self.(mod_iter $ |iter| range(0, iter.get_size).fold(iter, |i, iter| iter.set(i, 0)))
+        }
+    );
+
+    // `level`をすべて-1にリセットする。
+    reset_level : DinicState c -> DinicState c;
+    reset_level = |self| (
+        let n = self.@graph.@graph.get_size;
+        if self.@level.get_size != n {
+            self.set_level(Array::fill(n, -1))
+        } else {
+            self.(mod_level $ |level| range(0, level.get_size).fold(level, |i, level| level.set(i, -1)))
+        }
+    );
+
+    // 残余グラフ上でBFSしてレベルを更新する
+    bfs : [c : CapacityLike] DinicState c -> DinicState c;
+    bfs = |self| (
+        // レベルを初期化
+        let self = self.reset_level;
+        // `self.@queue`を`none()`とスワップ
+        let (queue, self) = self.act_queue(|q| (none(), q));
+        let queue = queue.as_some : RingBuffer I64;
+        // 開始地点を訪問
+        let self = self.mod_level(set(self.@s, 0));
+        let queue = queue.push_back(self.@s);
+        // DFS
+        loop((self, queue), |(self, queue)|
+            let v = queue.get_front;
+            let queue = queue.pop_front;            
+            if v.is_none { 
+                // キューが空なら`self.@queue`に戻して終了
+                break $ self.set_queue(some $ queue)
+            };
+            let v = v.as_some;
+            let v_edges = self.@graph.@graph.@edges.@(v);
+            continue $ v_edges.to_iter.fold((self, queue), |e, (self, queue)|
+                let queue = if e.@data.@0 > zero && self.@level.@(e.@to) < 0 {
+                    // 残余容量があるかつ未訪問なら、`e.@to`を訪問
+                    let self = self.mod_level(set(e.@to, self.@level.@(v) + 1));
+                    queue.push_back(e.@to) // キューに追加
+                } else { queue };
+                (self, queue)
+            )
+        )
+    );
+
+    // 開始地点からの最短経路DAG（`level`から得られる）においてDFSして経路を一つ発見し、フロー・残余グラフを更新する。
+    //
+    // 更新された残余グラフと、新たに流されたフローの量を返す。
+    // 
+    // 一度調べた辺を次の`dfs`で調べないよう、`iter`を更新する。
+    // 
+    // # Parameters
+    // - `v` : 現在の頂点
+    // - `f` : 流してよいフローの量
+    dfs : [c : CapacityLike] I64 -> c -> DinicState c -> (DinicState c, c);
+    dfs = |v, f, self| (
+        // 終了地点に到達したら終了
+        if v == self.@t { (self, f) };
+        // 未探索の残余グラフの辺に沿ってループ
+        let v_edges = self.@graph.@graph.@edges.@(v);
+        match range(self.@iter.@(v), v_edges.get_size).loop_iter_s(self, |i, self|
+            let self = self.mod_iter(set(v, i));
+            let e = v_edges.@(i);
+            // 残余グラフの辺でないか、最短経路DAGに沿っていない辺なら、スキップする
+            if !(e.@data.@0 > zero && self.@level.@(v) < self.@level.@(e.@to)) {
+                continue $ self
+            };             
+            // DFSでフローを流そうとする
+            let (self, d) = self.dfs(e.@to, min(f, e.@data.@0));
+            // この辺に沿ってフローを流すことに失敗したら、次の辺を調べる
+            if d == zero {
+                continue $ self
+            };
+            // 残余グラフを更新する
+            let self = self.mod_graph(_add_flow(v, i, d));
+            break $ (self, d)
+        ) {
+            break(self_f) => (
+                // フローを流せるパスを見つけたとき
+                self_f
+            ),
+            continue(self) => (
+                // フローを流せるパスを見つけられなかったとき
+                (self, zero)
+            )
+        }
+    );
+}

@@ -43,13 +43,13 @@ get_size = |g| g.@edges.get_size;
 // グラフに辺を追加する
 // 
 // # Parameters
-// - `g` : グラフ
 // - `from` : 始点の頂点番号
 // - `to` : 終点の頂点番号
-// - `c` : 辺の重み
+// - `data` : 辺のデータ
+// - `graph` : グラフ
 add_edge : I64 -> I64 -> c -> Graph c -> Graph c;
-add_edge = |from, to, c, g| (
-    g.mod_edges(mod(from, push_back(Edge::make(to, c))))
+add_edge = |from, to, data, graph| (
+    graph.mod_edges(mod(from, push_back(Edge::make(to, data))))
 );
 
 // ノードとその距離を表す型（ダイクストラ法などで使用）
