@@ -1,6 +1,6 @@
 # CPLib.Graph
 
-Defined in cp-library@0.3.4
+Defined in cp-library@0.4.1
 
 ## Values
 
@@ -19,7 +19,7 @@ Type: `Std::I64 -> Std::I64 -> c -> CPLib.Graph::Graph c -> CPLib.Graph::Graph c
 - `data` : 辺のデータ
 - `graph` : グラフ
 
-#### compute_sccs
+#### calc_sccs
 
 Type: `CPLib.Graph::Graph c -> Std::Array (Std::Array Std::I64)`
 

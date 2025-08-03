@@ -1,6 +1,6 @@
 # CPLib.Bipartite
 
-Defined in cp-library@0.3.4
+Defined in cp-library@0.4.1
 
 二部グラフを扱うモジュール
 
@@ -39,6 +39,21 @@ Type: `CPLib.Bipartite::BipartiteGraph -> CPLib.Bipartite::BipartiteGraphFlow`
 
 ### namespace CPLib.Bipartite::BipartiteGraphFlow
 
+#### get_max_indep_set
+
+Type: `CPLib.Bipartite::BipartiteGraphFlow -> (Std::Array Std::Bool, Std::Array Std::Bool)`
+
+二部グラフの最大孤立集合（最大安定集合）を取得する
+
+##### Returns
+
+左側の頂点の被覆と右側の頂点の被覆をそれぞれ`Array Bool`として返す。
+ある頂点が被覆に含まれる場合は`true`、含まれない場合は`false`となる配列が返される。
+
+##### Parameters
+
+- `max_flow` : 二部グラフの最大フロー
+
 #### get_max_matching
 
 Type: `CPLib.Bipartite::BipartiteGraphFlow -> Std::Array Std::Bool`
@@ -48,6 +63,24 @@ Type: `CPLib.Bipartite::BipartiteGraphFlow -> Std::Array Std::Bool`
 ##### Returns
 
 第i番目に追加した辺がマッチングに含まれる場合は`true`、含まれない場合は`false`とする配列
+
+##### Parameters
+
+- `max_flow` : 二部グラフの最大フロー
+
+#### get_min_edge_cover
+
+Type: `CPLib.Bipartite::BipartiteGraphFlow -> Std::Array Std::Bool`
+
+二部グラフの最小辺カバーを取得する
+
+##### 制約
+
+二部グラフに孤立点がない
+
+##### Returns
+
+第i番目に追加した辺がカバーに含まれる場合は`true`、含まれない場合は`false`とする配列
 
 ##### Parameters
 
