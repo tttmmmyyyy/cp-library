@@ -1,5 +1,8 @@
 module CPLib.LSegtree.Test;
 
+// https://atcoder.jp/contests/language-test-202505/submissions/68053029
+// https://atcoder.jp/contests/language-test-202505/submissions/68052094
+
 import CPLib.Trait;
 import CPLib.Arithmetic::pmod;
 import CPLib.LSegtree;

@@ -1,5 +1,7 @@
 module CPLib.Bipartite.Test;
 
+// https://atcoder.jp/contests/language-test-202505/submissions/68182984
+
 import CPLib.Bipartite;
 
 test : IO ();
