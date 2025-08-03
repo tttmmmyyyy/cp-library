@@ -1,6 +1,6 @@
 # CPLib.IO
 
-Defined in cp-library@0.3.0
+Defined in cp-library@0.3.4
 
 入出力や数値のパースを楽にする機能のためのモジュール
 
@@ -64,7 +64,7 @@ Type: `Std::I64 -> Std::IO Std::String`
 
 ##### Parameters
 
-- `n`: 読み込む文字列の長さの上限
+- `n`: 読み込む文字列の長さの上限。バッファのメモリ量に影響する。
 
 #### read_ss
 

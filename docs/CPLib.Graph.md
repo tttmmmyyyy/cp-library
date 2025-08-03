@@ -1,6 +1,6 @@
 # CPLib.Graph
 
-Defined in cp-library@0.3.0
+Defined in cp-library@0.3.4
 
 ## Values
 
@@ -14,10 +14,10 @@ Type: `Std::I64 -> Std::I64 -> c -> CPLib.Graph::Graph c -> CPLib.Graph::Graph c
 
 ##### Parameters
 
-- `g` : グラフ
 - `from` : 始点の頂点番号
 - `to` : 終点の頂点番号
-- `c` : 辺の重み
+- `data` : 辺のデータ
+- `graph` : グラフ
 
 #### compute_sccs
 
@@ -96,11 +96,11 @@ Type: `Std::I64`
 
 終点の頂点番号
 
-##### field `cost`
+##### field `data`
 
 Type: `c`
 
-辺の重み
+辺のデータ
 
 #### Graph
 
@@ -108,7 +108,7 @@ Defined as: `type Graph c = unbox struct { ...fields... }`
 
 グラフの隣接リストによる表現
 
-型パラメータ`c`は辺の重みの型です。不要な場合はユニット型`()`や自分で作ったempty typeなどを指定するとメモリの節約になります。
+型パラメータ`c`は辺に付随するデータの型です（例：ダイクストラ法に使うときはコスト）。不要な場合はユニット型`()`や自分で作ったempty typeなどを指定するとメモリの節約になります。
 
 ##### field `edges`
 

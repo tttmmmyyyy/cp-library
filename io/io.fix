@@ -64,7 +64,7 @@ read_f = FFI_CALL_IO[F64 cp_lib_read_double()];
 // 空白文字を含まない文字列を一つ読み込む
 // 
 // # Parameters
-// - `n`: 読み込む文字列の長さの上限
+// - `n`: 読み込む文字列の長さの上限。バッファのメモリ量に影響する。
 read_s : I64 -> IO String;
 read_s = |n| (
     let n = if n < 0 { 255 } else { n };
