@@ -76,8 +76,8 @@ namespace MaxFlowGraph {
     // - `s` : 開始頂点番号
     // - `t` : 終了頂点番号
     // - `graph` : グラフ
-    calc_max_flow : [c : CapacityLike] I64 -> I64 -> MaxFlowGraph c -> (MaxFlowGraph c, c);
-    calc_max_flow = |s, t, g| (
+    maximize_flow : [c : CapacityLike] I64 -> I64 -> MaxFlowGraph c -> (MaxFlowGraph c, c);
+    maximize_flow = |s, t, g| (
         let ds = DinicState {
             graph : g,
             s : s,
