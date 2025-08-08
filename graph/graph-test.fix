@@ -15,6 +15,7 @@ test = (
 test_dijkstra : IO ();
 test_dijkstra = (
     test_dijkstra_basic;;
+    test_dijkstra_speed;;
     pure()
 );
 
@@ -30,6 +31,32 @@ test_dijkstra_basic = (
     let graph = graph.add_edge(3, 4, 5);
     let dist = graph.dijkstra(0, I64::maximum);
     assert_eq(|_|"", dist, [0, 7, 3, 9, 5, I64::maximum])
+);
+
+test_dijkstra_speed : IO ();
+test_dijkstra_speed = (
+    let n = 1e5;
+    let rng = Random::init_by_seed(0_U64);
+    let graph = Graph::create(n);
+    let (graph, rng) = range(0, n).fold((graph, rng), |i, (graph, rng)|
+        let (rng, j) = rng.generate_I64_nonneg;
+        let j = j % n;
+        let (rng, c) = rng.generate_I64_nonneg;
+        let c = c % 100 + 1; // 1 <= c < 100
+        let graph = graph.add_edge(i, j, c);
+
+        let (rng, j) = rng.generate_I64_nonneg;
+        let j = j % n;
+        let (rng, c) = rng.generate_I64_nonneg;
+        let c = c % 100 + 1; // 1 <= c < 100
+        let graph = graph.add_edge(j, i, c);
+
+        (graph, rng)
+    );
+    let (dist, time) = consumed_time_while_lazy(|_| graph.dijkstra(0, I64::maximum));
+    assert_eq(|_|"test_dijkstra_speed", dist.@(1), 391);;
+    println $ "[CPLib.Graph.Test] dijkstra({}): {}".populate([n.to_string, time.to_string]);;
+    pure()
 );
 
 test_scc : IO ();
