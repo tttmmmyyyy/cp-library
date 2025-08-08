@@ -209,10 +209,12 @@ test_prime_table = (
 
 test_prime_list : IO ();
 test_prime_list = (
+    let n = 1e8;
     assert_eq(|_|"test_prime_list 1", create_prime_list(20).map(to_I64), [2, 3, 5, 7, 11, 13, 17, 19]);;
-    let (res, time) = consumed_time_while_lazy(|_| create_prime_list(1e8));
+    let (res, time) = consumed_time_while_lazy(|_| create_prime_list(n));
+
     assert_eq(|_|"test_prime_list 2", res.get_size, 5761455);;
-    println $ "create_prime_list(1e8) took " + time.to_string + " s";;
+    println $ "[CPLib.Arithmetic.Test] create_prime_list({}): {}".populate([n.to_string, time.to_string]);;
     pure()
 );
 

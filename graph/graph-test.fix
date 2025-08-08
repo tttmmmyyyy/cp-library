@@ -1,6 +1,7 @@
 module CPLib.Graph.Test;
 
 import CPLib.Graph;
+import Random;
 
 test : IO ();
 test = (
@@ -35,6 +36,7 @@ test_scc : IO ();
 test_scc = (
     test_scc_basic;;
     test_scc_empty;;
+    test_scc_speed;;
     pure()
 );
 
@@ -131,5 +133,25 @@ test_scc_multiple_edges = (
     let sccs = graph.calc_sccs;
     let sccs = sccs.map(|scc| scc.sort_by(|(lhs, rhs)| lhs < rhs)); // 順序は保証されないのでソートして比較
     assert_eq(|_|"test_scc_multiple_edges", sccs, [[0, 1, 2]]);;
+    pure()
+);
+
+test_scc_speed : IO (); 
+test_scc_speed = (
+    // n個の頂点を持つグラフをランダムに生成
+    let n = 1e5;
+    let rng = Random::init_by_seed(0_U64);
+    let graph = Graph::create(n) : Graph ();
+    let (graph, rng) = range(0, n).fold((graph, rng), |i, (graph, rng)|
+        let (rng, i) = rng.generate_I64_nonneg;
+        let i = i % n;
+        let (rng, j) = rng.generate_I64_nonneg;
+        let j = j % n;
+        (graph.add_edge(i, j, ()), rng)
+    );
+    // 強連結成分を計算
+    let (sccs, time) = consumed_time_while_lazy(|_| graph.calc_sccs);
+    assert_eq(|_|"test_scc_speed", sccs.get_size, 99999);;
+    println("[CPLib.Graph.Test] calc_sccs({}): {}".populate([n.to_string, time.to_string]));;
     pure()
 );

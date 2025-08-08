@@ -83,10 +83,9 @@ test_speed = (
     // n=10^5個の要素を持つUnionFind木を生成し、n回程度ランダムにクエリを投げる。
     // もしn^2実装になっていたらこのテストは終わらない。
     let n = 1e5;
-    println("[CPLib.UnionFind.Test] test_speed: n = " + n.to_string);;
     let rng = Random::init_by_seed(0_U64);
     let uf = UnionFind::create(n);
-    let (uf, rng) = range(0, n).fold((uf, rng), |_, (uf, rng)| (
+    let ((uf, rng), time) = consumed_time_while_lazy(|_| range(0, n).fold((uf, rng), |_, (uf, rng)| (
         // unite
         let (rng, i) = rng.generate_I64_nonneg;
         let (rng, j) = rng.generate_I64_nonneg;
@@ -102,9 +101,10 @@ test_speed = (
         let (uf, is_united) = uf.is_united(k, l);
 
         (uf, rng)
-    ));
+    )));
     let (uf, grps) = uf.get_groups;
-    println("[CPLib.UnionFind.Test] test_speed: grps.get_size = " + grps.get_size.to_string);;
+    assert_eq(|_|"test_speed", grps.get_size, 16102);;
+    println $ "[CPLib.UnionFind.Test] UnionFind({}): {}".populate([n.to_string, time.to_string]);;
 
     pure()
 );

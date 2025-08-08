@@ -15,8 +15,7 @@ test = (
     let rng = *test_random(false, rng);
     let rng = *test_random(true, rng);
 
-    let (_, time) = *consumed_time_while_io(test_speed);
-    println("[CPLib.LSegtree.Test] test_speed: time = " + time.to_string);;
+    test_speed;;
 
     pure()
 );
@@ -185,10 +184,9 @@ test_speed = (
     // n=10^5個の要素を持つSegtreeを生成し、n回程度ランダムにクエリを投げる。
     // もしn^2実装になっていたらこのテストは終わらない。
     let n = 1e5;
-    println("[CPLib.LSegtree.Test] test_speed: n = " + n.to_string);;
     let rng = Random::init_by_seed(0_U64);
     let tree = LSegtree::init(n) : LSegtree I64Max I64Add;
-    let (tree, rng, fold_sum) = range(0, n).fold((tree, rng, 0), |_, (tree, rng, fold_sum)| (
+    let ((tree, rng, fold_sum), time) = consumed_time_while_lazy(|_| range(0, n).fold((tree, rng, 0), |_, (tree, rng, fold_sum)| (
         // set
         let (rng, i) = rng.generate_I64_nonneg;
         let (rng, v) = rng.generate_I64_nonneg;
@@ -213,8 +211,9 @@ test_speed = (
         let fold_sum = fold_sum.max(v.@v);
 
         (tree, rng, fold_sum)
-    ));
-    println("[CPLib.LSegtree.Test] test_speed: fold_sum = " + fold_sum.to_string);;
+    )));
+    assert_eq(|_|"test_speed", fold_sum, 9223363321965027598);;
+    println $ "[CPLib.LSegtree.Test] LSegtree({}): {}".populate([n.to_string, time.to_string]);;
 
     pure $ ()
 );

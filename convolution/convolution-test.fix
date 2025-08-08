@@ -55,7 +55,15 @@ test_zp = (
     let y = [ZP::make(1)];
     let (z, time) = consumed_time_while_lazy(|_| convolve_zp(x, y));
     assert_eq(|_|"[test_zp] case 14", z, x);;
-    ("time to convolve 2^23 elements: " + time.to_string).println;;
+
+    // ベンチマーク
+    let n = 1e5;
+    let x = range(0, n).map(ZP::make).to_array : Array (ZP P998244353);
+    let y = range(0, n).map(ZP::make).to_array : Array (ZP P998244353);
+    let (z, time) = consumed_time_while_lazy(|_| convolve_zp(x, y));
+    let ans_n1 = range(0, n).fold(ZP::make(0), |i, acc| acc + x.@(i) * y.@(n-1-i));
+    assert_eq(|_|"[test_zp] case 15", z.@(n-1), ans_n1);;
+    println $ "[CPLib.Convolution.Test] convolve_zp({}): {}".populate([n.to_string, time.to_string]);;
 
     pure()
 );
