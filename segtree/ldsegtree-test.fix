@@ -139,7 +139,7 @@ test_speed = (
     // もしn^2実装になっていたらこのテストは終わらない。
     let n = 1e5;
     let rng = Random::init_by_seed(0_U64);
-    let tree = LDSegtree::init(n, 0, |(lhs, rhs)| max(lhs, rhs), 0, |(lhs, rhs)| lhs + rhs, |(lhs, rhs)| lhs + rhs) : LDSegtree I64 I64;
+    let tree = LDSegtree::init(n, I64::minimum, |(lhs, rhs)| max(lhs, rhs), 0, |(lhs, rhs)| lhs + rhs, |(lhs, rhs)| lhs + rhs) : LDSegtree I64 I64;
     let ((tree, rng, fold_sum), time) = consumed_time_while_lazy(|_| range(0, n).fold((tree, rng, 0), |_, (tree, rng, fold_sum)| (
         // set
         let (rng, i) = rng.generate_I64_nonneg;
@@ -166,7 +166,7 @@ test_speed = (
 
         (tree, rng, fold_sum)
     )));
-    assert_eq(|_|"test_speed", fold_sum, 9223354524344916901);;
+    assert_eq(|_|"test_speed", fold_sum, 9223363321965027598);;
     println $ "[CPLib.LDSegtree.Test] LDSegtree({}): {}".populate([n.to_string, time.to_string]);;
 
     pure $ ()
