@@ -1,6 +1,6 @@
 # CPLib.LSegtree
 
-Defined in cp-library@0.4.1
+Defined in cp-library@0.4.2
 
 遅延伝番セグメント木（右作用）
 
