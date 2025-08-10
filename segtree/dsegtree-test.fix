@@ -3,6 +3,8 @@ module CPLib.DSegtree.Test;
 import CPLib.DSegtree;
 import Random;
 
+// https://atcoder.jp/contests/language-test-202505/submissions/68392637
+
 test : IO ();
 test = (
     test_one;;

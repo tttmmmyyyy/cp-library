@@ -5,6 +5,8 @@ import CPLib.Trait::{Monoid, Monoid::*};
 
 import Random;
 
+// https://atcoder.jp/contests/language-test-202505/submissions/68392568
+
 test : IO ();
 test = (
     test_one;;

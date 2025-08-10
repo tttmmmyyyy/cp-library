@@ -1,8 +1,9 @@
 module CPLib.UnionFind.Test;
 
 import CPLib.UnionFind;
-
 import Random;
+
+// https://atcoder.jp/contests/language-test-202505/submissions/68392520
 
 test : IO ();
 test = (

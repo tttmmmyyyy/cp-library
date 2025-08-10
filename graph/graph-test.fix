@@ -61,6 +61,7 @@ test_dijkstra_speed = (
 
 test_scc : IO ();
 test_scc = (
+    // https://atcoder.jp/contests/language-test-202505/submissions/68392778
     test_scc_basic;;
     test_scc_empty;;
     test_scc_speed;;

@@ -15,7 +15,7 @@ test = (
 
 test_max_matching : IO ();
 test_max_matching = (
-    // https://atcoder.jp/contests/language-test-202505/submissions/68182984
+    // https://atcoder.jp/contests/language-test-202505/submissions/68393274
     
     // 例1 蟻本
     let bg = BipartiteGraph::create(3, 3);

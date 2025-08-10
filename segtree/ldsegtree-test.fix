@@ -4,6 +4,9 @@ import CPLib.LDSegtree;
 import CPLib.Arithmetic::pmod;
 import Random;
 
+// https://atcoder.jp/contests/language-test-202505/submissions/68392915
+// https://atcoder.jp/contests/language-test-202505/submissions/68393014
+
 test : IO ();
 test = (
     let rng = Random::init_by_seed(0_U64);
