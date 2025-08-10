@@ -8,8 +8,7 @@ test : IO ();
 test = (
     test_zero;;
     test_by_hand;;
-    let (_, time) = *consumed_time_while_io(test_speed);
-    println("[CPLib.UnionFind.Test] test_speed: time = " + time.to_string);;
+    test_speed;;
     pure()
 );
 
