@@ -26,7 +26,7 @@
   * `CPLib.MinCostMaxFlow` : 最小コスト最大フロー
   * `CPLib.Bipartite` : 二部グラフの最大マッチング、最小辺被覆、最大独立集合、最小点被覆。
 * 文字列
-  * `CPLib.String` : Suffix Array, LCP Array。
+  * `CPLib.String` : Suffix Array、LCP Array、Z Algorithm。
 * グラフ
   * `CPLib.Graph` : グラフの表現と基本的なアルゴリズム。ダイクストラ法、連結成分分解、トポロジカルソート。
 * 2Sat

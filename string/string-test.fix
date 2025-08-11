@@ -5,7 +5,7 @@ module CPLib.String.Test;
 import CPLib.String;
 
 test : IO ();
-test = test_sa;; test_lcp;
+test = test_sa;; test_lcp;; test_z;
 
 test_sa : IO ();
 test_sa = (
@@ -15,12 +15,20 @@ test_sa = (
     pure()
 );
 
-
 test_lcp : IO ();
 test_lcp = (
     let s = "abracadabra";
     let sa = s.calc_suffix_array;
     let lcp = s.calc_lcp_array(sa);
     assert_eq(|_|"", lcp, [1, 4, 1, 1, 0, 3, 0, 0, 0, 2]);;
+    pure()
+);
+
+test_z : IO ();
+test_z = (
+    let s = "abracadabra";
+    let z = s.calc_z_array;
+    z.to_string.println;;
+    assert_eq(|_|"", z, [11, 0, 0, 1, 0, 1, 0, 4, 0, 0, 1]);;
     pure()
 );
