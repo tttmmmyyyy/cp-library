@@ -2,6 +2,7 @@
 module CPLib.Bipartite;
 
 import CPLib.MaxFlow;
+import CPLib.Graph;
 
 // 二部グラフの型
 type BipartiteGraph = struct {
@@ -53,12 +54,12 @@ namespace BipartiteGraph {
         let n = bg.@left_size + bg.@right_size + 2; // 開始と終了の頂点を含む
         let s = n - 2;
         let t = n - 1;
-        let graph = MaxFlowGraph::create(n, s, t, I64::maximum);
-        let graph = range(0, bg.@left_size).fold(graph, |i, graph| graph.add_edge(s, i, 1).@0);
-        let graph = range(0, bg.@right_size).fold(graph, |i, graph| graph.add_edge(bg.@left_size + i, t, 1).@0);
+        let graph = MaxFlowGraph::create(n, s, t);
+        let graph = range(0, bg.@left_size).fold(graph, |i, graph| graph.add_edge(s, i, 1));
+        let graph = range(0, bg.@right_size).fold(graph, |i, graph| graph.add_edge(bg.@left_size + i, t, 1));
         let eids = Array::empty(bg.@edges.get_size);
         let (graph, eids) = bg.@edges.to_iter.fold((graph, eids), |(left, right), (graph, eids)|
-            let (graph, eid) = graph.add_edge(left, bg.@left_size + right, 1);
+            let (graph, eid) = graph.add_edge_id(left, bg.@left_size + right, 1);
             (graph, push_back(eid, eids))
         );
         let (graph, flow) = graph.maximize_flow;

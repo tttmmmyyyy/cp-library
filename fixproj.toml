@@ -3,7 +3,7 @@
 name = "cp-library"
 
 ## Project version (in semver). This is a required field.
-version = "0.4.2"
+version = "0.5.0"
 
 ## Fix version requirement. Default is "*".
 fix_version = "1.1.0"
@@ -32,6 +32,7 @@ files = [
     "convolution/convolution.fix",
     "maxflow/maxflow.fix",
     "bipartite/bipartite.fix",
+    "mincostflow/mincostflow.fix",
     "twosat/twosat.fix",
 ]
 objects = ["lib.o"]
@@ -53,6 +54,7 @@ files = [
     "maxflow/maxflow-test.fix",
     "bipartite/bipartite-test.fix",
     "twosat/twosat-test.fix",
+    "mincostflow/mincostflow-test.fix",
 ]
 
 

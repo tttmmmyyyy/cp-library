@@ -20,3 +20,48 @@ trait a : Action {
     // 作用
     act : a -> Set a -> Set a;
 }
+
+// 各型の無限大の値
+trait a : Inf {
+    inf : a;
+}
+
+impl I8 : Inf {
+    inf = I8::maximum;
+}
+
+impl U8 : Inf {
+    inf = U8::maximum;
+}
+
+impl I16 : Inf {
+    inf = I16::maximum;
+}
+
+impl U16 : Inf {
+    inf = U16::maximum;
+}
+
+impl I32 : Inf {
+    inf = I32::maximum;
+}
+
+impl U32 : Inf {
+    inf = U32::maximum;
+}
+
+impl I64 : Inf {
+    inf = I64::maximum;
+}
+
+impl U64 : Inf {
+    inf = U64::maximum;
+}
+
+impl F32 : Inf {
+    inf = F32::infinity;
+}
+
+impl F64 : Inf {
+    inf = F64::infinity;
+}

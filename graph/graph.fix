@@ -1,6 +1,7 @@
 module CPLib.Graph;
 
 import BinaryHeap;
+import CPLib.Trait;
 
 // グラフの隣接リストによる表現
 // 
@@ -16,6 +17,14 @@ type Edge c = struct {
     to : I64,
     // 辺のデータ
     data : c
+};
+
+// 辺の識別子の型
+type EdgeId = unbox struct { 
+    // 始点インデックス
+    from : I64, 
+    // 辺インデックス
+    idx : I64
 };
 
 namespace Edge {
@@ -52,6 +61,27 @@ add_edge = |from, to, data, graph| (
     graph.mod_edges(mod(from, push_back(Edge::make(to, data))))
 );
 
+// グラフに辺を追加する（辺IDを返す）
+// 
+// # Parameters
+// - `from` : 始点の頂点番号
+// - `to` : 終点の頂点番号
+// - `data` : 辺のデータ
+// - `graph` : グラフ
+add_edge_id : I64 -> I64 -> c -> Graph c -> (Graph c, EdgeId);
+add_edge_id = |from, to, data, graph| (
+    let graph = graph.add_edge(from, to, data);
+    (graph, EdgeId { from: from, idx: graph.@edges.@(from).get_size - 1 })
+);
+
+// 辺を取得する
+// 
+// # Parameters
+// - `edge_id` : 辺の識別子
+// - `graph` : グラフ
+get_edge : EdgeId -> Graph c -> Edge c;
+get_edge = |eid, graph| graph.@edges.@(eid.@from).@(eid.@idx);
+
 // ノードとその距離を表す型（ダイクストラ法などで使用）
 type NodeDistance c = struct {
     node : I64,
@@ -71,12 +101,13 @@ impl [c : LessThan] NodeDistance c : LessThan {
 // 
 // 各辺のコストは非負である必要があります。
 // 
+// 到達できないノードまでの距離には`Inf::inf`が設定されます。
+// 
 // # Parameters
 // - `start` : 開始ノードの番号
-// - `inf` : 無限大のコストとして用いる値。到達不可能なノードのコストとして使われる。
 // - `graph` : グラフ
-dijkstra : [c : Additive, c : LessThan] I64 -> c -> Graph c -> Array c;
-dijkstra = |start, inf, graph| (
+dijkstra : [c : Additive, c : LessThan, c : Inf] I64 -> Graph c -> Array c;
+dijkstra = |start, graph| (
     // The number of nodes in the graph.
     let nn = graph.get_size;
 
@@ -103,16 +134,16 @@ dijkstra = |start, inf, graph| (
 
         // See all the neighbors of the node.
         let edges = graph.@edges.@(node);
-        continue $ edges.to_iter.loop_iter((dists, visit_list), |Edge { to : to, data : cost}, (dists, visit_list)|
+        continue $ edges.to_iter.fold((dists, visit_list), |Edge { to : to, data : cost}, (dists, visit_list)|
             // If the path using the current edge is not better than the previous one, skip.
             let new_dist = dist + cost;
-            if !(new_dist < dists.@(to)) { continue $ (dists, visit_list) };
+            if !(new_dist < dists.@(to)) { (dists, visit_list) };
 
             // Update the distance to the node.
             let dists = dists.set(to, new_dist);
             let visit_list = visit_list.push(NodeDistance::make(to, new_dist));
 
-            continue $ (dists, visit_list)
+            (dists, visit_list)
         )
     ))
 );

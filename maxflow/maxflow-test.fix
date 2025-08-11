@@ -10,14 +10,14 @@ test = (
 
 test_basic : IO ();
 test_basic = (
-    let graph = MaxFlowGraph::create(5, 0, 4, I64::maximum);
-    let (graph, eid0) = graph.add_edge(0, 1, 10);
-    let (graph, eid1) = graph.add_edge(0, 2, 2);
-    let (graph, eid2) = graph.add_edge(1, 2, 6);
-    let (graph, eid3) = graph.add_edge(1, 3, 6);
-    let (graph, eid4) = graph.add_edge(2, 4, 5);
-    let (graph, eid5) = graph.add_edge(3, 2, 4);
-    let (graph, eid6) = graph.add_edge(3, 4, 8);
+    let graph = MaxFlowGraph::create(5, 0, 4);
+    let (graph, eid0) = graph.add_edge_id(0, 1, 10);
+    let (graph, eid1) = graph.add_edge_id(0, 2, 2);
+    let (graph, eid2) = graph.add_edge_id(1, 2, 6);
+    let (graph, eid3) = graph.add_edge_id(1, 3, 6);
+    let (graph, eid4) = graph.add_edge_id(2, 4, 5);
+    let (graph, eid5) = graph.add_edge_id(3, 2, 4);
+    let (graph, eid6) = graph.add_edge_id(3, 4, 8);
     let (graph, flow) = graph.maximize_flow;
     assert_eq(|_|"", flow, 11);;
     assert_eq(|_|"", graph.get_flow(eid0), 9);;

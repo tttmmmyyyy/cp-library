@@ -1,6 +1,7 @@
 module CPLib.Graph.Test;
 
 import CPLib.Graph;
+import CPLib.Trait;
 import Random;
 
 test : IO ();
@@ -29,8 +30,8 @@ test_dijkstra_basic = (
     let graph = graph.add_edge(2, 3, 8);
     let graph = graph.add_edge(2, 4, 2);
     let graph = graph.add_edge(3, 4, 5);
-    let dist = graph.dijkstra(0, I64::maximum);
-    assert_eq(|_|"", dist, [0, 7, 3, 9, 5, I64::maximum])
+    let dist = graph.dijkstra(0);
+    assert_eq(|_|"", dist, [0, 7, 3, 9, 5, Inf::inf])
 );
 
 test_dijkstra_speed : IO ();
@@ -53,7 +54,7 @@ test_dijkstra_speed = (
 
         (graph, rng)
     );
-    let (dist, time) = consumed_time_while_lazy(|_| graph.dijkstra(0, I64::maximum));
+    let (dist, time) = consumed_time_while_lazy(|_| graph.dijkstra(0));
     assert_eq(|_|"test_dijkstra_speed", dist.@(1), 391);;
     println $ "[CPLib.Graph.Test] dijkstra({}): {}".populate([n.to_string, time.to_string]);;
     pure()
