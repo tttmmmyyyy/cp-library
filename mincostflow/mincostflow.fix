@@ -182,7 +182,7 @@ namespace MinCostFlowGraph {
                 )
             );
             // tに到達不能なときはflow_restをゼロにして次のループで終了
-            if dist.@(t) == Inf::inf { continue $ (g, zero, cost, h, que, dist, prevv, preve) };
+            if dist.@(t) == Inf::inf { break $ (g.set_potential(h), flow_limit - flow_rest, cost) };
             // ポテンシャルを更新
             let h = range(0, n).fold(h, |v, h| h.set(v, h.@(v) + dist.@(v)) );
             // s-t最短路に沿ってフローを流す
