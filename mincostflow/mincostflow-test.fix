@@ -19,7 +19,7 @@ test_basic = (
     let (g, e4) = g.add_edge_id(2, 4, 5, 2);
     let (g, e5) = g.add_edge_id(3, 2, 3, 3);
     let (g, e6) = g.add_edge_id(3, 4, 8, 6);
-    let (g, flow, cost) = g.min_cost_max_flow(9);
+    let (g, flow, cost) = g.maximize_flow_min_cost(9);
     assert_eq(|_|"flow", flow, 9);;
     assert_eq(|_|"cost", cost, 80);;
     assert_eq(|_|"e0", g.get_flow(e0), 7);;

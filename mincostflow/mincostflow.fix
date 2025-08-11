@@ -1,3 +1,4 @@
+// 最小コスト最大流問題
 module CPLib.MinCostFlow;
 
 import CPLib.Graph;
@@ -28,6 +29,8 @@ type MinCostFlowGraph c = struct {
     s : I64,
     // 終了地点
     t : I64,
+    // ポテンシャル
+    potential : Array c,
 };
 
 namespace MinCostFlowGraph {
@@ -43,6 +46,7 @@ namespace MinCostFlowGraph {
             graph : Graph::create(n),
             s : s,
             t : t,
+            potential : Array::fill(n, zero),
         }
     );
 
@@ -92,6 +96,25 @@ namespace MinCostFlowGraph {
         (g, EdgeId { from : from, idx : eidx })
     );
 
+    // ベルマンフォード法を使ってポテンシャルを更新する
+    //
+    // ベルマンフォード法を使って`graph.@potential`を更新し、負の辺がある場合も動作するようにします。
+    set_potential_bf : [c : CapCostLike] MinCostFlowGraph c -> MinCostFlowGraph c;
+    set_potential_bf = |g| (
+        let n = g.@graph.@edges.get_size;
+        // cap > 0な辺からなるグラフを作成する
+        let graph = Graph::create(n);
+        let graph = range(0, n).fold(graph, |from, graph|
+            let edges = g.@graph.@edges.@(from);
+            edges.to_iter.fold(graph, |e, graph|
+                if !(e.@data.@cap > zero) { graph };
+                graph.add_edge(from, e.@to, e.@data.@cost)
+            )
+        );
+        let h = graph.bellman_ford(g.@s);
+        g.set_potential(h)
+    );
+
     // ある辺にフローを流す
     // 
     // # Parameters
@@ -125,18 +148,18 @@ namespace MinCostFlowGraph {
     // # Parameters
     // - `flow_limit` : 流すフローの最大値
     // - `g` : 最小フロー問題のグラフ
-    min_cost_max_flow : [c : CapCostLike] c -> MinCostFlowGraph c -> (MinCostFlowGraph c, c, c);
-    min_cost_max_flow = |flow_limit, g| (
+    maximize_flow_min_cost : [c : CapCostLike] c -> MinCostFlowGraph c -> (MinCostFlowGraph c, c, c);
+    maximize_flow_min_cost = |flow_limit, g| (
         let n = g.@graph.@edges.get_size;
         let s = g.@s;
         let t = g.@t;
-        let h = Array::fill(n, zero); // ポテンシャル
+        let h = g.@potential; let g = g.set_potential([]); // ポテンシャル
         let que = MinBinaryHeap::empty; // 最小ヒープ
         let dist = Array::fill(n, Inf::inf); // 距離
         let prevv = Array::fill(n, -1); // 直前にしらべた頂点
         let preve = Array::fill(n, -1); // 直前にしらべた辺
         loop((g, flow_limit, zero, h, que, dist, prevv, preve), |(g, flow_rest, cost, h, que, dist, prevv, preve)| 
-            if flow_rest == zero { break $ (g, flow_limit, cost) };
+            if flow_rest == zero { break $ (g.set_potential(h), flow_limit - flow_rest, cost) };
             // ダイクストラ法を用いてhを更新する
             let dist = dist.resize(0, Inf::inf).resize(n, Inf::inf); // distを初期化
             let dist = dist.set(s, zero);
@@ -158,8 +181,8 @@ namespace MinCostFlowGraph {
                     (que, dist, prevv, preve)
                 )
             );
-            // tに到達不能なときは終了
-            if dist.@(t) == Inf::inf { break $ (g, flow_limit - flow_rest, cost) };
+            // tに到達不能なときはflow_restをゼロにして次のループで終了
+            if dist.@(t) == Inf::inf { continue $ (g, zero, cost, h, que, dist, prevv, preve) };
             // ポテンシャルを更新
             let h = range(0, n).fold(h, |v, h| h.set(v, h.@(v) + dist.@(v)) );
             // s-t最短路に沿ってフローを流す

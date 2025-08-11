@@ -97,7 +97,7 @@ impl [c : LessThan] NodeDistance c : LessThan {
     less_than = |x, y| x.@dist < y.@dist;
 }
 
-// グラフと開始ノードが与えられたとき、開始ノードから各ノードに到達するまでの最小コストの配列を返す。
+// ダイクストラ法：グラフと開始ノードが与えられたとき、開始ノードから各ノードに到達するまでの最小コストの配列を返す。
 // 
 // 各辺のコストは非負である必要があります。
 // 
@@ -146,6 +146,37 @@ dijkstra = |start, graph| (
             (dists, visit_list)
         )
     ))
+);
+
+// ベルマンフォード法：グラフと開始ノードが与えられたとき、開始ノードから各ノードに到達するまでの最小コストの配列を返す。
+// 
+// 到達できないノードまでの距離には`Inf::inf`が設定されます。
+// 
+// 負の閉路が存在する場合は無限ループに陥ります。
+// 
+// # Parameters
+// - `start` : 開始ノードの番号
+// - `graph` : グラフ
+bellman_ford : [c : Additive, c : LessThan, c : Inf, c : Eq] I64 -> Graph c -> Array c;
+bellman_ford = |start, graph| (
+    let n = graph.get_size;
+    let d = Array::fill(n, inf);
+    let d = d.set(start, zero);
+    loop(d, |d|
+        let (d, update) = range(0, n).fold((d, false), |i, (d, update)|
+            let edges = graph.@edges.@(i);
+            edges.to_iter.fold((d, update), |Edge { to : to, data : cost}, (d, update)|
+                let dist = d.@(i);
+                if dist == inf { (d, update) }; // 到達できないノード
+                let new_dist = d.@(i) + cost;
+                if !(new_dist < d.@(to)) { (d, update) };
+                let d = d.set(to, new_dist);
+                (d, true)
+            )
+        );
+        if !update { break $ d };
+        continue $ d
+    )
 );
 
 // グラフの強連結成分分解を求める
