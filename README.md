@@ -21,9 +21,12 @@
   * `CPLib.LDSegtree` : 遅延作用を持つセグメント木（モノイドおよび作用が動的に決まる場合）。
 * Union-Find木
   * `CPLib.UnionFind` : Union-Find木の実装。
-* 最大フロー・最小カット・二部グラフ
+* フロー・最小カット・二部グラフ
   * `CPLib.MaxFlow` : 最大フロー・最小カット（Dinic法）
+  * `CPLib.MinCostMaxFlow` : 最小コスト最大フロー
   * `CPLib.Bipartite` : 二部グラフの最大マッチング、最小辺被覆、最大独立集合、最小点被覆。
+* 文字列
+  * `CPLib.String` : Suffix Array, LCP Array。
 * グラフ
   * `CPLib.Graph` : グラフの表現と基本的なアルゴリズム。ダイクストラ法、連結成分分解、トポロジカルソート。
 * 2Sat

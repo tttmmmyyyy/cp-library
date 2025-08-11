@@ -1,6 +1,6 @@
 # CPLib.MinCostFlow
 
-Defined in cp-library@0.5.0
+Defined in cp-library@0.5.1
 
 最小コスト最大流問題
 

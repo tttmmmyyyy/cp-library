@@ -1,6 +1,6 @@
 # CPLib.Trait
 
-Defined in cp-library@0.5.0
+Defined in cp-library@0.5.1
 
 ## Values
 

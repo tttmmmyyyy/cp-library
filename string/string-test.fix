@@ -1,0 +1,24 @@
+module CPLib.String.Test;
+
+import CPLib.String;
+
+test : IO ();
+test = test_sa;; test_lcp;
+
+test_sa : IO ();
+test_sa = (
+    let s = "abracadabra";
+    let sa = s.calc_suffix_array;
+    assert_eq(|_|"", sa, [10, 7, 0, 3, 5, 8, 1, 4, 6, 9, 2]);;
+    pure()
+);
+
+
+test_lcp : IO ();
+test_lcp = (
+    let s = "abracadabra";
+    let sa = s.calc_suffix_array;
+    let lcp = s.calc_lcp_array(sa);
+    assert_eq(|_|"", lcp, [1, 4, 1, 1, 0, 3, 0, 0, 0, 2]);;
+    pure()
+);

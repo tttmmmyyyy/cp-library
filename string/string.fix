@@ -1,0 +1,118 @@
+module CPLib.String;
+
+// 文字列のsuffix arrayを計算する
+// 
+// 注：現在はSA-ISではなくダブリングで実装されているため、計算量はO(n (log n)^2)です。
+// 
+// # Returns
+// `[0, 1, ..., s.get_size)` の順列`sa`で、任意の`i`について`s[sa.@(i)..) < s[sa.@(i+1)..)` が成り立つもの
+// 
+// # Parameters
+// - `s` : 対象の文字列
+calc_suffix_array : String -> Array I64;
+calc_suffix_array = |s| s.get_bytes.pop_back.calc_suffix_array_any;
+
+// 配列のsuffix arrayを計算する
+//
+// 注：現在はSA-ISではなくダブリングで実装されているため、計算量はO(n (log n)^2)です。
+// 
+// # Returns
+// `[0, 1, ..., s.get_size)` の順列`sa`で、任意の`i`について`s[sa.@(i)..) < s[sa.@(i+1)..)` が成り立つもの
+// 
+// # Parameters
+// - `s` : 対象の配列
+calc_suffix_array_any : [a : EmbedToI64] Array a -> Array I64;
+calc_suffix_array_any = |s| (
+    let n = s.get_size;
+    let sa = range(0, n).fold(Array::fill(n, 0), |i, sa| sa.set(i, i) );
+    let rnk = s.map(embed);
+    let tmp = Array::fill(n, 0);
+    loop((1, sa, rnk, tmp), |(k, sa, rnk, tmp)|
+        if k >= n { break $ sa };
+        let cmp = |(x, y)| (
+            if (rnk.@(x) != rnk.@(y)) { rnk.@(x) < rnk.@(y) };
+            let rx = if x + k < n { rnk.@(x + k) } else { -1 };
+            let ry = if y + k < n { rnk.@(y + k) } else { -1 };
+            rx < ry
+        );
+        let sa = sa.sort_by(cmp);
+        let tmp = tmp.set(sa.@(0), 0);
+        let tmp = range(1, n).fold(tmp, |i, tmp|
+            let v = tmp.@(sa.@(i-1)) + if cmp((sa.@(i-1), sa.@(i))) { 1 } else { 0 };
+            tmp.set(sa.@(i), v)
+        );
+        let (rnk, tmp) = (tmp, rnk); // Swap `tmp` and `rnk`
+        continue $ (k * 2, sa, rnk, tmp)
+    )
+);
+
+// 文字列のLCP arrayを計算する
+// 
+// # Returns
+// 長さ`s.get_size - 1`の配列`lcp`で、`lcp.@(i)`は`s[sa.@(i)..)`と`s[sa.@(i+1)..)`の最長共通接頭辞の長さを表す。
+//
+// # Parameters
+// - `sa` : 対象の文字列のsuffix array
+// - `s` : 対象の文字列
+calc_lcp_array : Array I64 -> String -> Array I64;
+calc_lcp_array = |sa, s| s.get_bytes.pop_back.calc_lcp_array_any(sa);
+
+// 配列のLCP arrayを計算する
+//
+// # Returns
+// 長さ`s.get_size - 1`の配列`lcp`で、`lcp.@(i)`は`s[sa.@(i)..)`と`s[sa.@(i+1)..)`の最長共通接頭辞の長さを表す。
+//
+// # Parameters
+// - `sa` : 対象の配列のsuffix array
+// - `s` : 対象の配列
+calc_lcp_array_any : [a : EmbedToI64] Array I64 -> Array a -> Array I64;
+calc_lcp_array_any = |sa, s| (
+    let n = s.get_size;
+    let rnk = Array::fill(n, 0);
+    let rnk = range(0, n).fold(rnk, |i, rnk| rnk.set(sa.@(i), i));
+    let lcp = Array::fill(n - 1, 0);
+    range(0, n).fold((lcp, 0), |i, (lcp, h)|
+        let h = if h > 0 { h - 1 } else { 0 };
+        if rnk.@(i) == 0 { (lcp, h) };
+        let j = sa.@(rnk.@(i) - 1);
+        let h = loop(h, |h|
+            if i + h >= n || j + h >= n { break $ h };
+            if s.@(i + h).embed != s.@(j + h).embed { break $ h };
+            continue $ h + 1
+        );
+        let lcp = lcp.set(rnk.@(i) - 1, h);
+        (lcp, h)
+    ).@0
+);
+
+trait a : EmbedToI64 {
+    embed : a -> I64;
+}
+
+impl I8 : EmbedToI64 {
+    embed = |x| x.to_I64;
+}
+
+impl U8 : EmbedToI64 {
+    embed = |x| x.to_I64;
+}
+
+impl I16 : EmbedToI64 {
+    embed = |x| x.to_I64;
+}
+
+impl U16 : EmbedToI64 {
+    embed = |x| x.to_I64;
+}
+
+impl I32 : EmbedToI64 {
+    embed = |x| x.to_I64;
+}
+
+impl U32 : EmbedToI64 {
+    embed = |x| x.to_I64;
+}
+
+impl I64 : EmbedToI64 {
+    embed = |x| x;
+}
