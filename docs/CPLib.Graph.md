@@ -1,6 +1,6 @@
 # CPLib.Graph
 
-Defined in cp-library@0.4.2
+Defined in cp-library@0.5.0
 
 ## Values
 
@@ -17,6 +17,34 @@ Type: `Std::I64 -> Std::I64 -> c -> CPLib.Graph::Graph c -> CPLib.Graph::Graph c
 - `from` : 始点の頂点番号
 - `to` : 終点の頂点番号
 - `data` : 辺のデータ
+- `graph` : グラフ
+
+#### add_edge_id
+
+Type: `Std::I64 -> Std::I64 -> c -> CPLib.Graph::Graph c -> (CPLib.Graph::Graph c, CPLib.Graph::EdgeId)`
+
+グラフに辺を追加する（辺IDを返す）
+
+##### Parameters
+
+- `from` : 始点の頂点番号
+- `to` : 終点の頂点番号
+- `data` : 辺のデータ
+- `graph` : グラフ
+
+#### bellman_ford
+
+Type: `[c : Std::Additive, c : Std::LessThan, c : CPLib.Trait::Inf, c : Std::Eq] Std::I64 -> CPLib.Graph::Graph c -> Std::Array c`
+
+ベルマンフォード法：グラフと開始ノードが与えられたとき、開始ノードから各ノードに到達するまでの最小コストの配列を返す。
+
+到達できないノードまでの距離には`Inf::inf`が設定されます。
+
+負の閉路が存在する場合は無限ループに陥ります。
+
+##### Parameters
+
+- `start` : 開始ノードの番号
 - `graph` : グラフ
 
 #### calc_sccs
@@ -44,16 +72,28 @@ Type: `Std::I64 -> CPLib.Graph::Graph c`
 
 #### dijkstra
 
-Type: `[c : Std::Additive, c : Std::LessThan] Std::I64 -> c -> CPLib.Graph::Graph c -> Std::Array c`
+Type: `[c : Std::Additive, c : Std::LessThan, c : CPLib.Trait::Inf] Std::I64 -> CPLib.Graph::Graph c -> Std::Array c`
 
-グラフと開始ノードが与えられたとき、開始ノードから各ノードに到達するまでの最小コストの配列を返す。
+ダイクストラ法：グラフと開始ノードが与えられたとき、開始ノードから各ノードに到達するまでの最小コストの配列を返す。
 
 各辺のコストは非負である必要があります。
+
+到達できないノードまでの距離には`Inf::inf`が設定されます。
 
 ##### Parameters
 
 - `start` : 開始ノードの番号
-- `inf` : 無限大のコストとして用いる値。到達不可能なノードのコストとして使われる。
+- `graph` : グラフ
+
+#### get_edge
+
+Type: `CPLib.Graph::EdgeId -> CPLib.Graph::Graph c -> CPLib.Graph::Edge c`
+
+辺を取得する
+
+##### Parameters
+
+- `edge_id` : 辺の識別子
 - `graph` : グラフ
 
 #### get_size
@@ -101,6 +141,24 @@ Type: `Std::I64`
 Type: `c`
 
 辺のデータ
+
+#### EdgeId
+
+Defined as: `type EdgeId = unbox struct { ...fields... }`
+
+辺の識別子の型
+
+##### field `from`
+
+Type: `Std::I64`
+
+始点インデックス
+
+##### field `idx`
+
+Type: `Std::I64`
+
+辺インデックス
 
 #### Graph
 

@@ -1,6 +1,6 @@
 # CPLib.MaxFlow
 
-Defined in cp-library@0.4.2
+Defined in cp-library@0.5.0
 
 　最大フロー問題、最小カット問題
 
@@ -51,7 +51,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowGraph c -> (CPLib
 
 #### add_edge
 
-Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxFlow::MaxFlowGraph c -> (CPLib.MaxFlow::MaxFlowGraph c, CPLib.MaxFlow::EdgeId)`
+Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxFlow::MaxFlowGraph c -> CPLib.MaxFlow::MaxFlowGraph c`
 
 グラフに辺を追加する
 
@@ -64,9 +64,24 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxF
 - `to` : 終点の頂点番号
 - `cap` : 辺の容量
 
+#### add_edge_id
+
+Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxFlow::MaxFlowGraph c -> (CPLib.MaxFlow::MaxFlowGraph c, CPLib.Graph::EdgeId)`
+
+グラフに辺を追加する（辺IDを返す）
+
+追加された辺の識別子を返す。
+
+##### Parameters
+
+- `graph` : グラフ
+- `from` : 始点の頂点番号
+- `to` : 終点の頂点番号
+- `cap` : 辺の容量
+
 #### create
 
-Type: `Std::I64 -> Std::I64 -> Std::I64 -> c -> CPLib.MaxFlow::MaxFlowGraph c`
+Type: `Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MaxFlow::MaxFlowGraph c`
 
 グラフを作成する
 
@@ -75,11 +90,10 @@ Type: `Std::I64 -> Std::I64 -> Std::I64 -> c -> CPLib.MaxFlow::MaxFlowGraph c`
 - `n` : 頂点数
 - `s` : 開始頂点番号
 - `t` : 終了頂点番号
-- `max_cap` : 容量の型`c`の最大値
 
 #### get_flow
 
-Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::EdgeId -> CPLib.MaxFlow::MaxFlowGraph c -> c`
+Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.Graph::EdgeId -> CPLib.MaxFlow::MaxFlowGraph c -> c`
 
 ある辺に流れているフローを取得する
 
@@ -120,12 +134,6 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowGraph c -> (CPLib
 
 ### namespace CPLib.MaxFlow
 
-#### EdgeId
-
-Defined as: `type EdgeId = (Std::I64, Std::I64)`
-
-辺の識別子の型
-
 #### MaxFlowGraph
 
 Defined as: `type MaxFlowGraph c = unbox struct { ...fields... }`
@@ -139,12 +147,6 @@ Defined as: `type MaxFlowGraph c = unbox struct { ...fields... }`
 Type: `CPLib.Graph::Graph (c, Std::I64, c)`
 
 グラフ。`(現在の容量, 逆辺のインデックス, 初期容量)`
-
-##### field `max_cap`
-
-Type: `c`
-
-容量の型`c`の最大値
 
 ##### field `s`
 

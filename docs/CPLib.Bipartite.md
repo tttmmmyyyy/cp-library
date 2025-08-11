@@ -1,6 +1,6 @@
 # CPLib.Bipartite
 
-Defined in cp-library@0.4.2
+Defined in cp-library@0.5.0
 
 二部グラフを扱うモジュール
 
@@ -139,7 +139,7 @@ Type: `CPLib.MaxFlow::MaxFlowGraph Std::I64`
 
 ##### field `edge_ids`
 
-Type: `Std::Array CPLib.MaxFlow::EdgeId`
+Type: `Std::Array CPLib.Graph::EdgeId`
 
 二部グラフの辺に対応する最大フローグラフの辺の識別子
 
