@@ -161,7 +161,7 @@ namespace MinCostFlowGraph {
         loop((g, flow_limit, zero, h, que, dist, prevv, preve), |(g, flow_rest, cost, h, que, dist, prevv, preve)| 
             if flow_rest == zero { break $ (g.set_potential(h), flow_limit - flow_rest, cost) };
             // ダイクストラ法を用いてhを更新する
-            let dist = dist.resize(0, Inf::inf).resize(n, Inf::inf); // distを初期化
+            let dist = range(0, n).fold(dist, |i, dist| dist.set(i, Inf::inf)); // `dist`を初期化
             let dist = dist.set(s, zero);
             let que = que.push(NodeDistance::make(s, zero));
             let (que, dist, prevv, preve) = loop((que, dist, prevv, preve), |(que, dist, prevv, preve)|

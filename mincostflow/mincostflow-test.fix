@@ -1,5 +1,7 @@
 module CPLib.MinCostFlow.Test;
 
+// https://atcoder.jp/contests/language-test-202505/submissions/68408186
+
 import CPLib.MinCostFlow;
 import CPLib.Trait;
 
