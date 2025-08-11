@@ -1,6 +1,6 @@
 # CPLib.Arithmetic
 
-Defined in cp-library@0.5.2
+Defined in cp-library@0.5.3
 
 ## Values
 
@@ -83,6 +83,21 @@ Type: `Std::I64 -> Std::I64 -> (Std::I64, (Std::I64, Std::I64))`
 
 - `a`: 整数
 - `b`: 整数
+
+#### floor_sum
+
+Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::I64 -> Std::I64`
+
+0 <= i < n に対する floor((a * i + b) / m) の和を計算する
+
+ac-libraryのmathにある同名の関数の移植です。
+
+##### Parameters
+
+- `n`
+- `m`
+- `a`
+- `b`
 
 #### inv_mod
 

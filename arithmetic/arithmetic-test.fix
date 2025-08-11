@@ -1,5 +1,8 @@
 module CPLib.Arithmetic.Test;
 
+// floor_math:
+// https://atcoder.jp/contests/language-test-202505/submissions/68412909 
+
 import CPLib.Arithmetic;
 import BoolArray::BoolArray::@;
 import Random;

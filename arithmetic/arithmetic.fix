@@ -376,3 +376,53 @@ calc_primitive_root = |p| (
     if p == 469762049 { 3 };
     p._calc_primitive_root
 );
+
+// 0 <= i < n に対する floor((a * i + b) / m) の和を計算する
+// 
+// ac-libraryのmathにある同名の関数の移植です。
+// 
+// # Parameters
+// - `n`
+// - `m`
+// - `a`
+// - `b`
+floor_sum : I64 -> I64 -> I64 -> I64 -> I64;
+floor_sum = |n, m, a, b| (
+    let ans = 0_U64;
+    let (ans, a) = if a < 0 {
+        let a2 = a.pmod(m).to_U64;
+        let ans = ans - 1_U64 * n.to_U64 * (n - 1).to_U64 / 2_U64 * ((a2 - a.to_U64) / m.to_U64);
+        let a = a2;
+        (ans, a)
+    } else { (ans, a.to_U64) };
+    let (ans, b) = if b < 0 {
+        let b2 = b.pmod(m).to_U64;
+        let ans = ans - n.to_U64 * ((b2 - b.to_U64) / m.to_U64);
+        let b = b2;
+        (ans, b)
+    } else { (ans, b.to_U64) };
+    (ans + _floor_sum_unsigned(n.to_U64, m.to_U64, a, b)).to_I64
+);
+
+_floor_sum_unsigned : U64 -> U64 -> U64 -> U64 -> U64;
+_floor_sum_unsigned = |n, m, a, b| (
+    let ans = 0_U64;
+    loop((ans, n, m, a, b), |(ans, n, m, a, b)|
+        let (ans, a) = if a >= m {
+            let ans = ans + n * (n - 1_U64) / 2_U64 * (a / m);
+            let a = a % m;
+            (ans, a)
+        } else { (ans, a) };
+        let (ans, b) = if b >= m {
+            let ans = ans + n * (b / m);
+            let b = b % m;
+            (ans, b)
+        } else { (ans, b) };
+        let y_max = a * n + b;
+        if y_max < m { break $ ans };
+        let n = y_max / m;
+        let b = y_max % m;
+        let (m, a) = (a, m);
+        continue $ (ans, n, m, a, b)
+    )
+);

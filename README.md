@@ -7,13 +7,13 @@
 * IO
   * 整数、浮動小数点数、文字列、文字やその配列を空白区切りで読み込むための関数群。
   * Tips:
-    * 文字列を1行読み込むときは`Std::IO::input_line_s`を使います。ただしこれだとAtCoderで動かない場合がある（[参考](https://atcoder.jp/contests/language-test-202505/submissions/68392256) ので現状は`*read_s(1e6)`などをおすすめします。
+    * 文字列を1行読み込むときは`Std::IO::input_line_s`を使います。ただしこれだと注意が必要（[参考](https://atcoder.jp/contests/language-test-202505/submissions/68392256) なので文字数の上限がわかるときは`*read_s(n)`が簡単です。
     * 文字列を文字（`U8`）の配列に変換するときは`get_bytes : String -> Array U8`を使います。ただし、得られる配列はnull終端文字を含みます。
     * バイト配列`Array U8`を文字列に変換するときは`from_bytes(bytes).as_ok` と書きます（`from_bytes`は`FromBytes`トレイトのメンバで、`String`は`FromBytes`トレイトを実装している）。
 * Mod Int
   * `CPLib.ZP` : 静的な（すなわち、コンパイル時に決まる）素数を法とする整数の剰余環（体）の演算を提供します。またnumber theoretic transform（NTT）も提供します。
 * 整数論
-  * `CPLib.ZP.Arithmetic` : mod演算、GCD、拡張ユークリッドの互除法、pow_mod、inv_mod、中国剰余定理、素数リスト（篩）、素数判定（Miller-Rabin法）。
+  * `CPLib.ZP.Arithmetic` : mod演算、GCD、拡張ユークリッドの互除法、pow_mod、inv_mod、中国剰余定理、素数リスト（篩）、素数判定（Miller-Rabin法）、floor_sum
 * セグメント木
   * `CPLib.Segtree` : 静的にモノイド構造が決まる場合のセグメント木。
   * `CPLib.DSegtree` : 動的にモノイド構造が決まる場合のセグメント木。
