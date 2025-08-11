@@ -28,7 +28,6 @@ test_z : IO ();
 test_z = (
     let s = "abracadabra";
     let z = s.calc_z_array;
-    z.to_string.println;;
     assert_eq(|_|"", z, [11, 0, 0, 1, 0, 1, 0, 4, 0, 0, 1]);;
     pure()
 );
