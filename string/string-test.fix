@@ -11,7 +11,11 @@ test_sa : IO ();
 test_sa = (
     let s = "abracadabra";
     let sa = s.calc_suffix_array;
-    assert_eq(|_|"", sa, [10, 7, 0, 3, 5, 8, 1, 4, 6, 9, 2]);;
+    assert_eq(|_|"test_sa", sa, [10, 7, 0, 3, 5, 8, 1, 4, 6, 9, 2]);;
+
+    let sa = s.get_bytes.pop_back.map(to_I64).calc_suffix_array_any;
+    assert_eq(|_|"test_sa", sa, [10, 7, 0, 3, 5, 8, 1, 4, 6, 9, 2]);;
+
     pure()
 );
 
@@ -20,7 +24,7 @@ test_lcp = (
     let s = "abracadabra";
     let sa = s.calc_suffix_array;
     let lcp = s.calc_lcp_array(sa);
-    assert_eq(|_|"", lcp, [1, 4, 1, 1, 0, 3, 0, 0, 0, 2]);;
+    assert_eq(|_|"test_lcp", lcp, [1, 4, 1, 1, 0, 3, 0, 0, 0, 2]);;
     pure()
 );
 
@@ -28,6 +32,6 @@ test_z : IO ();
 test_z = (
     let s = "abracadabra";
     let z = s.calc_z_array;
-    assert_eq(|_|"", z, [11, 0, 0, 1, 0, 1, 0, 4, 0, 0, 1]);;
+    assert_eq(|_|"test_z", z, [11, 0, 0, 1, 0, 1, 0, 4, 0, 0, 1]);;
     pure()
 );

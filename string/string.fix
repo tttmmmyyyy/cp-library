@@ -10,7 +10,7 @@ module CPLib.String;
 // # Parameters
 // - `s` : 対象の文字列
 calc_suffix_array : String -> Array I64;
-calc_suffix_array = |s| s.get_bytes.pop_back.calc_suffix_array_any;
+calc_suffix_array = |s| s.get_bytes.pop_back.map(to_I64)._sa_is(255);
 
 // 配列のsuffix arrayを計算する
 //
@@ -23,27 +23,17 @@ calc_suffix_array = |s| s.get_bytes.pop_back.calc_suffix_array_any;
 // - `s` : 対象の配列
 calc_suffix_array_any : [a : EmbedToI64] Array a -> Array I64;
 calc_suffix_array_any = |s| (
+    let s = s.map(embed);
     let n = s.get_size;
-    let sa = range(0, n).fold(Array::fill(n, 0), |i, sa| sa.set(i, i) );
-    let rnk = s.map(embed);
-    let tmp = Array::fill(n, 0);
-    loop((1, sa, rnk, tmp), |(k, sa, rnk, tmp)|
-        if k >= n { break $ sa };
-        let cmp = |(x, y)| (
-            if (rnk.@(x) != rnk.@(y)) { rnk.@(x) < rnk.@(y) };
-            let rx = if x + k < n { rnk.@(x + k) } else { -1 };
-            let ry = if y + k < n { rnk.@(y + k) } else { -1 };
-            rx < ry
-        );
-        let sa = sa.sort_by(cmp);
-        let tmp = tmp.set(sa.@(0), 0);
-        let tmp = range(1, n).fold(tmp, |i, tmp|
-            let v = tmp.@(sa.@(i-1)) + if cmp((sa.@(i-1), sa.@(i))) { 1 } else { 0 };
-            tmp.set(sa.@(i), v)
-        );
-        let (rnk, tmp) = (tmp, rnk); // Swap `tmp` and `rnk`
-        continue $ (k * 2, sa, rnk, tmp)
-    )
+    let idx = range(0, n).to_array;
+    let idx = idx.sort_by(|(l, r)| s.@(l).embed < s.@(r).embed);
+    let s2 = Array::fill(n, 0);
+    let (s2, now) = range(0, n).fold((s2, 0), |i, (s2, now)|
+        let now = if i > 0 && s.@(idx.@(i - 1)) != s.@(idx.@(i)) { now + 1 } else { now };
+        let s2 = s2.set(idx.@(i), now);
+        (s2, now)
+    );
+    s2._sa_is(now)
 );
 
 // 文字列のLCP arrayを計算する
@@ -154,3 +144,159 @@ impl U32 : EmbedToI64 {
 impl I64 : EmbedToI64 {
     embed = |x| x;
 }
+
+// SA-IS法
+_sa_is : I64 -> Array I64 -> Array I64 = |upper, s| (
+    let n = s.get_size;
+    if n == 0 { [] };
+    if n == 1 { [0] };
+    if n == 2 {
+        if s.@(0) < s.@(1) {
+            [0, 1]
+        } else {
+            [1, 0]
+        }
+    };
+    if n < 40 {
+        s._sa_doubling
+    };
+    let sa = Array::fill(n, 0);
+    let ls = Array::fill(n, false);
+    let ls = range_step(n-2, -1, -1).fold(ls, |i, ls|
+        let l = if s.@(i) == s.@(i+1) { ls.@(i+1) } else { s.@(i) < s.@(i+1) };
+        ls.set(i, l)
+    );
+    let sum_l = Array::fill(upper + 1, 0);
+    let sum_s = Array::fill(upper + 1, 0);
+    let (sum_l, sum_s) = range(0, n).fold((sum_l, sum_s), |i, (sum_l, sum_s)|
+        if !ls.@(i) {
+            (sum_l, sum_s.mod(s.@(i), add(1)))
+        } else {
+            (sum_l.mod(s.@(i), add(1)), sum_s)
+        }
+    );
+    let (sum_l, sum_s) = range(0, upper).fold((sum_l, sum_s), |i, (sum_l, sum_s)|
+        let sum_s = sum_s.mod(i, add $ sum_l.@(i));
+        let sum_l = if i < upper { sum_l.mod(i+1, add $ sum_s.@(i)) } else { sum_l };
+        (sum_l, sum_s)
+    );
+    let induce : Array I64 -> Array I64 -> Array I64 = |lms, sa| (
+        let sa = range(0, n).fold(sa, |i, sa| sa.set(i, -1) );
+        let buf = sum_s;
+        let (sa, _) = lms.to_iter.fold((sa, buf), |d, (sa, buf)|
+            if d == n { (sa, buf) };
+            let i = s.@(d);
+            let sa = sa.set(buf.@(i), d);
+            let buf = buf.mod(i, add(1));
+            (sa, buf)
+        );
+        let buf = sum_l;
+        let i = s.@(n-1);
+        let sa = sa.set(buf.@(i), n-1);
+        let buf = buf.mod(i, add(1));
+        let (sa, _) = range(0, n).fold((sa, buf), |i, (sa, buf)|
+            let v = sa.@(i);
+            if v >= 1 && !ls.@(v-1) {
+                let i = s.@(v-1);
+                let sa = sa.set(buf.@(i), v-1);
+                let buf = buf.mod(i, add(1));
+                (sa, buf)
+            };
+            (sa, buf)
+        );
+        let buf = sum_l;
+        let (sa, _) = range_step(n-1, -1, -1).fold((sa, buf), |i, (sa, buf)|
+            let v = sa.@(i);
+            if v >= 1 && ls.@(v-1) {
+                let i = s.@(v-1) + 1;
+                let buf = buf.mod(i, add(-1));
+                let sa = sa.set(buf.@(i), v-1);
+                (sa, buf)
+            };
+            (sa, buf)
+        );
+        sa
+    );
+    let lms_map = Array::fill(n+1, -1);
+    let (lms_map, m) = range(1, n).fold((lms_map, 0), |i, (lms_map, m)|
+        if !ls.@(i-1) && ls.@(i) {
+            let lms_map = lms_map.set(i, m);
+            let m = m + 1;
+            (lms_map, m)
+        };
+        (lms_map, m)
+    );
+    let lms = Array::empty(m);
+    let lms = range(1, n).fold(lms, |i, lms|
+        if !ls.@(i-1) && ls.@(i) {
+            lms.push_back(i)
+        };
+        lms
+    );
+    let sa = sa.induce(lms);
+
+    if m != 0 {
+        let sorted_lms = Array::empty(m);
+        let sorted_lms = sa.to_iter.fold(sorted_lms, |v, sorted_lms|
+            if lms_map.@(v) != -1 { sorted_lms.push_back(v) };
+            sorted_lms
+        );
+        let rec_s = Array::fill(m, 0);
+        let rec_upper = 0;
+        let rec_s = rec_s.set(lms_map.@(sorted_lms.@(0)), 0);
+        let (rec_s, rec_upper) = range(1, m).fold((rec_s, rec_upper), |i, (rec_s, rec_upper)|
+            let l = sorted_lms.@(i-1);
+            let r = sorted_lms.@(i);
+            let end_l = if lms_map.@(l) + 1 < m { lms.@(lms_map.@(i) + 1) } else { n };
+            let end_r = if lms_map.@(r) + 1 < m { lms.@(lms_map.@(r) + 1) } else { n };
+            let same = true;
+            let same = if end_l - l != end_r - r {
+                false
+            } else {
+                let (l, r) = loop((l, r), |(l, r)|
+                    if l >= end_l { break $ (l, r) };
+                    if s.@(l) != s.@(r) { break $ (l, r) };
+                    continue $ (l + 1, r + 1)
+                );
+                if l == n || s.@(l) != s.@(r) { false } else { true }
+            };
+            let rec_upper = if !same { rec_upper + 1 } else { rec_upper };
+            let rec_s = rec_s.set(lms_map.@(sorted_lms.@(i)), rec_upper);
+            (rec_s, rec_upper)
+        );
+        
+        let rec_sa = rec_s._sa_is(rec_upper);
+
+        let sorted_lms = range(0, m).fold(sorted_lms, |i, sorted_lms|
+            sorted_lms.set(i, lms.@(rec_sa.@(i)))
+        );
+        sa.induce(sorted_lms)
+    };
+    sa
+
+);
+
+_sa_doubling : Array I64 -> Array I64;
+_sa_doubling = |s| (
+    let n = s.get_size;
+    let sa = range(0, n).fold(Array::fill(n, 0), |i, sa| sa.set(i, i) );
+    let rnk = s.map(embed);
+    let tmp = Array::fill(n, 0);
+    loop((1, sa, rnk, tmp), |(k, sa, rnk, tmp)|
+        if k >= n { break $ sa };
+        let cmp = |(x, y)| (
+            if (rnk.@(x) != rnk.@(y)) { rnk.@(x) < rnk.@(y) };
+            let rx = if x + k < n { rnk.@(x + k) } else { -1 };
+            let ry = if y + k < n { rnk.@(y + k) } else { -1 };
+            rx < ry
+        );
+        let sa = sa.sort_by(cmp);
+        let tmp = tmp.set(sa.@(0), 0);
+        let tmp = range(1, n).fold(tmp, |i, tmp|
+            let v = tmp.@(sa.@(i-1)) + if cmp((sa.@(i-1), sa.@(i))) { 1 } else { 0 };
+            tmp.set(sa.@(i), v)
+        );
+        let (rnk, tmp) = (tmp, rnk); // Swap `tmp` and `rnk`
+        continue $ (k * 2, sa, rnk, tmp)
+    )
+);
