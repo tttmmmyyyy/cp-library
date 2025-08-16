@@ -2,7 +2,7 @@ module CPLib.String;
 
 // 文字列のsuffix arrayを計算する
 // 
-// 注：現在はSA-ISではなくダブリングで実装されているため、計算量はO(n (log n)^2)です。
+// AtCoder Libraryの`suffix_array`の移植です。
 // 
 // # Returns
 // `[0, 1, ..., s.get_size)` の順列`sa`で、任意の`i`について`s[sa.@(i)..) < s[sa.@(i+1)..)` が成り立つもの
@@ -10,23 +10,22 @@ module CPLib.String;
 // # Parameters
 // - `s` : 対象の文字列
 calc_suffix_array : String -> Array I64;
-calc_suffix_array = |s| s.get_bytes.pop_back.map(to_I64)._sa_is(255);
+calc_suffix_array = |s| s.get_bytes.map(to_I64).pop_back._sa_is(255);
 
 // 配列のsuffix arrayを計算する
 //
-// 注：現在はSA-ISではなくダブリングで実装されているため、計算量はO(n (log n)^2)です。
+// AtCoder Libraryの`suffix_array`の移植です。
 // 
 // # Returns
 // `[0, 1, ..., s.get_size)` の順列`sa`で、任意の`i`について`s[sa.@(i)..) < s[sa.@(i+1)..)` が成り立つもの
 // 
 // # Parameters
 // - `s` : 対象の配列
-calc_suffix_array_any : [a : EmbedToI64] Array a -> Array I64;
-calc_suffix_array_any = |s| (
-    let s = s.map(embed);
+calc_suffix_array_i64 : Array I64 -> Array I64;
+calc_suffix_array_i64 = |s| (
     let n = s.get_size;
     let idx = range(0, n).to_array;
-    let idx = idx.sort_by(|(l, r)| s.@(l).embed < s.@(r).embed);
+    let idx = idx.sort_by(|(l, r)| s.@(l) < s.@(r));
     let s2 = Array::fill(n, 0);
     let (s2, now) = range(0, n).fold((s2, 0), |i, (s2, now)|
         let now = if i > 0 && s.@(idx.@(i - 1)) != s.@(idx.@(i)) { now + 1 } else { now };
@@ -146,7 +145,8 @@ impl I64 : EmbedToI64 {
 }
 
 // SA-IS法
-_sa_is : I64 -> Array I64 -> Array I64 = |upper, s| (
+_sa_is : I64 -> Array I64 -> Array I64;
+_sa_is = |upper, s| (
     let n = s.get_size;
     if n == 0 { [] };
     if n == 1 { [0] };

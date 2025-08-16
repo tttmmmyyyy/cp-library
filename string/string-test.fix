@@ -13,7 +13,7 @@ test_sa = (
     let sa = s.calc_suffix_array;
     assert_eq(|_|"test_sa", sa, [10, 7, 0, 3, 5, 8, 1, 4, 6, 9, 2]);;
 
-    let sa = s.get_bytes.pop_back.map(to_I64).calc_suffix_array_any;
+    let sa = s.get_bytes.map(to_I64).pop_back.calc_suffix_array_i64;
     assert_eq(|_|"test_sa", sa, [10, 7, 0, 3, 5, 8, 1, 4, 6, 9, 2]);;
 
     pure()
