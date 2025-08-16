@@ -1,6 +1,6 @@
 module CPLib.String.Test;
 
-// https://atcoder.jp/contests/language-test-202505/submissions/68411508
+// https://atcoder.jp/contests/language-test-202505/submissions/68577484
 
 import CPLib.String;
 import Random;

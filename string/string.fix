@@ -124,38 +124,6 @@ calc_z_array_any = |s| (
     z
 );
 
-trait a : EmbedToI64 {
-    embed : a -> I64;
-}
-
-impl I8 : EmbedToI64 {
-    embed = |x| x.to_I64;
-}
-
-impl U8 : EmbedToI64 {
-    embed = |x| x.to_I64;
-}
-
-impl I16 : EmbedToI64 {
-    embed = |x| x.to_I64;
-}
-
-impl U16 : EmbedToI64 {
-    embed = |x| x.to_I64;
-}
-
-impl I32 : EmbedToI64 {
-    embed = |x| x.to_I64;
-}
-
-impl U32 : EmbedToI64 {
-    embed = |x| x.to_I64;
-}
-
-impl I64 : EmbedToI64 {
-    embed = |x| x;
-}
-
 // SA-IS法
 _sa_is : I64 -> Array I64 -> Array I64;
 _sa_is = |upper, s| (
@@ -289,7 +257,7 @@ _sa_doubling : Array I64 -> Array I64;
 _sa_doubling = |s| (
     let n = s.get_size;
     let sa = range(0, n).fold(Array::fill(n, 0), |i, sa| sa.set(i, i) );
-    let rnk = s.map(embed);
+    let rnk = s;
     let tmp = Array::fill(n, 0);
     loop((1, sa, rnk, tmp), |(k, sa, rnk, tmp)|
         if k >= n { break $ sa };

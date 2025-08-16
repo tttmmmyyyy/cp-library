@@ -1,6 +1,6 @@
 # CPLib.String
 
-Defined in cp-library@0.5.3
+Defined in cp-library@0.6.0
 
 ## Values
 
@@ -42,7 +42,7 @@ Type: `Std::String -> Std::Array Std::I64`
 
 文字列のsuffix arrayを計算する
 
-注：現在はSA-ISではなくダブリングで実装されているため、計算量はO(n (log n)^2)です。
+AtCoder Libraryの`suffix_array`の移植です。
 
 ##### Returns
 
@@ -52,13 +52,29 @@ Type: `Std::String -> Std::Array Std::I64`
 
 - `s` : 対象の文字列
 
-#### calc_suffix_array_any
+#### calc_suffix_array_i64
 
-Type: `[a : CPLib.String::EmbedToI64] Std::Array a -> Std::Array Std::I64`
+Type: `Std::Array Std::I64 -> Std::Array Std::I64`
 
 配列のsuffix arrayを計算する
 
-注：現在はSA-ISではなくダブリングで実装されているため、計算量はO(n (log n)^2)です。
+AtCoder Libraryの`suffix_array`の移植です。
+
+##### Returns
+
+`[0, 1, ..., s.get_size)` の順列`sa`で、任意の`i`について`s[sa.@(i)..) < s[sa.@(i+1)..)` が成り立つもの
+
+##### Parameters
+
+- `s` : 対象の配列
+
+#### calc_suffix_array_i64_upper
+
+Type: `Std::I64 -> Std::Array Std::I64 -> Std::Array Std::I64`
+
+配列のsuffix arrayを計算する
+
+AtCoder Libraryの`suffix_array`の移植です。
 
 ##### Returns
 
@@ -96,36 +112,8 @@ Type: `[a : Std::Eq] Std::Array a -> Std::Array Std::I64`
 
 - `s` : 対象の配列
 
-### namespace CPLib.String::EmbedToI64
-
-#### embed
-
-Type: `[a : CPLib.String::EmbedToI64] a -> Std::I64`
-
 ## Types and aliases
 
 ## Traits and aliases
 
-### namespace CPLib.String
-
-#### trait `a : EmbedToI64`
-
-##### method `embed`
-
-Type: `a -> Std::I64`
-
 ## Trait implementations
-
-### impl `Std::I16 : CPLib.String::EmbedToI64`
-
-### impl `Std::I32 : CPLib.String::EmbedToI64`
-
-### impl `Std::I64 : CPLib.String::EmbedToI64`
-
-### impl `Std::I8 : CPLib.String::EmbedToI64`
-
-### impl `Std::U16 : CPLib.String::EmbedToI64`
-
-### impl `Std::U32 : CPLib.String::EmbedToI64`
-
-### impl `Std::U8 : CPLib.String::EmbedToI64`
