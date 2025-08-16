@@ -3,6 +3,7 @@ module CPLib.String.Test;
 // https://atcoder.jp/contests/language-test-202505/submissions/68411508
 
 import CPLib.String;
+import Random;
 
 test : IO ();
 test = test_sa;; test_lcp;; test_z;
@@ -15,6 +16,22 @@ test_sa = (
 
     let sa = s.get_bytes.map(to_I64).pop_back.calc_suffix_array_i64;
     assert_eq(|_|"test_sa", sa, [10, 7, 0, 3, 5, 8, 1, 4, 6, 9, 2]);;
+
+    let rng = Random::init_by_seed(0_U64);
+    range(0, 3).fold_m(rng, |_, rng|
+        let n = 5e5;
+        let (s, _) = range(0, n).fold((Array::empty(n), rng), |_, (s, rng)|
+            let (rng, v) = rng.generate_U64;
+            let v = (v % 26_U64).to_U8 + 'a';
+            (s.push_back(v), rng)
+        );
+        let s = s.push_back('\0');
+        let s = String::_unsafe_from_c_str(s);
+        let sa0 = s.calc_suffix_array;
+        let sa1 = s.get_bytes.map(to_I64).pop_back._sa_doubling;
+        assert_eq(|_|"test_sa", sa0, sa1);;
+        rng.pure
+    );;
 
     pure()
 );
