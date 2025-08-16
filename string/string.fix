@@ -184,7 +184,7 @@ _sa_is = |upper, s| (
         if !ls.@(i) {
             (sum_l, sum_s.mod(s.@(i), add(1)))
         } else {
-            (sum_l.mod(s.@(i), add(1)), sum_s)
+            (sum_l.mod(s.@(i) + 1, add(1)), sum_s)
         }
     );
     let (sum_l, sum_s) = range(0, upper+1).fold((sum_l, sum_s), |i, (sum_l, sum_s)|
