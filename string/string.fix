@@ -178,8 +178,8 @@ _sa_is = |upper, s| (
         let l = if s.@(i) == s.@(i+1) { ls.@(i+1) } else { s.@(i) < s.@(i+1) };
         ls.set(i, l)
     );
-    let sum_l = Array::fill(upper + 1, 0);
-    let sum_s = Array::fill(upper + 1, 0);
+    let sum_l = Array::fill(upper+1, 0);
+    let sum_s = Array::fill(upper+1, 0);
     let (sum_l, sum_s) = range(0, n).fold((sum_l, sum_s), |i, (sum_l, sum_s)|
         if !ls.@(i) {
             (sum_l, sum_s.mod(s.@(i), add(1)))
@@ -187,7 +187,7 @@ _sa_is = |upper, s| (
             (sum_l.mod(s.@(i), add(1)), sum_s)
         }
     );
-    let (sum_l, sum_s) = range(0, upper).fold((sum_l, sum_s), |i, (sum_l, sum_s)|
+    let (sum_l, sum_s) = range(0, upper+1).fold((sum_l, sum_s), |i, (sum_l, sum_s)|
         let sum_s = sum_s.mod(i, add $ sum_l.@(i));
         let sum_l = if i < upper { sum_l.mod(i+1, add $ sum_s.@(i)) } else { sum_l };
         (sum_l, sum_s)
@@ -247,21 +247,19 @@ _sa_is = |upper, s| (
     );
     let sa = sa.induce(lms);
 
-    if m != 0 {
+    if m > 0 {
         let sorted_lms = Array::empty(m);
         let sorted_lms = sa.to_iter.fold(sorted_lms, |v, sorted_lms|
             if lms_map.@(v) != -1 { sorted_lms.push_back(v) };
             sorted_lms
         );
         let rec_s = Array::fill(m, 0);
-        let rec_upper = 0;
         let rec_s = rec_s.set(lms_map.@(sorted_lms.@(0)), 0);
-        let (rec_s, rec_upper) = range(1, m).fold((rec_s, rec_upper), |i, (rec_s, rec_upper)|
+        let (rec_s, rec_upper) = range(1, m).fold((rec_s, 0), |i, (rec_s, rec_upper)|
             let l = sorted_lms.@(i-1);
             let r = sorted_lms.@(i);
-            let end_l = if lms_map.@(l) + 1 < m { lms.@(lms_map.@(i) + 1) } else { n };
+            let end_l = if lms_map.@(l) + 1 < m { lms.@(lms_map.@(l) + 1) } else { n };
             let end_r = if lms_map.@(r) + 1 < m { lms.@(lms_map.@(r) + 1) } else { n };
-            let same = true;
             let same = if end_l - l != end_r - r {
                 false
             } else {
@@ -285,7 +283,6 @@ _sa_is = |upper, s| (
         sa.induce(sorted_lms)
     };
     sa
-
 );
 
 _sa_doubling : Array I64 -> Array I64;
