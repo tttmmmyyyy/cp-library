@@ -45,7 +45,7 @@
   * module-name
 ```
 という形式で書いています。
-`fix deps add {project-name}` して、ソースコード中で`import {module-name}` することで使えるようになります。
+`fix deps add {project-name}` して、ソースコード中で`import {module-name};` することで使えるようになります。
 
 * minilib-collection
   * `Minilib.Collection.OrderedMap`
