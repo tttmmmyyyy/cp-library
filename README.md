@@ -7,6 +7,7 @@
 * IO
   * 整数、浮動小数点数、文字列、文字やその配列を空白区切りで読み込むための関数群。
   * Tips:
+    * 空白を含む行を読み込みたいときは`Std::IO::input_line_s`を使います。ただし`CPLib::IO`の諸関数（`read_i`など）は`scanf`を利用しており、`input_line_s`は`fgets`を利用しているため、`read_i`のあとに`input_line_s`を使う場合には要注意です：`read_i`が読まずに残している改行文字を`input_line_s`が読み込んでしまう場合があります。このような場合は`input_line_s`を一度余分に呼び出して改行文字を読み飛ばす必要があります。
     * 文字列を文字（`U8`）の配列に変換するときは`get_bytes : String -> Array U8`を使います。ただし、得られる配列はnull終端文字を含みます。
     * バイト配列`Array U8`を文字列に変換するときは`from_bytes(bytes).as_ok` と書きます（`from_bytes`は`FromBytes`トレイトのメンバで、`String`は`FromBytes`トレイトを実装している）。
 * Mod Int
@@ -57,3 +58,6 @@
   * `BoolArray`: bool型の配列を空間効率良く扱うモジュール
 * ring-buffer
   * `RingBuffer`: リングバッファ
+* gmp-fix
+  * `GMP.Z`: 任意精度の整数型 `MPZ`
+  * `GMP.Q`: 任意精度の有理数型 `MPQ`
