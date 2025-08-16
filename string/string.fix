@@ -10,7 +10,7 @@ module CPLib.String;
 // # Parameters
 // - `s` : 対象の文字列
 calc_suffix_array : String -> Array I64;
-calc_suffix_array = |s| s.get_bytes.map(to_I64).pop_back._sa_is(255);
+calc_suffix_array = |s| s.get_bytes.map(to_I64).pop_back.calc_suffix_array_i64_upper(255);
 
 // 配列のsuffix arrayを計算する
 //
@@ -34,6 +34,18 @@ calc_suffix_array_i64 = |s| (
     );
     s2._sa_is(now)
 );
+
+// 配列のsuffix arrayを計算する
+//
+// AtCoder Libraryの`suffix_array`の移植です。
+// 
+// # Returns
+// `[0, 1, ..., s.get_size)` の順列`sa`で、任意の`i`について`s[sa.@(i)..) < s[sa.@(i+1)..)` が成り立つもの
+// 
+// # Parameters
+// - `s` : 対象の配列
+calc_suffix_array_i64_upper : I64 -> Array I64 -> Array I64;
+calc_suffix_array_i64_upper = |upper, s| s._sa_is(upper);
 
 // 文字列のLCP arrayを計算する
 // 
