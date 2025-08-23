@@ -49,7 +49,6 @@
 
 * minilib-collection
   * `Minilib.Collection.OrderedMap`
-  * `Minilib.Collection.RBTree`
   * `Minilib.Collection.TreeMap`
   * `Minilib.Collection.TreeSet`
 * binary-heap
