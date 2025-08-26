@@ -1,0 +1,92 @@
+module CPLib.Bits.Test;
+
+import CPLib.Bits;
+
+test : IO () = (
+    test_bit_combinations;;
+    test_bit_subsets;;
+    pure()
+);
+
+test_bit_combinations : IO () = (
+    let combs = bit_combinations(0, -1).to_array;
+    assert_eq(|_|"test_bit_combinations 0 -1", combs.map(to_string_bits(8)).to_string, "[]");;
+
+    let combs = bit_combinations(0, 0).to_array;
+    assert_eq(|_|"test_bit_combinations 0 0", combs.map(to_string_bits(8)).to_string, "[00000000]");;
+
+    let combs = bit_combinations(0, 1).to_array;
+    assert_eq(|_|"test_bit_combinations 0 1", combs.map(to_string_bits(8)).to_string, "[]");;
+
+    let combs = bit_combinations(1, -1).to_array;
+    assert_eq(|_|"test_bit_combinations 1 -1", combs.map(to_string_bits(8)).to_string, "[]");;
+
+    let combs = bit_combinations(1, 0).to_array;
+    assert_eq(|_|"test_bit_combinations 1 0", combs.map(to_string_bits(8)).to_string, "[00000000]");;
+
+    let combs = bit_combinations(1, 1).to_array;
+    assert_eq(|_|"test_bit_combinations 1 1", combs.map(to_string_bits(8)).to_string, "[00000001]");;
+
+    let combs = bit_combinations(1, 2).to_array;
+    assert_eq(|_|"test_bit_combinations 1 2", combs.map(to_string_bits(8)).to_string, "[]");;    
+
+    let combs = bit_combinations(2, 0).to_array;
+    assert_eq(|_|"test_bit_combinations 2 0", combs.map(to_string_bits(8)).to_string, "[00000000]");;
+
+    let combs = bit_combinations(2, 1).to_array;
+    assert_eq(|_|"test_bit_combinations 2 1", combs.map(to_string_bits(8)).to_string, "[00000001, 00000010]");;
+
+    let combs = bit_combinations(2, 2).to_array;
+    assert_eq(|_|"test_bit_combinations 2 2", combs.map(to_string_bits(8)).to_string, "[00000011]");;
+
+    let combs = bit_combinations(4, 2).to_array;
+    assert_eq(|_|"test_bit_combinations 4 2", combs.map(to_string_bits(8)).to_string, "[00000011, 00000101, 00000110, 00001001, 00001010, 00001100]");;
+
+    let combs = bit_combinations(62, 0).to_array;
+    assert_eq(|_|"test_bit_combinations 62 0", combs.get_size, 1);;
+
+    let combs = bit_combinations(62, 1).to_array;
+    assert_eq(|_|"test_bit_combinations 62 1", combs.get_size, 62);;
+
+    let combs = bit_combinations(62, 2).to_array;
+    assert_eq(|_|"test_bit_combinations 62 2", combs.get_size, 62 * 61 / 2);;
+
+    let combs = bit_combinations(62, 60).to_array;
+    assert_eq(|_|"test_bit_combinations 62 60", combs.get_size, 62 * 61 / 2);;
+
+    let combs = bit_combinations(62, 61).to_array;
+    assert_eq(|_|"test_bit_combinations 62 61", combs.get_size, 62);;
+
+    let combs = bit_combinations(62, 62).to_array;
+    assert_eq(|_|"test_bit_combinations 62 62", combs.get_size, 1);;
+
+    pure()
+);
+
+test_bit_subsets : IO () = (
+    let subs = bit_subsets(0).to_array;
+    assert_eq(|_|"test_bit_subsets 0", subs.map(to_string_bits(8)).to_string, "[00000000]");;
+
+    let subs = bit_subsets(1).to_array;
+    assert_eq(|_|"test_bit_subsets 1", subs.map(to_string_bits(8)).to_string, "[00000001, 00000000]");;
+
+    let subs = bit_subsets(2).to_array;
+    assert_eq(|_|"test_bit_subsets 2", subs.map(to_string_bits(8)).to_string, "[00000010, 00000000]");;
+
+    let subs = bit_subsets(3).to_array;
+    assert_eq(|_|"test_bit_subsets 3", subs.map(to_string_bits(8)).to_string, "[00000011, 00000010, 00000001, 00000000]");;
+
+    let subs = bit_subsets(5).to_array;
+    assert_eq(|_|"test_bit_subsets 5", subs.map(to_string_bits(8)).to_string, "[00000101, 00000100, 00000001, 00000000]");;
+
+    let subs = bit_subsets(15).to_array;
+    assert_eq(|_|"test_bit_subsets 15", subs.map(to_string_bits(8)).to_string, "[00001111, 00001110, 00001101, 00001100, 00001011, 00001010, 00001001, 00001000, 00000111, 00000110, 00000101, 00000100, 00000011, 00000010, 00000001, 00000000]");;
+
+    let subs = bit_subsets(0b101010).to_array;
+    assert_eq(|_|"test_bit_subsets 0b101010", subs.map(to_string_bits(8)).to_string, "[00101010, 00101000, 00100010, 00100000, 00001010, 00001000, 00000010, 00000000]");;
+
+    let subs = bit_subsets(1.shift_left(62) + 1).to_array;
+    assert_eq(|_|"test_bit_subsets 1.shift_left(62) + 1", subs, [4611686018427387905, 4611686018427387904, 1, 0]);;
+
+    pure()
+);

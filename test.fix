@@ -15,6 +15,7 @@ import CPLib.Bipartite.Test;
 import CPLib.TwoSat.Test;
 import CPLib.MinCostFlow.Test;
 import CPLib.String.Test;
+import CPLib.Bits.Test;
 
 test : IO ();
 test = (
@@ -33,6 +34,7 @@ test = (
     CPLib.TwoSat.Test::test;;
     CPLib.MinCostFlow.Test::test;;
     CPLib.String.Test::test;;
+    CPLib.Bits.Test::test;;
 
     pure()
 );

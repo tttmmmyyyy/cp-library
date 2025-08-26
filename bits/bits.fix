@@ -1,0 +1,97 @@
+// ビット操作に関するユーティリティ
+module CPLib.Bits;
+
+trait a : ToStringBits {
+    // データをビット列として表示する
+    // 
+    // # Parameters
+    // - `n` : 下位からnビットのみを表示する
+    to_string_bits : I64 -> a -> String;
+}
+
+impl I64 : ToStringBits {
+    to_string_bits = |n, x| (
+        let n = n.min(64).max(0);
+        let s = Array::fill(n+1, '\0');
+        let s = range(0, n).fold(s, |i, s|
+            if x.bit_check(i) { s.set(n - 1 - i, '1') } else { s.set(n - 1 - i, '0') }
+        );
+        String::_unsafe_from_c_str $ s
+    );
+}
+
+// 第iビットが立っているかを調べる
+// 
+// # Parameters
+// - `i` : ビット位置 (0 <= i < 64)
+// - `x` : 対象のビット列
+bit_check : I64 -> I64 -> Bool = |i, x| x.bit_and(1.shift_left(i)) != 0;
+
+// 第iビットを立てる
+//
+// # Parameters
+// - `i` : ビット位置 (0 <= i < 64)
+// - `x` : 対象のビット列
+bit_set : I64 -> I64 -> I64 = |i, x| x.bit_or(1.shift_left(i));
+
+// 第iビットを消す
+// 
+// # Parameters
+// - `i` : ビット位置 (0 <= i < 64)
+// - `x` : 対象のビット列
+bit_clear : I64 -> I64 -> I64 = |i, x| x.bit_and(1.shift_left(i).bit_not);
+
+// 第iビットを反転する
+// 
+// # Parameters
+// - `i` : ビット位置 (0 <= i < 64)
+// - `x` : 対象のビット列
+bit_flip : I64 -> I64 -> I64 = |i, x| x.bit_xor(1.shift_left(i));
+
+type BitCombinationIterator = struct { sub : I64, end : I64 };
+
+impl BitCombinationIterator : Iterator {
+    type Item BitCombinationIterator = I64;
+    advance = |BitCombinationIterator { sub : sub, end : end }| (
+        if sub == 0 { some $ (BitCombinationIterator { sub: -1, end: -1 }, 0) }; // 次でnone
+        if sub >= end { none() };
+        let x = sub.bit_and(-sub);
+        let y = sub + x;
+        let next = (sub.bit_and(y.bit_not) / x).shift_right(1).bit_or(y);
+        some $ (BitCombinationIterator { sub: next, end: end }, sub)
+    );
+}
+
+// nビットの数のうち、ちょうどmビットが立っているものを昇順で列挙するイテレータ
+// 
+// # Parameters
+// - `n` : ビット数（0 <= n <= 62）
+// - `m` : 立っているビット数
+bit_combinations : I64 -> I64 -> BitCombinationIterator = |n, m| (
+    if m < 0 || n < m { BitCombinationIterator { sub : -1, end : -1 } };
+    BitCombinationIterator {
+        sub : 1.shift_left(m) - 1,
+        end : 1.shift_left(n)
+    }
+);
+
+type BitSubsetIterator = struct { sub : I64, set : I64 };
+
+impl BitSubsetIterator : Iterator {
+    type Item BitSubsetIterator = I64;
+    advance = |BitSubsetIterator { sub : sub, set : set }| (
+        if set < 0 { none() };
+        let next = (sub - 1).bit_and(set);
+        some $ (BitSubsetIterator { sub: next, set: if sub == 0 { -1 } else { set } }, sub)
+    );
+}
+
+// ビット列の部分集合を降順で列挙するイテレータ
+// 
+// 全体集合から始まり、空集合までを列挙する
+// 
+// # Parameters
+// - `set` : 全体集合 (0 <= set) 
+bit_subsets : I64 -> BitSubsetIterator = (
+    |set| BitSubsetIterator { sub : set, set : set }
+);
