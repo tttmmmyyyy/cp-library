@@ -1,7 +1,5 @@
 module CPLib.UnionFind;
 
-import HashMap;
-
 type UnionFind = struct {
     parent : Array I64,
     rank : Array I64,
@@ -88,15 +86,18 @@ is_united = |x, y, uf| (
 // - `uf` : UnionFind木
 get_groups : UnionFind -> (UnionFind, Array (Array I64));
 get_groups = |uf| (
-    let grps = HashMap::empty(0);
+    let n = uf.@parent.get_size;
+    let grps = Array::fill(n, none());
     let (uf, grps) = range(0, uf.@parent.get_size).fold((uf, grps), |i, (uf, grps)| 
         let (uf, p) = uf._find_parent(i);
-        let grp = grps.find_or(p, []);
-        let grps = grps.insert(p, []); // 下でgrpにpush_backするときに配列のコピーが行われないよう、空配列を入れておく（HashMapのAPIを改良するべき）。
-        let grp = grp.push_back(i);
-        let grps = grps.insert(p, grp);
+        let grps = grps.mod(p, |g| 
+            match g {
+                some(g) => some(g.push_back(i)),
+                none() => some([i])
+            }
+        );
         (uf, grps)
     );
-    let grps = grps.to_iter.map(|(_, v)| v).to_array;
+    let grps = grps.to_iter.filter_map(|g| g).to_array;
     (uf, grps)
 );
