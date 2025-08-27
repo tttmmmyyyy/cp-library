@@ -1,6 +1,6 @@
 # CPLib.Bits
 
-Defined in cp-library@0.6.3
+Defined in cp-library@0.6.4
 
 ビット操作に関するユーティリティ
 
@@ -75,6 +75,30 @@ Type: `Std::I64 -> CPLib.Bits::BitSubsetIterator`
 
 - `set` : 全体集合 (0 <= set)
 
+### namespace CPLib.Bits::I32
+
+#### popcount
+
+Type: `Std::I32 -> Std::I64`
+
+ビット表現における1の個数を数える
+
+##### Parameters
+
+- `x` : 対象のビット列
+
+### namespace CPLib.Bits::I64
+
+#### popcount
+
+Type: `Std::I64 -> Std::I64`
+
+ビット表現における1の個数を数える
+
+##### Parameters
+
+- `x` : 対象のビット列
+
 ### namespace CPLib.Bits::ToStringBits
 
 #### to_string_bits
@@ -86,6 +110,30 @@ Type: `[a : CPLib.Bits::ToStringBits] Std::I64 -> a -> Std::String`
 ##### Parameters
 
 - `n` : 下位からnビットのみを表示する
+
+### namespace CPLib.Bits::U32
+
+#### popcount
+
+Type: `Std::U32 -> Std::I64`
+
+ビット表現における1の個数を数える
+
+##### Parameters
+
+- `x` : 対象のビット列
+
+### namespace CPLib.Bits::U64
+
+#### popcount
+
+Type: `Std::U64 -> Std::I64`
+
+ビット表現における1の個数を数える
+
+##### Parameters
+
+- `x` : 対象のビット列
 
 ## Types and aliases
 

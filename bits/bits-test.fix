@@ -5,6 +5,8 @@ import CPLib.Bits;
 test : IO () = (
     test_bit_combinations;;
     test_bit_subsets;;
+    test_bit_operations;;
+    test_popcount;;
     pure()
 );
 
@@ -87,6 +89,31 @@ test_bit_subsets : IO () = (
 
     let subs = bit_subsets(1.shift_left(62) + 1).to_array;
     assert_eq(|_|"test_bit_subsets 1.shift_left(62) + 1", subs, [4611686018427387905, 4611686018427387904, 1, 0]);;
+
+    pure()
+);
+
+test_bit_operations : IO () = (
+    let x = 0.bit_set(2);
+    assert_eq(|_|"test_bit_operations 1", to_string_bits(8, x), "00000100");;
+
+    let x = x.bit_clear(2);
+    assert_eq(|_|"test_bit_operations 2", to_string_bits(8, x), "00000000");;
+
+    let x = x.bit_flip(0);
+    assert_eq(|_|"test_bit_operations 3", to_string_bits(8, x), "00000001");;
+
+    assert_eq(|_|"test_bit_operations 4", x.bit_check(0), true);;
+
+    pure()
+);
+
+test_popcount : IO () = (
+    assert_eq(|_|"test_popcount I64", 0b0111010011100111101110000111101000111111000001111101111100001000.popcount, 36);;
+    assert_eq(|_|"test_popcount U64", 0b1111010011100111101110000111101000111111000001111101111100001000_U64.popcount, 37);;
+
+    assert_eq(|_|"test_popcount I32", 0b01101001110011110111000011110100_I32.popcount, 18);;
+    assert_eq(|_|"test_popcount U32", 0b11101001110011110111000011110100_U32.popcount, 19);;
 
     pure()
 );

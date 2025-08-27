@@ -76,3 +76,13 @@ uint8_t cp_lib_read_char()
     scanf(" %c", &value);
     return value;
 }
+
+int64_t cp_lib_popcount64(uint64_t x)
+{
+    return __builtin_popcountll(x);
+}
+
+int64_t cp_lib_popcount32(uint32_t x)
+{
+    return __builtin_popcount(x);
+}

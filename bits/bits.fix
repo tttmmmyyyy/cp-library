@@ -95,3 +95,35 @@ impl BitSubsetIterator : Iterator {
 bit_subsets : I64 -> BitSubsetIterator = (
     |set| BitSubsetIterator { sub : set, set : set }
 );
+
+namespace I64 {
+    // ビット表現における1の個数を数える
+    //
+    // # Parameters
+    // - `x` : 対象のビット列
+    popcount : I64 -> I64 = |x| FFI_CALL[I64 cp_lib_popcount64(I64), x];
+}
+
+namespace U64 {
+    // ビット表現における1の個数を数える
+    //
+    // # Parameters
+    // - `x` : 対象のビット列    
+    popcount : U64 -> I64 = |x| FFI_CALL[I64 cp_lib_popcount64(U64), x];
+}
+
+namespace I32 {
+    // ビット表現における1の個数を数える
+    //
+    // # Parameters
+    // - `x` : 対象のビット列
+    popcount : I32 -> I64 = |x| FFI_CALL[I64 cp_lib_popcount32(I32), x];
+}
+
+namespace U32 {
+    // ビット表現における1の個数を数える
+    //
+    // # Parameters
+    // - `x` : 対象のビット列    
+    popcount : U32 -> I64 = |x| FFI_CALL[I64 cp_lib_popcount32(U32), x];
+}
