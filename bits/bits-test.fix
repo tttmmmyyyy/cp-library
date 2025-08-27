@@ -109,10 +109,10 @@ test_bit_operations : IO () = (
 );
 
 test_popcount : IO () = (
-    assert_eq(|_|"test_popcount I64", 0b0111010011100111101110000111101000111111000001111101111100001000.popcount, 36);;
+    assert_eq(|_|"test_popcount I64", 0b1111010011100111101110000111101000111111000001111101111100001000.popcount, 37);;
     assert_eq(|_|"test_popcount U64", 0b1111010011100111101110000111101000111111000001111101111100001000_U64.popcount, 37);;
 
-    assert_eq(|_|"test_popcount I32", 0b01101001110011110111000011110100_I32.popcount, 18);;
+    assert_eq(|_|"test_popcount I32", 0b11101001110011110111000011110100_I32.popcount, 19);;
     assert_eq(|_|"test_popcount U32", 0b11101001110011110111000011110100_U32.popcount, 19);;
 
     pure()
