@@ -24,13 +24,13 @@ create = |size| UnionFind {
 // # Parameters
 // - `x` : 対象となる要素
 // - `uf` : UnionFind木
-_find_parent : I64 -> UnionFind -> (UnionFind, I64);
-_find_parent = |x, uf| (
+find_parent : I64 -> UnionFind -> (UnionFind, I64);
+find_parent = |x, uf| (
     let y = uf.@parent.@(x);
     if y == x {
         (uf, x)
     } else {
-        let (uf, y) = uf._find_parent(y);
+        let (uf, y) = uf.find_parent(y);
         let uf = uf.mod_parent(set(x, y));
         (uf, y)
     }
@@ -44,8 +44,8 @@ _find_parent = |x, uf| (
 // - `uf` : UnionFind木
 unite : I64 -> I64 -> UnionFind -> UnionFind;
 unite = |x, y, uf| (
-    let (uf, px) = uf._find_parent(x);
-    let (uf, py) = uf._find_parent(y);
+    let (uf, px) = uf.find_parent(x);
+    let (uf, py) = uf.find_parent(y);
     if px == py {
         uf // すでに同じグループに属している場合は何もしない
     };
@@ -71,8 +71,8 @@ unite = |x, y, uf| (
 // - `uf` : UnionFind木
 is_united : I64 -> I64 -> UnionFind -> (UnionFind, Bool);
 is_united = |x, y, uf| (
-    let (uf, px) = uf._find_parent(x);
-    let (uf, py) = uf._find_parent(y);
+    let (uf, px) = uf.find_parent(x);
+    let (uf, py) = uf.find_parent(y);
     (uf, px == py)
 );
 
@@ -89,7 +89,7 @@ get_groups = |uf| (
     let n = uf.@parent.get_size;
     let grps = Array::fill(n, none());
     let (uf, grps) = range(0, uf.@parent.get_size).fold((uf, grps), |i, (uf, grps)| 
-        let (uf, p) = uf._find_parent(i);
+        let (uf, p) = uf.find_parent(i);
         let grps = grps.mod(p, |g| 
             match g {
                 some(g) => some(g.push_back(i)),
