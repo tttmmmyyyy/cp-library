@@ -3,7 +3,7 @@
 name = "cp-library"
 
 ## Project version (in semver). This is a required field.
-version = "0.6.5"
+version = "0.6.6"
 
 ## Fix version requirement. Default is "*".
 fix_version = "1.1.0"
@@ -36,6 +36,7 @@ files = [
     "twosat/twosat.fix",
     "string/string.fix",
     "bits/bits.fix",
+    "misc/misc.fix",
 ]
 objects = ["lib.o"]
 preliminary_commands = [["make", "-s", "lib.o"]]
@@ -59,6 +60,7 @@ files = [
     "mincostflow/mincostflow-test.fix",
     "string/string-test.fix",
     "bits/bits-test.fix",
+    "misc/misc-test.fix",
 ]
 
 

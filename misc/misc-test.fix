@@ -1,0 +1,48 @@
+module CPLib.Misc.Test;
+
+import CPLib.Misc;
+
+test : IO () = (
+    test_next_permutation;;
+    pure()
+);
+
+test_next_permutation : IO () = (
+    // Unboxed case
+    assert_eq(|_|"next_permutation", ([] : Array I64).next_permutation(0, 0), none());;
+    assert_eq(|_|"next_permutation", ([0]).next_permutation(0, 0), none());;
+    assert_eq(|_|"next_permutation", ([0]).next_permutation(0, 1), none());;
+    assert_eq(|_|"next_permutation", ([0]).next_permutation(1, 1), none());;
+    assert_eq(|_|"next_permutation", ([0, 1]).next_permutation(0, 1), none());;
+    assert_eq(|_|"next_permutation", ([0, 1]).next_permutation(1, 2), none());;
+    assert_eq(|_|"next_permutation", ([0, 1]).next_permutation(0, 2), some([1, 0]));;
+    assert_eq(|_|"next_permutation", ([1, 0]).next_permutation(0, 2), none());;
+    assert_eq(|_|"next_permutation", ([0, 1, 2]).next_permutation(0, 3), some([0, 2, 1]));;
+    assert_eq(|_|"next_permutation", ([0, 2, 1]).next_permutation(0, 3), some([1, 0, 2]));;
+    assert_eq(|_|"next_permutation", ([1, 0, 2]).next_permutation(0, 3), some([1, 2, 0]));;
+    assert_eq(|_|"next_permutation", ([1, 2, 0]).next_permutation(0, 3), some([2, 0, 1]));;
+    assert_eq(|_|"next_permutation", ([2, 0, 1]).next_permutation(0, 3), some([2, 1, 0]));;
+    assert_eq(|_|"next_permutation", ([2, 1, 0]).next_permutation(0, 3), none());;
+    assert_eq(|_|"next_permutation", ([0, 1, 2]).next_permutation(1, 3), some([0, 2, 1]));;
+    assert_eq(|_|"next_permutation", ([0, 2, 1]).next_permutation(1, 3), none());;
+
+    // Boxed case
+    assert_eq(|_|"next_permutation", ([] : Array (Array I64)).next_permutation(0, 0), none());;
+    assert_eq(|_|"next_permutation", ([[0]]).next_permutation(0, 0), none());;
+    assert_eq(|_|"next_permutation", ([[0]]).next_permutation(0, 1), none());;
+    assert_eq(|_|"next_permutation", ([[0]]).next_permutation(1, 1), none());;
+    assert_eq(|_|"next_permutation", ([[0], [1]]).next_permutation(0, 1), none());;
+    assert_eq(|_|"next_permutation", ([[0], [1]]).next_permutation(1, 2), none());;
+    assert_eq(|_|"next_permutation", ([[0], [1]]).next_permutation(0, 2), some([[1], [0]]));;
+    assert_eq(|_|"next_permutation", ([[1], [0]]).next_permutation(0, 2), none());;
+    assert_eq(|_|"next_permutation", ([[0], [1], [2]]).next_permutation(0, 3), some([[0], [2], [1]]));;
+    assert_eq(|_|"next_permutation", ([[0], [2], [1]]).next_permutation(0, 3), some([[1], [0], [2]]));;
+    assert_eq(|_|"next_permutation", ([[1], [0], [2]]).next_permutation(0, 3), some([[1], [2], [0]]));;
+    assert_eq(|_|"next_permutation", ([[1], [2], [0]]).next_permutation(0, 3), some([[2], [0], [1]]));;
+    assert_eq(|_|"next_permutation", ([[2], [0], [1]]).next_permutation(0, 3), some([[2], [1], [0]]));;
+    assert_eq(|_|"next_permutation", ([[2], [1], [0]]).next_permutation(0, 3), none());;
+    assert_eq(|_|"next_permutation", ([[0], [1], [2]]).next_permutation(1, 3), some([[0], [2], [1]]));;
+    assert_eq(|_|"next_permutation", ([[0], [2], [1]]).next_permutation(1, 3), none());;
+    
+    pure()
+);

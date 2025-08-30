@@ -1,0 +1,38 @@
+module CPLib.Misc;
+
+// 配列のある区間`[begin, end)`を辞書順で次に大きい順列に並び替える。
+// 
+// # Complexity
+// - `O(end - begin)`
+// 
+// # Returns
+// - 新しい順列`arr`が存在する場合は`some(arr)`、そうでない場合は`none()`
+// 
+// # Parameters
+// - `begin`: 区間の開始インデックス
+// - `end`: 区間の終了インデックス (exclusive)
+// - `arr`: 配列。`0 <= begin <= end <= |arr|`。
+next_permutation : [a : LessThanOrEq] I64 -> I64 -> Array a -> Option (Array a) = |begin, end, arr| (
+    let arr = arr._unsafe_force_unique;
+    let left = end - 2;
+    let left = loop(left, |left|
+        if left >= begin && arr.@(left) >= arr.@(left+1) { continue $ left - 1 } else { break $ left }
+    );
+    if left < begin { none() };
+    let right = end - 1;
+    let right = loop(right, |right|
+        if arr.@(left) >= arr.@(right) { continue $ right - 1 } else { break $ right }
+    );
+    let arr = arr._unsafe_swap(left, right);
+    let left = left + 1;
+    let right = end - 1;
+    let (left, right, arr) = loop((left, right, arr), |(left, right, arr)|
+        if left < right {
+            let arr = arr._unsafe_swap(left, right);
+            continue $ (left + 1, right - 1, arr)
+        } else {
+            break $ (left, right, arr)
+        }
+    );
+    some(arr)
+);
