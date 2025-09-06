@@ -1,6 +1,6 @@
 # CPLib.MinCostFlow
 
-Defined in cp-library@0.6.4
+Defined in cp-library@0.6.6
 
 最小コスト最大流問題
 
@@ -147,5 +147,15 @@ Type: `Std::Array c`
 ポテンシャル
 
 ## Traits and aliases
+
+### namespace CPLib.MinCostFlow
+
+#### trait `CapCostLike = Std::Additive + Std::Mul + Std::Neg + Std::Sub + Std::LessThan + CPLib.Trait::Inf + Std::Eq`
+
+Kind: `*`
+
+フローの容量およびコストに要求されるトレイト
+
+注：Fixの`Mul`トレイトは`lhs`と`rhs`に同じ型のみを受け付けるため、容量とコストは同じ型である必要があります。
 
 ## Trait implementations

@@ -1,6 +1,6 @@
 # CPLib.MaxFlow
 
-Defined in cp-library@0.6.4
+Defined in cp-library@0.6.6
 
 　最大フロー問題、最小カット問題
 
@@ -179,5 +179,13 @@ Type: `Std::Option (RingBuffer::RingBuffer Std::I64)`
 BFSで用いるキュー
 
 ## Traits and aliases
+
+### namespace CPLib.MaxFlow
+
+#### trait `CapacityLike = Std::Additive + Std::Neg + Std::LessThan + Std::Eq + CPLib.Trait::Inf`
+
+Kind: `*`
+
+容量に要求されるトレイト
 
 ## Trait implementations

@@ -1,14 +1,16 @@
 # CPLib.ZP
 
-Defined in cp-library@0.6.4
+Defined in cp-library@0.6.6
 
 素数`p`を法とする整数の環の型`ZP p`を与えるモジュール。
 
 素数`p`は静的でなければならない（コンパイル時に決まる必要がある）。
 
 素数`p`は型パラメータとして与える。例として、p = 17 としたい場合、
+
 - 空の型（フィールドを持たないunboxedな型）`P17`を作成：`type P17 = unbox struct {}`.
 - `P17 : PrimeProvider`を実装する。この際`PrimeProvider::value`関数で17を返すようにする：`value = |_| 17_U32;`
+
 すると`ZP P17`が環"Z/(17)"を表す型となる。
 
 幾つかの有名な素数nに対する PrimeProvider `Pn` はこのモジュールに定義されている。

@@ -1,6 +1,6 @@
 # CPLib.UnionFind
 
-Defined in cp-library@0.6.4
+Defined in cp-library@0.6.6
 
 ## Values
 
@@ -17,6 +17,19 @@ UnionFind木を作成する
 ##### Parameters
 
 - `size` : UnionFind木のサイズ
+
+#### find_parent
+
+Type: `Std::I64 -> CPLib.UnionFind::UnionFind -> (CPLib.UnionFind::UnionFind, Std::I64)`
+
+指定された要素の親を取得する
+
+パス圧縮を行うため、UnionFindの状態も変化する
+
+##### Parameters
+
+- `x` : 対象となる要素
+- `uf` : UnionFind木
 
 #### get_groups
 
