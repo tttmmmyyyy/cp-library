@@ -109,8 +109,8 @@ Type: `Std::I64 -> Std::I64 -> Std::I64`
 
 ##### Parameters
 
-- `a`: 整数
 - `m`: 法 > 0
+- `a`: 整数
 
 #### is_prime
 
@@ -196,9 +196,9 @@ Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::I64`
 
 ##### Parameters
 
-- `x`: 底
 - `e`: 指数 >= 0
 - `m`: 法 > 0
+- `x`: 底
 
 #### pow_mod_u
 
@@ -208,9 +208,9 @@ Type: `Std::U64 -> Std::U64 -> Std::U64 -> Std::U64`
 
 ##### Parameters
 
-- `x`: 底 >= 0
 - `e`: 指数 >= 0
 - `m`: 法 > 0
+- `x`: 底 >= 0
 
 #### sub_mod
 
