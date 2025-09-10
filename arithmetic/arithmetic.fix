@@ -101,9 +101,9 @@ ext_gcd = |a, b| (
 // `x^e`を`n`で割った余りを計算する
 //
 // # Parameters
-// - `x`: 底
 // - `e`: 指数 >= 0
 // - `m`: 法 > 0
+// - `x`: 底
 pow_mod : I64 -> I64 -> I64 -> I64;
 pow_mod = |e, m, x| (
     let e = e.to_U64;
@@ -115,9 +115,9 @@ pow_mod = |e, m, x| (
 // `x^e`を`n`で割った余りを計算する（unsigned版）
 //
 // # Parameters
-// - `x`: 底 >= 0
 // - `e`: 指数 >= 0
 // - `m`: 法 > 0
+// - `x`: 底 >= 0
 pow_mod_u : U64 -> U64 -> U64 -> U64;
 pow_mod_u = |e, m, x| (
     loop((e, 1_U64, x), |(e, pow, x)|
@@ -132,8 +132,8 @@ pow_mod_u = |e, m, x| (
 // 制約：gcd(a, m) = 1
 //
 // # Parameters
-// - `a`: 整数
 // - `m`: 法 > 0
+// - `a`: 整数
 inv_mod : I64 -> I64 -> I64;
 inv_mod = |m, a| (
     let m = m.abs;
