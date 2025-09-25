@@ -1,6 +1,6 @@
 # CPLib.IO
 
-Defined in cp-library@0.6.6
+Defined in cp-library@0.6.7
 
 入出力や数値のパースを楽にする機能のためのモジュール
 

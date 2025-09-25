@@ -1,6 +1,6 @@
 # CPLib.DSegtree
 
-Defined in cp-library@0.6.6
+Defined in cp-library@0.6.7
 
 モノイド構造が動的に決まる際に使えるセグメント木。
 
