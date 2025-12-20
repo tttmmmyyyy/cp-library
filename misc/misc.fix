@@ -23,12 +23,12 @@ next_permutation : [a : LessThanOrEq] I64 -> I64 -> Array a -> Option (Array a) 
     let right = loop(right, |right|
         if arr.@(left) >= arr.@(right) { continue $ right - 1 } else { break $ right }
     );
-    let arr = arr._unsafe_swap(left, right);
+    let arr = arr._unsafe_swap_bounds_uniqueness_unchecked(left, right);
     let left = left + 1;
     let right = end - 1;
     let (left, right, arr) = loop((left, right, arr), |(left, right, arr)|
         if left < right {
-            let arr = arr._unsafe_swap(left, right);
+            let arr = arr._unsafe_swap_bounds_uniqueness_unchecked(left, right);
             continue $ (left + 1, right - 1, arr)
         } else {
             break $ (left, right, arr)

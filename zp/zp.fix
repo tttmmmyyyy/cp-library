@@ -275,7 +275,7 @@ fft = |dir, x| (
             continue $ (bit, j)
         );
         
-        let x = if i < j { x._unsafe_swap(i, j) } else { x };
+        let x = if i < j { x._unsafe_swap_bounds_uniqueness_unchecked(i, j) } else { x };
         (j, x)
     );
 
