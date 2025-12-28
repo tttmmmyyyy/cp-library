@@ -1,6 +1,12 @@
 // ビット操作に関するユーティリティ
 module CPLib.Bits;
 
+import Std::{
+    Bool, I32, I64, Iterator, String, U32, U64, Array::{fill, set}, 
+    I64::{bit_and, bit_not, bit_or, bit_xor, shift_left, shift_right}, Iterator::{fold, range}, 
+    LessThan::{max, min}, Option::{none, some}, String::_unsafe_from_c_str
+};
+
 trait a : ToStringBits {
     // データをビット列として表示する
     // 

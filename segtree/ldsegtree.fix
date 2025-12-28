@@ -4,6 +4,11 @@
 // モノイド構造・作用が静的に決まる場合は`CPLib.LSegtree`の方が高速です。
 module CPLib.LDSegtree;
 
+import Std::{
+    loop, Array, I64, Array::{fill, get_size, set, @}, I64::{bit_and, shift_right}, 
+    Iterator::{fold, range, range_step}, LoopState::{break, continue}
+};
+
 // 遅延伝搬セグメント木の型。
 // 
 // パラメータ`m`は「値」となるモノイドの型、`a`は「右作用」するモノイドの型。

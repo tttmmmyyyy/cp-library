@@ -1,5 +1,10 @@
 module CPLib.Trait;
 
+import Std::{
+    F32, F64, I16, I32, I64, I8, U16, U32, U64, U8, F32::infinity, F64::infinity, I16::maximum, 
+    I32::maximum, I64::maximum, I8::maximum, U16::maximum, U32::maximum, U64::maximum, U8::maximum
+};
+
 // モノイドのトレイト
 trait a : Monoid {
     // 単位元

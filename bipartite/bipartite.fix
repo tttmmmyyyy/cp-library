@@ -1,8 +1,12 @@
 // 二部グラフを扱うモジュール
 module CPLib.Bipartite;
 
-import CPLib.MaxFlow;
-import CPLib.Graph;
+import CPLib.Graph::EdgeId;
+import CPLib.MaxFlow::{MaxFlowGraph, MaxFlowGraph::{add_edge, add_edge_id, create, get_flow, get_min_cut, maximize_flow}};
+import Std::{
+    undefined, Array, Bool, I64, Array::{empty, fill, get_size, push_back, set, to_iter, @}, 
+    Functor::map, Iterator::{count_up, fold, map, range, to_array, zip}
+};
 
 // 二部グラフの型
 type BipartiteGraph = struct {

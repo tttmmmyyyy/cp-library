@@ -1,8 +1,9 @@
 module CPLib.TwoSat.Test;
 
-// https://atcoder.jp/contests/language-test-202505/submissions/68186286
+import CPLib.TwoSat::{add_clause, create, solve};
+import Std::{IO, Debug::{assert, assert_eq}, Monad::pure, Option::{as_some, is_none}};
 
-import CPLib.TwoSat;
+// https://atcoder.jp/contests/language-test-202505/submissions/68186286
 
 test : IO ();
 test = (

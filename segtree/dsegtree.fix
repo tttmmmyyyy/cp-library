@@ -4,6 +4,11 @@
 // モノイド構造が静的に決まる場合は`CPLib.Segtree`の方が高速です。
 module CPLib.DSegtree;
 
+import Std::{
+    loop, Array, I64, Array::{fill, get_size, set, @}, Iterator::{fold, range, range_step}, 
+    LoopState::{break, continue}
+};
+
 // この実装にあたっては、[maspyさんの記事](https://maspypy.com/segment-tree-%E3%81%AE%E3%81%8A%E5%8B%89%E5%BC%B71) を参考にしました。良質な解説をありがとうございます。
 
 // セグメント木

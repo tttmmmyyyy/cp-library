@@ -1,6 +1,12 @@
 // 入出力や数値のパースを楽にする機能のためのモジュール
 module CPLib.IO;
 
+import Std::{
+    Array, F64, I64, IO, String, U64, U8, Array::fill, FFI::mutate_boxed_io, FromString::from_string, 
+    Iterator::{collect_m, map, range, to_array}, Monad::pure, Result::as_ok, 
+    String::{borrow_c_str_io, is_empty, split, _unsafe_from_c_str}, ToString::to_string
+};
+
 // 文字列をパースして`I64`整数に変換する
 //
 // # Parameters

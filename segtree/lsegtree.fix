@@ -47,9 +47,13 @@
 // ```
 module CPLib.LSegtree;
 
-// この実装にあたっては、[maspyさんの記事](https://maspypy.com/segment-tree-%e3%81%ae%e3%81%8a%e5%8b%89%e5%bc%b72) を参考にしました。良質な解説をありがとうございます。
+import CPLib.Trait::{Action, Monoid, Action::{act, Set}, Monoid::{op, unit}};
+import Std::{
+    loop, Array, I64, Array::{fill, get_size, set, @}, I64::{bit_and, shift_right}, 
+    Iterator::{fold, range, range_step}, LoopState::{break, continue}
+};
 
-import CPLib.Trait::{Monoid, Monoid::*, Action, Action::*};
+// この実装にあたっては、[maspyさんの記事](https://maspypy.com/segment-tree-%e3%81%ae%e3%81%8a%e5%8b%89%e5%bc%b72) を参考にしました。良質な解説をありがとうございます。
 
 // 遅延伝搬セグメント木の型。
 // 

@@ -1,6 +1,10 @@
 module CPLib.TwoSat;
 
-import CPLib.Graph;
+import CPLib.Graph::{add_edge, calc_sccs, create, Graph};
+import Std::{
+    Array, Bool, I64, Option, Array::{fill, get_size, set, to_iter, @}, 
+    Iterator::{fold, loop_iter_s, range}, LoopState::{break, continue}, Option::{none, some}
+};
 
 // 2-SAT問題の型
 type TwoSat = struct {

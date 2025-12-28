@@ -1,7 +1,12 @@
 module CPLib.DSegtree.Test;
 
-import CPLib.DSegtree;
-import Random;
+import CPLib.DSegtree::{build, fold, init, set, @, DSegtree, DSegtree::@n};
+import Random::{generate_I64_nonneg, init_by_seed, Random};
+import Std::{
+    Bool, I64, IO, Array::{fill, set, @}, Debug::{assert_eq, consumed_time_while_lazy}, I64::to_U8, 
+    IO::println, Iterator::{fold, fold_m, map, range, to_array}, LessThan::max, Monad::pure, 
+    String::populate, ToString::to_string
+};
 
 // https://atcoder.jp/contests/language-test-202505/submissions/68392637
 

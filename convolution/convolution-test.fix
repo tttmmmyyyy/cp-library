@@ -1,10 +1,14 @@
 module CPLib.Convolution.Test;
 
-// https://atcoder.jp/contests/language-test-202505/submissions/68393185
+import CPLib.Convolution::{convolve_i64, convolve_zp};
+import CPLib.ZP::{make, P998244353, PrimeProvider, ZP};
+import Std::{
+    Array, IO, Array::{get_size, @}, Debug::{assert_eq, consumed_time_while_lazy}, 
+    I64::{maximum, minimum, shift_left}, IO::println, Iterator::{fold, map, range, to_array}, 
+    Monad::pure, String::populate, ToString::to_string
+};
 
-import CPLib.Convolution;
-import CPLib.ZP;
-import CPLib.Arithmetic;
+// https://atcoder.jp/contests/language-test-202505/submissions/68393185
 
 type P17 = unbox struct {};
 

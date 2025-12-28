@@ -1,5 +1,10 @@
 module CPLib.UnionFind;
 
+import Std::{
+    Array, Bool, I64, Array::{fill, get_size, mod, push_back, set, to_iter, @}, 
+    Iterator::{filter_map, fold, range, to_array}, Option::{none, some}
+};
+
 type UnionFind = struct {
     parent : Array I64,
     rank : Array I64,

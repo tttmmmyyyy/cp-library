@@ -1,6 +1,7 @@
 module CPLib.Misc.Test;
 
-import CPLib.Misc;
+import CPLib.Misc::next_permutation;
+import Std::{Array, I64, IO, Debug::assert_eq, Monad::pure, Option::{none, some}};
 
 test : IO () = (
     test_next_permutation;;

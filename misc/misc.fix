@@ -1,5 +1,11 @@
 module CPLib.Misc;
 
+import Std::{
+    loop, Array, I64, LessThanOrEq, Option, 
+    Array::{@, _unsafe_force_unique, _unsafe_swap_bounds_uniqueness_unchecked}, 
+    LoopState::{break, continue}, Option::{none, some}
+};
+
 // 配列のある区間`[begin, end)`を辞書順で次に大きい順列に並び替える。
 // 
 // # Complexity

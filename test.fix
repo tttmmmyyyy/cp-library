@@ -1,22 +1,23 @@
 module Test;
 
-import CPLib.IO.Test;
-import CPLib.ZP.Test;
-import CPLib.Arithmetic.Test;
-import CPLib.Segtree.Test;
-import CPLib.DSegtree.Test;
-import CPLib.LSegtree.Test;
-import CPLib.LDSegtree.Test;
-import CPLib.UnionFind.Test;
-import CPLib.Graph.Test;
-import CPLib.Convolution.Test;
-import CPLib.MaxFlow.Test;
-import CPLib.Bipartite.Test;
-import CPLib.TwoSat.Test;
-import CPLib.MinCostFlow.Test;
-import CPLib.String.Test;
-import CPLib.Bits.Test;
-import CPLib.Misc.Test;
+import CPLib.Arithmetic.Test::test;
+import CPLib.Bipartite.Test::test;
+import CPLib.Bits.Test::test;
+import CPLib.Convolution.Test::test;
+import CPLib.DSegtree.Test::test;
+import CPLib.Graph.Test::test;
+import CPLib.IO.Test::test;
+import CPLib.LDSegtree.Test::test;
+import CPLib.LSegtree.Test::test;
+import CPLib.MaxFlow.Test::test;
+import CPLib.MinCostFlow.Test::test;
+import CPLib.Misc.Test::test;
+import CPLib.Segtree.Test::test;
+import CPLib.String.Test::test;
+import CPLib.TwoSat.Test::test;
+import CPLib.UnionFind.Test::test;
+import CPLib.ZP.Test::test;
+import Std::{IO, Monad::pure};
 
 test : IO ();
 test = (

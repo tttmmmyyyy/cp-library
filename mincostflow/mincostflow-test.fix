@@ -1,9 +1,9 @@
 module CPLib.MinCostFlow.Test;
 
-// https://atcoder.jp/contests/language-test-202505/submissions/68408186
+import CPLib.MinCostFlow::MinCostFlowGraph::{add_edge_id, create, get_flow, maximize_flow_min_cost};
+import Std::{IO, Debug::assert_eq, Monad::pure};
 
-import CPLib.MinCostFlow;
-import CPLib.Trait;
+// https://atcoder.jp/contests/language-test-202505/submissions/68408186
 
 test : IO ();
 test = (

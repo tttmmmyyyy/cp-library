@@ -1,8 +1,12 @@
 module CPLib.Graph.Test;
 
-import CPLib.Graph;
-import CPLib.Trait;
-import Random;
+import CPLib.Graph::{add_edge, calc_sccs, create, dijkstra, Graph};
+import CPLib.Trait::Inf::inf;
+import Random::{generate_I64_nonneg, init_by_seed};
+import Std::{
+    IO, Array::{get_size, sort_by, @}, Debug::{assert_eq, consumed_time_while_lazy}, Functor::map, 
+    IO::println, Iterator::{fold, range}, Monad::pure, String::populate, ToString::to_string
+};
 
 test : IO ();
 test = (

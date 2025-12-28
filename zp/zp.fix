@@ -34,7 +34,18 @@
 // ```
 module CPLib.ZP;
 
-import CPLib.Arithmetic;
+import CPLib.Arithmetic::calc_primitive_root;
+import Std::{
+    loop, undefined, Add, Array, Div, Eq, I64, Mul, Neg, Sub, ToString, U32, U64, 
+    Array::{
+        empty, get_size, push_back, reserve, @, _unsafe_force_unique, 
+        _unsafe_get_linear_bounds_unchecked_unretained, _unsafe_set_bounds_uniqueness_unchecked_unreleased, 
+        _unsafe_swap_bounds_uniqueness_unchecked
+    }, 
+    Functor::map, I64::{bit_and, bit_xor, shift_left, shift_right, to_U32, to_U64}, 
+    Iterator::{fold, range, range_step}, LoopState::{break, continue}, ToString::to_string, 
+    U32::{to_I64, to_U64}, U64::{bit_and, bit_or, shift_right, to_I64, to_U32}
+};
 
 // 素数`p`を法とする整数の環
 type ZP p = struct { value : U32, prime : p };

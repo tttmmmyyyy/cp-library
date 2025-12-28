@@ -1,11 +1,21 @@
 module CPLib.Arithmetic.Test;
 
+import BoolArray::BoolArray::@;
+import CPLib.Arithmetic::{
+    add_mod, calc_gcd, create_prime_list, create_prime_table, ext_gcd, inv_mod, is_prime, is_prime_32, 
+    isqrt, lift_crt, mul_mod, pmod, pow_mod, sub_mod, _calc_primitive_root, _inv_gcd
+};
+import Random::{generate_I64_nonneg, generate_U64, init_by_seed};
+import Std::{
+    loop, IO, U64, Array::{get_size, to_iter}, Debug::{assert, assert_eq, consumed_time_while_lazy}, 
+    Functor::{forget, map}, I32::{maximum, to_I64}, I64::{maximum, minimum, shift_left, to_U32, to_U64}, 
+    IO::println, Iterator::{collect_m, filter, fold_m, map, range}, LessThan::max, 
+    LoopState::{break, continue}, Monad::pure, String::populate, ToString::to_string, 
+    U32::{shift_left, to_I64}, U64::{maximum, shift_left, to_I64}
+};
+
 // floor_math:
 // https://atcoder.jp/contests/language-test-202505/submissions/68412909 
-
-import CPLib.Arithmetic;
-import BoolArray::BoolArray::@;
-import Random;
 
 test : IO ();
 test = (

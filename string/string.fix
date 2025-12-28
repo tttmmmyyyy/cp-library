@@ -1,5 +1,12 @@
 module CPLib.String;
 
+import Std::{
+    loop, Array, Eq, I64, String, Add::add, 
+    Array::{empty, fill, get_size, mod, pop_back, push_back, set, sort_by, to_iter, @}, Functor::map, 
+    Iterator::{fold, range, range_step, to_array}, LessThan::min, LoopState::{break, continue}, 
+    String::get_bytes, Tuple2::@0, U8::to_I64
+};
+
 // 文字列のsuffix arrayを計算する
 // 
 // AtCoder Libraryの`suffix_array`の移植です。

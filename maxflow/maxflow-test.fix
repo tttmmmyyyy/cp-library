@@ -1,6 +1,7 @@
 module CPLib.MaxFlow.Test;
 
-import CPLib.MaxFlow;
+import CPLib.MaxFlow::MaxFlowGraph::{add_edge_id, create, get_flow, get_min_cut, maximize_flow};
+import Std::{IO, Debug::assert_eq, Monad::pure};
 
 test : IO ();
 test = (

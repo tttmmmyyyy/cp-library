@@ -1,6 +1,7 @@
 module CPLib.IO.Test;
 
-import CPLib.IO;
+import CPLib.IO::{stof, stofa, stoi, stoia, stoui, stouia};
+import Std::{F64, IO, Debug::assert_eq, Monad::pure};
 
 test : IO ();
 test = (
