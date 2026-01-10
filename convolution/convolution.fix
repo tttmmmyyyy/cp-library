@@ -1,15 +1,14 @@
 module CPLib.Convolution;
 
-import CPLib.Arithmetic::{pmod, _inv_gcd};
+import CPLib.Arithmetic::{_inv_gcd, pmod};
 import CPLib.ZP::{
-    fft, make, P167772161, P469762049, P754974721, PrimeProvider, ZP, _calc_next_pot, 
+    _calc_next_pot, fft, make, P167772161, P469762049, P754974721, PrimeProvider, ZP, 
     FFTDirection::{forward, inverse}, ZP::@value
 };
 import Std::{
     undefined, Array, I64, 
-    Array::{fill, get_size, push_back, reserve, truncate, @, _unsafe_set_bounds_uniqueness_unchecked_unreleased}, 
-    Functor::map, I64::{shift_left, to_U64}, Iterator::{fold, range}, Tuple2::@1, U32::{to_I64, to_U64}, 
-    U64::to_I64
+    Array::{@, _unsafe_set_bounds_uniqueness_unchecked_unreleased, fill, get_size, push_back, reserve, truncate}, 
+    Functor::map, I64::shift_left, Iterator::{fold, range}, ToI64::i64, ToU64::u64, Tuple2::@1
 };
 
 // 2つの配列の畳み込みを計算する
@@ -27,7 +26,7 @@ convolve_zp = |x, y| (
 
     // xとyの長さを同じ2のべき乗にする
     let n = x.get_size + y.get_size - 1;
-    let pot = _calc_next_pot(n.to_U64).to_I64;
+    let pot = _calc_next_pot(n.u64).i64;
     let x = x.reserve(pot);
     let x = range(x.get_size, pot).fold(x, |i, x| x.push_back(ZP::make(0)));
     let y = y.reserve(pot);
@@ -77,23 +76,22 @@ convolve_i64 = |a, b| (
     let c2 = convolve_zp(a.map(make), b.map(make)) : Array (ZP P167772161);
     let c3 = convolve_zp(a.map(make), b.map(make)) : Array (ZP P469762049);
 
-    let i1 = _inv_gcd(_M2M3.to_I64, _M1.to_I64).@1.to_U64;
-    let i2 = _inv_gcd(_M1M3.to_I64, _M2.to_I64).@1.to_U64;
-    let i3 = _inv_gcd(_M1M2.to_I64, _M3.to_I64).@1.to_U64;
+    let i1 = _inv_gcd(_M2M3.i64, _M1.i64).@1.u64;
+    let i2 = _inv_gcd(_M1M3.i64, _M2.i64).@1.u64;
+    let i3 = _inv_gcd(_M1M2.i64, _M3.i64).@1.u64;
 
     let offset = [0_U64, 0_U64, _M1M2M3, 2_U64 * _M1M2M3, 3_U64 * _M1M2M3];
 
     let c = Array::fill(n + m - 1, 0);
     range(0, n + m - 1).fold(c, |i, c|
         let x = 0_U64;
-        let x = x + (c1.@(i).@value.to_U64 * i1) % _M1 * _M2M3;
-        let x = x + (c2.@(i).@value.to_U64 * i2) % _M2 * _M1M3;
-        let x = x + (c3.@(i).@value.to_U64 * i3) % _M3 * _M1M2;
+        let x = x + (c1.@(i).@value.u64 * i1) % _M1 * _M2M3;
+        let x = x + (c2.@(i).@value.u64 * i2) % _M2 * _M1M3;
+        let x = x + (c3.@(i).@value.u64 * i3) % _M3 * _M1M2;
 
-        let diff = c1.@(i).@value.to_I64 - x.to_I64.pmod(_M1.to_I64);
-        let diff = if diff < 0 { diff + _M1.to_I64 } else { diff };
-
+        let diff = c1.@(i).@value.i64 - x.i64.pmod(_M1.i64);
+        let diff = if diff < 0 { diff + _M1.i64 } else { diff };
         let x = x - offset.@(diff % 5);
-        c._unsafe_set_bounds_uniqueness_unchecked_unreleased(i, x.to_I64)
+        c._unsafe_set_bounds_uniqueness_unchecked_unreleased(i, x.i64)
     )
 );

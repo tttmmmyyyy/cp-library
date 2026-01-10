@@ -1,6 +1,7 @@
 module Main;
 
-import CPLib.IO;
+import CPLib.IO::{read_c, read_cs, read_f, read_fs, read_i, read_is, read_s, read_ss, read_u, read_us};
+import Std::{F64, IO, Debug::assert, Functor::map, Monad::pure, ToU64::u64};
 
 main : IO ();
 main = (
@@ -11,10 +12,10 @@ main = (
     assert(|_|"2", xs == [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8]);;    
 
     let (a, b, c) = (*read_u, *read_u, *read_u);
-    assert(|_|"3", a == 31.to_U64 && b == 41.to_U64 && c == -5.to_U64);;
+    assert(|_|"3", a == 31.u64 && b == 41.u64 && c == (-5).u64);;
 
     let xs = *read_us(10);
-    assert(|_|"4", xs == [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8].map(to_U64));;
+    assert(|_|"4", xs == [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8].map(u64));;
 
     let (a, b, c) = (*read_f, *read_f, *read_f);
     assert(|_|"5", a == 3.1 && b == 4.1 && c == -5.9);;

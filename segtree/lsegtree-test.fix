@@ -5,10 +5,11 @@ import CPLib.LSegtree::{act_range, build, fold, init, set, LSegtree};
 import CPLib.Trait::{Action, Monoid, Action::act, Monoid::{op, unit}};
 import Random::{generate_I64_nonneg, init_by_seed, Random};
 import Std::{
-    Bool, Eq, I64, IO, String, ToString, Array::{fill, push_back, set, @}, 
-    Debug::{assert_eq, consumed_time_while_lazy}, Functor::map, I64::{minimum, to_U8}, IO::println, 
+    Bool, Eq, I64, IO, String, ToString, Array::{@, fill, push_back, set}, 
+    Debug::{assert_eq, consumed_time_while_lazy}, Functor::map, I64::minimum, IO::println, 
     Iterator::{fold, fold_m, map, range, to_array}, LessThan::max, Monad::pure, 
-    String::{from_U8, get_bytes, populate, _unsafe_from_c_str}, ToString::to_string, U8::to_I64
+    String::{_unsafe_from_c_str, from_U8, get_bytes, populate}, ToI64::i64, ToString::to_string, 
+    ToU8::u8
 };
 
 // https://atcoder.jp/contests/language-test-202505/submissions/68392811
@@ -73,9 +74,9 @@ impl ShiftAlphabet : Action {
         let bytes = s.@v.get_bytes;
         let bytes = bytes.map(|x| 
             if x == '\0' { x }; // ヌル文字は変換しない
-            let x = (x - 'a').to_I64;
+            let x = (x - 'a').i64;
             let x = (a.@a * x + a.@b).pmod(26);
-            let x = x.to_U8 + 'a';
+            let x = x.u8 + 'a';
             x
         );
         let s = String::_unsafe_from_c_str(bytes);
@@ -118,7 +119,7 @@ gen_random_alphabetical_string = |rng| (
     let len = len % 6; // 0～5文字
     let (bytes, rng) = range(0, len).fold(([], rng), |_, (bytes, rng)|
         let (rng, c) = rng.generate_I64_nonneg;
-        let c = (c % 26).to_U8 + 'a';
+        let c = (c % 26).u8 + 'a';
         let bytes = bytes.push_back(c);
         (bytes, rng)
     );
@@ -137,7 +138,7 @@ test_random = |is_build, rng| (
         (LSegtree::init(n), arr)
     } else {
         let arr = range(0, n).map(|i| 
-            let v = String::from_U8('a' + (i % 26).to_U8);
+            let v = String::from_U8('a' + (i % 26).u8);
             StrConcat::make(v)
         ).to_array;
         (LSegtree::build(arr), arr)

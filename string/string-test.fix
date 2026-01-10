@@ -1,11 +1,11 @@
 module CPLib.String.Test;
 
-import CPLib.String::{calc_lcp_array, calc_suffix_array, calc_suffix_array_i64, calc_z_array, _sa_doubling};
+import CPLib.String::{_sa_doubling, calc_lcp_array, calc_suffix_array, calc_suffix_array_i64, calc_z_array};
 import Random::{generate_U64, init_by_seed};
 import Std::{
     IO, Array::{empty, pop_back, push_back}, Debug::assert_eq, Functor::map, 
-    Iterator::{fold, fold_m, range}, Monad::pure, String::{get_bytes, _unsafe_from_c_str}, U64::to_U8, 
-    U8::to_I64
+    Iterator::{fold, fold_m, range}, Monad::pure, String::{_unsafe_from_c_str, get_bytes}, ToI64::i64, 
+    ToU8::u8
 };
 
 // https://atcoder.jp/contests/language-test-202505/submissions/68577484
@@ -19,7 +19,7 @@ test_sa = (
     let sa = s.calc_suffix_array;
     assert_eq(|_|"test_sa", sa, [10, 7, 0, 3, 5, 8, 1, 4, 6, 9, 2]);;
 
-    let sa = s.get_bytes.map(to_I64).pop_back.calc_suffix_array_i64;
+    let sa = s.get_bytes.map(i64).pop_back.calc_suffix_array_i64;
     assert_eq(|_|"test_sa", sa, [10, 7, 0, 3, 5, 8, 1, 4, 6, 9, 2]);;
 
     let rng = Random::init_by_seed(0_U64);
@@ -27,13 +27,13 @@ test_sa = (
         let n = 5e5;
         let (s, _) = range(0, n).fold((Array::empty(n), rng), |_, (s, rng)|
             let (rng, v) = rng.generate_U64;
-            let v = (v % 26_U64).to_U8 + 'a';
+            let v = (v % 26_U64).u8 + 'a';
             (s.push_back(v), rng)
         );
         let s = s.push_back('\0');
         let s = String::_unsafe_from_c_str(s);
         let sa0 = s.calc_suffix_array;
-        let sa1 = s.get_bytes.map(to_I64).pop_back._sa_doubling;
+        let sa1 = s.get_bytes.map(i64).pop_back._sa_doubling;
         assert_eq(|_|"test_sa", sa0, sa1);;
         rng.pure
     );;

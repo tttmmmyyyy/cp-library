@@ -1,12 +1,13 @@
 module CPLib.Arithmetic;
 
-import BoolArray::{BoolArray, BoolArray::{fill_true, get_size, make, set, @}};
+import BoolArray::{BoolArray, BoolArray::{@, fill_true, get_size, make, set}};
+import BoolArray;
 import Std::{
-    loop, undefined, Array, Bool, I64, U32, U64, Array::{empty, get_size, push_back, to_iter, @}, 
-    I64::{abs, to_U32, to_U64}, 
+    loop, undefined, Array, Bool, I64, U32, U64, Array::{@, empty, get_size, push_back, to_iter}, 
+    I64::abs, 
     Iterator::{check_all, filter_map, fold, get_first, loop_iter, loop_iter_s, range, range_step}, 
-    LoopState::{break, continue, is_continue}, Option::{as_some, none, some}, U32::to_U64, 
-    U64::{bit_and, shift_right, to_I64}
+    LoopState::{break, continue, is_continue}, Option::{as_some, none, some}, ToI64::i64, ToU32::u32, 
+    ToU64::u64, U64::{bit_and, shift_right}
 };
 
 // `x`を`m`で割った余りを非負で返す
@@ -30,7 +31,7 @@ pmod = |m, x| (
 // - `m`: 除数 != 0
 add_mod : I64 -> I64 -> I64 -> I64;
 add_mod = |x, y, m| (
-    let m = m.abs.to_U64;
+    let m = m.abs.u64;
     FFI_CALL[I64 cp_lib_add_mod_signed(I64, I64, U64), x, y, m]
 );
 
@@ -42,7 +43,7 @@ add_mod = |x, y, m| (
 // - `m`: 除数 != 0
 sub_mod : I64 -> I64 -> I64 -> I64;
 sub_mod = |x, y, m| (
-    let m = m.abs.to_U64;
+    let m = m.abs.u64;
     FFI_CALL[I64 cp_lib_sub_mod_signed(I64, I64, U64), x, y, m]
 );
 
@@ -54,7 +55,7 @@ sub_mod = |x, y, m| (
 // - `m`: 除数 != 0
 mul_mod : I64 -> I64 -> I64 -> I64;
 mul_mod = |x, y, m| (
-    let m = m.abs.to_U64;
+    let m = m.abs.u64;
     FFI_CALL[I64 cp_lib_mul_mod_signed(I64, I64, U64), x, y, m]
 );
 
@@ -113,10 +114,10 @@ ext_gcd = |a, b| (
 // - `x`: 底
 pow_mod : I64 -> I64 -> I64 -> I64;
 pow_mod = |e, m, x| (
-    let e = e.to_U64;
+    let e = e.u64;
     let m = m.abs;
-    let x = x.pmod(m).to_U64;
-    x.pow_mod_u(e, m.to_U64).to_I64
+    let x = x.pmod(m).u64;
+    x.pow_mod_u(e, m.u64).i64
 );
 
 // `x^e`を`n`で割った余りを計算する（unsigned版）
@@ -155,7 +156,7 @@ inv_mod = |m, a| (
 //
 // 配列（`BoolArray`）`table`は素数テーブルであり、`table.@(n)`が`true`の場合に`n`が素数であることを意味する。
 // 
-// 注意：戻り値の要素に`@(n)`でアクセスするには`import BoolArray;`が必要です。
+// 注意：戻り値の要素に`@(n)`でアクセスするには``が必要です。
 //
 // # Parameters
 // - `n` : 素数テーブルの上限（exclusive）
@@ -183,7 +184,7 @@ create_prime_list = |n| (
     let count = Iterator::range(0, n).fold(0, |i, cnt| if table.@(i) { cnt + 1 } else { cnt });
     let list = Array::empty(count);
     let list = Iterator::range(0, n).fold(list, |p, list|
-        if table.@(p) { list.push_back(p.to_U32) } else { list }
+        if table.@(p) { list.push_back(p.u32) } else { list }
     );
     list
 );
@@ -226,8 +227,8 @@ is_prime = |n| (
         }
     );
     match [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37].to_iter.loop_iter_s((), |a, _|
-        if n == a.to_U64 { break $ true };
-        if _check_composite_miller_rabin(n, a.to_U64, d, s) { break $ false };
+        if n == a.u64 { break $ true };
+        if _check_composite_miller_rabin(n, a.u64, d, s) { break $ false };
         continue $ ()
     ) {
         break(r) => r,
@@ -252,8 +253,8 @@ is_prime_32 = |n| (
         }
     );
     match [2, 3, 5, 7].to_iter.loop_iter_s((), |a, _|
-        if n == a.to_U32 { break $ true };
-        if _check_composite_miller_rabin(n.to_U64, a.to_U64, d.to_U64, s) { break $ false };
+        if n == a.u32 { break $ true };
+        if _check_composite_miller_rabin(n.u64, a.u64, d.u64, s) { break $ false };
         continue $ ()
     ) {
         break(r) => r,
@@ -397,18 +398,18 @@ floor_sum : I64 -> I64 -> I64 -> I64 -> I64;
 floor_sum = |n, m, a, b| (
     let ans = 0_U64;
     let (ans, a) = if a < 0 {
-        let a2 = a.pmod(m).to_U64;
-        let ans = ans - 1_U64 * n.to_U64 * (n - 1).to_U64 / 2_U64 * ((a2 - a.to_U64) / m.to_U64);
+        let a2 = a.pmod(m).u64;
+        let ans = ans - 1_U64 * n.u64 * (n - 1).u64 / 2_U64 * ((a2 - a.u64) / m.u64);
         let a = a2;
         (ans, a)
-    } else { (ans, a.to_U64) };
+    } else { (ans, a.u64) };
     let (ans, b) = if b < 0 {
-        let b2 = b.pmod(m).to_U64;
-        let ans = ans - n.to_U64 * ((b2 - b.to_U64) / m.to_U64);
+        let b2 = b.pmod(m).u64;
+        let ans = ans - n.u64 * ((b2 - b.u64) / m.u64);
         let b = b2;
         (ans, b)
-    } else { (ans, b.to_U64) };
-    (ans + _floor_sum_unsigned(n.to_U64, m.to_U64, a, b)).to_I64
+    } else { (ans, b.u64) };
+    (ans + _floor_sum_unsigned(n.u64, m.u64, a, b)).i64
 );
 
 _floor_sum_unsigned : U64 -> U64 -> U64 -> U64 -> U64;

@@ -2,16 +2,16 @@ module CPLib.Arithmetic.Test;
 
 import BoolArray::BoolArray::@;
 import CPLib.Arithmetic::{
-    add_mod, calc_gcd, create_prime_list, create_prime_table, ext_gcd, inv_mod, is_prime, is_prime_32, 
-    isqrt, lift_crt, mul_mod, pmod, pow_mod, sub_mod, _calc_primitive_root, _inv_gcd
+    _calc_primitive_root, _inv_gcd, add_mod, calc_gcd, create_prime_list, create_prime_table, ext_gcd, 
+    inv_mod, is_prime, is_prime_32, isqrt, lift_crt, mul_mod, pmod, pow_mod, sub_mod
 };
 import Random::{generate_I64_nonneg, generate_U64, init_by_seed};
 import Std::{
     loop, IO, U64, Array::{get_size, to_iter}, Debug::{assert, assert_eq, consumed_time_while_lazy}, 
-    Functor::{forget, map}, I32::{maximum, to_I64}, I64::{maximum, minimum, shift_left, to_U32, to_U64}, 
-    IO::println, Iterator::{collect_m, filter, fold_m, map, range}, LessThan::max, 
-    LoopState::{break, continue}, Monad::pure, String::populate, ToString::to_string, 
-    U32::{shift_left, to_I64}, U64::{maximum, shift_left, to_I64}
+    Functor::{forget, map}, I32::maximum, I64::{maximum, minimum, shift_left}, IO::println, 
+    Iterator::{collect_m, filter, fold_m, map, range}, LessThan::max, LoopState::{break, continue}, 
+    Monad::pure, String::populate, ToI64::i64, ToString::to_string, ToU32::u32, ToU64::u64, 
+    U32::shift_left, U64::{maximum, shift_left}
 };
 
 // floor_math:
@@ -92,7 +92,7 @@ test_isqrt = (
     assert_eq(|_|"isqrt 4", isqrt(4_U64), 2_U64);;
     assert_eq(|_|"isqrt 5", isqrt(5_U64), 2_U64);;
     assert_eq(|_|"isqrt 5", isqrt(2000000_U64), 1414_U64);;
-    assert_eq(|_|"isqrt 5", isqrt(U64::maximum), (1.shift_left(32) - 1).to_U64);;
+    assert_eq(|_|"isqrt 5", isqrt(U64::maximum), (1.shift_left(32) - 1).u64);;
 
     pure()
 );
@@ -170,7 +170,7 @@ test_pow_mod = (
     assert_eq(|_|"pow_mod 8 (any^any mod 1)", 7.pow_mod(100, 1), 0);; // mod 1 は常に0
 
     // オーバーフローに着目したテスト
-    let max = I32::maximum.to_I64;
+    let max = I32::maximum.i64;
     assert_eq(|_|"pow_mod 9 (large x, e, m)", (max - 1).pow_mod(2, max), (max - 1) * (max - 1) % max);;
     assert_eq(|_|"pow_mod 10 (large x, e, small m)", max.pow_mod(10, 2), 1);;
     assert_eq(|_|"pow_mod 11 (large x, large m)", (max / 2).pow_mod(3, max / 3), (((max / 2) * (max / 2)) % (max / 3) * (max / 2)) % (max / 3));;
@@ -223,7 +223,7 @@ test_prime_table = (
 test_prime_list : IO ();
 test_prime_list = (
     let n = 1e8;
-    assert_eq(|_|"test_prime_list 1", create_prime_list(20).map(to_I64), [2, 3, 5, 7, 11, 13, 17, 19]);;
+    assert_eq(|_|"test_prime_list 1", create_prime_list(20).map(i64), [2, 3, 5, 7, 11, 13, 17, 19]);;
     let (res, time) = consumed_time_while_lazy(|_| create_prime_list(n));
 
     assert_eq(|_|"test_prime_list 2", res.get_size, 5761455);;
@@ -236,7 +236,7 @@ test_miller_rabin_u64 = (
     let _N = 1e5;
     let prime_table = create_prime_table(_N);
     range(0, _N).fold_m((), |n, _|
-        assert_eq(|_|"check_is_prime_u64: " + n.to_string, prime_table.@(n), is_prime(n.to_U64))
+        assert_eq(|_|"check_is_prime_u64: " + n.to_string, prime_table.@(n), is_prime(n.u64))
     );;
     assert_eq(|_|"2^61-1 is prime", is_prime(1_U64.shift_left(61_U64) - 1_U64), true);;
     assert_eq(|_|"2^59-1 is not prime", is_prime(1_U64.shift_left(59_U64) - 1_U64), false);;
@@ -248,7 +248,7 @@ test_miller_rabin_u32 = (
     let _N = 1e5;
     let prime_table = create_prime_table(_N);
     range(0, _N).fold_m((), |n, _|
-        assert_eq(|_|"check_is_prime_u32: " + n.to_string, prime_table.@(n), is_prime_32(n.to_U32))
+        assert_eq(|_|"check_is_prime_u32: " + n.to_string, prime_table.@(n), is_prime_32(n.u32))
     );;
     assert_eq(|_|"2^31-1 is prime", is_prime_32(1_U32.shift_left(31_U32) - 1_U32), true);;
     assert_eq(|_|"2^29-1 is not prime", is_prime_32(1_U32.shift_left(29_U32) - 1_U32), false);;
@@ -261,7 +261,7 @@ test_inv_gcd = (
     let rng = Random::init_by_seed(0_U64);
     range(0, _N).fold_m(rng, |_, rng|
         let (rng, a) = rng.generate_U64;
-        let a = a.to_I64;
+        let a = a.i64;
         let (rng, b) = rng.generate_I64_nonneg;
         let b = if b == I64::maximum { 1 } else { b + 1 };        // b >= 1 にする
         let (g, x) = _inv_gcd(a, b);
@@ -280,11 +280,11 @@ test_crt = (
     range(0, _N).fold_m(rng, |_, rng|
         // 解がある場合のみチェック
         let (rng, m0) = rng.generate_I64_nonneg;
-        let m0 = max(1, m0 % (I32::maximum.to_I64 - 1));
+        let m0 = max(1, m0 % (I32::maximum.i64 - 1));
         let (rng, m1) = rng.generate_I64_nonneg;
-        let m1 = max(1, m1 % (I32::maximum.to_I64 - 1));
+        let m1 = max(1, m1 % (I32::maximum.i64 - 1));
         let (rng, x) = rng.generate_U64;
-        let x = x.to_I64;
+        let x = x.i64;
         let r0 = x.pmod(m0);
         let r1 = x.pmod(m1);
         // "{} {} {} {}".populate([r0, r1, m0, m1].map(to_string)).println;;

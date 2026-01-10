@@ -2,9 +2,9 @@ module CPLib.String;
 
 import Std::{
     loop, Array, Eq, I64, String, Add::add, 
-    Array::{empty, fill, get_size, mod, pop_back, push_back, set, sort_by, to_iter, @}, Functor::map, 
+    Array::{@, empty, fill, get_size, mod, pop_back, push_back, set, sort_by, to_iter}, Functor::map, 
     Iterator::{fold, range, range_step, to_array}, LessThan::min, LoopState::{break, continue}, 
-    String::get_bytes, Tuple2::@0, U8::to_I64
+    String::get_bytes, ToI64::i64, Tuple2::@0
 };
 
 // 文字列のsuffix arrayを計算する
@@ -17,7 +17,7 @@ import Std::{
 // # Parameters
 // - `s` : 対象の文字列
 calc_suffix_array : String -> Array I64;
-calc_suffix_array = |s| s.get_bytes.map(to_I64).pop_back.calc_suffix_array_i64_upper(255);
+calc_suffix_array = |s| s.get_bytes.map(i64).pop_back.calc_suffix_array_i64_upper(255);
 
 // 配列のsuffix arrayを計算する
 //

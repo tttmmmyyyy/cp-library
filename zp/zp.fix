@@ -38,13 +38,13 @@ import CPLib.Arithmetic::calc_primitive_root;
 import Std::{
     loop, undefined, Add, Array, Div, Eq, I64, Mul, Neg, Sub, ToString, U32, U64, 
     Array::{
-        empty, get_size, push_back, reserve, @, _unsafe_force_unique, 
-        _unsafe_get_linear_bounds_unchecked_unretained, _unsafe_set_bounds_uniqueness_unchecked_unreleased, 
-        _unsafe_swap_bounds_uniqueness_unchecked
+        @, _unsafe_force_unique, _unsafe_get_linear_bounds_unchecked_unretained, 
+        _unsafe_set_bounds_uniqueness_unchecked_unreleased, _unsafe_swap_bounds_uniqueness_unchecked, empty, 
+        get_size, push_back, reserve
     }, 
-    Functor::map, I64::{bit_and, bit_xor, shift_left, shift_right, to_U32, to_U64}, 
-    Iterator::{fold, range, range_step}, LoopState::{break, continue}, ToString::to_string, 
-    U32::{to_I64, to_U64}, U64::{bit_and, bit_or, shift_right, to_I64, to_U32}
+    Functor::map, I64::{bit_and, bit_xor, shift_left, shift_right}, Iterator::{fold, range, range_step}, 
+    LoopState::{break, continue}, ToI64::i64, ToString::to_string, ToU32::u32, ToU64::u64, 
+    U64::{bit_and, bit_or, shift_right}
 };
 
 // 素数`p`を法とする整数の環
@@ -109,9 +109,9 @@ make : [p : PrimeProvider] I64 -> ZP p;
 make = |x| (
     let pp = PrimeProvider::create;
     let p = pp.value;
-    let x = x % p.to_I64;
-    let x = if x < 0 { x + p.to_I64 } else { x };
-    ZP { value : x.to_U32, prime : pp }
+    let x = x % p.i64;
+    let x = if x < 0 { x + p.i64 } else { x };
+    ZP { value : x.u32, prime : pp }
 );
 
 // x^e mod p を計算する。
@@ -127,10 +127,10 @@ power = |e, x| (
         undefined("[ZP::power] divide by zero!")
     };
     let p = x.@prime.value;
-    let p1 = p.to_I64 - 1;
+    let p1 = p.i64 - 1;
     let e = e % p1;
     let e = if e < 0 { e + p1 } else { e };
-    x._power_unsigned(e.to_U64)
+    x._power_unsigned(e.u64)
 );
 
 // x^e mod p を計算する（eが非負整数のとき）
@@ -158,7 +158,7 @@ inv : [p : PrimeProvider] ZP p -> ZP p;
 inv = |x| (
     let p = x.@prime.value;
     if x.@value == 0_U32 { undefined("[ZP::inv] divide by zero!") };
-    x.power(p.to_I64 - 2)
+    x.power(p.i64 - 2)
 );
 
 // 1の原始根を一つ得る
@@ -166,8 +166,8 @@ primitive_root : [p : PrimeProvider] ZP p;
 primitive_root = (
     let pp = PrimeProvider::create;
     let p = pp.value;
-    let r = calc_primitive_root(p.to_I64);
-    ZP { value : r.to_U32, prime : pp }
+    let r = calc_primitive_root(p.i64);
+    ZP { value : r.u32, prime : pp }
 );
 
 impl [p : PrimeProvider] ZP p : Eq {
@@ -207,8 +207,8 @@ impl [p : PrimeProvider] ZP p : Sub {
 
 impl [p : PrimeProvider] ZP p : Mul {
     mul = |this, that| (
-        let p = this.@prime.value.to_U64;
-        ZP { value : ((this.@value.to_U64 * that.@value.to_U64) % p).to_U32, prime : this.@prime }
+        let p = this.@prime.value.u64;
+        ZP { value : ((this.@value.u64 * that.@value.u64) % p).u32, prime : this.@prime }
     );
 }
 
@@ -257,7 +257,7 @@ fft = |dir, x| (
 
     // xの長さを2のべき乗にする
     let n = x.get_size;
-    let pot = _calc_next_pot(n.to_U64).to_I64;
+    let pot = _calc_next_pot(n.u64).i64;
     let x = x.reserve(pot);
     let x = range(n, pot).fold(x, |i, x| x.push_back(ZP::make(0)));
     let n = pot;
@@ -266,12 +266,12 @@ fft = |dir, x| (
     let x = x._unsafe_force_unique;
 
     // p - 1 = 2^k * c (c: 奇数) と分解し、2^k >= n であることを確認し、1のn乗根wを計算する
-    let p = x.@(0).@prime.value.to_I64;
+    let p = x.@(0).@prime.value.i64;
     let pm1 = p - 1;
     let two_k = pm1.bit_and(-pm1);
     if two_k < n { undefined("[fft_zp] p - 1 is not enough for the size of x.") };
     let d = pm1 / n;
-    let w = ZP::primitive_root._power_unsigned(d.to_U64);
+    let w = ZP::primitive_root._power_unsigned(d.u64);
     let w = match dir { forward() => w, inverse() => w.inv };
 
     // bit-reversal permutation

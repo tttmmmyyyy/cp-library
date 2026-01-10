@@ -4,10 +4,11 @@ import CPLib.Arithmetic::pmod;
 import CPLib.LDSegtree::{act_range, build, fold, init, set, LDSegtree};
 import Random::{generate_I64_nonneg, init_by_seed, Random};
 import Std::{
-    Bool, I64, IO, String, ToString, Array::{fill, push_back, set, @}, 
-    Debug::{assert_eq, consumed_time_while_lazy}, Functor::map, I64::{minimum, to_U8}, IO::println, 
+    Bool, I64, IO, String, ToString, Array::{@, fill, push_back, set}, 
+    Debug::{assert_eq, consumed_time_while_lazy}, Functor::map, I64::minimum, IO::println, 
     Iterator::{fold, fold_m, map, range, to_array}, LessThan::max, Monad::pure, 
-    String::{from_U8, get_bytes, populate, _unsafe_from_c_str}, ToString::to_string, U8::to_I64
+    String::{_unsafe_from_c_str, from_U8, get_bytes, populate}, ToI64::i64, ToString::to_string, 
+    ToU8::u8
 };
 
 // https://atcoder.jp/contests/language-test-202505/submissions/68392915
@@ -58,9 +59,9 @@ namespace ShiftAlphabet {
         let bytes = s.get_bytes;
         let bytes = bytes.map(|x| 
             if x == '\0' { x }; // ヌル文字は変換しない
-            let x = (x - 'a').to_I64;
+            let x = (x - 'a').i64;
             let x = (a.@a * x + a.@b).pmod(26);
-            let x = x.to_U8 + 'a';
+            let x = x.u8 + 'a';
             x
         );
         String::_unsafe_from_c_str(bytes)
@@ -77,7 +78,7 @@ gen_random_alphabetical_string = |rng| (
     let len = len % 6; // 0～5文字
     let (bytes, rng) = range(0, len).fold(([], rng), |_, (bytes, rng)|
         let (rng, c) = rng.generate_I64_nonneg;
-        let c = (c % 26).to_U8 + 'a';
+        let c = (c % 26).u8 + 'a';
         let bytes = bytes.push_back(c);
         (bytes, rng)
     );
@@ -96,7 +97,7 @@ test_random = |is_build, rng| (
         (LDSegtree::init(n, "", op, a_unit, a_op, act), arr)
     } else {
         let arr = range(0, n).map(|i| 
-            let v = String::from_U8('a' + (i % 26).to_U8);
+            let v = String::from_U8('a' + (i % 26).u8);
             v
         ).to_array;
         (LDSegtree::build(arr, "", op, a_unit, a_op, act), arr)

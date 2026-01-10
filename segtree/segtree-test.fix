@@ -1,12 +1,12 @@
 module CPLib.Segtree.Test;
 
-import CPLib.Segtree::{build, fold, init, set, @, Segtree, Segtree::@n};
+import CPLib.Segtree::{@, build, fold, init, set, Segtree, Segtree::@n};
 import CPLib.Trait::{Monoid, Monoid::{op, unit}};
 import Random::{generate_I64_nonneg, init_by_seed, Random};
 import Std::{
-    Bool, Eq, I64, IO, String, Array::{fill, set, @}, Debug::{assert_eq, consumed_time_while_lazy}, 
-    Functor::map, I64::{minimum, to_U8}, IO::println, Iterator::{fold, fold_m, map, range, to_array}, 
-    LessThan::max, Monad::pure, String::populate, ToString::to_string
+    Bool, Eq, I64, IO, String, Array::{@, fill, set}, Debug::{assert_eq, consumed_time_while_lazy}, 
+    Functor::map, I64::minimum, IO::println, Iterator::{fold, fold_m, map, range, to_array}, 
+    LessThan::max, Monad::pure, String::populate, ToString::to_string, ToU8::u8
 };
 
 // https://atcoder.jp/contests/language-test-202505/submissions/68392568
@@ -172,7 +172,7 @@ test_random = |is_build, rng| (
         let arr = Array::fill(n, Monoid::unit);
         (Segtree::init(n), arr)
     } else {
-        let arr = range(0, n).map(|i| StrConcat::make(i.to_U8.to_string)).to_array;
+        let arr = range(0, n).map(|i| StrConcat::make(i.u8.to_string)).to_array;
         (Segtree::build(arr), arr)
     };
 
@@ -181,7 +181,7 @@ test_random = |is_build, rng| (
         let (rng, i) = rng.generate_I64_nonneg;
         let i = i % n;
         let (rng, v) = rng.generate_I64_nonneg;
-        let v = StrConcat::make(v.to_U8.to_string);
+        let v = StrConcat::make(v.u8.to_string);
         let tree = tree.set(i, v);
         let arr = arr.set(i, v);
 
