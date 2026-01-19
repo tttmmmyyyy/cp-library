@@ -1,6 +1,6 @@
 # CPLib.LSegtree
 
-Defined in cp-library@0.6.7
+Defined in cp-library@0.7.5
 
 遅延伝番セグメント木（右作用）
 
@@ -56,7 +56,7 @@ main = (
 
 #### act_range
 
-Type: `[m : CPLib.Trait::Monoid, a : CPLib.Trait::Monoid, a : CPLib.Trait::Action, CPLib.Trait::Action::Set a = m] Std::I64 -> Std::I64 -> a -> CPLib.LSegtree::LSegtree m a -> CPLib.LSegtree::LSegtree m a`
+Type: `[a : CPLib.Trait::Action, a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoid, CPLib.Trait::Action::Set a = m] Std::I64 -> Std::I64 -> a -> CPLib.LSegtree::LSegtree m a -> CPLib.LSegtree::LSegtree m a`
 
 半開区間[l, r)に右から作用を適用する
 
@@ -69,7 +69,7 @@ Type: `[m : CPLib.Trait::Monoid, a : CPLib.Trait::Monoid, a : CPLib.Trait::Actio
 
 #### build
 
-Type: `[m : CPLib.Trait::Monoid, a : CPLib.Trait::Monoid] Std::Array m -> CPLib.LSegtree::LSegtree m a`
+Type: `[a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoid] Std::Array m -> CPLib.LSegtree::LSegtree m a`
 
 要素の配列からセグメント木を作成する
 
@@ -79,7 +79,7 @@ Type: `[m : CPLib.Trait::Monoid, a : CPLib.Trait::Monoid] Std::Array m -> CPLib.
 
 #### fold
 
-Type: `[m : CPLib.Trait::Monoid, a : CPLib.Trait::Monoid, a : CPLib.Trait::Action, CPLib.Trait::Action::Set a = m] Std::I64 -> Std::I64 -> CPLib.LSegtree::LSegtree m a -> (CPLib.LSegtree::LSegtree m a, m)`
+Type: `[a : CPLib.Trait::Action, a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoid, CPLib.Trait::Action::Set a = m] Std::I64 -> Std::I64 -> CPLib.LSegtree::LSegtree m a -> (CPLib.LSegtree::LSegtree m a, m)`
 
 半開区間[l, r)にある要素の畳み込みを計算する
 
@@ -93,7 +93,7 @@ Type: `[m : CPLib.Trait::Monoid, a : CPLib.Trait::Monoid, a : CPLib.Trait::Actio
 
 #### init
 
-Type: `[m : CPLib.Trait::Monoid, a : CPLib.Trait::Monoid] Std::I64 -> CPLib.LSegtree::LSegtree m a`
+Type: `[a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoid] Std::I64 -> CPLib.LSegtree::LSegtree m a`
 
 すべての要素が単位元であるような遅延伝搬セグメント木を作成する
 
@@ -103,7 +103,7 @@ Type: `[m : CPLib.Trait::Monoid, a : CPLib.Trait::Monoid] Std::I64 -> CPLib.LSeg
 
 #### set
 
-Type: `[m : CPLib.Trait::Monoid, a : CPLib.Trait::Monoid, a : CPLib.Trait::Action, CPLib.Trait::Action::Set a = m] Std::I64 -> m -> CPLib.LSegtree::LSegtree m a -> CPLib.LSegtree::LSegtree m a`
+Type: `[a : CPLib.Trait::Action, a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoid, CPLib.Trait::Action::Set a = m] Std::I64 -> m -> CPLib.LSegtree::LSegtree m a -> CPLib.LSegtree::LSegtree m a`
 
 セグメント木の要素を設定する
 

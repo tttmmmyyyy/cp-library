@@ -1,6 +1,6 @@
 # CPLib.Graph
 
-Defined in cp-library@0.6.7
+Defined in cp-library@0.7.5
 
 ## Values
 
@@ -34,7 +34,7 @@ Type: `Std::I64 -> Std::I64 -> c -> CPLib.Graph::Graph c -> (CPLib.Graph::Graph 
 
 #### bellman_ford
 
-Type: `[c : Std::Additive, c : Std::LessThan, c : CPLib.Trait::Inf, c : Std::Eq] Std::I64 -> CPLib.Graph::Graph c -> Std::Array c`
+Type: `[c : CPLib.Trait::Inf, c : Std::Additive, c : Std::Eq, c : Std::LessThan] Std::I64 -> CPLib.Graph::Graph c -> Std::Array c`
 
 ベルマンフォード法：グラフと開始ノードが与えられたとき、開始ノードから各ノードに到達するまでの最小コストの配列を返す。
 
@@ -72,7 +72,7 @@ Type: `Std::I64 -> CPLib.Graph::Graph c`
 
 #### dijkstra
 
-Type: `[c : Std::Additive, c : Std::LessThan, c : CPLib.Trait::Inf] Std::I64 -> CPLib.Graph::Graph c -> Std::Array c`
+Type: `[c : CPLib.Trait::Inf, c : Std::Additive, c : Std::LessThan] Std::I64 -> CPLib.Graph::Graph c -> Std::Array c`
 
 ダイクストラ法：グラフと開始ノードが与えられたとき、開始ノードから各ノードに到達するまでの最小コストの配列を返す。
 

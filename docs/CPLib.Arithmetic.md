@@ -1,6 +1,6 @@
 # CPLib.Arithmetic
 
-Defined in cp-library@0.6.7
+Defined in cp-library@0.7.5
 
 ## Values
 
@@ -61,7 +61,7 @@ Type: `Std::I64 -> BoolArray::BoolArray`
 
 配列（`BoolArray`）`table`は素数テーブルであり、`table.@(n)`が`true`の場合に`n`が素数であることを意味する。
 
-注意：戻り値の要素に`@(n)`でアクセスするには`import BoolArray;`が必要です。
+注意：戻り値の要素に`@(n)`でアクセスするには``が必要です。
 
 ##### Parameters
 
