@@ -77,6 +77,14 @@ uint8_t cp_lib_read_char()
     return value;
 }
 
+// 可変長引数関数でないscanfラッパー
+//
+// Fix 1.1.0のFFI_CALLは可変長引数関数をサポートしていないため、このようにラップする必要がある。
+void cp_lib_scanf(char *format, void *buf)
+{
+    scanf(format, buf);
+}
+
 int64_t cp_lib_popcount64(uint64_t x)
 {
     return __builtin_popcountll(x);

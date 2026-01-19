@@ -78,7 +78,7 @@ read_s = |n| (
     let buf = Array::fill(n + 1, 0_U8);
     let (buf, _err) = *buf.mutate_boxed_io(|ptr| 
         format.borrow_c_str_io(|format|
-            FFI_CALL_IO[CInt scanf(Ptr, Ptr), format, ptr]
+            FFI_CALL_IO[CInt cp_lib_scanf(Ptr, Ptr), format, ptr]
         )
     );
     String::_unsafe_from_c_str(buf).pure
