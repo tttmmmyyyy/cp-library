@@ -1,10 +1,15 @@
 module CPLib.IO.Test;
 
 import CPLib.IO::{stof, stofa, stoi, stoia, stoui, stouia};
-import Std::{F64, IO, Debug::assert_eq, Monad::pure};
+import EZS::{cd, run_o, run_wi_o, Context::default};
+import Std::{
+    undefined, F64, IO, Debug::{assert, assert_eq}, IO::{read_file_string, IOFail::to_result}, 
+    Monad::pure, Option::is_some, Result::{as_ok, is_ok}, String::{find, populate}
+};
 
 test : IO ();
 test = (
+    test_io;;
     test_stoi;;
     test_stoui;;
     test_stoia;;
@@ -13,6 +18,18 @@ test = (
     test_stofa;;
 
     pure()
+);
+
+test_io : IO () = (
+    let ezs = EZS::Context::default;
+    let input_path = "io/io-test/input.txt";
+    let input = *read_file_string(input_path).to_result;
+    assert(|_|"Failed to read \"{}\"".populate([input_path]), input.is_ok);;
+    let input = input.as_ok;
+    ezs.cd("io/io-test");;
+    let output = *ezs.run_wi_o(["fix", "run"], input);
+    let found = output.find("PASS", 0).is_some;
+    assert(|_|"IO test failed", found)
 );
 
 test_stoi : IO ();
