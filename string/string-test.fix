@@ -1,10 +1,10 @@
 module CPLib.String.Test;
 
-import CPLib.String::{_sa_doubling, calc_lcp_array, calc_suffix_array, calc_suffix_array_i64, calc_z_array};
+import CPLib.String::{calc_lcp_array, calc_suffix_array, calc_suffix_array_i64, calc_z_array, _sa_doubling};
 import Random::{generate_U64, init_by_seed};
 import Std::{
     IO, Array::{empty, pop_back, push_back}, Debug::assert_eq, Functor::map, 
-    Iterator::{fold, fold_m, range}, Monad::pure, String::{_unsafe_from_c_str, get_bytes}, ToI64::i64, 
+    Iterator::{fold, fold_m, range}, Monad::pure, String::{get_bytes, _unsafe_from_c_str}, ToI64::i64, 
     ToU8::u8
 };
 

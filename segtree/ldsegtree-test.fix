@@ -4,10 +4,10 @@ import CPLib.Arithmetic::pmod;
 import CPLib.LDSegtree::{act_range, build, fold, init, set, LDSegtree};
 import Random::{generate_I64_nonneg, init_by_seed, Random};
 import Std::{
-    Bool, I64, IO, String, ToString, Array::{@, fill, push_back, set}, 
+    Bool, I64, IO, String, ToString, Array::{fill, push_back, set, @}, 
     Debug::{assert_eq, consumed_time_while_lazy}, Functor::map, I64::minimum, IO::println, 
     Iterator::{fold, fold_m, map, range, to_array}, LessThan::max, Monad::pure, 
-    String::{_unsafe_from_c_str, from_U8, get_bytes, populate}, ToI64::i64, ToString::to_string, 
+    String::{from_U8, get_bytes, populate, _unsafe_from_c_str}, ToI64::i64, ToString::to_string, 
     ToU8::u8
 };
 

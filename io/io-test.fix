@@ -1,10 +1,10 @@
 module CPLib.IO.Test;
 
 import CPLib.IO::{stof, stofa, stoi, stoia, stoui, stouia};
-import EZS::{cd, run_o, run_wi_o, Context::default};
+import EZS::{cd, run_wi_o, Context::default};
 import Std::{
-    undefined, F64, IO, Debug::{assert, assert_eq}, IO::{read_file_string, IOFail::to_result}, 
-    Monad::pure, Option::is_some, Result::{as_ok, is_ok}, String::{find, populate}
+    F64, IO, Debug::{assert, assert_eq}, IO::{read_file_string, IOFail::to_result}, Monad::pure, 
+    Option::is_some, Result::{as_ok, is_ok}, String::{find, populate}
 };
 
 test : IO ();

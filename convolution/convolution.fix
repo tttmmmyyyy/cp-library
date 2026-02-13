@@ -1,13 +1,13 @@
 module CPLib.Convolution;
 
-import CPLib.Arithmetic::{_inv_gcd, pmod};
+import CPLib.Arithmetic::{pmod, _inv_gcd};
 import CPLib.ZP::{
-    _calc_next_pot, fft, make, P167772161, P469762049, P754974721, PrimeProvider, ZP, 
+    fft, make, P167772161, P469762049, P754974721, PrimeProvider, ZP, _calc_next_pot, 
     FFTDirection::{forward, inverse}, ZP::@value
 };
 import Std::{
     undefined, Array, I64, 
-    Array::{@, _unsafe_set_bounds_uniqueness_unchecked_unreleased, fill, get_size, push_back, reserve, truncate}, 
+    Array::{fill, get_size, push_back, reserve, truncate, @, _unsafe_set_bounds_uniqueness_unchecked_unreleased}, 
     Functor::map, I64::shift_left, Iterator::{fold, range}, ToI64::i64, ToU64::u64, Tuple2::@1
 };
 

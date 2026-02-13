@@ -1,8 +1,8 @@
 module CPLib.Bits.Test;
 
 import CPLib.Bits::{
-    bit_check, bit_clear, bit_combinations, bit_flip, bit_set, bit_subsets, I32::popcount, I64::popcount, 
-    ToStringBits::to_string_bits, U32::popcount, U64::popcount
+    bit_check, bit_clear, bit_combinations, bit_flip, bit_set, bit_subsets, to_string_bits, 
+    Bits::popcount
 };
 import Std::{
     IO, Array::get_size, Debug::assert_eq, Functor::map, I64::shift_left, Iterator::to_array, 

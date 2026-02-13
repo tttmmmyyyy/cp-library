@@ -2,57 +2,166 @@
 module CPLib.Bits;
 
 import Std::{
-    Bool, I32, I64, Iterator, String, U32, U64, Array::{fill, set}, 
-    I64::{bit_and, bit_not, bit_or, bit_xor, shift_left, shift_right}, Iterator::{fold, range}, 
-    LessThan::{max, min}, Option::{none, some}, String::_unsafe_from_c_str
+    Bool, Eq, I16, I32, I64, I8, Iterator, String, U16, U32, U64, U8, Array::{fill, set}, 
+    FromBytes::from_bytes, I16::{bit_and, bit_not, bit_or, bit_xor, shift_left, shift_right}, 
+    I32::{bit_and, bit_not, bit_or, bit_xor, shift_left, shift_right}, 
+    I64::{bit_and, bit_not, bit_or, bit_xor, shift_left, shift_right}, 
+    I8::{bit_and, bit_not, bit_or, bit_xor, shift_left, shift_right}, Iterator::{fold, range}, 
+    Option::{none, some}, Result::as_ok, ToI16::i16, ToI32::i32, ToI64::i64, ToI8::i8, ToU16::u16, 
+    ToU32::u32, ToU64::u64, ToU8::u8, U16::{bit_and, bit_not, bit_or, bit_xor, shift_left, shift_right}, 
+    U32::{bit_and, bit_not, bit_or, bit_xor, shift_left, shift_right}, 
+    U64::{bit_and, bit_not, bit_or, bit_xor, shift_left, shift_right}, 
+    U8::{bit_and, bit_not, bit_or, bit_xor, shift_left, shift_right}
 };
 
-trait a : ToStringBits {
-    // データをビット列として表示する
-    // 
-    // # Parameters
-    // - `n` : 下位からnビットのみを表示する
-    to_string_bits : I64 -> a -> String;
+trait a : Bits {
+    and : a -> a -> a;
+    or : a -> a -> a;
+    xor : a -> a -> a;
+    not : a -> a;
+    shl : I64 -> a -> a;
+    shr : I64 -> a -> a;
+    zero : a;
+    one : a;
+    // ビット表現における1の個数を数える
+    popcount : a -> I64;
 }
 
-impl I64 : ToStringBits {
-    to_string_bits = |n, x| (
-        let n = n.min(64).max(0);
-        let s = Array::fill(n+1, '\0');
-        let s = range(0, n).fold(s, |i, s|
-            if x.bit_check(i) { s.set(n - 1 - i, '1') } else { s.set(n - 1 - i, '0') }
-        );
-        String::_unsafe_from_c_str $ s
-    );
+impl U64 : Bits {
+    and = U64::bit_and;
+    or = U64::bit_or;
+    xor = U64::bit_xor;
+    not = U64::bit_not;
+    shl = u64 >> U64::shift_left;
+    shr = u64 >> U64::shift_right;
+    zero = 0_U64;
+    one = 1_U64;
+    popcount = |x| FFI_CALL[I64 cp_lib_popcount64(U64), x.u64];
 }
+
+impl I64 : Bits {
+    and = I64::bit_and;
+    or = I64::bit_or;
+    xor = I64::bit_xor;
+    not = I64::bit_not;
+    shl = i64 >> I64::shift_left;
+    shr = i64 >> I64::shift_right;
+    zero = 0_I64;
+    one = 1_I64;
+    popcount = |x| FFI_CALL[I64 cp_lib_popcount64(U64), x.u64];
+}
+
+impl U32 : Bits {
+    and = U32::bit_and;
+    or = U32::bit_or;
+    xor = U32::bit_xor;
+    not = U32::bit_not;
+    shl = u32 >> U32::shift_left;
+    shr = u32 >> U32::shift_right;
+    zero = 0_U32;
+    one = 1_U32;
+    popcount = |x| FFI_CALL[I64 cp_lib_popcount32(U32), x.u32];
+}
+
+impl I32 : Bits {
+    and = I32::bit_and;
+    or = I32::bit_or;
+    xor = I32::bit_xor;
+    not = I32::bit_not;
+    shl = i32 >> I32::shift_left;
+    shr = i32 >> I32::shift_right;
+    zero = 0_I32;
+    one = 1_I32;
+    popcount = |x| FFI_CALL[I64 cp_lib_popcount32(U32), x.u32];
+}
+
+impl U16 : Bits {
+    and = U16::bit_and;
+    or = U16::bit_or;
+    xor = U16::bit_xor;
+    not = U16::bit_not;
+    shl = u16 >> U16::shift_left;
+    shr = u16 >> U16::shift_right;
+    zero = 0_U16;
+    one = 1_U16;
+    popcount = |x| FFI_CALL[I64 cp_lib_popcount32(U32), x.u32];
+}
+
+impl I16 : Bits {
+    and = I16::bit_and;
+    or = I16::bit_or;
+    xor = I16::bit_xor;
+    not = I16::bit_not;
+    shl = i16 >> I16::shift_left;
+    shr = i16 >> I16::shift_right;
+    zero = 0_I16;
+    one = 1_I16;
+    popcount = |x| FFI_CALL[I64 cp_lib_popcount32(U32), x.u16.u32];
+}
+
+impl U8 : Bits {
+    and = U8::bit_and;
+    or = U8::bit_or;
+    xor = U8::bit_xor;
+    not = U8::bit_not;
+    shl = u8 >> U8::shift_left;
+    shr = u8 >> U8::shift_right;
+    zero = 0_U8;
+    one = 1_U8;
+    popcount = |x| FFI_CALL[I64 cp_lib_popcount32(U32), x.u32];
+}
+
+impl I8 : Bits {
+    and = I8::bit_and;
+    or = I8::bit_or;
+    xor = I8::bit_xor;
+    not = I8::bit_not;
+    shl = i8 >> I8::shift_left;
+    shr = i8 >> I8::shift_right;
+    zero = 0_I8;
+    one = 1_I8;
+    popcount = |x| FFI_CALL[I64 cp_lib_popcount32(U32), x.i8.u32];
+}
+
+// ビット列を0と1の文字列として表示する
+// 
+// # Parameters
+// - `n` : 下位からnビットのみを表示する。0 <= n < (ビット幅) でないときは未定義動作
+to_string_bits : [a : Bits, a : Eq] I64 -> a -> String = |n, x| (
+    let s = fill(n+1, '\0');
+    let s = range(0, n).fold(s, |i, s|
+        if x.bit_check(i) { s.set(n - 1 - i, '1') } else { s.set(n - 1 - i, '0') }
+    );
+    s.from_bytes.as_ok
+);
 
 // 第iビットが立っているかを調べる
 // 
 // # Parameters
-// - `i` : ビット位置 (0 <= i < 64)
+// - `i` : ビット位置。0 <= i < (ビット幅）でないときは未定義動作
 // - `x` : 対象のビット列
-bit_check : I64 -> I64 -> Bool = |i, x| x.bit_and(1.shift_left(i)) != 0;
+bit_check : [a : Bits, a : Eq] I64 -> a -> Bool = |i, x| x.and(one.shl(i)) != zero;
 
 // 第iビットを立てる
 //
 // # Parameters
-// - `i` : ビット位置 (0 <= i < 64)
+// - `i` : ビット位置。0 <= i < (ビット幅）でないときは未定義動作
 // - `x` : 対象のビット列
-bit_set : I64 -> I64 -> I64 = |i, x| x.bit_or(1.shift_left(i));
-
+bit_set : [a : Bits, a : Eq] I64 -> a -> a = |i, x| x.or(one.shl(i));
+    
 // 第iビットを消す
 // 
 // # Parameters
-// - `i` : ビット位置 (0 <= i < 64)
+// - `i` : ビット位置。0 <= i < (ビット幅）でないときは未定義動作
 // - `x` : 対象のビット列
-bit_clear : I64 -> I64 -> I64 = |i, x| x.bit_and(1.shift_left(i).bit_not);
+bit_clear : [a : Bits, a : Eq] I64 -> a -> a = |i, x| x.and(one.shl(i).not);
 
 // 第iビットを反転する
 // 
 // # Parameters
-// - `i` : ビット位置 (0 <= i < 64)
+// - `i` : ビット位置。0 <= i < (ビット幅）でないときは未定義動作
 // - `x` : 対象のビット列
-bit_flip : I64 -> I64 -> I64 = |i, x| x.bit_xor(1.shift_left(i));
+bit_flip : [a : Bits, a : Eq] I64 -> a -> a = |i, x| x.xor(one.shl(i));
 
 type BitCombinationIterator = struct { sub : I64, end : I64 };
 
@@ -101,35 +210,3 @@ impl BitSubsetIterator : Iterator {
 bit_subsets : I64 -> BitSubsetIterator = (
     |set| BitSubsetIterator { sub : set, set : set }
 );
-
-namespace I64 {
-    // ビット表現における1の個数を数える
-    //
-    // # Parameters
-    // - `x` : 対象のビット列
-    popcount : I64 -> I64 = |x| FFI_CALL[I64 cp_lib_popcount64(I64), x];
-}
-
-namespace U64 {
-    // ビット表現における1の個数を数える
-    //
-    // # Parameters
-    // - `x` : 対象のビット列    
-    popcount : U64 -> I64 = |x| FFI_CALL[I64 cp_lib_popcount64(U64), x];
-}
-
-namespace I32 {
-    // ビット表現における1の個数を数える
-    //
-    // # Parameters
-    // - `x` : 対象のビット列
-    popcount : I32 -> I64 = |x| FFI_CALL[I64 cp_lib_popcount32(I32), x];
-}
-
-namespace U32 {
-    // ビット表現における1の個数を数える
-    //
-    // # Parameters
-    // - `x` : 対象のビット列    
-    popcount : U32 -> I64 = |x| FFI_CALL[I64 cp_lib_popcount32(U32), x];
-}

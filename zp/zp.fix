@@ -38,9 +38,9 @@ import CPLib.Arithmetic::calc_primitive_root;
 import Std::{
     loop, undefined, Add, Array, Div, Eq, I64, Mul, Neg, Sub, ToString, U32, U64, 
     Array::{
-        @, _unsafe_force_unique, _unsafe_get_linear_bounds_unchecked_unretained, 
-        _unsafe_set_bounds_uniqueness_unchecked_unreleased, _unsafe_swap_bounds_uniqueness_unchecked, empty, 
-        get_size, push_back, reserve
+        empty, get_size, push_back, reserve, @, _unsafe_force_unique, 
+        _unsafe_get_linear_bounds_unchecked_unretained, _unsafe_set_bounds_uniqueness_unchecked_unreleased, 
+        _unsafe_swap_bounds_uniqueness_unchecked
     }, 
     Functor::map, I64::{bit_and, bit_xor, shift_left, shift_right}, Iterator::{fold, range, range_step}, 
     LoopState::{break, continue}, ToI64::i64, ToString::to_string, ToU32::u32, ToU64::u64, 

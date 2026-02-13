@@ -1,10 +1,10 @@
 module CPLib.Segtree.Test;
 
-import CPLib.Segtree::{@, build, fold, init, set, Segtree, Segtree::@n};
+import CPLib.Segtree::{build, fold, init, set, @, Segtree, Segtree::@n};
 import CPLib.Trait::{Monoid, Monoid::{op, unit}};
 import Random::{generate_I64_nonneg, init_by_seed, Random};
 import Std::{
-    Bool, Eq, I64, IO, String, Array::{@, fill, set}, Debug::{assert_eq, consumed_time_while_lazy}, 
+    Bool, Eq, I64, IO, String, Array::{fill, set, @}, Debug::{assert_eq, consumed_time_while_lazy}, 
     Functor::map, I64::minimum, IO::println, Iterator::{fold, fold_m, map, range, to_array}, 
     LessThan::max, Monad::pure, String::populate, ToString::to_string, ToU8::u8
 };

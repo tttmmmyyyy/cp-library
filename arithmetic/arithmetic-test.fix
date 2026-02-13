@@ -2,8 +2,8 @@ module CPLib.Arithmetic.Test;
 
 import BoolArray::BoolArray::@;
 import CPLib.Arithmetic::{
-    _calc_primitive_root, _inv_gcd, add_mod, calc_gcd, create_prime_list, create_prime_table, ext_gcd, 
-    inv_mod, is_prime, is_prime_32, isqrt, lift_crt, mul_mod, pmod, pow_mod, sub_mod
+    add_mod, calc_gcd, create_prime_list, create_prime_table, ext_gcd, inv_mod, is_prime, is_prime_32, 
+    isqrt, lift_crt, mul_mod, pmod, pow_mod, sub_mod, _calc_primitive_root, _inv_gcd
 };
 import Random::{generate_I64_nonneg, generate_U64, init_by_seed};
 import Std::{
