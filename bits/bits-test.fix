@@ -14,6 +14,8 @@ test : IO () = (
     test_bit_subsets;;
     test_bit_operations;;
     test_popcount;;
+    test_to_string_bits;;
+    test_small_types_popcount;;
     pure()
 );
 
@@ -121,6 +123,90 @@ test_popcount : IO () = (
 
     assert_eq(|_|"test_popcount I32", 0b11101001110011110111000011110100_I32.popcount, 19);;
     assert_eq(|_|"test_popcount U32", 0b11101001110011110111000011110100_U32.popcount, 19);;
+
+    pure()
+);
+
+// I32, I16, I8 などの小さい型に対する to_string_bits のテスト
+// 特に符号付き整数の負の値の2の補数表現に注意
+test_to_string_bits : IO () = (
+    // I32 tests
+    assert_eq(|_|"to_string_bits I32 positive", to_string_bits(32, 0b1010_I32), "00000000000000000000000000001010");;
+    assert_eq(|_|"to_string_bits I32 zero", to_string_bits(32, 0_I32), "00000000000000000000000000000000");;
+    // -1 は全ビット1 (2の補数表現)
+    assert_eq(|_|"to_string_bits I32 -1", to_string_bits(32, -1_I32), "11111111111111111111111111111111");;
+    // -2 は 11111111111111111111111111111110
+    assert_eq(|_|"to_string_bits I32 -2", to_string_bits(32, -2_I32), "11111111111111111111111111111110");;
+
+    // U32 tests
+    assert_eq(|_|"to_string_bits U32", to_string_bits(32, 0b1010_U32), "00000000000000000000000000001010");;
+    assert_eq(|_|"to_string_bits U32 max", to_string_bits(32, 4294967295_U32), "11111111111111111111111111111111");;
+
+    // I16 tests
+    assert_eq(|_|"to_string_bits I16 positive", to_string_bits(16, 0b1010_I16), "0000000000001010");;
+    assert_eq(|_|"to_string_bits I16 zero", to_string_bits(16, 0_I16), "0000000000000000");;
+    // -1 は全ビット1 (2の補数表現)
+    assert_eq(|_|"to_string_bits I16 -1", to_string_bits(16, -1_I16), "1111111111111111");;
+    // -2 は 1111111111111110
+    assert_eq(|_|"to_string_bits I16 -2", to_string_bits(16, -2_I16), "1111111111111110");;
+    // -128 は 1111111110000000
+    assert_eq(|_|"to_string_bits I16 -128", to_string_bits(16, -128_I16), "1111111110000000");;
+
+    // U16 tests
+    assert_eq(|_|"to_string_bits U16", to_string_bits(16, 0b1010_U16), "0000000000001010");;
+    assert_eq(|_|"to_string_bits U16 max", to_string_bits(16, 65535_U16), "1111111111111111");;
+
+    // I8 tests
+    assert_eq(|_|"to_string_bits I8 positive", to_string_bits(8, 0b1010_I8), "00001010");;
+    assert_eq(|_|"to_string_bits I8 zero", to_string_bits(8, 0_I8), "00000000");;
+    // -1 は全ビット1 (2の補数表現)
+    assert_eq(|_|"to_string_bits I8 -1", to_string_bits(8, -1_I8), "11111111");;
+    // -2 は 11111110
+    assert_eq(|_|"to_string_bits I8 -2", to_string_bits(8, -2_I8), "11111110");;
+    // -128 は 10000000 (I8の最小値)
+    assert_eq(|_|"to_string_bits I8 -128", to_string_bits(8, -128_I8), "10000000");;
+    // 127 は 01111111 (I8の最大値)
+    assert_eq(|_|"to_string_bits I8 127", to_string_bits(8, 127_I8), "01111111");;
+
+    // U8 tests
+    assert_eq(|_|"to_string_bits U8", to_string_bits(8, 0b1010_U8), "00001010");;
+    assert_eq(|_|"to_string_bits U8 max", to_string_bits(8, 255_U8), "11111111");;
+
+    pure()
+);
+
+// I16, I8 などの小さい型に対する popcount のテスト
+// 特に符号付き整数の負の値の振る舞いに注意
+test_small_types_popcount : IO () = (
+    // I16 tests
+    assert_eq(|_|"popcount I16 positive", 0b1010_I16.popcount, 2);;
+    assert_eq(|_|"popcount I16 zero", 0_I16.popcount, 0);;
+    // -1 は全ビット1 なので popcount は 16
+    assert_eq(|_|"popcount I16 -1", (-1_I16).popcount, 16);;
+    // -2 は 1111111111111110 なので popcount は 15
+    assert_eq(|_|"popcount I16 -2", (-2_I16).popcount, 15);;
+    // -128 は 1111111110000000 なので popcount は 9
+    assert_eq(|_|"popcount I16 -128", (-128_I16).popcount, 9);;
+
+    // U16 tests
+    assert_eq(|_|"popcount U16", 0b1010_U16.popcount, 2);;
+    assert_eq(|_|"popcount U16 max", 65535_U16.popcount, 16);;
+
+    // I8 tests
+    assert_eq(|_|"popcount I8 positive", 0b1010_I8.popcount, 2);;
+    assert_eq(|_|"popcount I8 zero", 0_I8.popcount, 0);;
+    // -1 は全ビット1 なので popcount は 8
+    assert_eq(|_|"popcount I8 -1", (-1_I8).popcount, 8);;
+    // -2 は 11111110 なので popcount は 7
+    assert_eq(|_|"popcount I8 -2", (-2_I8).popcount, 7);;
+    // -128 は 10000000 なので popcount は 1
+    assert_eq(|_|"popcount I8 -128", (-128_I8).popcount, 1);;
+    // 127 は 01111111 なので popcount は 7
+    assert_eq(|_|"popcount I8 127", 127_I8.popcount, 7);;
+
+    // U8 tests
+    assert_eq(|_|"popcount U8", 0b1010_U8.popcount, 2);;
+    assert_eq(|_|"popcount U8 max", 255_U8.popcount, 8);;
 
     pure()
 );
