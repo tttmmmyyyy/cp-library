@@ -433,3 +433,27 @@ _floor_sum_unsigned = |n, m, a, b| (
         continue $ (ans, n, m, a, b)
     )
 );
+
+// 原始ピタゴラス数`(a, b, c)`を列挙する
+// 
+// `a^2 + b^2 = c^2`を満たす正の整数の組`(a, b, c)`で、`gcd(a, b, c) = 1`を満たすものを列挙する
+// 
+// また、このような`a`, `b`は必ず片方が奇数でもう片方が偶数である。
+// この関数の戻り値では`a`が奇数、`b`が偶数となる。
+// 
+// # Parameters
+// - `c_max`: `c`の上限（inclusive), `c_max >= 1`
+pythagorean_triples : I64 -> Array (I64, I64, I64) = |c_max| (
+    let m_max = isqrt((c_max - 1).u64).i64;
+    range(1, m_max+1).fold([], |m, triples|
+        let n_max = isqrt((c_max - m * m).u64).i64;
+        range_step(m+1, n_max+1, 2).fold(triples, |n, triples|
+            let d = calc_gcd(n, m);
+            if d > 1 { triples };
+            let a = n*n - m*m;
+            let b = 2*n*m;
+            let c = n*n + m*m;
+            triples.push_back((a, b, c))
+        )
+    )
+);

@@ -3,15 +3,16 @@ module CPLib.Arithmetic.Test;
 import BoolArray::BoolArray::@;
 import CPLib.Arithmetic::{
     add_mod, calc_gcd, create_prime_list, create_prime_table, ext_gcd, inv_mod, is_prime, is_prime_32, 
-    isqrt, lift_crt, mul_mod, pmod, pow_mod, sub_mod, _calc_primitive_root, _inv_gcd
+    isqrt, lift_crt, mul_mod, pmod, pow_mod, pythagorean_triples, sub_mod, _calc_primitive_root, 
+    _inv_gcd
 };
 import Random::{generate_I64_nonneg, generate_U64, init_by_seed};
 import Std::{
-    loop, IO, U64, Array::{get_size, to_iter}, Debug::{assert, assert_eq, consumed_time_while_lazy}, 
-    Functor::{forget, map}, I32::maximum, I64::{maximum, minimum, shift_left}, IO::println, 
-    Iterator::{collect_m, filter, fold_m, map, range}, LessThan::max, LoopState::{break, continue}, 
-    Monad::pure, String::populate, ToI64::i64, ToString::to_string, ToU32::u32, ToU64::u64, 
-    U32::shift_left, U64::{maximum, shift_left}
+    loop, IO, U64, Array::{get_size, sort, to_iter}, 
+    Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, I32::maximum, 
+    I64::{maximum, minimum, shift_left}, IO::println, Iterator::{collect_m, filter, fold_m, map, range}, 
+    LessThan::max, LoopState::{break, continue}, Monad::pure, String::populate, ToI64::i64, 
+    ToString::to_string, ToU32::u32, ToU64::u64, U32::shift_left, U64::{maximum, shift_left}
 };
 
 // floor_math:
@@ -33,6 +34,7 @@ test = (
     test_inv_gcd;;
     test_crt;;
     test_calc_primitive_root;;
+    test_pythagorean_triples;;
 
     pure()
 );
@@ -307,4 +309,44 @@ test_calc_primitive_root = (
     ).collect_m;;
     pure()
 
+);
+
+test_pythagorean_triples : IO () = (
+    assert_eq(|_|"pythagorean_triples 1", 
+        pythagorean_triples(1).sort,
+        []
+    );;
+
+    assert_eq(|_|"pythagorean_triples 2", 
+        pythagorean_triples(2).sort,
+        []
+    );;
+
+    assert_eq(|_|"pythagorean_triples 3", 
+        pythagorean_triples(3).sort,
+        []
+    );;   
+
+    assert_eq(|_|"pythagorean_triples 4", 
+        pythagorean_triples(4).sort,
+        []
+    );; 
+
+
+    assert_eq(|_|"pythagorean_triples 5", 
+        pythagorean_triples(5).sort,
+        [(3, 4, 5)]
+    );;
+
+    assert_eq(|_|"pythagorean_triples 25", 
+        pythagorean_triples(25).sort,
+        [(3, 4, 5), (15, 8, 17), (5, 12, 13), (7, 24, 25)].sort
+    );;
+
+    assert_eq(|_|"pythagorean_triples 101", 
+        pythagorean_triples(101).sort,
+        [(3, 4, 5), (15, 8, 17), (35, 12, 37), (63, 16, 65), (99, 20, 101), (5, 12, 13), (21, 20, 29), (45, 28, 53), (77, 36, 85), (7, 24, 25), (55, 48, 73), (9, 40, 41), (33, 56, 65), (65, 72, 97), (11, 60, 61), (39, 80, 89), (13, 84, 85)].sort
+    );;    
+
+    pure()
 );
