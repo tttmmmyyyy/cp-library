@@ -24,6 +24,9 @@ trait a : Bits {
     zero : a;
     one : a;
     // ビット表現における1の個数を数える
+    // 
+    // # Parameters
+    // - `x` : 対象のビット列
     popcount : a -> I64;
 }
 
