@@ -123,7 +123,7 @@ impl I8 : Bits {
     shr = i8 >> I8::shift_right;
     zero = 0_I8;
     one = 1_I8;
-    popcount = |x| FFI_CALL[I64 cp_lib_popcount32(U32), x.u8.u32];
+    popcount = |x| FFI_CALL[I64 cp_lib_popcount32(U32), x.i8.u32];
 }
 
 // ビット列を0と1の文字列として表示する
@@ -180,7 +180,7 @@ impl BitCombinationIterator : Iterator {
     );
 }
 
-// nビットの数のうち、ちょうどmビットが立っているものを昇順で列挙するイテレータ
+// 高々nビットの数のうち、ちょうどmビットが立っているものを昇順で列挙するイテレータ
 // 
 // # Parameters
 // - `n` : ビット数（0 <= n <= 62）
