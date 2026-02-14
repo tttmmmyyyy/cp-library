@@ -1,6 +1,6 @@
 # CPLib.Arithmetic
 
-Defined in cp-library@0.7.5
+Defined in cp-library@0.9.0
 
 ## Values
 
@@ -211,6 +211,21 @@ Type: `Std::U64 -> Std::U64 -> Std::U64 -> Std::U64`
 - `e`: 指数 >= 0
 - `m`: 法 > 0
 - `x`: 底 >= 0
+
+#### pythagorean_triples
+
+Type: `Std::I64 -> Std::Array (Std::I64, Std::I64, Std::I64)`
+
+原始ピタゴラス数`(a, b, c)`を列挙する
+
+`a^2 + b^2 = c^2`を満たす正の整数の組`(a, b, c)`で、`gcd(a, b, c) = 1`を満たすものを列挙する
+
+また、このような`a`, `b`は必ず片方が奇数でもう片方が偶数である。
+この関数の戻り値では`a`が奇数、`b`が偶数となる。
+
+##### Parameters
+
+- `c_max`: `c`の上限（inclusive), `c_max >= 1`
 
 #### sub_mod
 

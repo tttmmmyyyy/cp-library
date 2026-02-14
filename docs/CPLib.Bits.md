@@ -1,6 +1,6 @@
 # CPLib.Bits
 
-Defined in cp-library@0.7.5
+Defined in cp-library@0.9.0
 
 ビット操作に関するユーティリティ
 
@@ -10,31 +10,31 @@ Defined in cp-library@0.7.5
 
 #### bit_check
 
-Type: `Std::I64 -> Std::I64 -> Std::Bool`
+Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> Std::Bool`
 
 第iビットが立っているかを調べる
 
 ##### Parameters
 
-- `i` : ビット位置 (0 <= i < 64)
+- `i` : ビット位置。0 <= i < (ビット幅）でないときは未定義動作
 - `x` : 対象のビット列
 
 #### bit_clear
 
-Type: `Std::I64 -> Std::I64 -> Std::I64`
+Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> a`
 
 第iビットを消す
 
 ##### Parameters
 
-- `i` : ビット位置 (0 <= i < 64)
+- `i` : ビット位置。0 <= i < (ビット幅）でないときは未定義動作
 - `x` : 対象のビット列
 
 #### bit_combinations
 
 Type: `Std::I64 -> Std::I64 -> CPLib.Bits::BitCombinationIterator`
 
-nビットの数のうち、ちょうどmビットが立っているものを昇順で列挙するイテレータ
+高々nビットの数のうち、ちょうどmビットが立っているものを昇順で列挙するイテレータ
 
 ##### Parameters
 
@@ -43,24 +43,24 @@ nビットの数のうち、ちょうどmビットが立っているものを昇
 
 #### bit_flip
 
-Type: `Std::I64 -> Std::I64 -> Std::I64`
+Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> a`
 
 第iビットを反転する
 
 ##### Parameters
 
-- `i` : ビット位置 (0 <= i < 64)
+- `i` : ビット位置。0 <= i < (ビット幅）でないときは未定義動作
 - `x` : 対象のビット列
 
 #### bit_set
 
-Type: `Std::I64 -> Std::I64 -> Std::I64`
+Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> a`
 
 第iビットを立てる
 
 ##### Parameters
 
-- `i` : ビット位置 (0 <= i < 64)
+- `i` : ビット位置。0 <= i < (ビット幅）でないときは未定義動作
 - `x` : 対象のビット列
 
 #### bit_subsets
@@ -75,47 +75,37 @@ Type: `Std::I64 -> CPLib.Bits::BitSubsetIterator`
 
 - `set` : 全体集合 (0 <= set)
 
-### namespace CPLib.Bits::I32
-
-#### popcount
-
-Type: `Std::I32 -> Std::I64`
-
-ビット表現における1の個数を数える
-
-##### Parameters
-
-- `x` : 対象のビット列
-
-### namespace CPLib.Bits::I64
-
-#### popcount
-
-Type: `Std::I64 -> Std::I64`
-
-ビット表現における1の個数を数える
-
-##### Parameters
-
-- `x` : 対象のビット列
-
-### namespace CPLib.Bits::ToStringBits
-
 #### to_string_bits
 
-Type: `[a : CPLib.Bits::ToStringBits] Std::I64 -> a -> Std::String`
+Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> Std::String`
 
-データをビット列として表示する
+ビット列を0と1の文字列として表示する
 
 ##### Parameters
 
-- `n` : 下位からnビットのみを表示する
+- `n` : 下位からnビットのみを表示する。0 <= n < (ビット幅) でないときは未定義動作
 
-### namespace CPLib.Bits::U32
+### namespace CPLib.Bits::Bits
+
+#### and
+
+Type: `[a : CPLib.Bits::Bits] a -> a -> a`
+
+#### not
+
+Type: `[a : CPLib.Bits::Bits] a -> a`
+
+#### one
+
+Type: `[a : CPLib.Bits::Bits] a`
+
+#### or
+
+Type: `[a : CPLib.Bits::Bits] a -> a -> a`
 
 #### popcount
 
-Type: `Std::U32 -> Std::I64`
+Type: `[a : CPLib.Bits::Bits] a -> Std::I64`
 
 ビット表現における1の個数を数える
 
@@ -123,17 +113,21 @@ Type: `Std::U32 -> Std::I64`
 
 - `x` : 対象のビット列
 
-### namespace CPLib.Bits::U64
+#### shl
 
-#### popcount
+Type: `[a : CPLib.Bits::Bits] Std::I64 -> a -> a`
 
-Type: `Std::U64 -> Std::I64`
+#### shr
 
-ビット表現における1の個数を数える
+Type: `[a : CPLib.Bits::Bits] Std::I64 -> a -> a`
 
-##### Parameters
+#### xor
 
-- `x` : 対象のビット列
+Type: `[a : CPLib.Bits::Bits] a -> a -> a`
+
+#### zero
+
+Type: `[a : CPLib.Bits::Bits] a`
 
 ## Types and aliases
 
@@ -167,17 +161,49 @@ Type: `Std::I64`
 
 ### namespace CPLib.Bits
 
-#### trait `a : ToStringBits`
+#### trait `a : Bits`
 
-##### method `to_string_bits`
+##### method `and`
 
-Type: `Std::I64 -> a -> Std::String`
+Type: `a -> a -> a`
 
-データをビット列として表示する
+##### method `or`
+
+Type: `a -> a -> a`
+
+##### method `xor`
+
+Type: `a -> a -> a`
+
+##### method `not`
+
+Type: `a -> a`
+
+##### method `shl`
+
+Type: `Std::I64 -> a -> a`
+
+##### method `shr`
+
+Type: `Std::I64 -> a -> a`
+
+##### method `zero`
+
+Type: `a`
+
+##### method `one`
+
+Type: `a`
+
+##### method `popcount`
+
+Type: `a -> Std::I64`
+
+ビット表現における1の個数を数える
 
 ###### Parameters
 
-- `n` : 下位からnビットのみを表示する
+- `x` : 対象のビット列
 
 ## Trait implementations
 
@@ -185,4 +211,18 @@ Type: `Std::I64 -> a -> Std::String`
 
 ### impl `CPLib.Bits::BitSubsetIterator : Std::Iterator`
 
-### impl `Std::I64 : CPLib.Bits::ToStringBits`
+### impl `Std::I16 : CPLib.Bits::Bits`
+
+### impl `Std::I32 : CPLib.Bits::Bits`
+
+### impl `Std::I64 : CPLib.Bits::Bits`
+
+### impl `Std::I8 : CPLib.Bits::Bits`
+
+### impl `Std::U16 : CPLib.Bits::Bits`
+
+### impl `Std::U32 : CPLib.Bits::Bits`
+
+### impl `Std::U64 : CPLib.Bits::Bits`
+
+### impl `Std::U8 : CPLib.Bits::Bits`
