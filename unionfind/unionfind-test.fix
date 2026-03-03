@@ -1,6 +1,6 @@
 module CPLib.UnionFind.Test;
 
-import CPLib.UnionFind::{create, get_groups, get_group_size, is_united, unite};
+import CPLib.UnionFind::{create, get_group_size, get_groups, is_united, unite};
 import Random::{generate_I64_nonneg, init_by_seed};
 import Std::{
     IO, Array::{get_size, sort_by}, Debug::{assert_eq, consumed_time_while_lazy}, Functor::map, 

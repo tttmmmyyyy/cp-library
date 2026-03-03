@@ -2,13 +2,13 @@ module CPLib.Arithmetic.Test;
 
 import BoolArray::BoolArray::@;
 import CPLib.Arithmetic::{
-    add_mod, calc_gcd, create_prime_list, create_prime_table, ext_gcd, inv_mod, is_prime, is_prime_32, 
-    isqrt, lift_crt, mul_mod, pmod, pow_mod, pythagorean_triples, sub_mod, _calc_primitive_root, 
-    _inv_gcd
+    add_mod, calc_gcd, create_prime_list, create_prime_table, ext_gcd, factorize_via_lp_table, inv_mod, is_prime, is_prime_32, 
+    isqrt, lift_crt, linear_sieve, mul_mod, pmod, pow_mod, pythagorean_triples, sub_mod, 
+    _calc_primitive_root, _inv_gcd
 };
 import Random::{generate_I64_nonneg, generate_U64, init_by_seed};
 import Std::{
-    loop, IO, U64, Array::{get_size, sort, to_iter}, 
+    loop, IO, U64, U8, Array::{get_size, sort, to_iter, @}, 
     Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, I32::maximum, 
     I64::{maximum, minimum, shift_left}, IO::println, Iterator::{collect_m, filter, fold_m, map, range}, 
     LessThan::max, LoopState::{break, continue}, Monad::pure, String::populate, ToI64::i64, 
@@ -30,6 +30,7 @@ test = (
     test_prime_table;;
     test_prime_list;;
     test_linear_sieve;;
+    test_factorize_via_lp_table;;
     test_miller_rabin_u64;;
     test_miller_rabin_u32;;
     test_inv_gcd;;
@@ -348,6 +349,32 @@ test_pythagorean_triples : IO () = (
         pythagorean_triples(101).sort,
         [(3, 4, 5), (15, 8, 17), (35, 12, 37), (63, 16, 65), (99, 20, 101), (5, 12, 13), (21, 20, 29), (45, 28, 53), (77, 36, 85), (7, 24, 25), (55, 48, 73), (9, 40, 41), (33, 56, 65), (65, 72, 97), (11, 60, 61), (39, 80, 89), (13, 84, 85)].sort
     );;    
+
+    pure()
+);
+
+test_factorize_via_lp_table : IO ();
+test_factorize_via_lp_table = (
+    let (lp, _) = linear_sieve(400_U32);
+
+    // n=0, n=1: 素因数なし
+    assert_eq(|_|"factorize_via_lp_table 0", factorize_via_lp_table(0_U32, lp), []);;    
+    assert_eq(|_|"factorize_via_lp_table 1", factorize_via_lp_table(1_U32, lp), []);;
+
+    // 素数
+    assert_eq(|_|"factorize_via_lp_table 2",  factorize_via_lp_table(2_U32, lp),  [(2_U32, 1_U8)]  );;
+    assert_eq(|_|"factorize_via_lp_table 13", factorize_via_lp_table(13_U32, lp), [(13_U32, 1_U8)] );;
+
+    // 素数の累乗
+    assert_eq(|_|"factorize_via_lp_table 4",   factorize_via_lp_table(4_U32, lp),   [(2_U32, 2_U8)]            );;
+    assert_eq(|_|"factorize_via_lp_table 8",   factorize_via_lp_table(8_U32, lp),   [(2_U32, 3_U8)]            );;
+    assert_eq(|_|"factorize_via_lp_table 243", factorize_via_lp_table(243_U32, lp), [(3_U32, 5_U8)]            );; // 3^5
+
+    // 複数の素因数
+    assert_eq(|_|"factorize_via_lp_table 6",   factorize_via_lp_table(6_U32, lp),   [(2_U32, 1_U8), (3_U32, 1_U8)]              );;
+    assert_eq(|_|"factorize_via_lp_table 12",  factorize_via_lp_table(12_U32, lp),  [(2_U32, 2_U8), (3_U32, 1_U8)]              );;
+    assert_eq(|_|"factorize_via_lp_table 30",  factorize_via_lp_table(30_U32, lp),  [(2_U32, 1_U8), (3_U32, 1_U8), (5_U32, 1_U8)]);;
+    assert_eq(|_|"factorize_via_lp_table 360", factorize_via_lp_table(360_U32, lp), [(2_U32, 3_U8), (3_U32, 2_U8), (5_U32, 1_U8)]);; // 2^3 * 3^2 * 5
 
     pure()
 );

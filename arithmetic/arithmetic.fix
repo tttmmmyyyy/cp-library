@@ -2,13 +2,12 @@ module CPLib.Arithmetic;
 
 import BinaryHeap.BinaryArrayTree::BinaryArrayTree;
 import BoolArray::{BoolArray, BoolArray::{@, fill_true, get_size, make, set}};
-import BoolArray;
 import Std::{
-    loop, undefined, Array, Bool, I64, U32, U64, Array::{@, empty, get_size, push_back, to_iter}, 
-    I64::abs, 
+    loop, undefined, Array, Bool, I64, U32, U64, U8, Add::add, 
+    Array::{@, @size, empty, fill, get_size, push_back, set, to_iter}, I64::abs, Indexable::{iget, imod}, 
     Iterator::{check_all, filter_map, fold, get_first, loop_iter, loop_iter_s, range, range_step}, 
     LoopState::{break, continue, is_continue}, Option::{as_some, none, some}, ToI64::i64, ToU32::u32, 
-    ToU64::u64, U64::{bit_and, shift_right}
+    ToU64::u64, ToU8::u8, Tuple2::{act_0, act_1}, U64::{bit_and, shift_right}
 };
 
 // `x`を`m`で割った余りを非負で返す
@@ -197,15 +196,15 @@ create_prime_list = |n| (
 // 
 // # Returns
 // `(lp, ps)`
-// - `lp`: 長さnの配列で、`lp.@(i)`は`i`の最小の素因数。`lp.@(0)`, `lp.@(1)`は0。
+// - `lp`: 最小素因子テーブル。長さnの配列で、`lp.@(i)`は`i`の最小の素因数。`lp.@(0)`, `lp.@(1)`は0。
 // - `ps`: [0, n)の範囲の素数のリスト
 linear_sieve : U32 -> (Array U32, Array U32);
 linear_sieve = |n| (
-    let lp = Array::fill(n.to_I64, 0_U32);
+    let lp = Array::fill(n.i64, 0_U32);
     let ps = [];
-    Iterator::range(2, n.to_I64).fold((lp, ps), |i, (lp, ps)|
+    Iterator::range(2, n.i64).fold((lp, ps), |i, (lp, ps)|
         let (lp, ps) = if lp.@(i) == 0_U32 {
-            let p = i.to_U32;
+            let p = i.u32;
             let lp = lp.set(i, p);
             let ps = ps.push_back(p);
             (lp, ps)
@@ -213,14 +212,39 @@ linear_sieve = |n| (
             (lp, ps)
         };
         ps.to_iter.loop_iter((lp, ps), |p, (lp, ps)|
-            if i * p.to_I64 >= n.to_I64 { break $ (lp, ps) };
-            let lp = lp.set(i * p.to_I64, p);
+            if i * p.i64 >= n.i64 { break $ (lp, ps) };
+            let lp = lp.set(i * p.i64, p);
             if p == lp.@(i) {
                 break $ (lp, ps)
             } else {
                 continue $ (lp, ps)
             }
         )
+    )
+);
+
+// 最小素因子テーブルを用いて、数を素因数分解する
+// 
+// # Parameters
+// - `n`: 素因数分解する数
+// - `lp_table`: 長さが少なくとも`n+1`の最小素因子テーブル。最小素因子テーブルの定義は`linear_sieve`のコメントを参照。
+// 
+// # Returns
+// 素因数分解の結果。
+// `(p, e)`の配列で、`p`は素因子、`e`はその指数を表す。`p`は昇順に並ぶ。
+// `n`が0の場合は空の配列を返す。
+factorize_via_lp_table : U32 -> Array U32 -> Array (U32, U8) = |n, lp_table| (
+    loop((n, []), |(n, fact)|
+        let p = lp_table.@(n.i64);
+        if p < 2.u32 { fact.break };
+        let n_fact = fact.@size;
+        let fact = if fact.@size == 0 || fact[n_fact-1][^0].iget != p { 
+            fact.push_back((p, 1.u8))
+        } else {
+            fact[n_fact-1][^1].imod(add(1.u8))
+        };
+        let n = n / p;
+        (n, fact).continue
     )
 );
 
