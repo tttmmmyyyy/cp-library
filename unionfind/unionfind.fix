@@ -8,6 +8,7 @@ import Std::{
 type UnionFind = struct {
     parent : Array I64,
     rank : Array I64,
+    size : Array I64,
 };
 
 // UnionFind木を作成する
@@ -19,7 +20,8 @@ type UnionFind = struct {
 create : I64 -> UnionFind;
 create = |size| UnionFind {
     parent : range(0, size).to_array,
-    rank : Array::fill(size, 0)
+    rank : Array::fill(size, 0),
+    size : Array::fill(size, 1)
 };
 
 // 指定された要素の親を取得する
@@ -56,13 +58,17 @@ unite = |x, y, uf| (
     };
     let px_rank = uf.@rank.@(px);
     let py_rank = uf.@rank.@(py);
+    let new_size = uf.@size.@(px) + uf.@size.@(py);
     if px_rank < py_rank {
-        uf.mod_parent(set(px, py))
+        let uf = uf.mod_parent(set(px, py));
+        uf.mod_size(set(py, new_size))
     } else if px_rank > py_rank {
-        uf.mod_parent(set(py, px))
+        let uf = uf.mod_parent(set(py, px));
+        uf.mod_size(set(px, new_size))
     } else { // rank[px] == rank[py]
         let uf = uf.mod_parent(set(py, px));
-        uf.mod_rank(set(px, px_rank + 1))
+        let uf = uf.mod_rank(set(px, px_rank + 1));
+        uf.mod_size(set(px, new_size))
     }
 );
 
@@ -79,6 +85,19 @@ is_united = |x, y, uf| (
     let (uf, px) = uf.find_parent(x);
     let (uf, py) = uf.find_parent(y);
     (uf, px == py)
+);
+
+// 指定された要素が属するグループのサイズを取得する
+// 
+// パス圧縮を行うため、UnionFindの状態も変化する
+// 
+// # Parameters
+// - `x` : 対象となる要素
+// - `uf` : UnionFind木
+get_group_size : I64 -> UnionFind -> (UnionFind, I64);
+get_group_size = |x, uf| (
+    let (uf, px) = uf.find_parent(x);
+    (uf, uf.@size.@(px))
 );
 
 // グループの配列を取得する
