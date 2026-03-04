@@ -36,7 +36,7 @@ module CPLib.ZP;
 
 import CPLib.Arithmetic::calc_primitive_root;
 import Std::{
-    loop, undefined, Add, Array, Div, Eq, I64, Mul, Neg, Sub, ToString, U32, U64, 
+    loop, undefined, Add, Array, Div, Eq, I64, Mul, Neg, Sub, ToString, U32, U64, Zero, 
     Array::{
         empty, get_size, push_back, reserve, @, _unsafe_force_unique, 
         _unsafe_get_linear_bounds_unchecked_unretained, _unsafe_set_bounds_uniqueness_unchecked_unreleased, 
@@ -214,6 +214,10 @@ impl [p : PrimeProvider] ZP p : Mul {
 
 impl [p : PrimeProvider] ZP p : Div {
     div = |this, that| this * that.inv;
+}
+
+impl [p : PrimeProvider] ZP p : Zero {
+    zero = ZP::make(0);
 }
 
 impl ZP p : ToString {

@@ -1,6 +1,6 @@
 # CPLib.Bits
 
-Defined in cp-library@0.9.0
+Defined in cp-library@0.11.1
 
 ビット操作に関するユーティリティ
 
@@ -91,21 +91,31 @@ Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> Std::String`
 
 Type: `[a : CPLib.Bits::Bits] a -> a -> a`
 
+Trait member of `CPLib.Bits::Bits`
+
 #### not
 
 Type: `[a : CPLib.Bits::Bits] a -> a`
+
+Trait member of `CPLib.Bits::Bits`
 
 #### one
 
 Type: `[a : CPLib.Bits::Bits] a`
 
+Trait member of `CPLib.Bits::Bits`
+
 #### or
 
 Type: `[a : CPLib.Bits::Bits] a -> a -> a`
 
+Trait member of `CPLib.Bits::Bits`
+
 #### popcount
 
 Type: `[a : CPLib.Bits::Bits] a -> Std::I64`
+
+Trait member of `CPLib.Bits::Bits`
 
 ビット表現における1の個数を数える
 
@@ -117,17 +127,25 @@ Type: `[a : CPLib.Bits::Bits] a -> Std::I64`
 
 Type: `[a : CPLib.Bits::Bits] Std::I64 -> a -> a`
 
+Trait member of `CPLib.Bits::Bits`
+
 #### shr
 
 Type: `[a : CPLib.Bits::Bits] Std::I64 -> a -> a`
+
+Trait member of `CPLib.Bits::Bits`
 
 #### xor
 
 Type: `[a : CPLib.Bits::Bits] a -> a -> a`
 
+Trait member of `CPLib.Bits::Bits`
+
 #### zero
 
 Type: `[a : CPLib.Bits::Bits] a`
+
+Trait member of `CPLib.Bits::Bits`
 
 ## Types and aliases
 

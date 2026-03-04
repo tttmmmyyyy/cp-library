@@ -1,6 +1,6 @@
 # CPLib.ZP
 
-Defined in cp-library@0.9.0
+Defined in cp-library@0.11.1
 
 素数`p`を法とする整数の環の型`ZP p`を与えるモジュール。
 
@@ -101,9 +101,13 @@ Type: `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::ZP p`
 
 Type: `[p : CPLib.ZP::PrimeProvider] p`
 
+Trait member of `CPLib.ZP::PrimeProvider`
+
 #### value
 
 Type: `[p : CPLib.ZP::PrimeProvider] p -> Std::U32`
+
+Trait member of `CPLib.ZP::PrimeProvider`
 
 ## Types and aliases
 
@@ -210,3 +214,5 @@ Type: `p -> Std::U32`
 ### impl `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::ZP p : Std::Sub`
 
 ### impl `CPLib.ZP::ZP p : Std::ToString`
+
+### impl `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::ZP p : Std::Zero`

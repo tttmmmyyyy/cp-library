@@ -1,6 +1,6 @@
 # CPLib.Arithmetic
 
-Defined in cp-library@0.9.0
+Defined in cp-library@0.11.1
 
 ## Values
 
@@ -84,6 +84,23 @@ Type: `Std::I64 -> Std::I64 -> (Std::I64, (Std::I64, Std::I64))`
 - `a`: 整数
 - `b`: 整数
 
+#### factorize_via_lp_table
+
+Type: `Std::U32 -> Std::Array Std::U32 -> Std::Array (Std::U32, Std::U8)`
+
+最小素因子テーブルを用いて、数を素因数分解する
+
+##### Parameters
+
+- `n`: 素因数分解する数
+- `lp_table`: 長さが少なくとも`n+1`の最小素因子テーブル。最小素因子テーブルの定義は`linear_sieve`のコメントを参照。
+
+##### Returns
+
+素因数分解の結果。
+`(p, e)`の配列で、`p`は素因子、`e`はその指数を表す。`p`は昇順に並ぶ。
+`n`が0の場合は空の配列を返す。
+
 #### floor_sum
 
 Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::I64 -> Std::I64`
@@ -162,6 +179,22 @@ Type: `Std::Array Std::I64 -> Std::Array Std::I64 -> (Std::I64, Std::I64)`
 
 - `rs`: r(i)の配列
 - `ms`: m(i) >= 1の配列。r(i)と同じ長さ。
+
+#### linear_sieve
+
+Type: `Std::U32 -> (Std::Array Std::U32, Std::Array Std::U32)`
+
+線形ふるいを用いて、[0, n)の範囲で、各数の最小の素因数を格納した配列と、素数のリストを作成する
+
+##### Parameters
+
+- `n` : 上限（exclusive）
+
+##### Returns
+
+`(lp, ps)`
+- `lp`: 最小素因子テーブル。長さnの配列で、`lp.@(i)`は`i`の最小の素因数。`lp.@(0)`, `lp.@(1)`は0。
+- `ps`: [0, n)の範囲の素数のリスト
 
 #### mul_mod
 

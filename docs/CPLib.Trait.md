@@ -1,6 +1,6 @@
 # CPLib.Trait
 
-Defined in cp-library@0.9.0
+Defined in cp-library@0.11.1
 
 ## Values
 
@@ -10,6 +10,8 @@ Defined in cp-library@0.9.0
 
 Type: `[a : CPLib.Trait::Action] a -> CPLib.Trait::Action::Set a -> CPLib.Trait::Action::Set a`
 
+Trait member of `CPLib.Trait::Action`
+
 作用
 
 ### namespace CPLib.Trait::Inf
@@ -18,11 +20,15 @@ Type: `[a : CPLib.Trait::Action] a -> CPLib.Trait::Action::Set a -> CPLib.Trait:
 
 Type: `[a : CPLib.Trait::Inf] a`
 
+Trait member of `CPLib.Trait::Inf`
+
 ### namespace CPLib.Trait::Monoid
 
 #### op
 
 Type: `[a : CPLib.Trait::Monoid] a -> a -> a`
+
+Trait member of `CPLib.Trait::Monoid`
 
 演算
 
@@ -32,6 +38,8 @@ Type: `[a : CPLib.Trait::Monoid] a -> a -> a`
 #### unit
 
 Type: `[a : CPLib.Trait::Monoid] a`
+
+Trait member of `CPLib.Trait::Monoid`
 
 単位元
 

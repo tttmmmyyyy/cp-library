@@ -1,10 +1,9 @@
 module CPLib.Arithmetic;
 
-import BinaryHeap.BinaryArrayTree::BinaryArrayTree;
-import BoolArray::{BoolArray, BoolArray::{@, fill_true, get_size, make, set}};
+import BoolArray::{BoolArray, BoolArray::{fill_true, get_size, make, set, @}};
 import Std::{
     loop, undefined, Array, Bool, I64, U32, U64, U8, Add::add, 
-    Array::{@, @size, empty, fill, get_size, push_back, set, to_iter}, I64::abs, Indexable::{iget, imod}, 
+    Array::{empty, fill, get_size, push_back, set, to_iter, @, @size}, I64::abs, Indexable::{iget, imod}, 
     Iterator::{check_all, filter_map, fold, get_first, loop_iter, loop_iter_s, range, range_step}, 
     LoopState::{break, continue, is_continue}, Option::{as_some, none, some}, ToI64::i64, ToU32::u32, 
     ToU64::u64, ToU8::u8, Tuple2::{act_0, act_1}, U64::{bit_and, shift_right}
