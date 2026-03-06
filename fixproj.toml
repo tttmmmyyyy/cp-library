@@ -18,6 +18,9 @@ description = "A library for competitive programming in Fixlang."
 license = "CC0-1.0"
 
 [build]
+dynamic_links = ["mimalloc"]
+library_paths = ["/usr/lib/x86_64-linux-gnu"]
+
 files = [
     "io/io.fix",
     "zp/zp.fix",
