@@ -1,4 +1,4 @@
-proj_file_hash = "c4dd7ead0362567f514dfb835b17c6a7"
+proj_file_hash = "ba370302a005007fc84a835f2dc664b4"
 
 [[dependencies]]
 name = "binary-heap"
@@ -19,15 +19,6 @@ repo = "https://github.com/tttmmmyyyy/bool-array.git"
 rev = "608a7dfded55c6f9373347a5324c28f5ccfabbbf"
 
 [[dependencies]]
-name = "random"
-version = "1.1.1"
-path = ".fixlang/deps/random_1.1.1"
-
-[dependencies.git]
-repo = "https://github.com/tttmmmyyyy/fixlang-random.git"
-rev = "b4f83ee48564e714c0918513dd431f9135493dce"
-
-[[dependencies]]
 name = "ez-scripting"
 version = "0.3.1"
 path = ".fixlang/deps/ez-scripting_0.3.1"
@@ -37,13 +28,31 @@ repo = "https://github.com/tttmmmyyyy/ez_scripting.git"
 rev = "b6edcd04c6fd7946f4cf09266d3d7164abdf9748"
 
 [[dependencies]]
-name = "subprocess"
-version = "1.0.7"
-path = ".fixlang/deps/subprocess_1.0.7"
+name = "hash"
+version = "1.1.1"
+path = ".fixlang/deps/hash_1.1.1"
 
 [dependencies.git]
-repo = "https://github.com/tttmmmyyyy/fixlang-subprocess.git"
-rev = "68f84481b864abdbe01a5964e1f798dc44d9dfa5"
+repo = "https://github.com/tttmmmyyyy/fixlang-hash.git"
+rev = "145a20913eb9c280edd616d5b9977d33303343c1"
+
+[[dependencies]]
+name = "hashmap"
+version = "1.2.0"
+path = ".fixlang/deps/hashmap_1.2.0"
+
+[dependencies.git]
+repo = "https://github.com/tttmmmyyyy/fixlang-hashmap.git"
+rev = "a7cb58fef24d0cf11ba305faf4f764dca72ecc45"
+
+[[dependencies]]
+name = "random"
+version = "1.1.1"
+path = ".fixlang/deps/random_1.1.1"
+
+[dependencies.git]
+repo = "https://github.com/tttmmmyyyy/fixlang-random.git"
+rev = "b4f83ee48564e714c0918513dd431f9135493dce"
 
 [[dependencies]]
 name = "ring-buffer"
@@ -53,3 +62,12 @@ path = ".fixlang/deps/ring-buffer_0.1.1"
 [dependencies.git]
 repo = "https://github.com/tttmmmyyyy/ring-buffer.git"
 rev = "78e543ca1eb24737659c47fa1253f0f4e92994bf"
+
+[[dependencies]]
+name = "subprocess"
+version = "1.0.7"
+path = ".fixlang/deps/subprocess_1.0.7"
+
+[dependencies.git]
+repo = "https://github.com/tttmmmyyyy/fixlang-subprocess.git"
+rev = "68f84481b864abdbe01a5964e1f798dc44d9dfa5"

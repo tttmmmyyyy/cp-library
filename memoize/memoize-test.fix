@@ -1,0 +1,42 @@
+module CPLib.Memoize.Test;
+
+import CPLib.Memoize::{memoize, run_with_array, run_with_hashmap, Memoize, Memory, Memory::{Key, Value}};
+import Std::{I64, IO, U64, Debug::assert_eq, Iterator::{fold_m, range}, Monad::pure, ToU64::u64};
+
+// フィボナッチ数列 mod 2^64 を計算する
+// 
+// `m`はメモ化につかうメモリの型。`HashMap`や`Array`を呼び出し時に選択。
+// 
+// `fib`の結果をメモ化したいので`memoize(n) $ `で始める
+fib : [m : Memory, Key m = I64, Value m = U64] I64 -> Memoize m U64 = |n| memoize(n) $ (
+    if n <= 1 { pure $ n.u64 };
+    pure $ *fib(n - 1) + *fib(n - 2)
+);
+
+// フィボナッチ数列の和 mod 2^64 を計算する
+// 
+// `sum_fib`の結果はメモ化しないので、`memoize`しない。
+sum_fib : [m : Memory, Key m = I64, Value m = U64] I64 -> Memoize m U64 = |n| (
+    range(0, n).fold_m(0.u64, |n, sum| pure $ sum + *fib(n))
+);
+
+test_hashmap : IO () = (
+    let m = sum_fib(1e5); // 答えを計算するモナドを作成
+    let x = m.run_with_hashmap(1e5); // キャパシティ（計算中に超えるとrehashが発生）
+    assert_eq(|_|"test_hashmap", x, 14406452726835625052_U64);;
+    pure()
+);
+
+test_array : IO () = (
+    let m = sum_fib(1e5); // 答えを計算するモナドを作成
+    let x = m.run_with_array(1e5); // サイズ（計算中に超えるとout of range）
+    assert_eq(|_|"test_array", x, 14406452726835625052_U64);;
+    pure()
+);
+
+test : IO ();
+test = (
+    test_hashmap;;
+    test_array;;
+    pure()
+);

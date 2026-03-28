@@ -1,0 +1,125 @@
+// 関数のメモ化（memoize）
+// 
+// 基本的な使い方：
+// ```
+// // フィボナッチ数列 mod 2^64 を計算するMemoizeモナド
+// // 
+// // `m`はメモ化につかうメモリの型。`HashMap`や`Array`を呼び出し時に選択。
+// // 
+// // 結果をメモしたいので、値を計算するモナドを `memoize(n)`に渡す
+// fib : [m : Memory, Key m = I64, Value m = U64] I64 -> Memoize m U64 = |n| memoize(n) $ (
+//     if n <= 1 { pure $ n.u64 };
+//     pure $ *fib(n - 1) + *fib(n - 2)
+// );
+// 
+// // フィボナッチ数列の和 mod 2^64 を計算するMemoizeモナド
+// // 
+// // 内部で呼ばれるfibはメモ化されるべきだが、sum_fibの結果自体はメモしないので、`memoize`しない。
+// sum_fib : [m : Memory, Key m = I64, Value m = U64] I64 -> Memoize m U64 = |n| (
+//     range(0, n).fold_m(0.u64, |n, sum| pure $ sum + *fib(n))
+// );
+// 
+// test_hashmap : IO () = (
+//     let m = sum_fib(1e5); // 答えを計算するモナドを作成
+//     let x = m.run_with_hashmap(1e5); // キャパシティ（計算中に超えるとrehashが発生）
+//     assert_eq(|_|"test_hashmap", x, 14406452726835625052_U64);;
+//     pure()
+// );
+//
+// test_array : IO () = (
+//     let m = sum_fib(1e5); // 答えを計算するモナドを作成
+//     let x = m.run_with_array(1e5); // サイズ（計算中に超えるとout of range）
+//     assert_eq(|_|"test_array", x, 14406452726835625052_U64);;
+//     pure()
+// );
+// ```
+module CPLib.Memoize;
+
+import Hash::HashKey;
+import HashMap::{empty, find, insert, HashMap};
+import Std::{Array, I64, Monad, Option, Array::{fill, set, @}, Monad::pure, Option::{none, some}, Tuple2::@1};
+
+// メモ化モナド
+// 
+// `m`はメモ化に使うメモリの型（`HashMap`や`Array`など）。
+type Memoize m a = struct { _run : m -> (m, a) };
+
+impl Memoize m : Monad {
+    pure = |y| Memoize { _run : |s| (s, y) };
+    bind = |f, m| Memoize {
+        _run : |s| (
+            let (s, x) = (m.@_run)(s);
+            (f(x).@_run)(s)
+        )
+    };
+}
+
+trait m : Memory {
+    type Key m;
+    type Value m;
+    insert : Key m -> Value m -> m -> m;
+    find : Key m -> m -> Option (Value m);
+}
+
+_put : [m: Memory] Key m -> Value m -> Memoize m () = |k, v| Memoize { _run : |s| (s.insert(k, v), ()) };
+
+_get : [m : Memory] Key m -> Memoize m (Option (Value m)) = |k| Memoize { _run : |s| (s, s.find(k)) };
+
+// メモ化モナドをメモリ`m`上で実行する
+// 
+// # Parameters
+// - `m` : メモ化に使うメモリ領域
+// - `f` : メモ化モナド
+run_with_memory : m -> Memoize m a -> a = |m, f| (f.@_run)(m).@1;
+
+// ハッシュマップ上でメモ化モナドを実行する
+// 
+// # Parameters
+// - `capacity` : ハッシュマップの初期容量。計算中に超えた場合はrehashが発生。
+// - `f` : メモ化モナド
+run_with_hashmap : I64 -> Memoize (HashMap k v) a -> a = |capacity| (
+    run_with_memory(HashMap::empty(capacity))
+);
+
+// 配列上でメモ化モナドを実行する
+// 
+// # Parameters
+// - `size` : 配列のサイズ。計算中に超えた場合はout of rangeでプログラム終了。
+// - `f` : メモ化モナド
+run_with_array : I64 -> Memoize (Array (Option v)) a -> a = |size| (
+    run_with_memory(Array::fill(size, none()))
+);
+
+// モナドアクションをメモ化する
+// 
+// `memoize(x) $ f` は、
+// - キー`x`に対する値がメモリに存在する場合はそれを返す。
+// - 存在しない場合はモナド`f`を実行し、結果をメモリに保存してから返す。
+// 
+// # Parameters
+// - `x` : メモ化のキー
+// - `f` : キー`x`に対する値を計算するモナド
+memoize : [m : Memory, Key m = k, Value m = v] k -> Memoize m v -> Memoize m v = |x, f| (
+    match *_get(x) {
+        some(y) => pure(y),
+        none() => (
+            let y = *f;
+            _put(x, y);;
+            pure(y)
+        )
+    }
+);
+
+impl [k : HashKey] HashMap k v : Memory {
+    type Key (HashMap k v) = k;
+    type Value (HashMap k v) = v;
+    insert = |k, v, m| m.HashMap::insert(k, v);
+    find = |k, m| m.HashMap::find(k);
+}
+
+impl Array (Option v) : Memory {
+    type Key (Array (Option v)) = I64;
+    type Value (Array (Option v)) = v;
+    insert = |k, v| set(k, some(v));
+    find = |k| @(k);
+}

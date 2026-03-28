@@ -3,7 +3,7 @@
 name = "cp-library"
 
 ## Project version (in semver). This is a required field.
-version = "0.11.1"
+version = "0.11.2"
 
 ## Fix version requirement. Default is "*".
 fix_version = "1.3.0"
@@ -37,6 +37,7 @@ files = [
     "string/string.fix",
     "bits/bits.fix",
     "misc/misc.fix",
+    "memoize/memoize.fix",
 ]
 objects = ["lib.o"]
 preliminary_commands = [["make", "-s", "lib.o"]]
@@ -61,6 +62,7 @@ files = [
     "string/string-test.fix",
     "bits/bits-test.fix",
     "misc/misc-test.fix",
+    "memoize/memoize-test.fix",
 ]
 
 
@@ -92,3 +94,9 @@ git = { url = "https://github.com/tttmmmyyyy/fixlang-random.git" }
 name = "ez-scripting"
 version = "0.3.1"
 git = { url = "https://github.com/tttmmmyyyy/ez_scripting.git" }
+
+
+[[dependencies]]
+name = "hashmap"
+version = "1.2.0"
+git = { url = "https://github.com/tttmmmyyyy/fixlang-hashmap.git" }

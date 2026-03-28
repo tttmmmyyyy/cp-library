@@ -1,6 +1,6 @@
 # CPLib.LDSegtree
 
-Defined in cp-library@0.11.1
+Defined in cp-library@0.11.2
 
 モノイド構造および作用が動的に決められる遅延伝搬セグメント木
 
