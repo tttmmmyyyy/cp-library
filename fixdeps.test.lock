@@ -1,4 +1,4 @@
-proj_file_hash = "ba370302a005007fc84a835f2dc664b4"
+proj_file_hash = "8da47c85679657934893a5d13d228a22"
 
 [[dependencies]]
 name = "binary-heap"
@@ -38,12 +38,12 @@ rev = "145a20913eb9c280edd616d5b9977d33303343c1"
 
 [[dependencies]]
 name = "hashmap"
-version = "1.2.0"
-path = ".fixlang/deps/hashmap_1.2.0"
+version = "2.0.0"
+path = ".fixlang/deps/hashmap_2.0.0"
 
 [dependencies.git]
 repo = "https://github.com/tttmmmyyyy/fixlang-hashmap.git"
-rev = "a7cb58fef24d0cf11ba305faf4f764dca72ecc45"
+rev = "26bcb6c7cb66cc39b4f2604e1c94aa7730e03a9e"
 
 [[dependencies]]
 name = "random"

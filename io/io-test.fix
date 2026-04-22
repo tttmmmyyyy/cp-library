@@ -29,7 +29,7 @@ test_io : IO () = (
     let input = input.as_ok;
     ezs.cd("io/io-test");;
     ezs.run_o(["fix", "deps", "update"]);;
-    let output = *ezs.run_wi_o(["fix", "run"], input);
+    let output = *ezs.run_wi_o(["fix", "run", "--allow-preliminary-commands"], input);
     let found = output.find("PASS", 0).is_some;
     assert(|_|"IO test failed", found);;
     eprintln("IO test passed!")
