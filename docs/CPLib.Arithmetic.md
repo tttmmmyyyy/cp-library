@@ -1,6 +1,6 @@
 # CPLib.Arithmetic
 
-Defined in cp-library@0.11.2
+Defined in cp-library@0.12.1
 
 ## Values
 
@@ -83,6 +83,41 @@ Type: `Std::I64 -> Std::I64 -> (Std::I64, (Std::I64, Std::I64))`
 
 - `a`: 整数
 - `b`: 整数
+
+#### factorize
+
+Type: `Std::I64 -> Std::Array (Std::U32, Std::U8)`
+
+試し割りにより、数を素因数分解する（素因子と指数のペアの配列で返す）
+
+計算量：O(sqrt(n))
+
+##### Parameters
+
+- `n`: 素因数分解する数 >= 1
+
+##### Returns
+
+素因数分解の結果。
+`(p, e)`の配列で、`p`は素因子、`e`はその指数を表す。`p`は昇順に並ぶ。
+`n`が1の場合は空の配列を返す。
+
+#### factorize_flat
+
+Type: `Std::I64 -> Std::Array Std::U32`
+
+試し割りにより、数を素因数分解する（素因子を重複ありのフラットな配列で返す）
+
+計算量：O(sqrt(n))
+
+##### Parameters
+
+- `n`: 素因数分解する数 >= 1
+
+##### Returns
+
+素因数分解の結果。素因子を昇順に並べた配列（同じ素因子はその指数分だけ繰り返し現れる）。
+`n`が1の場合は空の配列を返す。
 
 #### factorize_via_lp_table
 

@@ -2,9 +2,9 @@ module CPLib.Arithmetic.Test;
 
 import BoolArray::BoolArray::@;
 import CPLib.Arithmetic::{
-    add_mod, calc_gcd, create_prime_list, create_prime_table, ext_gcd, factorize_via_lp_table, inv_mod, 
-    is_prime, is_prime_32, isqrt, lift_crt, linear_sieve, mul_mod, pmod, pow_mod, pythagorean_triples, 
-    sub_mod, _calc_primitive_root, _inv_gcd
+    add_mod, calc_gcd, create_prime_list, create_prime_table, ext_gcd, factorize, factorize_flat, 
+    factorize_via_lp_table, inv_mod, is_prime, is_prime_32, isqrt, lift_crt, linear_sieve, mul_mod, pmod, 
+    pow_mod, pythagorean_triples, sub_mod, _calc_primitive_root, _inv_gcd
 };
 import Random::{generate_I64_nonneg, generate_U64, init_by_seed};
 import Std::{
@@ -31,6 +31,8 @@ test = (
     test_prime_list;;
     test_linear_sieve;;
     test_factorize_via_lp_table;;
+    test_factorize_flat;;
+    test_factorize;;
     test_miller_rabin_u64;;
     test_miller_rabin_u32;;
     test_inv_gcd;;
@@ -350,6 +352,52 @@ test_pythagorean_triples : IO () = (
         [(3, 4, 5), (15, 8, 17), (35, 12, 37), (63, 16, 65), (99, 20, 101), (5, 12, 13), (21, 20, 29), (45, 28, 53), (77, 36, 85), (7, 24, 25), (55, 48, 73), (9, 40, 41), (33, 56, 65), (65, 72, 97), (11, 60, 61), (39, 80, 89), (13, 84, 85)].sort
     );;    
 
+    pure()
+);
+
+test_factorize_flat : IO ();
+test_factorize_flat = (
+    assert_eq(|_|"factorize_flat 1", factorize_flat(1), []);;
+    assert_eq(|_|"factorize_flat 2", factorize_flat(2), [2_U32]);;
+    assert_eq(|_|"factorize_flat 3", factorize_flat(3), [3_U32]);;
+    assert_eq(|_|"factorize_flat 4", factorize_flat(4), [2_U32, 2_U32]);;
+    assert_eq(|_|"factorize_flat 6", factorize_flat(6), [2_U32, 3_U32]);;
+    assert_eq(|_|"factorize_flat 12", factorize_flat(12), [2_U32, 2_U32, 3_U32]);;
+    assert_eq(|_|"factorize_flat 17", factorize_flat(17), [17_U32]);;
+    assert_eq(|_|"factorize_flat 360", factorize_flat(360), [2_U32, 2_U32, 2_U32, 3_U32, 3_U32, 5_U32]);;
+    // 平方数（d > n/d の境界ケース）
+    assert_eq(|_|"factorize_flat 9", factorize_flat(9), [3_U32, 3_U32]);;
+    assert_eq(|_|"factorize_flat 25", factorize_flat(25), [5_U32, 5_U32]);;
+    assert_eq(|_|"factorize_flat 49", factorize_flat(49), [7_U32, 7_U32]);;
+    assert_eq(|_|"factorize_flat 36", factorize_flat(36), [2_U32, 2_U32, 3_U32, 3_U32]);;
+    assert_eq(|_|"factorize_flat 100", factorize_flat(100), [2_U32, 2_U32, 5_U32, 5_U32]);;
+    assert_eq(|_|"factorize_flat 1018081", factorize_flat(1018081), [1009_U32, 1009_U32]);; // 1009^2, 1009 is prime
+    // 大きめの素数
+    assert_eq(|_|"factorize_flat 1000003", factorize_flat(1000003), [1000003_U32]);;
+    // 大きめの合成数：1000000007 は素数なので、1000000007 * 2 = 2000000014
+    assert_eq(|_|"factorize_flat 2000000014", factorize_flat(2000000014), [2_U32, 1000000007_U32]);;
+    pure()
+);
+
+test_factorize : IO ();
+test_factorize = (
+    assert_eq(|_|"factorize 1", factorize(1), []);;
+    assert_eq(|_|"factorize 2", factorize(2), [(2_U32, 1_U8)]);;
+    assert_eq(|_|"factorize 4", factorize(4), [(2_U32, 2_U8)]);;
+    assert_eq(|_|"factorize 6", factorize(6), [(2_U32, 1_U8), (3_U32, 1_U8)]);;
+    assert_eq(|_|"factorize 12", factorize(12), [(2_U32, 2_U8), (3_U32, 1_U8)]);;
+    assert_eq(|_|"factorize 243", factorize(243), [(3_U32, 5_U8)]);;
+    assert_eq(|_|"factorize 360", factorize(360), [(2_U32, 3_U8), (3_U32, 2_U8), (5_U32, 1_U8)]);;
+    // 平方数（d > n/d の境界ケース）
+    assert_eq(|_|"factorize 9", factorize(9), [(3_U32, 2_U8)]);;
+    assert_eq(|_|"factorize 25", factorize(25), [(5_U32, 2_U8)]);;
+    assert_eq(|_|"factorize 49", factorize(49), [(7_U32, 2_U8)]);;
+    assert_eq(|_|"factorize 36", factorize(36), [(2_U32, 2_U8), (3_U32, 2_U8)]);;
+    assert_eq(|_|"factorize 100", factorize(100), [(2_U32, 2_U8), (5_U32, 2_U8)]);;
+    assert_eq(|_|"factorize 81", factorize(81), [(3_U32, 4_U8)]);; // 3^4
+    assert_eq(|_|"factorize 1018081", factorize(1018081), [(1009_U32, 2_U8)]);; // 1009^2
+    assert_eq(|_|"factorize 1000003", factorize(1000003), [(1000003_U32, 1_U8)]);;
+    assert_eq(|_|"factorize 2000000014", factorize(2000000014), [(2_U32, 1_U8), (1000000007_U32, 1_U8)]);;
     pure()
 );
 

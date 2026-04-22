@@ -1,6 +1,6 @@
 # CPLib.Memoize
 
-Defined in cp-library@0.11.2
+Defined in cp-library@0.12.1
 
 関数のメモ化（memoize）
 
@@ -115,10 +115,6 @@ Defined as: `type Memoize m a = unbox struct { ...fields... }`
 メモ化モナド
 
 `m`はメモ化に使うメモリの型（`HashMap`や`Array`など）。
-
-##### field `_run`
-
-Type: `m -> (m, a)`
 
 ## Traits and aliases
 
