@@ -67,6 +67,30 @@ Type: `Std::I64 -> BoolArray::BoolArray`
 
 - `n` : 素数テーブルの上限（exclusive）
 
+#### euler_tortient
+
+Type: `Std::I64 -> Std::I64`
+
+オイラーのトーシェント関数 φ(n) を計算する
+
+試し割りによる O(sqrt(n)) 実装
+
+##### Parameters
+
+- `n`: 正の整数 >= 1
+
+#### euler_tortient_table
+
+Type: `Std::I64 -> Std::Array Std::I64`
+
+0 <= i < n に対するオイラーのトーシェント関数 φ(i) の表を作成する
+
+`table.@(i)` が φ(i) の値となる。ただし `table.@(0) = 0` とする。
+
+##### Parameters
+
+- `n`: 表の上限（exclusive）
+
 #### ext_gcd
 
 Type: `Std::I64 -> Std::I64 -> (Std::I64, (Std::I64, Std::I64))`

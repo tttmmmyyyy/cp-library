@@ -267,8 +267,45 @@ factorize = |n| (
     if n > 1 { factors.push_back((n.u32, 1_U8)) } else { factors }
 );
 
+// オイラーのトーシェント関数 φ(n) を計算する
+//
+// 試し割りによる O(sqrt(n)) 実装
+//
+// # Parameters
+// - `n`: 正の整数 >= 1
+euler_tortient : I64 -> I64;
+euler_tortient = |n| (
+    if n == 1 { 1 };
+    let (d, n, tot) = loop((2, n, 1), |(d, n, tot)|
+        if d > n / d { break $ (d, n, tot) };
+        if n % d != 0 { continue $ (d + 1, n, tot) };
+        let (q, n) = loop((1, n), |(q, n)|
+            if n % d != 0 { break $ (q, n) };
+            continue $ (q * d, n / d)
+        );
+        continue $ (d + 1, n, tot * (q - q / d))
+    );
+    if n > 1 { tot * (n - 1) } else { tot }
+);
+
+// 0 <= i < n に対するオイラーのトーシェント関数 φ(i) の表を作成する
+//
+// `table.@(i)` が φ(i) の値となる。ただし `table.@(0) = 0` とする。
+//
+// # Parameters
+// - `n`: 表の上限（exclusive）
+euler_tortient_table : I64 -> Array I64;
+euler_tortient_table = |n| (
+    let table = Array::fill(n, 0);
+    let table = range(0, n).fold(table, |i, table| table.set(i, i));
+    range(2, n).fold(table, |i, table|
+        if table.@(i) != i { table };
+        range_step(i, n, i).fold(table, |j, table| table.set(j, table.@(j) / i * (i - 1)))
+    )
+);
+
 // 最小素因子テーブルを用いて、数を素因数分解する
-// 
+//
 // # Parameters
 // - `n`: 素因数分解する数
 // - `lp_table`: 長さが少なくとも`n+1`の最小素因子テーブル。最小素因子テーブルの定義は`linear_sieve`のコメントを参照。
