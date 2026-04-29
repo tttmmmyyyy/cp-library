@@ -2,7 +2,7 @@ module CPLib.String;
 
 import Std::{
     loop, Array, Eq, I64, String, Add::add, 
-    Array::{empty, fill, get_size, mod, pop_back, push_back, set, sort_by, to_iter, @}, Functor::map, 
+    Array::{empty, fill, mod, pop_back, push_back, set, sort_by, to_iter, @, @size}, Functor::map, 
     Iterator::{fold, range, range_step, to_array}, LessThan::min, LoopState::{break, continue}, 
     String::get_bytes, ToI64::i64, Tuple2::@0
 };
@@ -30,7 +30,7 @@ calc_suffix_array = |s| s.get_bytes.map(i64).pop_back.calc_suffix_array_i64_uppe
 // - `s` : 対象の配列
 calc_suffix_array_i64 : Array I64 -> Array I64;
 calc_suffix_array_i64 = |s| (
-    let n = s.get_size;
+    let n = s.@size;
     let idx = range(0, n).to_array;
     let idx = idx.sort_by(|(l, r)| s.@(l) < s.@(r));
     let s2 = Array::fill(n, 0);
@@ -75,7 +75,7 @@ calc_lcp_array = |sa, s| s.get_bytes.pop_back.calc_lcp_array_any(sa);
 // - `s` : 対象の配列
 calc_lcp_array_any : [a : Eq] Array I64 -> Array a -> Array I64;
 calc_lcp_array_any = |sa, s| (
-    let n = s.get_size;
+    let n = s.@size;
     let rnk = Array::fill(n, 0);
     let rnk = range(0, n).fold(rnk, |i, rnk| rnk.set(sa.@(i), i));
     let lcp = Array::fill(n - 1, 0);
@@ -112,7 +112,7 @@ calc_z_array = |s| s.get_bytes.pop_back.calc_z_array_any;
 // - `s` : 対象の配列
 calc_z_array_any : [a : Eq] Array a -> Array I64;
 calc_z_array_any = |s| (
-    let n = s.get_size;
+    let n = s.@size;
     if n == 0 { [] };
     let z = Array::fill(n, 0);
     let z = z.set(0, 0);
@@ -134,7 +134,7 @@ calc_z_array_any = |s| (
 // SA-IS法
 _sa_is : I64 -> Array I64 -> Array I64;
 _sa_is = |upper, s| (
-    let n = s.get_size;
+    let n = s.@size;
     if n == 0 { [] };
     if n == 1 { [0] };
     if n == 2 {
@@ -262,7 +262,7 @@ _sa_is = |upper, s| (
 
 _sa_doubling : Array I64 -> Array I64;
 _sa_doubling = |s| (
-    let n = s.get_size;
+    let n = s.@size;
     let sa = range(0, n).fold(Array::fill(n, 0), |i, sa| sa.set(i, i) );
     let rnk = s;
     let tmp = Array::fill(n, 0);

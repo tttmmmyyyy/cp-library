@@ -7,7 +7,7 @@ import CPLib.ZP::{
 };
 import Std::{
     undefined, Array, I64, 
-    Array::{fill, get_size, push_back, reserve, truncate, @, _unsafe_set_bounds_uniqueness_unchecked_unreleased}, 
+    Array::{fill, push_back, reserve, truncate, @, @size, _unsafe_set_bounds_uniqueness_unchecked_unreleased}, 
     Functor::map, I64::shift_left, Iterator::{fold, range}, ToI64::i64, ToU64::u64, Tuple2::@1
 };
 
@@ -22,15 +22,15 @@ import Std::{
 // - `b` : 畳み込まれる配列2
 convolve_zp : [p : PrimeProvider] Array (ZP p) -> Array (ZP p) -> Array (ZP p);
 convolve_zp = |x, y| (
-    if x.get_size == 0 || y.get_size == 0 { [] };
+    if x.@size == 0 || y.@size == 0 { [] };
 
     // xとyの長さを同じ2のべき乗にする
-    let n = x.get_size + y.get_size - 1;
+    let n = x.@size + y.@size - 1;
     let pot = _calc_next_pot(n.u64).i64;
     let x = x.reserve(pot);
-    let x = range(x.get_size, pot).fold(x, |i, x| x.push_back(ZP::make(0)));
+    let x = range(x.@size, pot).fold(x, |i, x| x.push_back(ZP::make(0)));
     let y = y.reserve(pot);
-    let y = range(y.get_size, pot).fold(y, |i, y| y.push_back(ZP::make(0)));
+    let y = range(y.@size, pot).fold(y, |i, y| y.push_back(ZP::make(0)));
 
     let x = x.ZP::fft(forward());
     let y = y.ZP::fft(forward());
@@ -59,8 +59,8 @@ convolve_zp = |x, y| (
 convolve_i64 : Array I64 -> Array I64 -> Array I64;
 convolve_i64 = |a, b| (
     // 実装参考：https://github.com/atcoder/ac-library/blob/master/atcoder/convolution.hpp#L269
-    let n = a.get_size;
-    let m = b.get_size;
+    let n = a.@size;
+    let m = b.@size;
     if n == 0 || m == 0 { [] };
     if n + m - 1 > 1.shift_left(24) { undefined("[convolve_i64] n + m - 1 > 2^24") };
 

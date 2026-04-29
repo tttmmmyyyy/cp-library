@@ -5,7 +5,7 @@
 module CPLib.DSegtree;
 
 import Std::{
-    loop, Array, I64, Array::{fill, get_size, set, @}, Iterator::{fold, range, range_step}, 
+    loop, Array, I64, Array::{fill, set, @, @size}, Iterator::{fold, range, range_step}, 
     LoopState::{break, continue}
 };
 
@@ -45,7 +45,7 @@ init = |n, unit, op| (
 // - `elems` : セグメント木の要素を格納する配列
 build : Array m -> m -> ((m, m) -> m) -> DSegtree m;
 build = |elems, unit, op| (
-    let n = elems.get_size;
+    let n = elems.@size;
     let tree = Array::fill(n * 2, unit);
     // [n, 2n)に要素をセット
     let tree = range(0, n).fold(tree, |i, tree| tree.set(n + i, elems.@(i)) );

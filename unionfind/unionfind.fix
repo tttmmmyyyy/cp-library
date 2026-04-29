@@ -1,7 +1,7 @@
 module CPLib.UnionFind;
 
 import Std::{
-    Array, Bool, I64, Array::{fill, get_size, mod, push_back, set, to_iter, @}, 
+    Array, Bool, I64, Array::{fill, mod, push_back, set, to_iter, @, @size}, 
     Iterator::{filter_map, fold, range, to_array}, Option::{none, some}
 };
 
@@ -110,9 +110,9 @@ get_group_size = |x, uf| (
 // - `uf` : UnionFind木
 get_groups : UnionFind -> (UnionFind, Array (Array I64));
 get_groups = |uf| (
-    let n = uf.@parent.get_size;
+    let n = uf.@parent.@size;
     let grps = Array::fill(n, none());
-    let (uf, grps) = range(0, uf.@parent.get_size).fold((uf, grps), |i, (uf, grps)| 
+    let (uf, grps) = range(0, uf.@parent.@size).fold((uf, grps), |i, (uf, grps)|
         let (uf, p) = uf.find_parent(i);
         let grps = grps.mod(p, |g| 
             match g {

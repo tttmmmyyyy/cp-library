@@ -3,8 +3,8 @@ module CPLib.UnionFind.Test;
 import CPLib.UnionFind::{create, get_group_size, get_groups, is_united, unite};
 import Random::{generate_I64_nonneg, init_by_seed};
 import Std::{
-    IO, Array::{get_size, sort_by}, Debug::{assert_eq, consumed_time_while_lazy}, Functor::map, 
-    IO::println, Iterator::{fold, range}, Monad::pure, String::populate, ToString::to_string, Tuple2::@1
+    IO, Array::{sort_by, @size}, Debug::{assert_eq, consumed_time_while_lazy}, Functor::map, IO::println, 
+    Iterator::{fold, range}, Monad::pure, String::populate, ToString::to_string, Tuple2::@1
 };
 
 // https://atcoder.jp/contests/language-test-202505/submissions/68392520
@@ -22,7 +22,7 @@ test_zero = (
     // UnionFind木のサイズが0の場合
     let uf = UnionFind::create(0);
     let (uf, grps) = uf.get_groups;
-    assert_eq(|_|"", grps.get_size, 0);;
+    assert_eq(|_|"", grps.@size, 0);;
 
     pure()
 );
@@ -35,7 +35,7 @@ test_by_hand = (
     assert_eq(|_|"", uf.get_group_size(0).@1, 1);;
     assert_eq(|_|"", uf.get_group_size(5).@1, 1);;
     let (uf, grps) = uf.get_groups;
-    assert_eq(|_|"", grps.get_size, 6);;
+    assert_eq(|_|"", grps.@size, 6);;
 
     let uf = uf.unite(0, 1);
     assert_eq(|_|"", uf.is_united(0, 1).@1, true);;
@@ -45,7 +45,7 @@ test_by_hand = (
     assert_eq(|_|"", uf.get_group_size(1).@1, 2);;
     assert_eq(|_|"", uf.get_group_size(2).@1, 1);;
     let (uf, grps) = uf.get_groups;
-    assert_eq(|_|"", grps.get_size, 5);;
+    assert_eq(|_|"", grps.@size, 5);;
 
     let uf = uf.unite(1, 2);
     assert_eq(|_|"", uf.is_united(1, 2).@1, true);;
@@ -55,7 +55,7 @@ test_by_hand = (
     assert_eq(|_|"", uf.get_group_size(1).@1, 3);;
     assert_eq(|_|"", uf.get_group_size(2).@1, 3);;
     let (uf, grps) = uf.get_groups;
-    assert_eq(|_|"", grps.get_size, 4);;
+    assert_eq(|_|"", grps.@size, 4);;
 
     let uf = uf.unite(3, 4);
     assert_eq(|_|"", uf.is_united(1, 2).@1, true);;
@@ -67,8 +67,8 @@ test_by_hand = (
     assert_eq(|_|"", uf.get_group_size(4).@1, 2);;
     assert_eq(|_|"", uf.get_group_size(5).@1, 1);;
     let (uf, grps) = uf.get_groups;
-    assert_eq(|_|"", grps.get_size, 3);;
-    let grps = grps.sort_by(|(a, b)| a.get_size > b.get_size);
+    assert_eq(|_|"", grps.@size, 3);;
+    let grps = grps.sort_by(|(a, b)| a.@size > b.@size);
     let grps = grps.map(|grp| grp.sort_by(|(a, b)| a < b));
     assert_eq(|_|"", grps, [[0, 1, 2], [3, 4], [5]]);;
 
@@ -82,7 +82,7 @@ test_by_hand = (
     assert_eq(|_|"", uf.get_group_size(3).@1, 5);;
     assert_eq(|_|"", uf.get_group_size(5).@1, 1);;
     let (uf, grps) = uf.get_groups;
-    assert_eq(|_|"", grps.get_size, 2);;
+    assert_eq(|_|"", grps.@size, 2);;
 
     let uf = uf.unite(4, 5);
     assert_eq(|_|"", uf.is_united(1, 2).@1, true);;
@@ -93,7 +93,7 @@ test_by_hand = (
     assert_eq(|_|"", uf.get_group_size(0).@1, 6);;
     assert_eq(|_|"", uf.get_group_size(5).@1, 6);;
     let (uf, grps) = uf.get_groups;
-    assert_eq(|_|"", grps.get_size, 1);;
+    assert_eq(|_|"", grps.@size, 1);;
 
     pure()
 );
@@ -123,7 +123,7 @@ test_speed = (
         (uf, rng)
     )));
     let (uf, grps) = uf.get_groups;
-    assert_eq(|_|"test_speed", grps.get_size, 16102);;
+    assert_eq(|_|"test_speed", grps.@size, 16102);;
     println $ "[CPLib.UnionFind.Test] UnionFind({}): {}".populate([n.to_string, time.to_string]);;
 
     pure()

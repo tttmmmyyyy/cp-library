@@ -9,7 +9,7 @@ import CPLib.Graph::{
 import CPLib.Trait::{Inf, Inf::inf};
 import Std::{
     loop, Additive, Array, Eq, I64, LessThan, Mul, Neg, Sub, Add::add, 
-    Array::{fill, get_size, mod, set, to_iter, @}, Iterator::{count_up, fold, range, zip}, LessThan::min, 
+    Array::{fill, mod, set, to_iter, @, @size}, Iterator::{count_up, fold, range, zip}, LessThan::min, 
     LoopState::{break, continue}, Option::as_some, Tuple2::@0, Zero::zero
 };
 
@@ -83,7 +83,7 @@ namespace MinCostFlowGraph {
     // - `cost` : 辺のコスト
     add_edge_id : [c : CapCostLike] I64 -> I64 -> c -> c -> MinCostFlowGraph c -> (MinCostFlowGraph c, EdgeId);
     add_edge_id = |from, to, cap, cost, g| (
-        let n_to_edges = g.@graph.@edges.@(to).get_size;
+        let n_to_edges = g.@graph.@edges.@(to).@size;
         let data = EdgeData {
             cost : cost,
             cap : cap,
@@ -91,7 +91,7 @@ namespace MinCostFlowGraph {
             init_cap : cap
         };
         let g = g.(mod_graph $ add_edge(from, to, data));
-        let eidx = g.@graph.@edges.@(from).get_size - 1;
+        let eidx = g.@graph.@edges.@(from).@size - 1;
 
         let data = EdgeData {
             cost : -cost,
@@ -109,7 +109,7 @@ namespace MinCostFlowGraph {
     // ベルマンフォード法を使って`graph.@potential`を更新し、負の辺がある場合も動作するようにします。
     set_potential_bf : [c : CapCostLike] MinCostFlowGraph c -> MinCostFlowGraph c;
     set_potential_bf = |g| (
-        let n = g.@graph.@edges.get_size;
+        let n = g.@graph.@edges.@size;
         // cap > 0な辺からなるグラフを作成する
         let graph = Graph::create(n);
         let graph = range(0, n).fold(graph, |from, graph|
@@ -158,7 +158,7 @@ namespace MinCostFlowGraph {
     // - `g` : 最小フロー問題のグラフ
     maximize_flow_min_cost : [c : CapCostLike] c -> MinCostFlowGraph c -> (MinCostFlowGraph c, c, c);
     maximize_flow_min_cost = |flow_limit, g| (
-        let n = g.@graph.@edges.get_size;
+        let n = g.@graph.@edges.@size;
         let s = g.@s;
         let t = g.@t;
         let h = g.@potential; let g = g.set_potential([]); // ポテンシャル

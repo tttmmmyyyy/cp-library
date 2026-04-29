@@ -9,7 +9,7 @@ import CPLib.Trait::{Inf, Inf::inf};
 import RingBuffer::{create, get_front, pop_front, push_back, RingBuffer};
 import Std::{
     loop, Additive, Array, Bool, Eq, I64, LessThan, Neg, Option, Add::add, 
-    Array::{fill, get_size, mod, set, to_iter, @}, Functor::map, Iterator::{fold, loop_iter_s, range}, 
+    Array::{fill, mod, set, to_iter, @, @size}, Functor::map, Iterator::{fold, loop_iter_s, range}, 
     LessThan::min, LoopState::{break, continue}, Option::{as_some, is_none, none, some}, Tuple2::@0, 
     Tuple3::{mod_0, @0, @1}, Zero::zero
 };
@@ -77,10 +77,10 @@ namespace MaxFlowGraph {
     // - `cap` : 辺の容量
     add_edge_id : [c : CapacityLike] I64 -> I64 -> c -> MaxFlowGraph c -> (MaxFlowGraph c, EdgeId);
     add_edge_id = |from, to, cap, g| (
-        let reve_idx = g.@graph.@edges.@(to).get_size;  // 次に`to`に追加される予定の辺のインデックス
+        let reve_idx = g.@graph.@edges.@(to).@size;  // 次に`to`に追加される予定の辺のインデックス
         let data = (cap, reve_idx, cap);
         let g = g.(mod_graph $ add_edge(from, to, data));
-        let eidx = g.@graph.@edges.@(from).get_size - 1;
+        let eidx = g.@graph.@edges.@(from).@size - 1;
         
         let data = (zero, eidx, zero);
         let g = g.(mod_graph $ add_edge(to, from, data));
@@ -165,10 +165,10 @@ namespace Dinic {
     reset_iter : MaxFlowGraph c -> MaxFlowGraph c;
     reset_iter = |self| (
         let n = self.@graph.get_size;
-        if self.@iter.get_size != n {
+        if self.@iter.@size != n {
             self.set_iter(Array::fill(n, 0))
         } else {
-            self.(mod_iter $ |iter| range(0, iter.get_size).fold(iter, |i, iter| iter.set(i, 0)))
+            self.(mod_iter $ |iter| range(0, iter.@size).fold(iter, |i, iter| iter.set(i, 0)))
         }
     );
 
@@ -176,10 +176,10 @@ namespace Dinic {
     reset_level : MaxFlowGraph c -> MaxFlowGraph c;
     reset_level = |self| (
         let n = self.@graph.get_size;
-        if self.@level.get_size != n {
+        if self.@level.@size != n {
             self.set_level(Array::fill(n, -1))
         } else {
-            self.(mod_level $ |level| range(0, level.get_size).fold(level, |i, level| level.set(i, -1)))
+            self.(mod_level $ |level| range(0, level.@size).fold(level, |i, level| level.set(i, -1)))
         }
     );
 
@@ -232,7 +232,7 @@ namespace Dinic {
         if v == self.@t { (self, f) };
         // 未探索の残余グラフの辺に沿ってループ
         let v_edges = self.@graph.@edges.@(v);
-        match range(self.@iter.@(v), v_edges.get_size).loop_iter_s(self, |i, self|
+        match range(self.@iter.@(v), v_edges.@size).loop_iter_s(self, |i, self|
             let self = self.mod_iter(set(v, i));
             let e = v_edges.@(i);
             // 残余グラフの辺でないか、最短経路DAGに沿っていない辺なら、スキップする

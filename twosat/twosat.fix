@@ -2,7 +2,7 @@ module CPLib.TwoSat;
 
 import CPLib.Graph::{add_edge, calc_sccs, create, Graph};
 import Std::{
-    Array, Bool, I64, Option, Array::{fill, get_size, set, to_iter, @}, 
+    Array, Bool, I64, Option, Array::{fill, set, to_iter, @, @size}, 
     Iterator::{fold, loop_iter_s, range}, LoopState::{break, continue}, Option::{none, some}
 };
 
@@ -52,7 +52,7 @@ solve = |sat| (
     let sccs = sat.@graph.calc_sccs;
     // 各リテラルのSCCグループインデックスを取得
     let scc_idx = Array::fill(2 * n, 0);
-    let scc_idx = range(0, sccs.get_size).fold(scc_idx, |i, scc_idx|
+    let scc_idx = range(0, sccs.@size).fold(scc_idx, |i, scc_idx|
         let scc = sccs.@(i);
         scc.to_iter.fold(scc_idx, |v, scc_idx| scc_idx.set(v, i))
     );

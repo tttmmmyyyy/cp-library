@@ -3,7 +3,7 @@ module CPLib.Convolution.Test;
 import CPLib.Convolution::{convolve_i64, convolve_zp};
 import CPLib.ZP::{make, P998244353, PrimeProvider, ZP};
 import Std::{
-    Array, IO, Array::{get_size, @}, Debug::{assert_eq, consumed_time_while_lazy}, 
+    Array, IO, Array::{@, @size}, Debug::{assert_eq, consumed_time_while_lazy}, 
     I64::{maximum, minimum, shift_left}, IO::println, Iterator::{fold, map, range, to_array}, 
     Monad::pure, String::populate, ToString::to_string
 };
@@ -35,7 +35,7 @@ test_zp = (
     assert_eq(|_|"[test_zp] case 3", z.@(2), x.@(0) * y.@(2) + x.@(1) * y.@(1) + x.@(2) * y.@(0));;
     assert_eq(|_|"[test_zp] case 4", z.@(3), x.@(1) * y.@(2) + x.@(2) * y.@(1));;
     assert_eq(|_|"[test_zp] case 5", z.@(4), x.@(2) * y.@(2));;
-    assert_eq(|_|"[test_zp] case 6", z.get_size, x.get_size + y.get_size - 1);;
+    assert_eq(|_|"[test_zp] case 6", z.@size, x.@size + y.@size - 1);;
 
     // p = 17, 長さギリギリ
     let x = range(0, 16).map(ZP::make).to_array : Array (ZP P17);
@@ -52,7 +52,7 @@ test_zp = (
     assert_eq(|_|"[test_zp] case 10", z.@(2), x.@(0) * y.@(2) + x.@(1) * y.@(1) + x.@(2) * y.@(0));;
     assert_eq(|_|"[test_zp] case 11", z.@(3), x.@(1) * y.@(2) + x.@(2) * y.@(1));;
     assert_eq(|_|"[test_zp] case 12", z.@(4), x.@(2) * y.@(2));;
-    assert_eq(|_|"[test_zp] case 13", z.get_size, x.get_size + y.get_size - 1);;
+    assert_eq(|_|"[test_zp] case 13", z.@size, x.@size + y.@size - 1);;
 
     // p = 998244353, 長さギリギリ
     let x = range(0, 1.shift_left(23)).map(ZP::make).to_array : Array (ZP P998244353);
@@ -83,7 +83,7 @@ test_i64 = (
     assert_eq(|_|"[test_i64] case 3", z.@(2), x.@(0) * y.@(2) + x.@(1) * y.@(1) + x.@(2) * y.@(0));;
     assert_eq(|_|"[test_i64] case 4", z.@(3), x.@(1) * y.@(2) + x.@(2) * y.@(1));;
     assert_eq(|_|"[test_i64] case 5", z.@(4), x.@(2) * y.@(2));;
-    assert_eq(|_|"[test_i64] case 6", z.get_size, x.get_size + y.get_size - 1);;
+    assert_eq(|_|"[test_i64] case 6", z.@size, x.@size + y.@size - 1);;
 
     // オーバーフローのテスト
     let x = [I64::maximum, I64::minimum];
@@ -93,7 +93,7 @@ test_i64 = (
     assert_eq(|_|"[test_i64] case 8", z.@(1), x.@(0) * y.@(1) + x.@(1) * y.@(0));;
     assert_eq(|_|"[test_i64] case 9", z.@(2), x.@(0) * y.@(2) + x.@(1) * y.@(1));;
     assert_eq(|_|"[test_i64] case 10", z.@(3), x.@(1) * y.@(2));;
-    assert_eq(|_|"[test_i64] case 11", z.get_size, x.get_size + y.get_size - 1);;
+    assert_eq(|_|"[test_i64] case 11", z.@size, x.@size + y.@size - 1);;
 
     pure()
 );

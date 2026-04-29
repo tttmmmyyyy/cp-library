@@ -1,4 +1,4 @@
-proj_file_hash = "8da47c85679657934893a5d13d228a22"
+proj_file_hash = "fa090f7544c9f3fcce308f1fec2a49e5"
 
 [[dependencies]]
 name = "binary-heap"
@@ -65,9 +65,9 @@ rev = "78e543ca1eb24737659c47fa1253f0f4e92994bf"
 
 [[dependencies]]
 name = "subprocess"
-version = "1.0.7"
-path = ".fixlang/deps/subprocess_1.0.7"
+version = "1.1.1"
+path = ".fixlang/deps/subprocess_1.1.1"
 
 [dependencies.git]
 repo = "https://github.com/tttmmmyyyy/fixlang-subprocess.git"
-rev = "68f84481b864abdbe01a5964e1f798dc44d9dfa5"
+rev = "c83c8c07193f944c8d1da7e3fbcada83fd4837eb"

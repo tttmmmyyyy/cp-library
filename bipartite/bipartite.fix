@@ -4,8 +4,8 @@ module CPLib.Bipartite;
 import CPLib.Graph::EdgeId;
 import CPLib.MaxFlow::{MaxFlowGraph, MaxFlowGraph::{add_edge, add_edge_id, create, get_flow, get_min_cut, maximize_flow}};
 import Std::{
-    undefined, Array, Bool, I64, Array::{empty, fill, get_size, push_back, set, to_iter, @}, 
-    Functor::map, Iterator::{count_up, fold, map, range, to_array, zip}
+    undefined, Array, Bool, I64, Array::{empty, fill, push_back, set, to_iter, @, @size}, Functor::map, 
+    Iterator::{count_up, fold, map, range, to_array, zip}
 };
 
 // 二部グラフの型
@@ -61,7 +61,7 @@ namespace BipartiteGraph {
         let graph = MaxFlowGraph::create(n, s, t);
         let graph = range(0, bg.@left_size).fold(graph, |i, graph| graph.add_edge(s, i, 1));
         let graph = range(0, bg.@right_size).fold(graph, |i, graph| graph.add_edge(bg.@left_size + i, t, 1));
-        let eids = Array::empty(bg.@edges.get_size);
+        let eids = Array::empty(bg.@edges.@size);
         let (graph, eids) = bg.@edges.to_iter.fold((graph, eids), |(left, right), (graph, eids)|
             let (graph, eid) = graph.add_edge_id(left, bg.@left_size + right, 1);
             (graph, push_back(eid, eids))
@@ -95,7 +95,7 @@ namespace BipartiteGraphFlow {
     // - `max_flow` : 二部グラフの最大フロー
     get_min_edge_cover : BipartiteGraphFlow -> Array Bool;
     get_min_edge_cover = |flow| (
-        let edge_n = flow.@graph.@edges.get_size;
+        let edge_n = flow.@graph.@edges.@size;
         let matching = flow.get_max_matching;
         let l_cov = Array::fill(flow.@graph.@left_size, false);
         let r_cov = Array::fill(flow.@graph.@right_size, false);

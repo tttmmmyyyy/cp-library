@@ -5,8 +5,8 @@ import CPLib.Bits::{
     Bits::popcount
 };
 import Std::{
-    IO, Array::get_size, Debug::assert_eq, Functor::map, I64::shift_left, Iterator::to_array, 
-    Monad::pure, ToString::to_string
+    IO, Array::@size, Debug::assert_eq, Functor::map, I64::shift_left, Iterator::to_array, Monad::pure, 
+    ToString::to_string
 };
 
 test : IO () = (
@@ -54,22 +54,22 @@ test_bit_combinations : IO () = (
     assert_eq(|_|"test_bit_combinations 4 2", combs.map(to_string_bits(8)).to_string, "[00000011, 00000101, 00000110, 00001001, 00001010, 00001100]");;
 
     let combs = bit_combinations(62, 0).to_array;
-    assert_eq(|_|"test_bit_combinations 62 0", combs.get_size, 1);;
+    assert_eq(|_|"test_bit_combinations 62 0", combs.@size, 1);;
 
     let combs = bit_combinations(62, 1).to_array;
-    assert_eq(|_|"test_bit_combinations 62 1", combs.get_size, 62);;
+    assert_eq(|_|"test_bit_combinations 62 1", combs.@size, 62);;
 
     let combs = bit_combinations(62, 2).to_array;
-    assert_eq(|_|"test_bit_combinations 62 2", combs.get_size, 62 * 61 / 2);;
+    assert_eq(|_|"test_bit_combinations 62 2", combs.@size, 62 * 61 / 2);;
 
     let combs = bit_combinations(62, 60).to_array;
-    assert_eq(|_|"test_bit_combinations 62 60", combs.get_size, 62 * 61 / 2);;
+    assert_eq(|_|"test_bit_combinations 62 60", combs.@size, 62 * 61 / 2);;
 
     let combs = bit_combinations(62, 61).to_array;
-    assert_eq(|_|"test_bit_combinations 62 61", combs.get_size, 62);;
+    assert_eq(|_|"test_bit_combinations 62 61", combs.@size, 62);;
 
     let combs = bit_combinations(62, 62).to_array;
-    assert_eq(|_|"test_bit_combinations 62 62", combs.get_size, 1);;
+    assert_eq(|_|"test_bit_combinations 62 62", combs.@size, 1);;
 
     pure()
 );

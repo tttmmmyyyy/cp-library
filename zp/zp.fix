@@ -38,7 +38,7 @@ import CPLib.Arithmetic::calc_primitive_root;
 import Std::{
     loop, undefined, Add, Array, Div, Eq, I64, Mul, Neg, Sub, ToString, U32, U64, Zero, 
     Array::{
-        empty, get_size, push_back, reserve, @, _unsafe_force_unique, 
+        empty, push_back, reserve, @, @size, _unsafe_force_unique, 
         _unsafe_get_linear_bounds_unchecked_unretained, _unsafe_set_bounds_uniqueness_unchecked_unreleased, 
         _unsafe_swap_bounds_uniqueness_unchecked
     }, 
@@ -257,10 +257,10 @@ type FFTDirection = union {
 fft : [p : PrimeProvider] FFTDirection -> Array (ZP p) -> Array (ZP p);
 fft = |dir, x| (
     // 空配列はそのまま返す
-    if x.get_size == 0 { x };
+    if x.@size == 0 { x };
 
     // xの長さを2のべき乗にする
-    let n = x.get_size;
+    let n = x.@size;
     let pot = _calc_next_pot(n.u64).i64;
     let x = x.reserve(pot);
     let x = range(n, pot).fold(x, |i, x| x.push_back(ZP::make(0)));
@@ -305,7 +305,7 @@ fft = |dir, x| (
     let x = loop((1, x), |(log_len, x)|
         let len = 1.shift_left(log_len);
         if len > n { break $ x };
-        let wlen = wlens.@(wlens.get_size - log_len); // 1のlen乗根
+        let wlen = wlens.@(wlens.@size - log_len); // 1のlen乗根
         let x = range_step(0, n, len).fold(x, |i, x|
             let w = ZP::make(1);
             let (_w, x) = range(0, len / 2).fold((w, x), |j, (w, x)|

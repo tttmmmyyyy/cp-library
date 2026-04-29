@@ -4,7 +4,7 @@ import BinaryHeap::{BinaryHeap::{get_size, get_top, pop, push}, MinBinaryHeap::e
 import CPLib.Trait::{Inf, Inf::inf};
 import Std::{
     loop, Additive, Array, Bool, Eq, I64, LessThan, 
-    Array::{empty, fill, get_size, mod, push_back, set, to_iter, @}, 
+    Array::{empty, fill, mod, push_back, set, to_iter, @, @size}, 
     Iterator::{fold, loop_iter, range, range_step}, LoopState::{break, continue}, Option::as_some, 
     Zero::zero
 };
@@ -53,7 +53,7 @@ create = |n| (
 // # Parameters
 // - `g` : グラフ
 get_size : Graph c -> I64;
-get_size = |g| g.@edges.get_size;
+get_size = |g| g.@edges.@size;
 
 // グラフに辺を追加する
 // 
@@ -77,7 +77,7 @@ add_edge = |from, to, data, graph| (
 add_edge_id : I64 -> I64 -> c -> Graph c -> (Graph c, EdgeId);
 add_edge_id = |from, to, data, graph| (
     let graph = graph.add_edge(from, to, data);
-    (graph, EdgeId { from: from, idx: graph.@edges.@(from).get_size - 1 })
+    (graph, EdgeId { from: from, idx: graph.@edges.@(from).@size - 1 })
 );
 
 // 辺を取得する
@@ -214,8 +214,8 @@ calc_sccs = |g| (
 
     // 反転グラフを`stack`の逆順にDFSして、各強連結成分を求める。
     let sccs = [];
-    let visited = range(0, visited.get_size).fold(visited, |i, visited| visited.set(i, false)); // `visited`を初期化
-    let (visited, sccs) = range_step(stack.get_size - 1, -1, -1).fold((visited, sccs), |stack_i, (visited, sccs)|
+    let visited = range(0, visited.@size).fold(visited, |i, visited| visited.set(i, false)); // `visited`を初期化
+    let (visited, sccs) = range_step(stack.@size - 1, -1, -1).fold((visited, sccs), |stack_i, (visited, sccs)|
         let node = stack.@(stack_i);
         if visited.@(node) { (visited, sccs) };
         let scc = []; // 新しい強連結成分を作成

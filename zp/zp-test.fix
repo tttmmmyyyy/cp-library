@@ -6,7 +6,7 @@ import CPLib.ZP::{
     ZP::@value
 };
 import Std::{
-    Array, IO, Array::{get_size, to_iter}, Debug::assert_eq, Functor::{forget, map}, 
+    Array, IO, Array::{to_iter, @size}, Debug::assert_eq, Functor::{forget, map}, 
     Iterator::{filter, fold_m, product, range}, Monad::pure, ToString::to_string
 };
 
@@ -145,7 +145,7 @@ test_fft_immutability = (
     let x = [1, 2, 3, 4].map(make) : Array (ZP P17);
     let y = x.fft(forward());
     assert_eq(|_|"test_fft_immutability",
-        x.get_size, y.get_size
+        x.@size, y.@size
     );;
     assert_eq(|_|"test_fft_immutability",
         x, [1, 2, 3, 4].map(make));;

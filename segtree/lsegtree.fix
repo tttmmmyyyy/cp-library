@@ -49,7 +49,7 @@ module CPLib.LSegtree;
 
 import CPLib.Trait::{Action, Monoid, Action::{act, Set}, Monoid::{op, unit}};
 import Std::{
-    loop, Array, I64, Array::{fill, get_size, set, @}, I64::{bit_and, shift_right}, 
+    loop, Array, I64, Array::{fill, set, @, @size}, I64::{bit_and, shift_right}, 
     Iterator::{fold, range, range_step}, LoopState::{break, continue}
 };
 
@@ -88,7 +88,7 @@ init = |n| (
 // - `elems` : セグメント木の要素を格納する配列
 build : [m : Monoid, a : Monoid] Array m -> LSegtree m a;
 build = |elems| (
-    let n = elems.get_size;
+    let n = elems.@size;
     let lazy = Array::fill(n * 2, Monoid::unit) : Array a;
     let tree = Array::fill(n * 2, Monoid::unit) : Array m;
     // [n, 2n)に要素をセット
