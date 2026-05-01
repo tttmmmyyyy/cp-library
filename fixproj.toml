@@ -98,7 +98,7 @@ git = { url = "https://github.com/tttmmmyyyy/ez_scripting.git" }
 
 [[test_dependencies]]
 name = "subprocess"
-version = "1.1.0"
+version = "1.1.2"
 git = { url = "https://github.com/tttmmmyyyy/fixlang-subprocess.git" }
 
 

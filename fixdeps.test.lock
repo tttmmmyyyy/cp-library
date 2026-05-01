@@ -1,73 +1,73 @@
-proj_file_hash = "fa090f7544c9f3fcce308f1fec2a49e5"
+proj_file_hash = "df28818dca769bba98f05c5a026280f4"
 
 [[dependencies]]
 name = "binary-heap"
-version = "0.2.0"
-path = ".fixlang/deps/binary-heap_0.2.0"
+version = "0.2.1"
+path = ".fixlang/deps/binary-heap_0.2.1"
 
 [dependencies.git]
 repo = "https://github.com/tttmmmyyyy/fixlang-binary-heap.git"
-rev = "1ea2a2465fb42878fbace135fd7a30014b1cafab"
+rev = "aa7af02bb6c93050ec05d3d80693c0a6568e309d"
 
 [[dependencies]]
 name = "bool-array"
-version = "0.1.1"
-path = ".fixlang/deps/bool-array_0.1.1"
+version = "0.1.2"
+path = ".fixlang/deps/bool-array_0.1.2"
 
 [dependencies.git]
 repo = "https://github.com/tttmmmyyyy/bool-array.git"
-rev = "608a7dfded55c6f9373347a5324c28f5ccfabbbf"
+rev = "bcfbde58e945e302751d81b34068885e26f7e611"
 
 [[dependencies]]
 name = "ez-scripting"
-version = "0.3.1"
-path = ".fixlang/deps/ez-scripting_0.3.1"
+version = "0.3.2"
+path = ".fixlang/deps/ez-scripting_0.3.2"
 
 [dependencies.git]
 repo = "https://github.com/tttmmmyyyy/ez_scripting.git"
-rev = "b6edcd04c6fd7946f4cf09266d3d7164abdf9748"
+rev = "f16ba9974ad3b17964b32641e543993db748edf2"
 
 [[dependencies]]
 name = "hash"
-version = "1.1.1"
-path = ".fixlang/deps/hash_1.1.1"
+version = "1.1.2"
+path = ".fixlang/deps/hash_1.1.2"
 
 [dependencies.git]
 repo = "https://github.com/tttmmmyyyy/fixlang-hash.git"
-rev = "145a20913eb9c280edd616d5b9977d33303343c1"
+rev = "dbf95379b6ee7b26ec4858116f24c0251467cb83"
 
 [[dependencies]]
 name = "hashmap"
-version = "2.0.0"
-path = ".fixlang/deps/hashmap_2.0.0"
+version = "2.0.1"
+path = ".fixlang/deps/hashmap_2.0.1"
 
 [dependencies.git]
 repo = "https://github.com/tttmmmyyyy/fixlang-hashmap.git"
-rev = "26bcb6c7cb66cc39b4f2604e1c94aa7730e03a9e"
+rev = "103595c593e92849be0b23df5cfee254da274a3e"
 
 [[dependencies]]
 name = "random"
-version = "1.1.1"
-path = ".fixlang/deps/random_1.1.1"
+version = "1.1.2"
+path = ".fixlang/deps/random_1.1.2"
 
 [dependencies.git]
 repo = "https://github.com/tttmmmyyyy/fixlang-random.git"
-rev = "b4f83ee48564e714c0918513dd431f9135493dce"
+rev = "af8b2ea3f4fb783d86119d1a2504a12d8f2be2c1"
 
 [[dependencies]]
 name = "ring-buffer"
-version = "0.1.1"
-path = ".fixlang/deps/ring-buffer_0.1.1"
+version = "0.1.2"
+path = ".fixlang/deps/ring-buffer_0.1.2"
 
 [dependencies.git]
 repo = "https://github.com/tttmmmyyyy/ring-buffer.git"
-rev = "78e543ca1eb24737659c47fa1253f0f4e92994bf"
+rev = "fa520558c0ae040eff99896a743a0e2820748c5e"
 
 [[dependencies]]
 name = "subprocess"
-version = "1.1.1"
-path = ".fixlang/deps/subprocess_1.1.1"
+version = "1.1.2"
+path = ".fixlang/deps/subprocess_1.1.2"
 
 [dependencies.git]
 repo = "https://github.com/tttmmmyyyy/fixlang-subprocess.git"
-rev = "c83c8c07193f944c8d1da7e3fbcada83fd4837eb"
+rev = "8015f4ce7eeff4e00b001c9b96680e9e904f736b"

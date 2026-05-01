@@ -2,45 +2,45 @@ proj_file_hash = "7fe6410776c00baa59aba3d92a99657e"
 
 [[dependencies]]
 name = "binary-heap"
-version = "0.2.0"
-path = ".fixlang/deps/binary-heap_0.2.0"
+version = "0.2.1"
+path = ".fixlang/deps/binary-heap_0.2.1"
 
 [dependencies.git]
 repo = "https://github.com/tttmmmyyyy/fixlang-binary-heap.git"
-rev = "1ea2a2465fb42878fbace135fd7a30014b1cafab"
+rev = "aa7af02bb6c93050ec05d3d80693c0a6568e309d"
 
 [[dependencies]]
 name = "bool-array"
-version = "0.1.1"
-path = ".fixlang/deps/bool-array_0.1.1"
+version = "0.1.2"
+path = ".fixlang/deps/bool-array_0.1.2"
 
 [dependencies.git]
 repo = "https://github.com/tttmmmyyyy/bool-array.git"
-rev = "608a7dfded55c6f9373347a5324c28f5ccfabbbf"
+rev = "bcfbde58e945e302751d81b34068885e26f7e611"
 
 [[dependencies]]
 name = "hash"
-version = "1.1.1"
-path = ".fixlang/deps/hash_1.1.1"
+version = "1.1.2"
+path = ".fixlang/deps/hash_1.1.2"
 
 [dependencies.git]
 repo = "https://github.com/tttmmmyyyy/fixlang-hash.git"
-rev = "145a20913eb9c280edd616d5b9977d33303343c1"
+rev = "dbf95379b6ee7b26ec4858116f24c0251467cb83"
 
 [[dependencies]]
 name = "hashmap"
-version = "2.0.0"
-path = ".fixlang/deps/hashmap_2.0.0"
+version = "2.0.1"
+path = ".fixlang/deps/hashmap_2.0.1"
 
 [dependencies.git]
 repo = "https://github.com/tttmmmyyyy/fixlang-hashmap.git"
-rev = "26bcb6c7cb66cc39b4f2604e1c94aa7730e03a9e"
+rev = "103595c593e92849be0b23df5cfee254da274a3e"
 
 [[dependencies]]
 name = "ring-buffer"
-version = "0.1.1"
-path = ".fixlang/deps/ring-buffer_0.1.1"
+version = "0.1.2"
+path = ".fixlang/deps/ring-buffer_0.1.2"
 
 [dependencies.git]
 repo = "https://github.com/tttmmmyyyy/ring-buffer.git"
-rev = "78e543ca1eb24737659c47fa1253f0f4e92994bf"
+rev = "fa520558c0ae040eff99896a743a0e2820748c5e"
