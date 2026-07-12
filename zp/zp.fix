@@ -40,7 +40,7 @@ import Std::{
     Array::{
         empty, push_back, reserve, @, @size, _unsafe_force_unique, 
         _unsafe_get_linear_bounds_unchecked_unretained, _unsafe_set_bounds_uniqueness_unchecked_unreleased, 
-        _unsafe_swap_bounds_uniqueness_unchecked
+        unsafe_swap_bounds_unchecked
     }, 
     Functor::map, I64::{bit_and, bit_xor, shift_left, shift_right}, Iterator::{fold, range, range_step}, 
     LoopState::{break, continue}, ToI64::i64, ToString::to_string, ToU32::u32, ToU64::u64, 
@@ -290,7 +290,7 @@ fft = |dir, x| (
             continue $ (bit, j)
         );
         
-        let x = if i < j { x._unsafe_swap_bounds_uniqueness_unchecked(i, j) } else { x };
+        let x = if i < j { x.unsafe_swap_bounds_unchecked(i, j) } else { x };
         (j, x)
     );
 
