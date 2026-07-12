@@ -43,6 +43,7 @@ objects = ["lib.o"]
 preliminary_commands = [["make", "-s", "lib.o"]]
 
 [build.test]
+memcheck = true
 files = [
     "test.fix",
     "io/io-test.fix",
