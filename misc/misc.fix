@@ -2,7 +2,7 @@ module CPLib.Misc;
 
 import Std::{
     loop, Array, I64, LessThanOrEq, Option, 
-    Array::{@, _unsafe_force_unique, unsafe_swap_bounds_unchecked}, 
+    Array::{@, unsafe_swap_bounds_unchecked}, 
     LoopState::{break, continue}, Option::{none, some}
 };
 
@@ -19,7 +19,6 @@ import Std::{
 // - `end`: 区間の終了インデックス (exclusive)
 // - `arr`: 配列。`0 <= begin <= end <= |arr|`。
 next_permutation : [a : LessThanOrEq] I64 -> I64 -> Array a -> Option (Array a) = |begin, end, arr| (
-    let arr = arr._unsafe_force_unique;
     let left = end - 2;
     let left = loop(left, |left|
         if left >= begin && arr.@(left) >= arr.@(left+1) { continue $ left - 1 } else { break $ left }

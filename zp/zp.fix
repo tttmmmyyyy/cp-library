@@ -38,10 +38,9 @@ import CPLib.Arithmetic::calc_primitive_root;
 import Std::{
     loop, undefined, Add, Array, Div, Eq, I64, Mul, Neg, Sub, ToString, U32, U64, 
     Array::{
-        empty, get_size, push_back, reserve, @, _unsafe_force_unique, 
-        _unsafe_get_linear_bounds_unchecked_unretained, _unsafe_set_bounds_uniqueness_unchecked_unreleased, 
-        unsafe_swap_bounds_unchecked
-    }, 
+        empty, get_size, push_back, reserve, @, _unsafe_get_bounds_unchecked,
+        unsafe_set_bounds_unchecked, unsafe_swap_bounds_unchecked
+    },
     Functor::map, I64::{bit_and, bit_xor, shift_left, shift_right, to_U32, to_U64}, 
     Iterator::{fold, range, range_step}, LoopState::{break, continue}, ToString::to_string, 
     U32::{to_I64, to_U64}, U64::{bit_and, bit_or, shift_right, to_I64, to_U32}
@@ -262,9 +261,6 @@ fft = |dir, x| (
     let x = range(n, pot).fold(x, |i, x| x.push_back(ZP::make(0)));
     let n = pot;
 
-    // xを一意にする
-    let x = x._unsafe_force_unique;
-
     // p - 1 = 2^k * c (c: 奇数) と分解し、2^k >= n であることを確認し、1のn乗根wを計算する
     let p = x.@(0).@prime.value.to_I64;
     let pm1 = p - 1;
@@ -305,11 +301,11 @@ fft = |dir, x| (
         let x = range_step(0, n, len).fold(x, |i, x|
             let w = ZP::make(1);
             let (_w, x) = range(0, len / 2).fold((w, x), |j, (w, x)|
-                let (x, u) = x._unsafe_get_linear_bounds_unchecked_unretained(i+j);
-                let (x, v) = x._unsafe_get_linear_bounds_unchecked_unretained(i+j+len/2);
+                let u = x._unsafe_get_bounds_unchecked(i+j);
+                let v = x._unsafe_get_bounds_unchecked(i+j+len/2);
                 let v = v * w;
-                let x = x._unsafe_set_bounds_uniqueness_unchecked_unreleased(i+j, u + v);
-                let x = x._unsafe_set_bounds_uniqueness_unchecked_unreleased(i+j+len/2, u - v);
+                let x = x.unsafe_set_bounds_unchecked(i+j, u + v);
+                let x = x.unsafe_set_bounds_unchecked(i+j+len/2, u - v);
                 (w * wlen, x)
             );
             x

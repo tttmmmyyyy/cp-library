@@ -1,0 +1,37 @@
+proj_file_hash = "f4a720892ee10e1369dbda964b08c407"
+
+[[dependencies]]
+name = "binary-heap"
+version = "0.2.1"
+path = ".fixlang/deps/binary-heap_0.2.1"
+
+[dependencies.git]
+repo = "https://github.com/tttmmmyyyy/fixlang-binary-heap.git"
+rev = "aa7af02bb6c93050ec05d3d80693c0a6568e309d"
+
+[[dependencies]]
+name = "bool-array"
+version = "0.1.2"
+path = ".fixlang/deps/bool-array_0.1.2"
+
+[dependencies.git]
+repo = "https://github.com/tttmmmyyyy/bool-array.git"
+rev = "bcfbde58e945e302751d81b34068885e26f7e611"
+
+[[dependencies]]
+name = "random"
+version = "1.1.2"
+path = ".fixlang/deps/random_1.1.2"
+
+[dependencies.git]
+repo = "https://github.com/tttmmmyyyy/fixlang-random.git"
+rev = "af8b2ea3f4fb783d86119d1a2504a12d8f2be2c1"
+
+[[dependencies]]
+name = "ring-buffer"
+version = "0.1.2"
+path = ".fixlang/deps/ring-buffer_0.1.2"
+
+[dependencies.git]
+repo = "https://github.com/tttmmmyyyy/ring-buffer.git"
+rev = "fa520558c0ae040eff99896a743a0e2820748c5e"

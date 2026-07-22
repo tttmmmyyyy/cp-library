@@ -7,7 +7,7 @@ import CPLib.ZP::{
 };
 import Std::{
     undefined, Array, I64, 
-    Array::{fill, get_size, push_back, reserve, truncate, @, _unsafe_set_bounds_uniqueness_unchecked_unreleased}, 
+    Array::{fill, get_size, push_back, reserve, truncate, @, unsafe_set_bounds_unchecked}, 
     Functor::map, I64::{shift_left, to_U64}, Iterator::{fold, range}, Tuple2::@1, U32::{to_I64, to_U64}, 
     U64::to_I64
 };
@@ -37,7 +37,7 @@ convolve_zp = |x, y| (
     let y = y.ZP::fft(forward());
 
     // xとyの各要素を掛け合わせる
-    let x = range(0, pot).fold(x, |i, x| x._unsafe_set_bounds_uniqueness_unchecked_unreleased(i, x.@(i) * y.@(i)));
+    let x = range(0, pot).fold(x, |i, x| x.unsafe_set_bounds_unchecked(i, x.@(i) * y.@(i)));
 
     // 逆変換を行う
     let x = x.ZP::fft(inverse());
@@ -94,6 +94,6 @@ convolve_i64 = |a, b| (
         let diff = if diff < 0 { diff + _M1.to_I64 } else { diff };
 
         let x = x - offset.@(diff % 5);
-        c._unsafe_set_bounds_uniqueness_unchecked_unreleased(i, x.to_I64)
+        c.unsafe_set_bounds_unchecked(i, x.to_I64)
     )
 );
