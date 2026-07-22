@@ -2,7 +2,7 @@
 module CPLib.IO;
 
 import Std::{
-    Array, F64, I64, IO, String, U64, U8, Array::fill, FFI::mutate_boxed_io, FromString::from_string, 
+    Array, F64, I64, IO, String, U64, U8, Array::fill, Array::mutate_elements_io, FromString::from_string, 
     Iterator::{collect_m, map, range, to_array}, Monad::pure, Result::as_ok, 
     String::{borrow_c_str_io, is_empty, split, _unsafe_from_c_str}, ToString::to_string
 };
@@ -76,7 +76,7 @@ read_s = |n| (
     let n = if n < 0 { 255 } else { n };
     let format = "%" + n.to_string + "s";
     let buf = Array::fill(n + 1, 0_U8);
-    let (buf, _err) = *buf.mutate_boxed_io(|ptr| 
+    let (buf, _err) = *buf.mutate_elements_io(|ptr| 
         format.borrow_c_str_io(|format|
             FFI_CALL_IO[CInt scanf(Ptr, Ptr), format, ptr]
         )
@@ -132,7 +132,7 @@ _i_format = "%lld";
 read_i : IO I64;
 read_i = (
     let buf = Box { value : 0 };
-    buf.mutate_boxed_io(|ptr|
+    buf.mutate_elements_io(|ptr|
         FFI_CALL_IO[CInt scanf(Ptr, Ptr), _i_format._get_c_str, ptr]
     ).map(|(buf, _)| buf.@value)
 );
@@ -143,7 +143,7 @@ _u_format = "%llu\n";
 read_u : IO U64;
 read_u = (
     let buf = Box { value : 0_U64 };
-    buf.mutate_boxed_io(|ptr|
+    buf.mutate_elements_io(|ptr|
         FFI_CALL_IO[CInt scanf(Ptr, Ptr), _u_format._get_c_str, ptr]
     ).map(|(buf, _)| buf.@value)
 );
@@ -154,7 +154,7 @@ _f_format = "%lf";
 read_f : IO F64;
 read_f = (
     let buf = Box { value : 0.0 };
-    buf.mutate_boxed_io(|ptr| 
+    buf.mutate_elements_io(|ptr| 
         FFI_CALL_IO[CInt scanf(Ptr, Ptr), _f_format._get_c_str, ptr]
     ).map(|(buf, _)| buf.@value)
 );
@@ -165,7 +165,7 @@ _c_format = " %c";
 read_c : IO U8;
 read_c = (
     let buf = Box { value : 0_U8 };
-    buf.mutate_boxed_io(|ptr|
+    buf.mutate_elements_io(|ptr|
         FFI_CALL_IO[CInt scanf(Ptr, Ptr), _c_format._get_c_str, ptr]
     ).map(|(buf, _)| buf.@value)
 );
