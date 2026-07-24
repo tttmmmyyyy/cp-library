@@ -1,4 +1,4 @@
-proj_file_hash = "df28818dca769bba98f05c5a026280f4"
+proj_file_hash = "5b3399b35b37a754a1ba036dc378d6e9"
 
 [[dependencies]]
 name = "binary-heap"
@@ -20,12 +20,12 @@ rev = "bcfbde58e945e302751d81b34068885e26f7e611"
 
 [[dependencies]]
 name = "ez-scripting"
-version = "0.3.2"
-path = ".fixlang/deps/ez-scripting_0.3.2"
+version = "0.4.0"
+path = ".fixlang/deps/ez-scripting_0.4.0"
 
 [dependencies.git]
 repo = "https://github.com/tttmmmyyyy/ez_scripting.git"
-rev = "f16ba9974ad3b17964b32641e543993db748edf2"
+rev = "43d254a1c2d5f5dbc04b443b083517f16a9bbf58"
 
 [[dependencies]]
 name = "hash"
@@ -65,9 +65,9 @@ rev = "fa520558c0ae040eff99896a743a0e2820748c5e"
 
 [[dependencies]]
 name = "subprocess"
-version = "1.1.2"
-path = ".fixlang/deps/subprocess_1.1.2"
+version = "2.0.0"
+path = ".fixlang/deps/subprocess_2.0.0"
 
 [dependencies.git]
 repo = "https://github.com/tttmmmyyyy/fixlang-subprocess.git"
-rev = "8015f4ce7eeff4e00b001c9b96680e9e904f736b"
+rev = "b610e67529defe6fdd8adf8f7d420667d6e40b64"
