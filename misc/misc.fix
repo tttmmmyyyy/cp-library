@@ -2,7 +2,7 @@ module CPLib.Misc;
 
 import Std::{
     loop, Array, I64, LessThanOrEq, Option, 
-    Array::{@, _unsafe_force_unique, _unsafe_swap_bounds_uniqueness_unchecked}, 
+    Array::{@, unsafe_swap_bounds_unchecked},
     LoopState::{break, continue}, Option::{none, some}
 };
 
@@ -19,7 +19,6 @@ import Std::{
 // - `end`: 区間の終了インデックス (exclusive)
 // - `arr`: 配列。`0 <= begin <= end <= |arr|`。
 next_permutation : [a : LessThanOrEq] I64 -> I64 -> Array a -> Option (Array a) = |begin, end, arr| (
-    let arr = arr._unsafe_force_unique;
     let left = end - 2;
     let left = loop(left, |left|
         if left >= begin && arr.@(left) >= arr.@(left+1) { continue $ left - 1 } else { break $ left }
@@ -29,12 +28,12 @@ next_permutation : [a : LessThanOrEq] I64 -> I64 -> Array a -> Option (Array a) 
     let right = loop(right, |right|
         if arr.@(left) >= arr.@(right) { continue $ right - 1 } else { break $ right }
     );
-    let arr = arr._unsafe_swap_bounds_uniqueness_unchecked(left, right);
+    let arr = arr.unsafe_swap_bounds_unchecked(left, right);
     let left = left + 1;
     let right = end - 1;
     let (left, right, arr) = loop((left, right, arr), |(left, right, arr)|
         if left < right {
-            let arr = arr._unsafe_swap_bounds_uniqueness_unchecked(left, right);
+            let arr = arr.unsafe_swap_bounds_unchecked(left, right);
             continue $ (left + 1, right - 1, arr)
         } else {
             break $ (left, right, arr)
