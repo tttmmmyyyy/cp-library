@@ -1,6 +1,6 @@
 # CPLib.String
 
-Defined in cp-library@0.12.2
+Defined in cp-library@0.13.1
 
 ## Values
 
