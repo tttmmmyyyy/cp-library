@@ -126,8 +126,10 @@ make = |x| (
 // - `e` : `I64`型の指数
 power : [p : PrimeProvider] I64 -> ZP p -> ZP p;
 power = |e, x| (
-    if x.@value == 0_U32 && e < 0 {
-        undefined("[ZP::power] divide by zero!")
+    if x.@value == 0_U32 {
+        if e < 0 { undefined("[ZP::power] divide by zero!") }
+        else if e == 0 { ZP::make(1) }
+        else { x }
     };
     let p = x.@prime.value;
     let p1 = p.i64 - 1;
