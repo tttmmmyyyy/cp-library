@@ -16,8 +16,6 @@ Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> Std::Bool`
 
 制約：0 <= i < ビット幅
 
-計算量：O(1)
-
 ##### Parameters
 
 - `i` : ビット位置
@@ -30,8 +28,6 @@ Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> a`
 第iビットを消す
 
 制約：0 <= i < ビット幅
-
-計算量：O(1)
 
 ##### Parameters
 
@@ -46,8 +42,6 @@ Type: `Std::I64 -> Std::I64 -> CPLib.Bits::BitCombinationIterator`
 
 制約：0 <= n <= 62
 
-計算量：全体でO(C(n, m))
-
 ##### Parameters
 
 - `n` : ビット数
@@ -61,8 +55,6 @@ Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> a`
 
 制約：0 <= i < ビット幅
 
-計算量：O(1)
-
 ##### Parameters
 
 - `i` : ビット位置
@@ -75,8 +67,6 @@ Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> a`
 第iビットを立てる
 
 制約：0 <= i < ビット幅
-
-計算量：O(1)
 
 ##### Parameters
 
@@ -93,8 +83,6 @@ Type: `Std::I64 -> CPLib.Bits::BitSubsetIterator`
 
 制約：set >= 0
 
-計算量：全体でO(2^k)、kはsetの立っているビット数
-
 ##### Parameters
 
 - `set` : 全体集合
@@ -106,8 +94,6 @@ Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> Std::String`
 ビット列を0と1の文字列として表示する
 
 制約：0 <= n <= ビット幅
-
-計算量：O(n)
 
 ##### Parameters
 
@@ -147,8 +133,6 @@ Type: `[a : CPLib.Bits::Bits] a -> Std::I64`
 Trait member of `CPLib.Bits::Bits`
 
 ビット表現における1の個数を数える
-
-計算量：O(1)
 
 ##### Parameters
 
@@ -249,8 +233,6 @@ Type: `a`
 Type: `a -> Std::I64`
 
 ビット表現における1の個数を数える
-
-計算量：O(1)
 
 ###### Parameters
 

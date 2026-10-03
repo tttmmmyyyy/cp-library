@@ -25,8 +25,6 @@ trait a : Bits {
     one : a;
     // ビット表現における1の個数を数える
     // 
-    // 計算量：O(1)
-    //
     // # Parameters
     // - `x` : 対象のビット列
     popcount : a -> I64;
@@ -132,8 +130,6 @@ impl I8 : Bits {
 // 
 // 制約：0 <= n <= ビット幅
 //
-// 計算量：O(n)
-//
 // # Parameters
 // - `n` : 下位からnビットのみを表示する
 // - `x` : 対象のビット列
@@ -149,8 +145,6 @@ to_string_bits : [a : Bits, a : Eq] I64 -> a -> String = |n, x| (
 // 
 // 制約：0 <= i < ビット幅
 //
-// 計算量：O(1)
-//
 // # Parameters
 // - `i` : ビット位置
 // - `x` : 対象のビット列
@@ -159,8 +153,6 @@ bit_check : [a : Bits, a : Eq] I64 -> a -> Bool = |i, x| x.and(one.shl(i)) != ze
 // 第iビットを立てる
 //
 // 制約：0 <= i < ビット幅
-//
-// 計算量：O(1)
 //
 // # Parameters
 // - `i` : ビット位置
@@ -171,8 +163,6 @@ bit_set : [a : Bits, a : Eq] I64 -> a -> a = |i, x| x.or(one.shl(i));
 // 
 // 制約：0 <= i < ビット幅
 //
-// 計算量：O(1)
-//
 // # Parameters
 // - `i` : ビット位置
 // - `x` : 対象のビット列
@@ -181,8 +171,6 @@ bit_clear : [a : Bits, a : Eq] I64 -> a -> a = |i, x| x.and(one.shl(i).not);
 // 第iビットを反転する
 // 
 // 制約：0 <= i < ビット幅
-//
-// 計算量：O(1)
 //
 // # Parameters
 // - `i` : ビット位置
@@ -206,8 +194,6 @@ impl BitCombinationIterator : Iterator {
 // 高々nビットの数のうち、ちょうどmビットが立っているものを昇順で列挙するイテレータ
 // 
 // 制約：0 <= n <= 62
-//
-// 計算量：全体でO(C(n, m))
 //
 // # Parameters
 // - `n` : ビット数
@@ -236,8 +222,6 @@ impl BitSubsetIterator : Iterator {
 // 全体集合から始まり、空集合までを列挙する
 // 
 // 制約：set >= 0
-//
-// 計算量：全体でO(2^k)、kはsetの立っているビット数
 //
 // # Parameters
 // - `set` : 全体集合
