@@ -137,7 +137,7 @@ calc_z_array_any = |s| (
     if n == 0 { [] };
     let z = Array::fill(n, 0);
     let z = z.set(0, 0);
-    let (_, z) = range(0, n).fold((0, z), |i, (j, z)|
+    let (_, z) = range(1, n).fold((0, z), |i, (j, z)|
         let k = if j + z.@(j) <= i { 0 } else { min(j + z.@(j) - i, z.@(i-j)) };
         let z = z.set(i, k);
         let z = loop(z, |z|
