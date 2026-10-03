@@ -8,8 +8,9 @@ import Std::{
 
 // 配列のある区間`[begin, end)`を辞書順で次に大きい順列に並び替える。
 // 
-// # Complexity
-// - `O(end - begin)`
+// 制約：0 <= begin <= end <= |arr|
+//
+// 計算量：O(end - begin)
 // 
 // # Returns
 // - 新しい順列`arr`が存在する場合は`some(arr)`、そうでない場合は`none()`
@@ -17,7 +18,7 @@ import Std::{
 // # Parameters
 // - `begin`: 区間の開始インデックス
 // - `end`: 区間の終了インデックス (exclusive)
-// - `arr`: 配列。`0 <= begin <= end <= |arr|`。
+// - `arr`: 配列
 next_permutation : [a : LessThanOrEq] I64 -> I64 -> Array a -> Option (Array a) = |begin, end, arr| (
     let left = end - 2;
     let left = loop(left, |left|

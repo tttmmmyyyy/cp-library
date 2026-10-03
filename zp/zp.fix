@@ -100,8 +100,10 @@ impl P469762049 : PrimeProvider {
     value = |p| 469762049_U32;
 }
 
-// `I64`から素数を作成する
+// `I64`から`ZP p`の値を作成する
 // 
+// 計算量：O(1)
+//
 // # Parameters
 // - `x` : `I64`型の整数
 make : [p : PrimeProvider] I64 -> ZP p;
@@ -117,6 +119,8 @@ make = |x| (
 // 
 // xが0かつeが負のときはプログラムを終了する。
 // 
+// 計算量：O(log p)
+//
 // # Parameters
 // - `x` : `ZP p`型の数
 // - `e` : `I64`型の指数
@@ -151,6 +155,8 @@ _power_unsigned = |e, x| (
 // 
 // 0を与えた場合はプログラムを終了する。
 //
+// 計算量：O(log p)
+//
 // # Parameters
 // - `x` : `ZP p`型の整数
 inv : [p : PrimeProvider] ZP p -> ZP p;
@@ -160,7 +166,9 @@ inv = |x| (
     x.power(p.i64 - 2)
 );
 
-// 1の原始根を一つ得る
+// 法pの原始根を一つ得る
+//
+// 計算量：O(sqrt(p))。pが1e9+7や998244353などならO(1)
 primitive_root : [p : PrimeProvider] ZP p;
 primitive_root = (
     let pp = PrimeProvider::create;
@@ -248,7 +256,9 @@ type FFTDirection = union {
 
 // `ZP p`型の配列に対して高速フーリエ変換を行う
 //
-// 制約：2^c|(p-1)かつ|x| <= 2^cなるcが存在する
+// 制約：2^c | (p-1) かつ |x| <= 2^c なる c が存在する
+//
+// 計算量：O(n log n + sqrt(p))、n = |x|。pが998244353などならO(n log n)
 //
 // # Parameters
 // - `dir` : FFTの方向（順方向か逆方向か）

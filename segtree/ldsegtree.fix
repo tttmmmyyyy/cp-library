@@ -2,6 +2,8 @@
 //
 // コンストラクタでモノイドおよび作用を指定する点以外は、`CPLib.LSegtree`と同じです。
 // モノイド構造・作用が静的に決まる場合は`CPLib.LSegtree`の方が高速です。
+//
+// 制約・計算量の n は要素数です。計算量は`op`, `act_op`, `act`がO(1)で動くとしたものです。
 module CPLib.LDSegtree;
 
 import Std::{
@@ -37,6 +39,8 @@ type LDSegtree m a = struct {
 
 // すべての要素が単位元であるような遅延伝搬セグメント木を作成する
 // 
+// 計算量：O(n)
+//
 // # Parameters
 // - `n` : セグメント木の要素数
 // - `unit` : 値モノイドの単位元
@@ -53,6 +57,8 @@ init = |n, unit, op, act_unit, act_op, act| (
 
 // 要素の配列からセグメント木を作成する
 // 
+// 計算量：O(n)
+//
 // # Parameters
 // - `elems` : セグメント木の要素を格納する配列
 // - `unit` : 値モノイドの単位元
@@ -147,6 +153,10 @@ _recalc_above = |i, tree| (
 
 // セグメント木の要素を設定する
 //
+// 制約：0 <= i < n
+//
+// 計算量：O(log n)
+//
 // # Parameters
 // - `i` : インデックス（0-indexed）
 // - `value` : 設定する値
@@ -168,6 +178,10 @@ set = |i, value, tree| (
 // 半開区間[l, r)にある要素の畳み込みを計算する
 // 
 // 遅延作用の伝搬が行われるので、ツリー自体も更新される。
+//
+// 制約：0 <= l <= r <= n
+//
+// 計算量：O(log n)
 //
 // # Parameters
 // - `l` : 区間の左端 (0-indexed)
@@ -212,6 +226,10 @@ fold = |l, r, tree| (
 
 // 半開区間[l, r)に右から作用を適用する
 // 
+// 制約：0 <= l <= r <= n
+//
+// 計算量：O(log n)
+//
 // # Parameters
 // - `l` : 区間の左端 (0-indexed)
 // - `r` : 区間の右端 (0-indexed, exclusive)

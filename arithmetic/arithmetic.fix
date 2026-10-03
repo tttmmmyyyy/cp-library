@@ -13,8 +13,12 @@ import Std::{
 //
 // C言語の%演算子とは異なり、負の数に対しても正の余りを返す
 //
+// 制約：m >= 1
+//
+// 計算量：O(1)
+//
 // # Parameters
-// - `m`: 除数 > 0
+// - `m`: 除数
 // - `x`: 被除数
 pmod : I64 -> I64 -> I64;
 pmod = |m, x| (
@@ -22,36 +26,48 @@ pmod = |m, x| (
     if r < 0 { r + m } else { r }
 );
 
-// `x + y`を`m`で割った余りを（非負で）返す
+// `x + y`を`|m|`で割った余りを（非負で）返す
+//
+// 制約：m != 0
+//
+// 計算量：O(1)
 //
 // # Parameters
 // - `x`: 整数
 // - `y`: 整数
-// - `m`: 除数 != 0
+// - `m`: 除数
 add_mod : I64 -> I64 -> I64 -> I64;
 add_mod = |x, y, m| (
     let m = m.abs.u64;
     FFI_CALL[I64 cp_lib_add_mod_signed(I64, I64, U64), x, y, m]
 );
 
-// `x - y`を`m`で割った余りを（非負で）返す
+// `x - y`を`|m|`で割った余りを（非負で）返す
 // 
+// 制約：m != 0
+//
+// 計算量：O(1)
+//
 // # Parameters
 // - `x`: 整数
 // - `y`: 整数
-// - `m`: 除数 != 0
+// - `m`: 除数
 sub_mod : I64 -> I64 -> I64 -> I64;
 sub_mod = |x, y, m| (
     let m = m.abs.u64;
     FFI_CALL[I64 cp_lib_sub_mod_signed(I64, I64, U64), x, y, m]
 );
 
-// `x * y`を`m`で割った余りを（非負で）返す
+// `x * y`を`|m|`で割った余りを（非負で）返す
+//
+// 制約：m != 0
+//
+// 計算量：O(1)
 //
 // # Parameters
 // - `x`: 整数
 // - `y`: 整数
-// - `m`: 除数 != 0
+// - `m`: 除数
 mul_mod : I64 -> I64 -> I64 -> I64;
 mul_mod = |x, y, m| (
     let m = m.abs.u64;
@@ -60,8 +76,10 @@ mul_mod = |x, y, m| (
 
 // 64ビット整数の平方根の整数部分を計算する
 //
+// 計算量：O(log s)
+//
 // # Parameters
-// - `x`: 64ビット整数
+// - `s`: 64ビット整数
 isqrt : U64 -> U64;
 isqrt = |s| (
     if s <= 1_U64 { s };
@@ -77,6 +95,8 @@ isqrt = |s| (
 
 // 2つの整数の最大公約数（非負整数）を計算する
 // 
+// 計算量：O(log max(|a|, |b|))
+//
 // # Parameters
 // - `a`: 整数
 // - `b`: 整数
@@ -89,6 +109,8 @@ calc_gcd = |a, b| (
 // 拡張ユークリッドの互除法
 // 
 // 2つの整数 `a`, `b` に対して、その最大公約数 `d >= 0` および、`ax + by = d` を満たす整数 `x`, `y` を求める
+//
+// 計算量：O(log max(|a|, |b|))
 //
 // # Returns 
 // `(d, (x, y))`
@@ -105,11 +127,15 @@ ext_gcd = |a, b| (
     (d, (y1, x1 - (a / b) * y1))
 );
 
-// `x^e`を`n`で割った余りを計算する
+// `x^e`を`m`で割った余りを計算する
+//
+// 制約：e >= 0, m >= 1
+//
+// 計算量：O(log e)
 //
 // # Parameters
-// - `e`: 指数 >= 0
-// - `m`: 法 > 0
+// - `e`: 指数
+// - `m`: 法
 // - `x`: 底
 pow_mod : I64 -> I64 -> I64 -> I64;
 pow_mod = |e, m, x| (
@@ -119,12 +145,16 @@ pow_mod = |e, m, x| (
     x.pow_mod_u(e, m.u64).i64
 );
 
-// `x^e`を`n`で割った余りを計算する（unsigned版）
+// `x^e`を`m`で割った余りを計算する（unsigned版）
+//
+// 制約：m >= 1
+//
+// 計算量：O(log e)
 //
 // # Parameters
-// - `e`: 指数 >= 0
-// - `m`: 法 > 0
-// - `x`: 底 >= 0
+// - `e`: 指数
+// - `m`: 法
+// - `x`: 底
 pow_mod_u : U64 -> U64 -> U64 -> U64;
 pow_mod_u = |e, m, x| (
     loop((e, 1_U64 % m, x), |(e, pow, x)|
@@ -134,12 +164,14 @@ pow_mod_u = |e, m, x| (
     )
 );
 
-// `ax = 1 mod m`なる`x`のうち、`0 <= x < |m|`を満たすものを返す
+// `ax = 1 mod m`なる`x`のうち、`0 <= x < m`を満たすものを返す
 //
-// 制約：gcd(a, m) = 1
+// 制約：gcd(a, m) = 1, m >= 1
+//
+// 計算量：O(log m)
 //
 // # Parameters
-// - `m`: 法 > 0
+// - `m`: 法
 // - `a`: 整数
 inv_mod : I64 -> I64 -> I64;
 inv_mod = |m, a| (
@@ -156,6 +188,10 @@ inv_mod = |m, a| (
 // 配列（`BoolArray`）`table`は素数テーブルであり、`table.@(n)`が`true`の場合に`n`が素数であることを意味する。
 // 
 // 注意：戻り値の要素に`@(n)`でアクセスするには`import BoolArray;`が必要です。
+//
+// 制約：n >= 1
+//
+// 計算量：O(n log log n)
 //
 // # Parameters
 // - `n` : 素数テーブルの上限（exclusive）
@@ -175,6 +211,10 @@ create_prime_table = |size| (
 
 // [0, n)の範囲での素数リストを作成する
 //
+// 制約：n >= 1
+//
+// 計算量：O(n log log n)
+//
 // # Parameters
 // - `n` : 素数リストの上限（exclusive）
 create_prime_list : I64 -> Array U32;
@@ -190,6 +230,8 @@ create_prime_list = |n| (
 
 // 線形ふるいを用いて、[0, n)の範囲で、各数の最小の素因数を格納した配列と、素数のリストを作成する
 // 
+// 計算量：O(n)
+//
 // # Parameters
 // - `n` : 上限（exclusive）
 // 
@@ -224,10 +266,12 @@ linear_sieve = |n| (
 
 // 試し割りにより、数を素因数分解する（素因子を重複ありのフラットな配列で返す）
 //
+// 制約：n >= 1, nの素因数 <= 4e9
+//
 // 計算量：O(sqrt(n))
 //
 // # Parameters
-// - `n`: 素因数分解する数 >= 1
+// - `n`: 素因数分解する数
 //
 // # Returns
 // 素因数分解の結果。素因子を昇順に並べた配列（同じ素因子はその指数分だけ繰り返し現れる）。
@@ -244,10 +288,12 @@ factorize_flat = |n| (
 
 // 試し割りにより、数を素因数分解する（素因子と指数のペアの配列で返す）
 //
+// 制約：n >= 1, nの素因数 <= 4e9
+//
 // 計算量：O(sqrt(n))
 //
 // # Parameters
-// - `n`: 素因数分解する数 >= 1
+// - `n`: 素因数分解する数
 //
 // # Returns
 // 素因数分解の結果。
@@ -269,10 +315,12 @@ factorize = |n| (
 
 // オイラーのトーシェント関数 φ(n) を計算する
 //
-// 試し割りによる O(sqrt(n)) 実装
+// 制約：n >= 1
+//
+// 計算量：O(sqrt(n))
 //
 // # Parameters
-// - `n`: 正の整数 >= 1
+// - `n`: 正の整数
 euler_tortient : I64 -> I64;
 euler_tortient = |n| (
     if n == 1 { 1 };
@@ -292,6 +340,8 @@ euler_tortient = |n| (
 //
 // `table.@(i)` が φ(i) の値となる。ただし `table.@(0) = 0` とする。
 //
+// 計算量：O(n log log n)
+//
 // # Parameters
 // - `n`: 表の上限（exclusive）
 euler_tortient_table : I64 -> Array I64;
@@ -306,9 +356,13 @@ euler_tortient_table = |n| (
 
 // 最小素因子テーブルを用いて、数を素因数分解する
 //
+// 制約：n < |lp_table|
+//
+// 計算量：O(log n)
+//
 // # Parameters
 // - `n`: 素因数分解する数
-// - `lp_table`: 長さが少なくとも`n+1`の最小素因子テーブル。最小素因子テーブルの定義は`linear_sieve`のコメントを参照。
+// - `lp_table`: 最小素因子テーブル。最小素因子テーブルの定義は`linear_sieve`のコメントを参照。
 // 
 // # Returns
 // 素因数分解の結果。
@@ -354,6 +408,8 @@ _check_composite_miller_rabin = |n, a, d, s| (
 // 
 // https://cp-algorithms.com/algebra/primality_tests.html#deterministic-version
 // 
+// 計算量：O(log n)
+//
 // # Parameters
 // - `n`: 調べる数
 is_prime : U64 -> Bool;
@@ -380,6 +436,8 @@ is_prime = |n| (
 // 
 // https://cp-algorithms.com/algebra/primality_tests.html#deterministic-version
 // 
+// 計算量：O(log n)
+//
 // # Parameters
 // - `n`: 調べる数
 is_prime_32 : U32 -> Bool;
@@ -439,11 +497,13 @@ _inv_gcd = |a, b| (
 // 
 // 解が存在しない場合は、`(0, 0)`を返します。
 // 
-// 制約や計算量オーダーは https://atcoder.github.io/ac-library/master/document_ja/math.html の`crt`と同様です。
+// 制約：|rs| = |ms|, ms.@(i) >= 1, lcm(ms) が I64 に収まる
+//
+// 計算量：O(n log lcm(ms))、n = |rs|
 // 
 // # Parameters
 // - `rs`: r(i)の配列
-// - `ms`: m(i) >= 1の配列。r(i)と同じ長さ。
+// - `ms`: m(i)の配列
 lift_crt : Array I64 -> Array I64 -> (I64, I64);
 lift_crt = |r, m| (
     // if r.get_size != m.get_size { undefined("[lift_crt] `rs` and `ms` must have the same size") };
@@ -511,7 +571,9 @@ _calc_primitive_root = |p| (
 // 
 // https://cp-algorithms.com/algebra/primitive-root.html#algorithm-for-finding-a-primitive-root
 // 
-// 注意：現状、この関数はp-1の素因数分解を素朴なO(sqrt(p))の方法で行います。
+// 制約：pは素数
+//
+// 計算量：O(sqrt(p))。pが1e9+7や998244353などならO(1)
 // 
 // # Parameters
 // - `p`: 素数
@@ -528,6 +590,10 @@ calc_primitive_root = |p| (
 // 0 <= i < n に対する floor((a * i + b) / m) の和を計算する
 // 
 // ac-libraryのmathにある同名の関数の移植です。
+// 
+// 制約：0 <= n < 2^32, 1 <= m < 2^32
+//
+// 計算量：O(log m)
 // 
 // # Parameters
 // - `n`
@@ -582,8 +648,12 @@ _floor_sum_unsigned = |n, m, a, b| (
 // また、このような`a`, `b`は必ず片方が奇数でもう片方が偶数である。
 // この関数の戻り値では`a`が奇数、`b`が偶数となる。
 // 
+// 制約：c_max >= 1
+//
+// 計算量：O(c_max log c_max)
+// 
 // # Parameters
-// - `c_max`: `c`の上限（inclusive), `c_max >= 1`
+// - `c_max`: `c`の上限（inclusive）
 pythagorean_triples : I64 -> Array (I64, I64, I64) = |c_max| (
     let m_max = isqrt((c_max - 1).u64).i64;
     range(1, m_max+1).fold([], |m, triples|
