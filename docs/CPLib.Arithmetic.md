@@ -274,7 +274,7 @@ Type: `Std::Array Std::I64 -> Std::Array Std::I64 -> (Std::I64, Std::I64)`
 
 解が存在しない場合は、`(0, 0)`を返します。
 
-制約：|rs| = |ms|, ms.@(i) >= 1, lcm(ms) が I64 に収まる
+制約：|rs| = |ms|, ms.@(i) >= 1, lcm(ms)が`I64`に収まる
 
 計算量：O(n log lcm(ms))、n = |rs|
 

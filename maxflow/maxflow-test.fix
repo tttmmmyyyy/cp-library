@@ -42,7 +42,7 @@ test_basic = (
 test_dead_end_speed : IO ();
 test_dead_end_speed = (
     let n = 5000;
-    // 頂点0が始点、1が終点、2..n+2が鎖
+    // 頂点0が始点、1が終点、2からn+1までが鎖
     let graph = MaxFlowGraph::create(n + 2, 0, 1);
     let graph = range(0, n).fold(graph, |_, graph| graph.add_edge(0, 2, 1));
     let graph = range(2, n + 1).fold(graph, |v, graph| graph.add_edge(v, v + 1, 1));
