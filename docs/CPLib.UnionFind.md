@@ -1,6 +1,6 @@
 # CPLib.UnionFind
 
-Defined in cp-library@0.13.1
+Defined in cp-library@0.13.2
 
 ## Values
 
@@ -14,6 +14,8 @@ UnionFind木を作成する
 
 `0`から`size - 1`までの`size`個の要素を持つUnionFind木を作成する
 
+計算量：O(size)
+
 ##### Parameters
 
 - `size` : UnionFind木のサイズ
@@ -25,6 +27,10 @@ Type: `Std::I64 -> CPLib.UnionFind::UnionFind -> (CPLib.UnionFind::UnionFind, St
 指定された要素の親を取得する
 
 パス圧縮を行うため、UnionFindの状態も変化する
+
+制約：0 <= x < size
+
+計算量：ならしO(α(size))
 
 ##### Parameters
 
@@ -38,6 +44,10 @@ Type: `Std::I64 -> CPLib.UnionFind::UnionFind -> (CPLib.UnionFind::UnionFind, St
 指定された要素が属するグループのサイズを取得する
 
 パス圧縮を行うため、UnionFindの状態も変化する
+
+制約：0 <= x < size
+
+計算量：ならしO(α(size))
 
 ##### Parameters
 
@@ -54,6 +64,8 @@ Type: `CPLib.UnionFind::UnionFind -> (CPLib.UnionFind::UnionFind, Std::Array (St
 
 パス圧縮を行うため、UnionFindの状態も変化する
 
+計算量：O(size α(size))
+
 ##### Parameters
 
 - `uf` : UnionFind木
@@ -66,6 +78,10 @@ Type: `Std::I64 -> Std::I64 -> CPLib.UnionFind::UnionFind -> (CPLib.UnionFind::U
 
 パス圧縮を行うため、UnionFindの状態も変化する
 
+制約：0 <= x, y < size
+
+計算量：ならしO(α(size))
+
 ##### Parameters
 
 - `x` : 1つ目の要素
@@ -77,6 +93,10 @@ Type: `Std::I64 -> Std::I64 -> CPLib.UnionFind::UnionFind -> (CPLib.UnionFind::U
 Type: `Std::I64 -> Std::I64 -> CPLib.UnionFind::UnionFind -> CPLib.UnionFind::UnionFind`
 
 2つの要素を同じグループにする
+
+制約：0 <= x, y < size
+
+計算量：ならしO(α(size))
 
 ##### Parameters
 

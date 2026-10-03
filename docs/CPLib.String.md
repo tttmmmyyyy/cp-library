@@ -1,6 +1,6 @@
 # CPLib.String
 
-Defined in cp-library@0.13.1
+Defined in cp-library@0.13.2
 
 ## Values
 
@@ -11,6 +11,10 @@ Defined in cp-library@0.13.1
 Type: `Std::Array Std::I64 -> Std::String -> Std::Array Std::I64`
 
 文字列のLCP arrayを計算する
+
+制約：saはsのsuffix array, 文字列が空でない
+
+計算量：O(n)、n = 文字列のバイト数
 
 ##### Returns
 
@@ -26,6 +30,10 @@ Type: `Std::Array Std::I64 -> Std::String -> Std::Array Std::I64`
 Type: `[a : Std::Eq] Std::Array Std::I64 -> Std::Array a -> Std::Array Std::I64`
 
 配列のLCP arrayを計算する
+
+制約：saはsのsuffix array, |s| >= 1
+
+計算量：O(n)、n = |s|
 
 ##### Returns
 
@@ -44,6 +52,8 @@ Type: `Std::String -> Std::Array Std::I64`
 
 AtCoder Libraryの`suffix_array`の移植です。
 
+計算量：O(n)、n = 文字列のバイト数
+
 ##### Returns
 
 `[0, 1, ..., s.get_size)` の順列`sa`で、任意の`i`について`s[sa.@(i)..) < s[sa.@(i+1)..)` が成り立つもの
@@ -59,6 +69,8 @@ Type: `Std::Array Std::I64 -> Std::Array Std::I64`
 配列のsuffix arrayを計算する
 
 AtCoder Libraryの`suffix_array`の移植です。
+
+計算量：O(n log n)、n = |s|
 
 ##### Returns
 
@@ -76,12 +88,17 @@ Type: `Std::I64 -> Std::Array Std::I64 -> Std::Array Std::I64`
 
 AtCoder Libraryの`suffix_array`の移植です。
 
+制約：0 <= s.@(i) <= upper
+
+計算量：O(n + upper)、n = |s|
+
 ##### Returns
 
 `[0, 1, ..., s.get_size)` の順列`sa`で、任意の`i`について`s[sa.@(i)..) < s[sa.@(i+1)..)` が成り立つもの
 
 ##### Parameters
 
+- `upper` : `s`の要素の上限
 - `s` : 対象の配列
 
 #### calc_z_array
@@ -89,6 +106,8 @@ AtCoder Libraryの`suffix_array`の移植です。
 Type: `Std::String -> Std::Array Std::I64`
 
 文字列のZ-arrayを計算する
+
+計算量：O(n)、n = 文字列のバイト数
 
 ##### Returns
 
@@ -103,6 +122,8 @@ Type: `Std::String -> Std::Array Std::I64`
 Type: `[a : Std::Eq] Std::Array a -> Std::Array Std::I64`
 
 配列のZ-arrayを計算する
+
+計算量：O(n)、n = |s|
 
 ##### Returns
 

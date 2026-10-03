@@ -1,10 +1,12 @@
 # CPLib.LSegtree
 
-Defined in cp-library@0.13.1
+Defined in cp-library@0.13.2
 
-遅延伝番セグメント木（右作用）
+遅延伝搬セグメント木（右作用）
 
 ある要素の値を取得する関数`@`はないので、もし必要なら`fold(i, i+1)`を使うこと。
+
+制約・計算量の n は要素数です。計算量は各モノイドの`op`と`act`がO(1)で動くとしたものです。
 
 使用例
 ```
@@ -60,6 +62,10 @@ Type: `[a : CPLib.Trait::Action, a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoi
 
 半開区間[l, r)に右から作用を適用する
 
+制約：0 <= l <= r <= n
+
+計算量：O(log n)
+
 ##### Parameters
 
 - `l` : 区間の左端 (0-indexed)
@@ -73,6 +79,8 @@ Type: `[a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoid] Std::Array m -> CPLib.
 
 要素の配列からセグメント木を作成する
 
+計算量：O(n)
+
 ##### Parameters
 
 - `elems` : セグメント木の要素を格納する配列
@@ -84,6 +92,10 @@ Type: `[a : CPLib.Trait::Action, a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoi
 半開区間[l, r)にある要素の畳み込みを計算する
 
 遅延作用の伝搬が行われるので、ツリー自体も更新される。
+
+制約：0 <= l <= r <= n
+
+計算量：O(log n)
 
 ##### Parameters
 
@@ -97,6 +109,8 @@ Type: `[a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoid] Std::I64 -> CPLib.LSeg
 
 すべての要素が単位元であるような遅延伝搬セグメント木を作成する
 
+計算量：O(n)
+
 ##### Parameters
 
 - `n` : セグメント木の要素数
@@ -106,6 +120,10 @@ Type: `[a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoid] Std::I64 -> CPLib.LSeg
 Type: `[a : CPLib.Trait::Action, a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoid, CPLib.Trait::Action::Set a = m] Std::I64 -> m -> CPLib.LSegtree::LSegtree m a -> CPLib.LSegtree::LSegtree m a`
 
 セグメント木の要素を設定する
+
+制約：0 <= i < n
+
+計算量：O(log n)
 
 ##### Parameters
 

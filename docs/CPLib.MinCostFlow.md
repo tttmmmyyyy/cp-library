@@ -1,8 +1,10 @@
 # CPLib.MinCostFlow
 
-Defined in cp-library@0.13.1
+Defined in cp-library@0.13.2
 
 最小コスト最大流問題
+
+制約・計算量の n は頂点数、m は辺数を表します。
 
 ## Values
 
@@ -14,7 +16,9 @@ Type: `[c : CPLib.MinCostFlow::CapCostLike] Std::I64 -> Std::I64 -> c -> c -> CP
 
 グラフに辺を追加する
 
-追加された辺の識別子を返す。
+制約：0 <= from, to < n, cap >= 0
+
+計算量：ならしO(1)
 
 ##### Parameters
 
@@ -32,6 +36,10 @@ Type: `[c : CPLib.MinCostFlow::CapCostLike] Std::I64 -> Std::I64 -> c -> c -> CP
 
 追加された辺の識別子を返す。
 
+制約：0 <= from, to < n, cap >= 0
+
+計算量：ならしO(1)
+
 ##### Parameters
 
 - `graph` : グラフ
@@ -46,6 +54,10 @@ Type: `[c : CPLib.MinCostFlow::CapCostLike] Std::I64 -> Std::I64 -> Std::I64 -> 
 
 グラフを作成する
 
+制約：0 <= s, t < n, s != t
+
+計算量：O(n)
+
 ##### Parameters
 
 - `n` : 頂点数
@@ -57,6 +69,8 @@ Type: `[c : CPLib.MinCostFlow::CapCostLike] Std::I64 -> Std::I64 -> Std::I64 -> 
 Type: `[c : CPLib.MinCostFlow::CapCostLike] CPLib.Graph::EdgeId -> CPLib.MinCostFlow::MinCostFlowGraph c -> c`
 
 ある辺に流れているフローを取得する
+
+計算量：O(1)
 
 ##### Parameters
 
@@ -71,6 +85,12 @@ Type: `[c : CPLib.MinCostFlow::CapCostLike] c -> CPLib.MinCostFlow::MinCostFlowG
 
 指定された量を上限として流せるだけ流し、流れたフローとコストを返す。
 
+制約：
+- 辺のコスト >= 0（負のコストの辺があるときは、先に`set_potential_bf`を呼ぶ）
+- 流量とコストの総和が`c`に収まる
+
+計算量：O(F (n + m) log(n + m))、Fは流量
+
 ##### Parameters
 
 - `flow_limit` : 流すフローの最大値
@@ -83,6 +103,10 @@ Type: `[c : CPLib.MinCostFlow::CapCostLike] CPLib.MinCostFlow::MinCostFlowGraph 
 ベルマンフォード法を使ってポテンシャルを更新する
 
 ベルマンフォード法を使って`graph.@potential`を更新し、負の辺がある場合も動作するようにします。
+
+制約：負の閉路がない
+
+計算量：O(n (n + m))
 
 ## Types and aliases
 

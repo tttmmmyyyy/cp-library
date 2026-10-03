@@ -1,6 +1,6 @@
 # CPLib.Bipartite.Test
 
-Defined in cp-library@0.11.1
+Defined in cp-library@0.13.2
 
 ## Values
 

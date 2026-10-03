@@ -1,11 +1,13 @@
 # CPLib.LDSegtree
 
-Defined in cp-library@0.13.1
+Defined in cp-library@0.13.2
 
 モノイド構造および作用が動的に決められる遅延伝搬セグメント木
 
 コンストラクタでモノイドおよび作用を指定する点以外は、`CPLib.LSegtree`と同じです。
 モノイド構造・作用が静的に決まる場合は`CPLib.LSegtree`の方が高速です。
+
+制約・計算量の n は要素数です。計算量は`op`, `act_op`, `act`がO(1)で動くとしたものです。
 
 ## Values
 
@@ -16,6 +18,10 @@ Defined in cp-library@0.13.1
 Type: `Std::I64 -> Std::I64 -> a -> CPLib.LDSegtree::LDSegtree m a -> CPLib.LDSegtree::LDSegtree m a`
 
 半開区間[l, r)に右から作用を適用する
+
+制約：0 <= l <= r <= n
+
+計算量：O(log n)
 
 ##### Parameters
 
@@ -29,6 +35,8 @@ Type: `Std::I64 -> Std::I64 -> a -> CPLib.LDSegtree::LDSegtree m a -> CPLib.LDSe
 Type: `Std::Array m -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((m, a) -> m) -> CPLib.LDSegtree::LDSegtree m a`
 
 要素の配列からセグメント木を作成する
+
+計算量：O(n)
 
 ##### Parameters
 
@@ -47,6 +55,10 @@ Type: `Std::I64 -> Std::I64 -> CPLib.LDSegtree::LDSegtree m a -> (CPLib.LDSegtre
 
 遅延作用の伝搬が行われるので、ツリー自体も更新される。
 
+制約：0 <= l <= r <= n
+
+計算量：O(log n)
+
 ##### Parameters
 
 - `l` : 区間の左端 (0-indexed)
@@ -58,6 +70,8 @@ Type: `Std::I64 -> Std::I64 -> CPLib.LDSegtree::LDSegtree m a -> (CPLib.LDSegtre
 Type: `Std::I64 -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((m, a) -> m) -> CPLib.LDSegtree::LDSegtree m a`
 
 すべての要素が単位元であるような遅延伝搬セグメント木を作成する
+
+計算量：O(n)
 
 ##### Parameters
 
@@ -73,6 +87,10 @@ Type: `Std::I64 -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((m, a) -> m) -> 
 Type: `Std::I64 -> m -> CPLib.LDSegtree::LDSegtree m a -> CPLib.LDSegtree::LDSegtree m a`
 
 セグメント木の要素を設定する
+
+制約：0 <= i < n
+
+計算量：O(log n)
 
 ##### Parameters
 

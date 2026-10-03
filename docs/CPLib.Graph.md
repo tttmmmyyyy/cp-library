@@ -1,6 +1,10 @@
 # CPLib.Graph
 
-Defined in cp-library@0.13.1
+Defined in cp-library@0.13.2
+
+グラフの表現と基本的なアルゴリズム
+
+制約・計算量の n は頂点数、m は辺数を表します。
 
 ## Values
 
@@ -11,6 +15,10 @@ Defined in cp-library@0.13.1
 Type: `Std::I64 -> Std::I64 -> c -> CPLib.Graph::Graph c -> CPLib.Graph::Graph c`
 
 グラフに辺を追加する
+
+制約：0 <= from, to < n
+
+計算量：ならしO(1)
 
 ##### Parameters
 
@@ -24,6 +32,10 @@ Type: `Std::I64 -> Std::I64 -> c -> CPLib.Graph::Graph c -> CPLib.Graph::Graph c
 Type: `Std::I64 -> Std::I64 -> c -> CPLib.Graph::Graph c -> (CPLib.Graph::Graph c, CPLib.Graph::EdgeId)`
 
 グラフに辺を追加する（辺IDを返す）
+
+制約：0 <= from, to < n
+
+計算量：ならしO(1)
 
 ##### Parameters
 
@@ -40,7 +52,9 @@ Type: `[c : CPLib.Trait::Inf, c : Std::Additive, c : Std::Eq, c : Std::LessThan]
 
 到達できないノードまでの距離には`Inf::inf`が設定されます。
 
-負の閉路が存在する場合は無限ループに陥ります。
+制約：0 <= start < n, 開始ノードから到達できる負の閉路がない
+
+計算量：O(n (n + m))
 
 ##### Parameters
 
@@ -56,6 +70,8 @@ Type: `CPLib.Graph::Graph c -> Std::Array (Std::Array Std::I64)`
 戻り値は、各強連結成分を構成する頂点のリストの配列です。
 また、戻り値はトポロジカルソートされています：uとvが異なる強連結成分cu, cvに属するとき、uからvに到達できるなら、cuはcvの前に現れます。
 
+計算量：O(n + m)
+
 ##### Parameters
 
 - `g` : グラフ
@@ -64,7 +80,9 @@ Type: `CPLib.Graph::Graph c -> Std::Array (Std::Array Std::I64)`
 
 Type: `Std::I64 -> CPLib.Graph::Graph c`
 
-離散的なグラフを作成する
+辺のないグラフを作成する
+
+計算量：O(n)
 
 ##### Parameters
 
@@ -76,9 +94,11 @@ Type: `[c : CPLib.Trait::Inf, c : Std::Additive, c : Std::LessThan] Std::I64 -> 
 
 ダイクストラ法：グラフと開始ノードが与えられたとき、開始ノードから各ノードに到達するまでの最小コストの配列を返す。
 
-各辺のコストは非負である必要があります。
-
 到達できないノードまでの距離には`Inf::inf`が設定されます。
+
+制約：0 <= start < n, 辺のコスト >= 0
+
+計算量：O((n + m) log m)
 
 ##### Parameters
 
@@ -91,6 +111,8 @@ Type: `CPLib.Graph::EdgeId -> CPLib.Graph::Graph c -> CPLib.Graph::Edge c`
 
 辺を取得する
 
+計算量：O(1)
+
 ##### Parameters
 
 - `edge_id` : 辺の識別子
@@ -101,6 +123,8 @@ Type: `CPLib.Graph::EdgeId -> CPLib.Graph::Graph c -> CPLib.Graph::Edge c`
 Type: `CPLib.Graph::Graph c -> Std::I64`
 
 グラフの頂点数を取得する
+
+計算量：O(1)
 
 ##### Parameters
 
