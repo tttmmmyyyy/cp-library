@@ -177,6 +177,7 @@ test_pow_mod = (
 
     // 法が1の場合のテスト
     assert_eq(|_|"pow_mod 8 (any^any mod 1)", 7.pow_mod(100, 1), 0);; // mod 1 は常に0
+    assert_eq(|_|"pow_mod 8b (any^0 mod 1)", 7.pow_mod(0, 1), 0);;
 
     // オーバーフローに着目したテスト
     let max = I32::maximum.i64;
