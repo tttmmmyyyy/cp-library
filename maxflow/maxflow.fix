@@ -251,10 +251,12 @@ namespace Dinic {
         // 終了地点に到達したら終了
         if v == self.@t { (self, f) };
         // 未探索の残余グラフの辺に沿ってループ
-        let v_edges = self.@graph.@edges.@(v);
-        match range(self.@iter.@(v), v_edges.@size).loop_iter_s(self, |i, self|
+        // 
+        // 辺はループの中で`self`から読む。`v`の辺の配列をループの外で保持すると、`_add_flow`がそれを書き換えるときに配列が複製される。
+        let deg = self.@graph.@edges.@(v).@size;
+        match range(self.@iter.@(v), deg).loop_iter_s(self, |i, self|
             let self = self.mod_iter(set(v, i));
-            let e = v_edges.@(i);
+            let e = self.@graph.@edges.@(v).@(i);
             // 残余グラフの辺でないか、最短経路DAGに沿っていない辺なら、スキップする
             if !(e.@data.@0 > zero && self.@level.@(v) < self.@level.@(e.@to)) {
                 continue $ self
@@ -275,7 +277,7 @@ namespace Dinic {
             ),
             continue(self) => (
                 // フローを流せるパスを見つけられなかったとき、`v`の辺をすべて調べ終えたことを記録する
-                (self.mod_iter(set(v, v_edges.@size)), zero)
+                (self.mod_iter(set(v, deg)), zero)
             )
         }
     );
