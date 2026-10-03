@@ -251,6 +251,9 @@ namespace Dinic {
         // 終了地点に到達したら終了
         if v == self.@t { (self, f) };
         // 未探索の残余グラフの辺に沿ってループ
+        // 
+        // `v`の辺の配列`v_edges`は、ループの中で毎回`self`から取り出すのが素直だが、ループの状態として引き回すと取り出す処理が無くなり、速い。
+        // `_add_flow`が`v`の辺を書き換えるのは、ループの状態の`v_edges`が解放された後なので、配列は複製されない。
         let v_edges = self.@graph.@edges.@(v);
         let deg = v_edges.@size;
         match range(self.@iter.@(v), deg).loop_iter_s((self, v_edges), |i, (self, v_edges)|
