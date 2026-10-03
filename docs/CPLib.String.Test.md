@@ -22,6 +22,18 @@ Type: `Std::IO ()`
 
 Type: `Std::IO ()`
 
+#### test_z_random
+
+Type: `Std::IO ()`
+
+ランダムな短い配列で、Z-arrayを素朴な計算と比べる
+
+#### test_z_speed
+
+Type: `Std::IO ()`
+
+全要素が等しい配列のZ-array。素朴な延長をするとO(n^2)かかる入力
+
 ## Types and aliases
 
 ## Traits and aliases

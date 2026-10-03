@@ -45,7 +45,7 @@ https://cp-algorithms.com/algebra/primitive-root.html#algorithm-for-finding-a-pr
 
 制約：pは素数
 
-計算量：O(sqrt(p))。pが1e9+7や998244353などならO(1)
+計算量：O(sqrt(p))。pが`CPLib.ZP`に定義されている素数ならO(1)
 
 ##### Parameters
 

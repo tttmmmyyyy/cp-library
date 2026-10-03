@@ -6,6 +6,8 @@ Defined in cp-library@0.13.2
 
 素数`p`は静的でなければならない（コンパイル時に決まる必要がある）。
 
+制約：pは素数, p < 2^31
+
 素数`p`は型パラメータとして与える。例として、p = 17 としたい場合、
 
 - 空の型（フィールドを持たないunboxedな型）`P17`を作成：`type P17 = unbox struct {}`.
@@ -49,7 +51,7 @@ Type: `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::FFTDirection -> Std::Array (CPLib
 
 制約：2^c | (p-1) かつ |x| <= 2^c なる c が存在する
 
-計算量：O(n log n + sqrt(p))、n = |x|。pが998244353などならO(n log n)
+計算量：O(n log n + sqrt(p))、n = |x|。pがこのモジュールに定義されている素数ならO(n log n)
 
 ##### Parameters
 
@@ -103,7 +105,7 @@ Type: `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::ZP p`
 
 法pの原始根を一つ得る
 
-計算量：O(sqrt(p))。pが1e9+7や998244353などならO(1)
+計算量：O(sqrt(p))。pがこのモジュールに定義されている素数ならO(1)
 
 ### namespace CPLib.ZP::PrimeProvider
 

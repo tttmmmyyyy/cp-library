@@ -8,6 +8,11 @@ Defined in cp-library@0.13.2
 
 制約・計算量の n は要素数です。計算量は各モノイドの`op`と`act`がO(1)で動くとしたものです。
 
+制約：作用は次を満たす（`a`, `b`は作用、`x`, `y`は値）
+- act(unit, x) = x
+- act(a, op(x, y)) = op(act(a, x), act(a, y))
+- act(op(a, b), x) = act(b, act(a, x))
+
 使用例
 ```
 // 最大値モノイド

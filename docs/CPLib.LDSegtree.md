@@ -9,6 +9,11 @@ Defined in cp-library@0.13.2
 
 制約・計算量の n は要素数です。計算量は`op`, `act_op`, `act`がO(1)で動くとしたものです。
 
+制約：作用は次を満たす（`x`, `y`は値、`a`, `b`は作用）
+- act(x, act_unit) = x
+- act(op(x, y), a) = op(act(x, a), act(y, a))
+- act(x, act_op(a, b)) = act(act(x, a), b)
+
 ## Values
 
 ### namespace CPLib.LDSegtree

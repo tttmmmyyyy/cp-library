@@ -33,7 +33,7 @@ Type: `[p : CPLib.ZP::PrimeProvider] Std::Array (CPLib.ZP::ZP p) -> Std::Array (
 
 制約：2^c | (p-1) かつ |a| + |b| - 1 <= 2^c なる c が存在する
 
-計算量：O(n log n + sqrt(p))、n = |a| + |b|。pが998244353などならO(n log n)
+計算量：O(n log n + sqrt(p))、n = |a| + |b|。pが`CPLib.ZP`に定義されている素数ならO(n log n)
 
 ##### Parameters
 
