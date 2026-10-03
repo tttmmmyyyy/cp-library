@@ -175,6 +175,7 @@ set = |i, value, tree| (
 // - `tree` : セグメント木
 fold : I64 -> I64 -> LDSegtree m a -> (LDSegtree m a, m);
 fold = |l, r, tree| (
+    if l == r { (tree, tree.@unit) };
     let l = l + tree.@n;
     let r = r + tree.@n;
     // l0 = lが奇数になるまで2で割ったもの。
@@ -218,6 +219,7 @@ fold = |l, r, tree| (
 // - `tree` : セグメント木
 act_range : I64 -> I64 -> a -> LDSegtree m a -> LDSegtree m a;
 act_range = |l, r, a, tree| (
+    if l == r { tree };
     let l = l + tree.@n;
     let r = r + tree.@n;
     let l0 = l / (l.bit_and(-l));

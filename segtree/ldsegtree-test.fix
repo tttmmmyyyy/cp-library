@@ -19,6 +19,7 @@ test = (
     let rng = Random::init_by_seed(0_U64);
     let rng = *test_random(false, rng);
     let rng = *test_random(true, rng);
+    test_empty;;
 
     test_speed;;
 
@@ -85,6 +86,15 @@ gen_random_alphabetical_string = |rng| (
     let bytes = bytes.push_back('\0');
     let s = String::_unsafe_from_c_str(bytes);
     (rng, s)
+);
+
+// 要素数0の木で、空区間への作用と畳み込みができる
+test_empty : IO ();
+test_empty = (
+    let tree = LDSegtree::init(0, unit, op, a_unit, a_op, act);
+    let tree = tree.act_range(0, 0, ShiftAlphabet::make(3, 1));
+    let (_, v) = tree.fold(0, 0);
+    assert_eq(|_|"ldsegtree empty", v, "")
 );
 
 test_random : Bool -> Random -> IO Random;
