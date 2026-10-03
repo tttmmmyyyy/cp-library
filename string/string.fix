@@ -11,6 +11,8 @@ import Std::{
 // 
 // AtCoder Libraryの`suffix_array`の移植です。
 // 
+// 計算量：O(n)、n = 文字列のバイト数
+//
 // # Returns
 // `[0, 1, ..., s.get_size)` の順列`sa`で、任意の`i`について`s[sa.@(i)..) < s[sa.@(i+1)..)` が成り立つもの
 // 
@@ -23,6 +25,8 @@ calc_suffix_array = |s| s.get_bytes.map(i64).pop_back.calc_suffix_array_i64_uppe
 //
 // AtCoder Libraryの`suffix_array`の移植です。
 // 
+// 計算量：O(n log n)、n = |s|
+//
 // # Returns
 // `[0, 1, ..., s.get_size)` の順列`sa`で、任意の`i`について`s[sa.@(i)..) < s[sa.@(i+1)..)` が成り立つもの
 // 
@@ -46,16 +50,25 @@ calc_suffix_array_i64 = |s| (
 //
 // AtCoder Libraryの`suffix_array`の移植です。
 // 
+// 制約：0 <= s.@(i) <= upper
+//
+// 計算量：O(n + upper)、n = |s|
+//
 // # Returns
 // `[0, 1, ..., s.get_size)` の順列`sa`で、任意の`i`について`s[sa.@(i)..) < s[sa.@(i+1)..)` が成り立つもの
 // 
 // # Parameters
+// - `upper` : `s`の要素の上限
 // - `s` : 対象の配列
 calc_suffix_array_i64_upper : I64 -> Array I64 -> Array I64;
 calc_suffix_array_i64_upper = |upper, s| s._sa_is(upper);
 
 // 文字列のLCP arrayを計算する
 // 
+// 制約：saはsのsuffix array, 文字列が空でない
+//
+// 計算量：O(n)、n = 文字列のバイト数
+//
 // # Returns
 // 長さ`s.get_size - 1`の配列`lcp`で、`lcp.@(i)`は`s[sa.@(i)..)`と`s[sa.@(i+1)..)`の最長共通接頭辞の長さを表す。
 //
@@ -66,6 +79,10 @@ calc_lcp_array : Array I64 -> String -> Array I64;
 calc_lcp_array = |sa, s| s.get_bytes.pop_back.calc_lcp_array_any(sa);
 
 // 配列のLCP arrayを計算する
+//
+// 制約：saはsのsuffix array, |s| >= 1
+//
+// 計算量：O(n)、n = |s|
 //
 // # Returns
 // 長さ`s.get_size - 1`の配列`lcp`で、`lcp.@(i)`は`s[sa.@(i)..)`と`s[sa.@(i+1)..)`の最長共通接頭辞の長さを表す。
@@ -95,6 +112,8 @@ calc_lcp_array_any = |sa, s| (
 
 // 文字列のZ-arrayを計算する
 // 
+// 計算量：O(n)、n = 文字列のバイト数
+//
 // # Returns
 // 長さ`s.get_size`の配列`z`で、`z.@(i)`は`s[i..)`と`s.[0..)`の最長共通接頭辞の長さを表す。
 // 
@@ -105,6 +124,8 @@ calc_z_array = |s| s.get_bytes.pop_back.calc_z_array_any;
 
 // 配列のZ-arrayを計算する
 // 
+// 計算量：O(n)、n = |s|
+//
 // # Returns
 // 長さ`s.get_size`の配列`z`で、`z.@(i)`は`s[i..)`と`s.[0..)`の最長共通接頭辞の長さを表す。
 // 
@@ -116,7 +137,7 @@ calc_z_array_any = |s| (
     if n == 0 { [] };
     let z = Array::fill(n, 0);
     let z = z.set(0, 0);
-    let (_, z) = range(0, n).fold((0, z), |i, (j, z)|
+    let (_, z) = range(1, n).fold((0, z), |i, (j, z)|
         let k = if j + z.@(j) <= i { 0 } else { min(j + z.@(j) - i, z.@(i-j)) };
         let z = z.set(i, k);
         let z = loop(z, |z|

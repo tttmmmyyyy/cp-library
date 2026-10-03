@@ -1,8 +1,10 @@
 # CPLib.Bipartite
 
-Defined in cp-library@0.13.1
+Defined in cp-library@0.13.2
 
 二部グラフを扱うモジュール
+
+計算量の n は頂点数（左右の合計）、m は辺数を表します。
 
 ## Values
 
@@ -13,6 +15,10 @@ Defined in cp-library@0.13.1
 Type: `Std::I64 -> Std::I64 -> CPLib.Bipartite::BipartiteGraph -> CPLib.Bipartite::BipartiteGraph`
 
 二部グラフに辺を追加する
+
+制約：0 <= left < left_size, 0 <= right < right_size
+
+計算量：ならしO(1)
 
 ##### Parameters
 
@@ -26,6 +32,8 @@ Type: `Std::I64 -> Std::I64 -> CPLib.Bipartite::BipartiteGraph`
 
 二部グラフを作成する
 
+計算量：O(1)
+
 ##### Parameters
 
 - `left_size` : 左側の頂点数
@@ -37,6 +45,8 @@ Type: `CPLib.Bipartite::BipartiteGraph -> CPLib.Bipartite::BipartiteGraphFlow`
 
 二部グラフに対応する最大フロー問題を作成し、解く
 
+計算量：O((n + m) sqrt(n))
+
 ### namespace CPLib.Bipartite::BipartiteGraphFlow
 
 #### get_max_indep_set
@@ -44,6 +54,8 @@ Type: `CPLib.Bipartite::BipartiteGraph -> CPLib.Bipartite::BipartiteGraphFlow`
 Type: `CPLib.Bipartite::BipartiteGraphFlow -> (Std::Array Std::Bool, Std::Array Std::Bool)`
 
 二部グラフの最大孤立集合（最大安定集合）を取得する
+
+計算量：O(n)
 
 ##### Returns
 
@@ -60,6 +72,8 @@ Type: `CPLib.Bipartite::BipartiteGraphFlow -> Std::Array Std::Bool`
 
 二部グラフの最大マッチングを取得する
 
+計算量：O(m)
+
 ##### Returns
 
 第i番目に追加した辺がマッチングに含まれる場合は`true`、含まれない場合は`false`とする配列
@@ -74,9 +88,9 @@ Type: `CPLib.Bipartite::BipartiteGraphFlow -> Std::Array Std::Bool`
 
 二部グラフの最小辺カバーを取得する
 
-##### 制約
+制約：二部グラフに孤立点がない
 
-二部グラフに孤立点がない
+計算量：O(n + m)
 
 ##### Returns
 
@@ -91,6 +105,8 @@ Type: `CPLib.Bipartite::BipartiteGraphFlow -> Std::Array Std::Bool`
 Type: `CPLib.Bipartite::BipartiteGraphFlow -> (Std::Array Std::Bool, Std::Array Std::Bool)`
 
 二部グラフの最小点被覆を取得する
+
+計算量：O(n)
 
 ##### Returns
 

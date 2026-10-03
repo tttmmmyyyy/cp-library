@@ -1,6 +1,6 @@
 # CPLib.String.Test
 
-Defined in cp-library@0.11.1
+Defined in cp-library@0.13.2
 
 ## Values
 
@@ -21,6 +21,18 @@ Type: `Std::IO ()`
 #### test_z
 
 Type: `Std::IO ()`
+
+#### test_z_random
+
+Type: `Std::IO ()`
+
+ランダムな短い配列で、Z-arrayを素朴な計算と比べる
+
+#### test_z_speed
+
+Type: `Std::IO ()`
+
+全要素が等しい配列のZ-array。素朴な延長をするとO(n^2)かかる入力
 
 ## Types and aliases
 

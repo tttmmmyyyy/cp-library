@@ -2,6 +2,8 @@
 //
 // 素数`p`は静的でなければならない（コンパイル時に決まる必要がある）。
 // 
+// 制約：pは素数, p < 2^31
+// 
 // 素数`p`は型パラメータとして与える。例として、p = 17 としたい場合、
 // 
 // - 空の型（フィールドを持たないunboxedな型）`P17`を作成：`type P17 = unbox struct {}`.
@@ -100,8 +102,10 @@ impl P469762049 : PrimeProvider {
     value = |p| 469762049_U32;
 }
 
-// `I64`から素数を作成する
+// `I64`から`ZP p`の値を作成する
 // 
+// 計算量：O(1)
+//
 // # Parameters
 // - `x` : `I64`型の整数
 make : [p : PrimeProvider] I64 -> ZP p;
@@ -117,13 +121,17 @@ make = |x| (
 // 
 // xが0かつeが負のときはプログラムを終了する。
 // 
+// 計算量：O(log p)
+//
 // # Parameters
 // - `x` : `ZP p`型の数
 // - `e` : `I64`型の指数
 power : [p : PrimeProvider] I64 -> ZP p -> ZP p;
 power = |e, x| (
-    if x.@value == 0_U32 && e < 0 {
-        undefined("[ZP::power] divide by zero!")
+    if x.@value == 0_U32 {
+        if e < 0 { undefined("[ZP::power] divide by zero!") }
+        else if e == 0 { ZP::make(1) }
+        else { x }
     };
     let p = x.@prime.value;
     let p1 = p.i64 - 1;
@@ -151,6 +159,8 @@ _power_unsigned = |e, x| (
 // 
 // 0を与えた場合はプログラムを終了する。
 //
+// 計算量：O(log p)
+//
 // # Parameters
 // - `x` : `ZP p`型の整数
 inv : [p : PrimeProvider] ZP p -> ZP p;
@@ -160,7 +170,9 @@ inv = |x| (
     x.power(p.i64 - 2)
 );
 
-// 1の原始根を一つ得る
+// 法pの原始根を一つ得る
+//
+// 計算量：O(sqrt(p))。pがこのモジュールに定義されている素数ならO(1)
 primitive_root : [p : PrimeProvider] ZP p;
 primitive_root = (
     let pp = PrimeProvider::create;
@@ -248,7 +260,9 @@ type FFTDirection = union {
 
 // `ZP p`型の配列に対して高速フーリエ変換を行う
 //
-// 制約：2^c|(p-1)かつ|x| <= 2^cなるcが存在する
+// 制約：2^c | (p-1) かつ |x| <= 2^c なる c が存在する
+//
+// 計算量：O(n log n + sqrt(p))、n = |x|。pがこのモジュールに定義されている素数ならO(n log n)
 //
 // # Parameters
 // - `dir` : FFTの方向（順方向か逆方向か）

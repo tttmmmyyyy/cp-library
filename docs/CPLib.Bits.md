@@ -1,6 +1,6 @@
 # CPLib.Bits
 
-Defined in cp-library@0.13.1
+Defined in cp-library@0.13.2
 
 ビット操作に関するユーティリティ
 
@@ -14,9 +14,11 @@ Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> Std::Bool`
 
 第iビットが立っているかを調べる
 
+制約：0 <= i < ビット幅
+
 ##### Parameters
 
-- `i` : ビット位置。0 <= i < (ビット幅）でないときは未定義動作
+- `i` : ビット位置
 - `x` : 対象のビット列
 
 #### bit_clear
@@ -25,9 +27,11 @@ Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> a`
 
 第iビットを消す
 
+制約：0 <= i < ビット幅
+
 ##### Parameters
 
-- `i` : ビット位置。0 <= i < (ビット幅）でないときは未定義動作
+- `i` : ビット位置
 - `x` : 対象のビット列
 
 #### bit_combinations
@@ -36,9 +40,11 @@ Type: `Std::I64 -> Std::I64 -> CPLib.Bits::BitCombinationIterator`
 
 高々nビットの数のうち、ちょうどmビットが立っているものを昇順で列挙するイテレータ
 
+制約：0 <= n <= 62
+
 ##### Parameters
 
-- `n` : ビット数（0 <= n <= 62）
+- `n` : ビット数
 - `m` : 立っているビット数
 
 #### bit_flip
@@ -47,9 +53,11 @@ Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> a`
 
 第iビットを反転する
 
+制約：0 <= i < ビット幅
+
 ##### Parameters
 
-- `i` : ビット位置。0 <= i < (ビット幅）でないときは未定義動作
+- `i` : ビット位置
 - `x` : 対象のビット列
 
 #### bit_set
@@ -58,9 +66,11 @@ Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> a`
 
 第iビットを立てる
 
+制約：0 <= i < ビット幅
+
 ##### Parameters
 
-- `i` : ビット位置。0 <= i < (ビット幅）でないときは未定義動作
+- `i` : ビット位置
 - `x` : 対象のビット列
 
 #### bit_subsets
@@ -71,9 +81,11 @@ Type: `Std::I64 -> CPLib.Bits::BitSubsetIterator`
 
 全体集合から始まり、空集合までを列挙する
 
+制約：set >= 0
+
 ##### Parameters
 
-- `set` : 全体集合 (0 <= set)
+- `set` : 全体集合
 
 #### to_string_bits
 
@@ -81,9 +93,12 @@ Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> Std::String`
 
 ビット列を0と1の文字列として表示する
 
+制約：0 <= n <= ビット幅
+
 ##### Parameters
 
-- `n` : 下位からnビットのみを表示する。0 <= n < (ビット幅) でないときは未定義動作
+- `n` : 下位からnビットのみを表示する
+- `x` : 対象のビット列
 
 ### namespace CPLib.Bits::Bits
 

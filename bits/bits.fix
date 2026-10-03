@@ -128,8 +128,11 @@ impl I8 : Bits {
 
 // ビット列を0と1の文字列として表示する
 // 
+// 制約：0 <= n <= ビット幅
+//
 // # Parameters
-// - `n` : 下位からnビットのみを表示する。0 <= n < (ビット幅) でないときは未定義動作
+// - `n` : 下位からnビットのみを表示する
+// - `x` : 対象のビット列
 to_string_bits : [a : Bits, a : Eq] I64 -> a -> String = |n, x| (
     let s = fill(n+1, '\0');
     let s = range(0, n).fold(s, |i, s|
@@ -140,29 +143,37 @@ to_string_bits : [a : Bits, a : Eq] I64 -> a -> String = |n, x| (
 
 // 第iビットが立っているかを調べる
 // 
+// 制約：0 <= i < ビット幅
+//
 // # Parameters
-// - `i` : ビット位置。0 <= i < (ビット幅）でないときは未定義動作
+// - `i` : ビット位置
 // - `x` : 対象のビット列
 bit_check : [a : Bits, a : Eq] I64 -> a -> Bool = |i, x| x.and(one.shl(i)) != zero;
 
 // 第iビットを立てる
 //
+// 制約：0 <= i < ビット幅
+//
 // # Parameters
-// - `i` : ビット位置。0 <= i < (ビット幅）でないときは未定義動作
+// - `i` : ビット位置
 // - `x` : 対象のビット列
 bit_set : [a : Bits, a : Eq] I64 -> a -> a = |i, x| x.or(one.shl(i));
     
 // 第iビットを消す
 // 
+// 制約：0 <= i < ビット幅
+//
 // # Parameters
-// - `i` : ビット位置。0 <= i < (ビット幅）でないときは未定義動作
+// - `i` : ビット位置
 // - `x` : 対象のビット列
 bit_clear : [a : Bits, a : Eq] I64 -> a -> a = |i, x| x.and(one.shl(i).not);
 
 // 第iビットを反転する
 // 
+// 制約：0 <= i < ビット幅
+//
 // # Parameters
-// - `i` : ビット位置。0 <= i < (ビット幅）でないときは未定義動作
+// - `i` : ビット位置
 // - `x` : 対象のビット列
 bit_flip : [a : Bits, a : Eq] I64 -> a -> a = |i, x| x.xor(one.shl(i));
 
@@ -182,8 +193,10 @@ impl BitCombinationIterator : Iterator {
 
 // 高々nビットの数のうち、ちょうどmビットが立っているものを昇順で列挙するイテレータ
 // 
+// 制約：0 <= n <= 62
+//
 // # Parameters
-// - `n` : ビット数（0 <= n <= 62）
+// - `n` : ビット数
 // - `m` : 立っているビット数
 bit_combinations : I64 -> I64 -> BitCombinationIterator = |n, m| (
     if m < 0 || n < m { BitCombinationIterator { sub : -1, end : -1 } };
@@ -208,8 +221,10 @@ impl BitSubsetIterator : Iterator {
 // 
 // 全体集合から始まり、空集合までを列挙する
 // 
+// 制約：set >= 0
+//
 // # Parameters
-// - `set` : 全体集合 (0 <= set) 
+// - `set` : 全体集合
 bit_subsets : I64 -> BitSubsetIterator = (
     |set| BitSubsetIterator { sub : set, set : set }
 );

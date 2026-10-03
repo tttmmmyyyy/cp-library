@@ -1,6 +1,10 @@
 # CPLib.TwoSat
 
-Defined in cp-library@0.13.1
+Defined in cp-library@0.13.2
+
+2-SAT問題
+
+制約・計算量の n は変数の数、m は節の数を表します。
 
 ## Values
 
@@ -11,6 +15,10 @@ Defined in cp-library@0.13.1
 Type: `Std::I64 -> Std::Bool -> Std::I64 -> Std::Bool -> CPLib.TwoSat::TwoSat -> CPLib.TwoSat::TwoSat`
 
 節 (a = f) or (b = g) を追加する
+
+制約：0 <= a, b < n
+
+計算量：ならしO(1)
 
 ##### Parameters
 
@@ -26,6 +34,8 @@ Type: `Std::I64 -> CPLib.TwoSat::TwoSat`
 
 2-SAT問題を作る
 
+計算量：O(n)
+
 ##### Parameters
 
 - `n` : 変数の数
@@ -35,6 +45,8 @@ Type: `Std::I64 -> CPLib.TwoSat::TwoSat`
 Type: `CPLib.TwoSat::TwoSat -> Std::Option (Std::Array Std::Bool)`
 
 2-SAT問題を解く
+
+計算量：O(n + m)
 
 ##### Returns
 

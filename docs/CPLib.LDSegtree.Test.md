@@ -1,6 +1,6 @@
 # CPLib.LDSegtree.Test
 
-Defined in cp-library@0.11.1
+Defined in cp-library@0.13.2
 
 ## Values
 
@@ -21,6 +21,12 @@ Type: `(Std::String, Std::String) -> Std::String`
 #### test
 
 Type: `Std::IO ()`
+
+#### test_empty
+
+Type: `Std::IO ()`
+
+要素数0の木で、空区間への作用と畳み込みができる
 
 #### test_random
 

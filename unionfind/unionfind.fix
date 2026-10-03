@@ -15,6 +15,8 @@ type UnionFind = struct {
 // 
 // `0`から`size - 1`までの`size`個の要素を持つUnionFind木を作成する
 // 
+// 計算量：O(size)
+//
 // # Parameters
 // - `size` : UnionFind木のサイズ
 create : I64 -> UnionFind;
@@ -28,6 +30,10 @@ create = |size| UnionFind {
 // 
 // パス圧縮を行うため、UnionFindの状態も変化する
 // 
+// 制約：0 <= x < size
+//
+// 計算量：ならしO(α(size))
+//
 // # Parameters
 // - `x` : 対象となる要素
 // - `uf` : UnionFind木
@@ -45,6 +51,10 @@ find_parent = |x, uf| (
 
 // 2つの要素を同じグループにする
 // 
+// 制約：0 <= x, y < size
+//
+// 計算量：ならしO(α(size))
+//
 // # Parameters
 // - `x` : 1つ目の要素
 // - `y` : 2つ目の要素
@@ -76,6 +86,10 @@ unite = |x, y, uf| (
 // 
 // パス圧縮を行うため、UnionFindの状態も変化する
 // 
+// 制約：0 <= x, y < size
+//
+// 計算量：ならしO(α(size))
+//
 // # Parameters
 // - `x` : 1つ目の要素 
 // - `y` : 2つ目の要素
@@ -91,6 +105,10 @@ is_united = |x, y, uf| (
 // 
 // パス圧縮を行うため、UnionFindの状態も変化する
 // 
+// 制約：0 <= x < size
+//
+// 計算量：ならしO(α(size))
+//
 // # Parameters
 // - `x` : 対象となる要素
 // - `uf` : UnionFind木
@@ -106,6 +124,8 @@ get_group_size = |x, uf| (
 // 
 // パス圧縮を行うため、UnionFindの状態も変化する
 // 
+// 計算量：O(size α(size))
+//
 // # Parameters
 // - `uf` : UnionFind木
 get_groups : UnionFind -> (UnionFind, Array (Array I64));

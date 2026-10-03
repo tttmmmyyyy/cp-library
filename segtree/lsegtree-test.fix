@@ -20,6 +20,7 @@ test = (
     let rng = Random::init_by_seed(0_U64);
     let rng = *test_random(false, rng);
     let rng = *test_random(true, rng);
+    test_empty;;
 
     test_speed;;
 
@@ -128,6 +129,15 @@ gen_random_alphabetical_string = |rng| (
     (rng, s)
 );
 
+// 要素数0の木で、空区間への作用と畳み込みができる
+test_empty : IO ();
+test_empty = (
+    let tree = LSegtree::init(0) : LSegtree StrConcat ShiftAlphabet;
+    let tree = tree.act_range(0, 0, ShiftAlphabet::make(3, 1));
+    let (_, v) = tree.fold(0, 0);
+    assert_eq(|_|"lsegtree empty", v, StrConcat::make(""))
+);
+
 test_random : Bool -> Random -> IO Random;
 test_random = |is_build, rng| (
     // n要素のセグメント木に対してランダムな操作を行う
@@ -212,13 +222,14 @@ test_speed = (
         let (rng, l) = rng.generate_I64_nonneg;
         let k = k % n; // 0 <= k < n
         let l = l % n; // 0 <= l < n
+        let (k, l) = if k <= l { (k, l) } else { (l, k) };
         let (tree, v) = tree.fold(k, l);
 
         let fold_sum = fold_sum.max(v.@v);
 
         (tree, rng, fold_sum)
     )));
-    assert_eq(|_|"test_speed", fold_sum, 9223363321965027598);;
+    assert_eq(|_|"test_speed", fold_sum, 9223364764539491410);;
     println $ "[CPLib.LSegtree.Test] LSegtree({}): {}".populate([n.to_string, time.to_string]);;
 
     pure $ ()

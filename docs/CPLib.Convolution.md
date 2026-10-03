@@ -1,6 +1,6 @@
 # CPLib.Convolution
 
-Defined in cp-library@0.13.1
+Defined in cp-library@0.13.2
 
 ## Values
 
@@ -14,9 +14,9 @@ Type: `Std::Array Std::I64 -> Std::Array Std::I64 -> Std::Array Std::I64`
 
 結果は、要素数が`|a| + |b| - 1`の配列になります。
 
-制約：
-- |a| + |b| - 1 <= 2^24
-- 結果が`I64`の範囲でオーバーフローしない
+制約：|a| + |b| - 1 <= 2^24, 結果が`I64`に収まる
+
+計算量：O(n log n)、n = |a| + |b|
 
 ##### Parameters
 
@@ -31,7 +31,9 @@ Type: `[p : CPLib.ZP::PrimeProvider] Std::Array (CPLib.ZP::ZP p) -> Std::Array (
 
 結果は、要素数が`|a| + |b| - 1`の配列になります。
 
-制約：2^c|(p-1)かつ|a| + |b| - 1 <= 2^cなるcが存在する
+制約：2^c | (p-1) かつ |a| + |b| - 1 <= 2^c なる c が存在する
+
+計算量：O(n log n + sqrt(p))、n = |a| + |b|。pが`CPLib.ZP`に定義されている素数ならO(n log n)
 
 ##### Parameters
 

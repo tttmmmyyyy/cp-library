@@ -1,6 +1,6 @@
 # CPLib.Arithmetic.Test
 
-Defined in cp-library@0.11.1
+Defined in cp-library@0.13.2
 
 ## Values
 
@@ -18,7 +18,23 @@ Type: `Std::IO ()`
 
 Type: `Std::IO ()`
 
+#### test_euler_tortient
+
+Type: `Std::IO ()`
+
+#### test_euler_tortient_table
+
+Type: `Std::IO ()`
+
 #### test_ext_gcd
+
+Type: `Std::IO ()`
+
+#### test_factorize
+
+Type: `Std::IO ()`
+
+#### test_factorize_flat
 
 Type: `Std::IO ()`
 

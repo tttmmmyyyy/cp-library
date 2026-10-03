@@ -1,6 +1,6 @@
 # CPLib.Segtree
 
-Defined in cp-library@0.13.1
+Defined in cp-library@0.13.2
 
 セグメント木の実装
 
@@ -28,6 +28,8 @@ assert_eq(|_|"", tree.@(1), make("b"));;
 assert_eq(|_|"", tree.fold(0, 3), make("abc"));;
 ```
 
+制約・計算量の n は要素数です。計算量は`op`がO(1)で動くとしたものです。
+
 モノイド構造が動的に決まる場合は、モジュール`CPLib.DSegtree`を使用してください。
 
 ## Values
@@ -40,6 +42,10 @@ Type: `Std::I64 -> CPLib.Segtree::Segtree m -> m`
 
 セグメント木の要素を取得する
 
+制約：0 <= i < n
+
+計算量：O(1)
+
 ##### Parameters
 
 - `i` : インデックス（0-indexed）
@@ -51,6 +57,8 @@ Type: `[m : CPLib.Trait::Monoid] Std::Array m -> CPLib.Segtree::Segtree m`
 
 要素の配列からセグメント木を作成する
 
+計算量：O(n)
+
 ##### Parameters
 
 - `elems` : セグメント木の要素を格納する配列
@@ -60,6 +68,10 @@ Type: `[m : CPLib.Trait::Monoid] Std::Array m -> CPLib.Segtree::Segtree m`
 Type: `[m : CPLib.Trait::Monoid] Std::I64 -> Std::I64 -> CPLib.Segtree::Segtree m -> m`
 
 半開区間[l, r)にある要素の畳み込みを計算する
+
+制約：0 <= l <= r <= n
+
+計算量：O(log n)
 
 ##### Parameters
 
@@ -73,6 +85,8 @@ Type: `[m : CPLib.Trait::Monoid] Std::I64 -> CPLib.Segtree::Segtree m`
 
 すべての要素が単位元であるようなセグメント木を作成する
 
+計算量：O(n)
+
 ##### Parameters
 
 - `n` : セグメント木の要素数
@@ -82,6 +96,10 @@ Type: `[m : CPLib.Trait::Monoid] Std::I64 -> CPLib.Segtree::Segtree m`
 Type: `[m : CPLib.Trait::Monoid] Std::I64 -> m -> CPLib.Segtree::Segtree m -> CPLib.Segtree::Segtree m`
 
 要素を設定する
+
+制約：0 <= i < n
+
+計算量：O(log n)
 
 ##### Parameters
 

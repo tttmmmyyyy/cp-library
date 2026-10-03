@@ -1,6 +1,13 @@
-// 遅延伝番セグメント木（右作用）
+// 遅延伝搬セグメント木（右作用）
 // 
 // ある要素の値を取得する関数`@`はないので、もし必要なら`fold(i, i+1)`を使うこと。
+//
+// 制約・計算量の n は要素数です。計算量は各モノイドの`op`と`act`がO(1)で動くとしたものです。
+//
+// 制約：作用は次を満たす（`a`, `b`は作用、`x`, `y`は値）
+// - act(unit, x) = x
+// - act(a, op(x, y)) = op(act(a, x), act(a, y))
+// - act(op(a, b), x) = act(b, act(a, x))
 //
 // 使用例
 // ```
@@ -73,6 +80,8 @@ type LSegtree m a = struct {
 
 // すべての要素が単位元であるような遅延伝搬セグメント木を作成する
 // 
+// 計算量：O(n)
+//
 // # Parameters
 // - `n` : セグメント木の要素数
 init : [m : Monoid, a : Monoid] I64 -> LSegtree m a;
@@ -84,6 +93,8 @@ init = |n| (
 
 // 要素の配列からセグメント木を作成する
 // 
+// 計算量：O(n)
+//
 // # Parameters
 // - `elems` : セグメント木の要素を格納する配列
 build : [m : Monoid, a : Monoid] Array m -> LSegtree m a;
@@ -172,6 +183,10 @@ _recalc_above = |i, tree| (
 
 // セグメント木の要素を設定する
 //
+// 制約：0 <= i < n
+//
+// 計算量：O(log n)
+//
 // # Parameters
 // - `i` : インデックス（0-indexed）
 // - `value` : 設定する値
@@ -192,12 +207,17 @@ set = |i, value, tree| (
 // 
 // 遅延作用の伝搬が行われるので、ツリー自体も更新される。
 //
+// 制約：0 <= l <= r <= n
+//
+// 計算量：O(log n)
+//
 // # Parameters
 // - `l` : 区間の左端 (0-indexed)
 // - `r` : 区間の右端 (0-indexed, exclusive)
 // - `tree` : セグメント木
 fold : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> I64 -> LSegtree m a -> (LSegtree m a, m);
 fold = |l, r, tree| (
+    if l == r { (tree, Monoid::unit) };
     let l = l + tree.@n;
     let r = r + tree.@n;
     // l0 = lが奇数になるまで2で割ったもの。
@@ -234,6 +254,10 @@ fold = |l, r, tree| (
 
 // 半開区間[l, r)に右から作用を適用する
 // 
+// 制約：0 <= l <= r <= n
+//
+// 計算量：O(log n)
+//
 // # Parameters
 // - `l` : 区間の左端 (0-indexed)
 // - `r` : 区間の右端 (0-indexed, exclusive)
@@ -241,6 +265,7 @@ fold = |l, r, tree| (
 // - `tree` : セグメント木
 act_range : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> I64 -> a -> LSegtree m a -> LSegtree m a;
 act_range = |l, r, a, tree| (
+    if l == r { tree };
     let l = l + tree.@n;
     let r = r + tree.@n;
     let l0 = l / (l.bit_and(-l));

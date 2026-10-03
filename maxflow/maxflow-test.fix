@@ -1,11 +1,15 @@
 module CPLib.MaxFlow.Test;
 
-import CPLib.MaxFlow::MaxFlowGraph::{add_edge_id, create, get_flow, get_min_cut, maximize_flow};
-import Std::{IO, Debug::assert_eq, Monad::pure};
+import CPLib.MaxFlow::MaxFlowGraph::{add_edge, add_edge_id, create, get_flow, get_min_cut, maximize_flow};
+import Std::{
+    IO, Debug::{assert_eq, consumed_time_while_lazy}, IO::println, Iterator::{fold, range}, Monad::pure, 
+    String::populate, ToString::to_string
+};
 
 test : IO ();
 test = (
     test_basic;;
+    test_dead_end_speed;;
     pure()
 );
 
@@ -30,5 +34,21 @@ test_basic = (
     assert_eq(|_|"", graph.get_flow(eid6), 6);;
     let min_cut = graph.get_min_cut;
     assert_eq(|_|"", min_cut, [true, true, true, false, false]);;
+    pure()
+);
+// 行き止まりの長い鎖に`n`本の並行辺が入るグラフ
+// 
+// 行き止まりと分かった頂点を同じフェーズで再び探索すると、`n`本の辺ごとに鎖を辿り直して O(n^2) かかる。
+test_dead_end_speed : IO ();
+test_dead_end_speed = (
+    let n = 5000;
+    // 頂点0が始点、1が終点、2からn+1までが鎖
+    let graph = MaxFlowGraph::create(n + 2, 0, 1);
+    let graph = range(0, n).fold(graph, |_, graph| graph.add_edge(0, 2, 1));
+    let graph = range(2, n + 1).fold(graph, |v, graph| graph.add_edge(v, v + 1, 1));
+    let graph = graph.add_edge(0, 1, 1);
+    let ((_, flow), time) = consumed_time_while_lazy(|_| graph.maximize_flow);
+    assert_eq(|_|"test_dead_end_speed", flow, 1);;
+    println("[CPLib.MaxFlow.Test] dead end chain({}): {}".populate([n.to_string, time.to_string]));;
     pure()
 );

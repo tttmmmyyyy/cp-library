@@ -1,4 +1,6 @@
 // 最小コスト最大流問題
+//
+// 制約・計算量の n は頂点数、m は辺数を表します。
 module CPLib.MinCostFlow;
 
 import BinaryHeap::{BinaryHeap::{get_size, get_top, pop, push}, MinBinaryHeap::empty};
@@ -44,6 +46,10 @@ type MinCostFlowGraph c = struct {
 namespace MinCostFlowGraph {
     // グラフを作成する
     // 
+    // 制約：0 <= s, t < n, s != t
+    //
+    // 計算量：O(n)
+    //
     // # Parameters
     // - `n` : 頂点数
     // - `s` : 開始頂点番号
@@ -60,7 +66,9 @@ namespace MinCostFlowGraph {
 
     // グラフに辺を追加する
     // 
-    // 追加された辺の識別子を返す。
+    // 制約：0 <= from, to < n, cap >= 0
+    //
+    // 計算量：ならしO(1)
     // 
     // # Parameters
     // - `graph` : グラフ
@@ -74,6 +82,10 @@ namespace MinCostFlowGraph {
     // グラフに辺を追加する（辺IDを返す）
     // 
     // 追加された辺の識別子を返す。
+    // 
+    // 制約：0 <= from, to < n, cap >= 0
+    //
+    // 計算量：ならしO(1)
     // 
     // # Parameters
     // - `graph` : グラフ
@@ -107,6 +119,10 @@ namespace MinCostFlowGraph {
     // ベルマンフォード法を使ってポテンシャルを更新する
     //
     // ベルマンフォード法を使って`graph.@potential`を更新し、負の辺がある場合も動作するようにします。
+    //
+    // 制約：負の閉路がない
+    //
+    // 計算量：O(n (n + m))
     set_potential_bf : [c : CapCostLike] MinCostFlowGraph c -> MinCostFlowGraph c;
     set_potential_bf = |g| (
         let n = g.@graph.@edges.@size;
@@ -140,6 +156,8 @@ namespace MinCostFlowGraph {
 
     // ある辺に流れているフローを取得する
     // 
+    // 計算量：O(1)
+    // 
     // # Parameters
     // - `eid` : `add_edge`で得た辺の識別子
     // - `graph` : グラフ
@@ -152,6 +170,13 @@ namespace MinCostFlowGraph {
     // 最小コスト最大フローを計算する
     // 
     // 指定された量を上限として流せるだけ流し、流れたフローとコストを返す。
+    // 
+    // 制約：
+    // - 辺のコスト >= 0（負のコストの辺があるときは、先に`set_potential_bf`を呼ぶ）
+    // - 流量とコストの総和が`c`に収まる
+    // - n * (辺のコストの絶対値の最大) <= 8e18（`c`が`I64`のとき）
+    //
+    // 計算量：O(F (n + m) log(n + m))、Fは流量（容量が整数のとき）
     // 
     // # Parameters
     // - `flow_limit` : 流すフローの最大値

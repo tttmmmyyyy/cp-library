@@ -1,10 +1,12 @@
 # CPLib.ZP
 
-Defined in cp-library@0.13.1
+Defined in cp-library@0.13.2
 
 素数`p`を法とする整数の環の型`ZP p`を与えるモジュール。
 
 素数`p`は静的でなければならない（コンパイル時に決まる必要がある）。
+
+制約：pは素数, p < 2^31
 
 素数`p`は型パラメータとして与える。例として、p = 17 としたい場合、
 
@@ -47,7 +49,9 @@ Type: `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::FFTDirection -> Std::Array (CPLib
 
 `ZP p`型の配列に対して高速フーリエ変換を行う
 
-制約：2^c|(p-1)かつ|x| <= 2^cなるcが存在する
+制約：2^c | (p-1) かつ |x| <= 2^c なる c が存在する
+
+計算量：O(n log n + sqrt(p))、n = |x|。pがこのモジュールに定義されている素数ならO(n log n)
 
 ##### Parameters
 
@@ -62,6 +66,8 @@ Type: `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::ZP p -> CPLib.ZP::ZP p`
 
 0を与えた場合はプログラムを終了する。
 
+計算量：O(log p)
+
 ##### Parameters
 
 - `x` : `ZP p`型の整数
@@ -70,7 +76,9 @@ Type: `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::ZP p -> CPLib.ZP::ZP p`
 
 Type: `[p : CPLib.ZP::PrimeProvider] Std::I64 -> CPLib.ZP::ZP p`
 
-`I64`から素数を作成する
+`I64`から`ZP p`の値を作成する
+
+計算量：O(1)
 
 ##### Parameters
 
@@ -84,6 +92,8 @@ x^e mod p を計算する。
 
 xが0かつeが負のときはプログラムを終了する。
 
+計算量：O(log p)
+
 ##### Parameters
 
 - `x` : `ZP p`型の数
@@ -93,7 +103,9 @@ xが0かつeが負のときはプログラムを終了する。
 
 Type: `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::ZP p`
 
-1の原始根を一つ得る
+法pの原始根を一つ得る
+
+計算量：O(sqrt(p))。pがこのモジュールに定義されている素数ならO(1)
 
 ### namespace CPLib.ZP::PrimeProvider
 

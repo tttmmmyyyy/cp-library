@@ -1,8 +1,10 @@
 # CPLib.MaxFlow
 
-Defined in cp-library@0.13.1
+Defined in cp-library@0.13.2
 
-　最大フロー問題、最小カット問題
+最大フロー問題、最小カット問題
+
+制約・計算量の n は頂点数、m は辺数を表します。
 
 ## Values
 
@@ -55,7 +57,9 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxF
 
 グラフに辺を追加する
 
-追加された辺の識別子を返す。
+制約：0 <= from, to < n, cap >= 0
+
+計算量：ならしO(1)
 
 ##### Parameters
 
@@ -72,6 +76,10 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxF
 
 追加された辺の識別子を返す。
 
+制約：0 <= from, to < n, cap >= 0
+
+計算量：ならしO(1)
+
 ##### Parameters
 
 - `graph` : グラフ
@@ -85,6 +93,10 @@ Type: `Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MaxFlow::MaxFlowGraph c`
 
 グラフを作成する
 
+制約：0 <= s, t < n, s != t
+
+計算量：O(n)
+
 ##### Parameters
 
 - `n` : 頂点数
@@ -96,6 +108,8 @@ Type: `Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MaxFlow::MaxFlowGraph c`
 Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.Graph::EdgeId -> CPLib.MaxFlow::MaxFlowGraph c -> c`
 
 ある辺に流れているフローを取得する
+
+計算量：O(1)
 
 ##### Parameters
 
@@ -114,6 +128,8 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowGraph c -> Std::A
 
 注：最小カットにおいて除去される辺の容量の和は`maximize_flow`で得られたフローの量に等しい。
 
+計算量：O(n)
+
 ##### Parameters
 
 - `graph` : グラフ
@@ -125,6 +141,10 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowGraph c -> (CPLib
 最大フローを計算する
 
 残余グラフと流されたフローの量を返す。
+
+制約：最大流量 < `Inf::inf`
+
+計算量：O(n^2 m)。辺の容量がすべて1ならO((n + m) sqrt(m))
 
 ##### Parameters
 

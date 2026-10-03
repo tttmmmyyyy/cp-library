@@ -1,17 +1,17 @@
 module CPLib.String.Test;
 
-import CPLib.String::{calc_lcp_array, calc_suffix_array, calc_suffix_array_i64, calc_z_array, _sa_doubling};
+import CPLib.String::{calc_lcp_array, calc_suffix_array, calc_suffix_array_i64, calc_z_array, calc_z_array_any, _sa_doubling};
 import Random::{generate_U64, init_by_seed};
 import Std::{
-    IO, Array::{empty, pop_back, push_back}, Debug::assert_eq, Functor::map, 
-    Iterator::{fold, fold_m, range}, Monad::pure, String::{get_bytes, _unsafe_from_c_str}, ToI64::i64, 
-    ToU8::u8
+    loop, IO, Array::{empty, fill, pop_back, push_back, @, @size}, Debug::{assert_eq, consumed_time_while_lazy}, 
+    Functor::{forget, map}, IO::println, Iterator::{fold, fold_m, map, range, to_array}, LoopState::{break, continue}, 
+    Monad::pure, String::{get_bytes, populate, _unsafe_from_c_str}, ToI64::i64, ToString::to_string, ToU8::u8
 };
 
 // https://atcoder.jp/contests/language-test-202505/submissions/68577484
 
 test : IO ();
-test = test_sa;; test_lcp;; test_z;
+test = test_sa;; test_lcp;; test_z;; test_z_random;; test_z_speed;
 
 test_sa : IO ();
 test_sa = (
@@ -56,4 +56,32 @@ test_z = (
     let z = s.calc_z_array;
     assert_eq(|_|"test_z", z, [11, 0, 0, 1, 0, 1, 0, 4, 0, 0, 1]);;
     pure()
+);
+// ランダムな短い配列で、Z-arrayを素朴な計算と比べる
+test_z_random : IO ();
+test_z_random = (
+    let rng = Random::init_by_seed(0_U64);
+    range(0, 300).fold_m(rng, |_, rng|
+        let (rng, n) = rng.generate_U64;
+        let n = (n % 20_U64).i64;
+        let (s, rng) = range(0, n).fold(([], rng), |_, (s, rng)|
+            let (rng, c) = rng.generate_U64;
+            (s.push_back((c % 2_U64).i64), rng)
+        );
+        let naive = range(0, n).map(|i|
+            loop(0, |k| if i + k < n && s.@(i + k) == s.@(k) { continue $ k + 1 } else { break $ k })
+        ).to_array;
+        assert_eq(|_|"test_z_random", s.calc_z_array_any, naive);;
+        pure $ rng
+    ).forget
+);
+
+// 全要素が等しい配列のZ-array。素朴な延長をするとO(n^2)かかる入力
+test_z_speed : IO ();
+test_z_speed = (
+    let n = 1e5;
+    let s = Array::fill(n, 0);
+    let (z, time) = consumed_time_while_lazy(|_| s.calc_z_array_any);
+    assert_eq(|_|"test_z_speed", z.@(n - 1), 1);;
+    println("[CPLib.String.Test] calc_z_array_any({}): {}".populate([n.to_string, time.to_string]))
 );

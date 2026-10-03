@@ -1,4 +1,6 @@
-//　最大フロー問題、最小カット問題
+// 最大フロー問題、最小カット問題
+//
+// 制約・計算量の n は頂点数、m は辺数を表します。
 module CPLib.MaxFlow;
 
 import CPLib.Graph::{
@@ -38,6 +40,10 @@ type MaxFlowGraph c = struct {
 namespace MaxFlowGraph {
     // グラフを作成する
     // 
+    // 制約：0 <= s, t < n, s != t
+    //
+    // 計算量：O(n)
+    //
     // # Parameters
     // - `n` : 頂点数
     // - `s` : 開始頂点番号
@@ -56,7 +62,9 @@ namespace MaxFlowGraph {
 
     // グラフに辺を追加する
     // 
-    // 追加された辺の識別子を返す。
+    // 制約：0 <= from, to < n, cap >= 0
+    //
+    // 計算量：ならしO(1)
     // 
     // # Parameters
     // - `graph` : グラフ
@@ -69,6 +77,10 @@ namespace MaxFlowGraph {
     // グラフに辺を追加する（辺IDを返す）
     // 
     // 追加された辺の識別子を返す。
+    // 
+    // 制約：0 <= from, to < n, cap >= 0
+    //
+    // 計算量：ならしO(1)
     // 
     // # Parameters
     // - `graph` : グラフ
@@ -90,6 +102,8 @@ namespace MaxFlowGraph {
 
     // ある辺に流れているフローを取得する
     // 
+    // 計算量：O(1)
+    // 
     // # Parameters
     // - `eid` : `add_edge`で得た辺の識別子
     // - `graph` : グラフ
@@ -103,6 +117,10 @@ namespace MaxFlowGraph {
     // 
     // 残余グラフと流されたフローの量を返す。
     //
+    // 制約：最大流量 < `Inf::inf`
+    //
+    // 計算量：O(n^2 m)。辺の容量がすべて1ならO((n + m) sqrt(m))
+    //
     // # Parameters
     // - `graph` : グラフ
     maximize_flow : [c : CapacityLike] MaxFlowGraph c -> (MaxFlowGraph c, c);
@@ -115,6 +133,8 @@ namespace MaxFlowGraph {
     // `s`から到達可能な頂点を`true`、到達不可能な頂点を`false`とする配列を返す。
     // 
     // 注：最小カットにおいて除去される辺の容量の和は`maximize_flow`で得られたフローの量に等しい。
+    // 
+    // 計算量：O(n)
     // 
     // # Parameters
     // - `graph` : グラフ
@@ -231,19 +251,23 @@ namespace Dinic {
         // 終了地点に到達したら終了
         if v == self.@t { (self, f) };
         // 未探索の残余グラフの辺に沿ってループ
+        // 
+        // `v`の辺の配列`v_edges`は、ループの中で毎回`self`から取り出すのが素直だが、ループの状態として引き回すと取り出す処理が無くなり、速い。
+        // `_add_flow`が`v`の辺を書き換えるのは、ループの状態の`v_edges`が解放された後なので、配列は複製されない。
         let v_edges = self.@graph.@edges.@(v);
-        match range(self.@iter.@(v), v_edges.@size).loop_iter_s(self, |i, self|
+        let deg = v_edges.@size;
+        match range(self.@iter.@(v), deg).loop_iter_s((self, v_edges), |i, (self, v_edges)|
             let self = self.mod_iter(set(v, i));
             let e = v_edges.@(i);
             // 残余グラフの辺でないか、最短経路DAGに沿っていない辺なら、スキップする
             if !(e.@data.@0 > zero && self.@level.@(v) < self.@level.@(e.@to)) {
-                continue $ self
-            };             
+                continue $ (self, v_edges)
+            };
             // DFSでフローを流そうとする
             let (self, d) = self.dfs(e.@to, min(f, e.@data.@0));
             // この辺に沿ってフローを流すことに失敗したら、次の辺を調べる
             if d == zero {
-                continue $ self
+                continue $ (self, v_edges)
             };
             // 残余グラフを更新する
             let self = self._add_flow(v, i, d);
@@ -253,9 +277,9 @@ namespace Dinic {
                 // フローを流せるパスを見つけたとき
                 self_f
             ),
-            continue(self) => (
-                // フローを流せるパスを見つけられなかったとき
-                (self, zero)
+            continue((self, _)) => (
+                // フローを流せるパスを見つけられなかったとき、`v`の辺をすべて調べ終えたことを記録する
+                (self.mod_iter(set(v, deg)), zero)
             )
         }
     );
