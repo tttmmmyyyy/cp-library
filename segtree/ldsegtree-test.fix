@@ -180,13 +180,14 @@ test_speed = (
         let (rng, l) = rng.generate_I64_nonneg;
         let k = k % n; // 0 <= k < n
         let l = l % n; // 0 <= l < n
+        let (k, l) = if k <= l { (k, l) } else { (l, k) };
         let (tree, v) = tree.fold(k, l);
 
         let fold_sum = fold_sum.max(v);
 
         (tree, rng, fold_sum)
     )));
-    assert_eq(|_|"test_speed", fold_sum, 9223363321965027598);;
+    assert_eq(|_|"test_speed", fold_sum, 9223364764539491410);;
     println $ "[CPLib.LDSegtree.Test] LDSegtree({}): {}".populate([n.to_string, time.to_string]);;
 
     pure $ ()
