@@ -254,8 +254,8 @@ namespace Dinic {
                 self_f
             ),
             continue(self) => (
-                // フローを流せるパスを見つけられなかったとき
-                (self, zero)
+                // フローを流せるパスを見つけられなかったとき、`v`の辺をすべて調べ終えたことを記録する
+                (self.mod_iter(set(v, v_edges.@size)), zero)
             )
         }
     );
