@@ -13,7 +13,7 @@ import Std::{
     Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, I32::maximum, 
     I64::{maximum, minimum, shift_left}, IO::println, Iterator::{collect_m, filter, fold_m, map, range}, 
     LessThan::max, LoopState::{break, continue}, Monad::pure, String::populate, ToI64::i64, 
-    ToString::to_string, ToU32::u32, ToU64::u64, U32::shift_left, U64::{maximum, shift_left}
+    ToString::to_string, ToU32::u32, ToU64::u64, U32::{maximum, shift_left}, U64::{maximum, shift_left}
 };
 
 // floor_math:
@@ -262,6 +262,13 @@ test_miller_rabin_u32 = (
     );;
     assert_eq(|_|"2^31-1 is prime", is_prime_32(1_U32.shift_left(31_U32) - 1_U32), true);;
     assert_eq(|_|"2^29-1 is not prime", is_prime_32(1_U32.shift_left(29_U32) - 1_U32), false);;
+    // 底 2, 3, 5, 7 のすべてに対する強擬素数
+    assert_eq(|_|"3215031751 is not prime", is_prime_32(3215031751_U32), false);;
+    // U32の上端付近を64bit版と比べる
+    range(0, 1e5).fold_m((), |i, _|
+        let n = U32::maximum - i.u32;
+        assert_eq(|_|"check_is_prime_u32 near 2^32: " + n.to_string, is_prime_32(n), is_prime(n.u64))
+    );;
     pure()
 );
 

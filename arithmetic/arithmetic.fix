@@ -450,7 +450,7 @@ is_prime_32 = |n| (
             break $ (s, d)
         }
     );
-    match [2, 3, 5, 7].to_iter.loop_iter_s((), |a, _|
+    match [2, 7, 61].to_iter.loop_iter_s((), |a, _|
         if n == a.u32 { break $ true };
         if _check_composite_miller_rabin(n.u64, a.u64, d.u64, s) { break $ false };
         continue $ ()
