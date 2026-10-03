@@ -488,7 +488,7 @@ _calc_primitive_root = |p| (
     // 全ての φ(p) = p-1 の素因子qに対し g^(φ(p) / q) != 1 であるならば、gは原子根である。
 
     let factors = loop((2, p-1, []), |(q, n, factors)|
-        if n == 1 { break $ factors };
+        if q > n / q { break $ if n > 1 { factors.push_back(n) } else { factors } };
         if n % q != 0 { continue $ (q + 1, n, factors) };
         let factors = factors.push_back(q);
         let n = loop(n, |n|
