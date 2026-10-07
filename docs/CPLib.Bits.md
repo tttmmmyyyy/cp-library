@@ -1,6 +1,6 @@
 # CPLib.Bits
 
-Defined in cp-library@0.13.2
+Defined in cp-library@0.13.3
 
 ビット操作に関するユーティリティ
 
