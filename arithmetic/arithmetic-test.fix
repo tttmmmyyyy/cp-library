@@ -76,6 +76,12 @@ test_mod_arithmetic = (
     assert_eq(|_|"mul_mod 2", mul_mod(I64::minimum, I64::minimum, I64::maximum), 1);;
     assert_eq(|_|"mul_mod 3", mul_mod(I64::minimum, I64::maximum, I64::maximum), 0);;
 
+    // 法は絶対値で扱う。I64::minimum の絶対値 2^63 も法になる
+    assert_eq(|_|"add_mod 4", add_mod(I64::maximum, I64::maximum, I64::minimum), I64::maximum-1);;
+    assert_eq(|_|"sub_mod 9", sub_mod(I64::minimum, 1, I64::minimum), I64::maximum);;
+    assert_eq(|_|"mul_mod 4", mul_mod(-3, 5, -7), 6);;
+    assert_eq(|_|"mul_mod 5", mul_mod(I64::maximum, I64::maximum, I64::minimum), 1);;
+
     pure()
 );
 
@@ -250,6 +256,9 @@ test_miller_rabin_u64 = (
     );;
     assert_eq(|_|"2^61-1 is prime", is_prime(1_U64.shift_left(61_U64) - 1_U64), true);;
     assert_eq(|_|"2^59-1 is not prime", is_prime(1_U64.shift_left(59_U64) - 1_U64), false);;
+    // 2^63 を超える n では、法の乗算の積が 128 ビットを要する
+    assert_eq(|_|"2^64-59 is prime", is_prime(18446744073709551557_U64), true);;
+    assert_eq(|_|"4294967291 * 4294967279 is not prime", is_prime(18446743979220271189_U64), false);;
     pure()
 );
 
