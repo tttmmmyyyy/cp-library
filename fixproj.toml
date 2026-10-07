@@ -3,10 +3,10 @@
 name = "cp-library"
 
 ## Project version (in semver). This is a required field.
-version = "0.13.2"
+version = "0.14.0"
 
 ## Fix version requirement. Default is "*".
-fix_version = "1.5.0"
+fix_version = "1.6.0"
 
 ## Project authors.
 # authors = ["Alice", "Bob"]

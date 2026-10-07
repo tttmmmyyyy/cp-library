@@ -2,11 +2,11 @@ module CPLib.Arithmetic;
 
 import BoolArray::{BoolArray, BoolArray::{fill_true, get_size, make, set, @}};
 import Std::{
-    loop, undefined, Array, Bool, I64, U32, U64, U8, Add::add, 
-    Array::{empty, fill, push_back, set, to_iter, @, @size}, I64::abs, Indexable::{iget, imod}, 
+    loop, undefined, Array, Bool, I128, I64, U32, U64, U8, Add::add, 
+    Array::{empty, fill, push_back, set, to_iter, @, @size}, I128::abs, I64::abs, Indexable::{iget, imod}, 
     Iterator::{check_all, filter_map, fold, get_first, loop_iter, loop_iter_s, range, range_step}, 
-    LoopState::{break, continue, is_continue}, Option::{as_some, none, some}, ToI64::i64, ToU32::u32, 
-    ToU64::u64, ToU8::u8, Tuple2::{act_0, act_1}, U64::{bit_and, shift_right}
+    LoopState::{break, continue, is_continue}, Option::{as_some, none, some}, ToI128::i128, ToI64::i64, 
+    ToU128::u128, ToU32::u32, ToU64::u64, ToU8::u8, Tuple2::{act_0, act_1}, U64::{bit_and, shift_right}
 };
 
 // `x`を`m`で割った余りを非負で返す
@@ -26,6 +26,15 @@ pmod = |m, x| (
     if r < 0 { r + m } else { r }
 );
 
+// `x`を`m`で割った余りを非負で返す
+//
+// 制約：1 <= m <= 2^63
+_pmod_i128 : I128 -> I128 -> I64;
+_pmod_i128 = |m, x| (
+    let r = x % m;
+    (if r < 0_I128 { r + m } else { r }).i64
+);
+
 // `x + y`を`|m|`で割った余りを（非負で）返す
 //
 // 制約：m != 0
@@ -37,10 +46,7 @@ pmod = |m, x| (
 // - `y`: 整数
 // - `m`: 除数
 add_mod : I64 -> I64 -> I64 -> I64;
-add_mod = |x, y, m| (
-    let m = m.abs.u64;
-    FFI_CALL[I64 cp_lib_add_mod_signed(I64, I64, U64), x, y, m]
-);
+add_mod = |x, y, m| _pmod_i128(m.i128.abs, x.i128 + y.i128);
 
 // `x - y`を`|m|`で割った余りを（非負で）返す
 // 
@@ -53,10 +59,7 @@ add_mod = |x, y, m| (
 // - `y`: 整数
 // - `m`: 除数
 sub_mod : I64 -> I64 -> I64 -> I64;
-sub_mod = |x, y, m| (
-    let m = m.abs.u64;
-    FFI_CALL[I64 cp_lib_sub_mod_signed(I64, I64, U64), x, y, m]
-);
+sub_mod = |x, y, m| _pmod_i128(m.i128.abs, x.i128 - y.i128);
 
 // `x * y`を`|m|`で割った余りを（非負で）返す
 //
@@ -69,10 +72,7 @@ sub_mod = |x, y, m| (
 // - `y`: 整数
 // - `m`: 除数
 mul_mod : I64 -> I64 -> I64 -> I64;
-mul_mod = |x, y, m| (
-    let m = m.abs.u64;
-    FFI_CALL[I64 cp_lib_mul_mod_signed(I64, I64, U64), x, y, m]
-);
+mul_mod = |x, y, m| _pmod_i128(m.i128.abs, x.i128 * y.i128);
 
 // 64ビット整数の平方根の整数部分を計算する
 //
@@ -159,10 +159,16 @@ pow_mod_u : U64 -> U64 -> U64 -> U64;
 pow_mod_u = |e, m, x| (
     loop((e, 1_U64 % m, x), |(e, pow, x)|
         if e == 0_U64 { break $ pow };
-        let pow = if e.bit_and(1_U64) == 1_U64 { FFI_CALL[U64 cp_lib_mul_mod(U64, U64, U64), pow, x, m] } else { pow };
-        continue $ (e.shift_right(1_U64), pow, FFI_CALL[U64 cp_lib_mul_mod(U64, U64, U64), x, x, m])
+        let pow = if e.bit_and(1_U64) == 1_U64 { _mul_mod_u(m, pow, x) } else { pow };
+        continue $ (e.shift_right(1_U64), pow, _mul_mod_u(m, x, x))
     )
 );
+
+// `x * y`を`m`で割った余りを返す
+//
+// 制約：m >= 1
+_mul_mod_u : U64 -> U64 -> U64 -> U64;
+_mul_mod_u = |m, x, y| (x.u128 * y.u128 % m.u128).u64;
 
 // `ax = 1 mod m`なる`x`のうち、`0 <= x < m`を満たすものを返す
 //
