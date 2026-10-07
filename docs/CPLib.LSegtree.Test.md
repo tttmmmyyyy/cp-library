@@ -1,6 +1,6 @@
 # CPLib.LSegtree.Test
 
-Defined in cp-library@0.13.3
+Defined in cp-library@0.14.0
 
 ## Values
 
