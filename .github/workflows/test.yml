@@ -52,4 +52,4 @@ jobs:
         run: cargo install --locked --git https://github.com/tttmmmyyyy/fixlang.git --rev ${{ steps.fixlang.outputs.commit }}
 
       - name: Run tests
-        run: fix test --allow-preliminary-commands
+        run: fix test --allow-preliminary-commands --check-integer-operations
