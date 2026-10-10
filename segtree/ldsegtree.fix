@@ -26,7 +26,7 @@
 module CPLib.LDSegtree;
 
 import Std::{
-    loop, Array, I64, Array::{fill, set, @, @size}, I64::{bit_and, shift_right}, 
+    loop, Array, I64, Array::{fill, set, @, @size}, I64::{bit_and, shift_right}, Indexable::ixchg, 
     Iterator::{fold, range, range_step}, LoopState::{break, continue}
 };
 
@@ -112,9 +112,9 @@ _propagate_above = |i, tree| (
     let act = tree.@act;
     let act_op = tree.@act_op;
     let act_unit = tree.@act_unit;
-    // 書き換える配列は木から抜き出し、木には空の配列を置く。抜き出した配列は木と共有されないので、書き換えても複製されない
-    let (elems, tree) = tree.act_elems(|x| (x, []));
-    let (lazy, tree) = tree.act_lazy(|x| (x, []));
+    // 書き換える配列は、空の配列を身代わりに置いて木から取り出す（身代わりパターン）。取り出した配列は木と共有されないので、書き換えても複製されない
+    let (tree, elems) = tree[^elems].ixchg([]);
+    let (tree, lazy) = tree[^lazy].ixchg([]);
     let (elems, lazy) = range_step(height, 0, -1).fold((elems, lazy), |h, (elems, lazy)|
         let j = i.shift_right(h); // iからh個親のノード
         let a = lazy.@(j);
@@ -134,7 +134,7 @@ _recalc_above : I64 -> LDSegtree m a -> LDSegtree m a;
 _recalc_above = |i, tree| (
     let act = tree.@act;
     let op = tree.@op;
-    let (elems, tree) = tree.act_elems(|x| (x, []));
+    let (tree, elems) = tree[^elems].ixchg([]);
     let lazy = tree.@lazy;
     let elems = loop((i, elems), |(i, elems)|
         if i <= 1 { break $ elems }; // ルートノードに到達したら終了
@@ -242,7 +242,7 @@ act_range = |l, r, a, tree| (
     let tree = tree._propagate_above(r0);
 
     let act_op = tree.@act_op;
-    let (lazy, tree) = tree.act_lazy(|x| (x, []));
+    let (tree, lazy) = tree[^lazy].ixchg([]);
     let lazy = loop((l, r, lazy), |(l, r, lazy)|
         if l >= r { break $ lazy };
         let (l, lazy) = if l % 2 == 0 { (l, lazy) } else {
