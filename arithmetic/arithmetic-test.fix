@@ -3,7 +3,7 @@ module CPLib.Arithmetic.Test;
 import BoolArray::BoolArray::@;
 import CPLib.Arithmetic::{
     add_mod, calc_gcd, create_prime_list, create_prime_table, euler_tortient, euler_tortient_table, 
-    ext_gcd, factorize, factorize_flat, factorize_via_lp_table, inv_mod, is_prime, is_prime_32, isqrt, 
+    ext_gcd, factorize, factorize_flat, factorize_via_lp_table, inv_mod, is_prime, isqrt, 
     lift_crt, linear_sieve, mul_mod, pmod, pow_mod, pythagorean_triples, sub_mod, _calc_primitive_root, 
     _inv_gcd
 };
@@ -286,20 +286,16 @@ test_miller_rabin_u64 = (
 
 test_miller_rabin_u32 : IO ();
 test_miller_rabin_u32 = (
-    let __N = 1e5;
-    let prime_table = create_prime_table(__N);
-    range(0, __N).fold_m((), |n, _|
-        assert_eq(|_|"check_is_prime_u32: " + n.to_string, prime_table.@(n), is_prime_32(n.u32))
-    );;
-    assert_eq(|_|"2^31-1 is prime", is_prime_32(1_U32.shift_left(31_U32) - 1_U32), true);;
-    assert_eq(|_|"2^29-1 is not prime", is_prime_32(1_U32.shift_left(29_U32) - 1_U32), false);;
+    // n < 4759123141 では底2, 7, 61で判定する
+    assert_eq(|_|"2^31-1 is prime", is_prime(1_U64.shift_left(31_U64) - 1_U64), true);;
+    assert_eq(|_|"2^29-1 is not prime", is_prime(1_U64.shift_left(29_U64) - 1_U64), false);;
+    assert_eq(|_|"2^32-5 is prime", is_prime(4294967291_U64), true);;
     // 底 2, 3, 5, 7 のすべてに対する強擬素数
-    assert_eq(|_|"3215031751 is not prime", is_prime_32(3215031751_U32), false);;
-    // U32の上端付近を64bit版と比べる
-    range(0, 1e5).fold_m((), |i, _|
-        let n = U32::maximum - i.u32;
-        assert_eq(|_|"check_is_prime_u32 near 2^32: " + n.to_string, is_prime_32(n), is_prime(n.u64))
-    );;
+    assert_eq(|_|"3215031751 is not prime", is_prime(3215031751_U64), false);;
+    // 4759123141 = 48781 * 97561 は、底2, 7, 61のすべてに対する強擬素数
+    assert_eq(|_|"4759123141 is not prime", is_prime(4759123141_U64), false);;
+    assert_eq(|_|"4759123129 is prime", is_prime(4759123129_U64), true);;
+    assert_eq(|_|"4759123151 is prime", is_prime(4759123151_U64), true);;
     pure()
 );
 

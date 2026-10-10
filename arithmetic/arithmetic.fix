@@ -445,30 +445,7 @@ factorize_via_lp_table : U32 -> Array U32 -> Array (U32, U8) = |n, lp_table| (
     )
 );
 
-// n-1 = 2^s * d (d: 奇数)に対し、2 <= a <= n-2 を使ってnが合成数かどうかを調べる。
-// 
-// a^d = 1 (mod n) または、a^(2^r * d) = -1 (mod n) (0 <= r < s) のいずれかが成り立つならば、nは素数である可能性があるので、falseを返す。
-// そうでない場合は、nは合成数であるので、trueを返す。
-// 
-// # Parameters
-// - `n`: 調べる数
-// - `a`: 2 <= a <= n-2 の範囲の整数
-// - `d`: n-1 = 2^s * d の 奇数d
-// - `s`: n-1 = 2^s * d の 2の指数部分
-_check_composite_miller_rabin : U64 -> U64 -> U64 -> I64 -> Bool;
-_check_composite_miller_rabin = |n, a, d, s| (
-    let x = a.pow_mod_u(d, n); // a^d
-    if x == 1_U64 || x == n - 1_U64 { false }; // a^d = 1,  or  a^(2^r * d) = -1 for r = 0
-    range(1, s).loop_iter_s(x, |_r, x|
-        let x = x.pow_mod_u(2_U64, n); // a^(2^r * d)
-        if x == n - 1_U64 { break $ () };
-        continue $ x
-    ).is_continue
-);
-
-// Miller-Rabin 素数判定法（64bit版）
-// 
-// 底は、2^64未満のすべての数で正しく判定する7個（https://miller-rabin.appspot.com）を使う。
+// Miller-Rabin 素数判定法
 // 
 // 計算量：O(log n)
 //
@@ -488,7 +465,14 @@ is_prime = |n| (
     let one = (0_U64 - n) % n; // 2^64 mod n
     let minus_one = n - one;
     let r2 = (one.u128 * one.u128 % n.u128).u64; // 2^128 mod n。`mul(x, r2)`はxのMontgomery表現
-    match [2_U64, 325_U64, 9375_U64, 28178_U64, 450775_U64, 9780504_U64, 1795265022_U64].to_iter.loop_iter_s((), |a, _|
+    // 底は、4759123141未満のすべての数を正しく判定する3個と、2^64未満のすべての数を正しく判定する7個
+    // （https://miller-rabin.appspot.com）。4759123141は、底2, 7, 61のすべてで素数と区別できない最小の合成数。
+    let bases = if n < 4759123141_U64 {
+        [2_U64, 7_U64, 61_U64]
+    } else {
+        [2_U64, 325_U64, 9375_U64, 28178_U64, 450775_U64, 9780504_U64, 1795265022_U64]
+    };
+    match bases.to_iter.loop_iter_s((), |a, _|
         let a = a % n;
         if a == 0_U64 { continue $ () };
         // x = a^d
@@ -524,32 +508,14 @@ _montgomery_reduce = |n, n_inv, t| (
 );
 
 // Miller-Rabin 素数判定法（32bit版）
-// 
-// https://cp-algorithms.com/algebra/primality_tests.html#deterministic-version
-// 
-// 計算量：O(log n)
 //
+// `is_prime(n.u64)`と同じ。
+// 
 // # Parameters
 // - `n`: 調べる数
 is_prime_32 : U32 -> Bool;
-is_prime_32 = |n| (
-    if n < 2_U32 { false };
-    let (s, d) = loop((0, n-1_U32), |(s, d)|
-        if d % 2_U32 == 0_U32 {
-            continue $ (s + 1, d / 2_U32)
-        } else {
-            break $ (s, d)
-        }
-    );
-    match [2, 7, 61].to_iter.loop_iter_s((), |a, _|
-        if n == a.u32 { break $ true };
-        if _check_composite_miller_rabin(n.u64, a.u64, d.u64, s) { break $ false };
-        continue $ ()
-    ) {
-        break(r) => r,
-        continue(_) => true
-    }
-);
+is_prime_32 = |n| is_prime(n.u64);
+DEPRECATED[is_prime_32, "Use `CPLib.Arithmetic::is_prime` instead."];
 
 // @param b `1 <= b`
 // @return pair (g, x) s.t. g = gcd(a, b), xa = g (mod b), 0 <= x < b/g

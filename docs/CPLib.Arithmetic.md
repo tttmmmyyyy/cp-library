@@ -270,9 +270,7 @@ assert_eq(|_|"", 3.inv_mod(7), 5) // 3 * 5 = 15 = 1 mod 7
 
 Type: `Std::U64 -> Std::Bool`
 
-Miller-Rabin 素数判定法（64bit版）
-
-底は、2^64未満のすべての数で正しく判定する7個（https://miller-rabin.appspot.com）を使う。
+Miller-Rabin 素数判定法
 
 計算量：O(log n)
 
@@ -282,13 +280,13 @@ Miller-Rabin 素数判定法（64bit版）
 
 #### is_prime_32
 
+**Deprecated**: Use `CPLib.Arithmetic::is_prime` instead.
+
 Type: `Std::U32 -> Std::Bool`
 
 Miller-Rabin 素数判定法（32bit版）
 
-https://cp-algorithms.com/algebra/primality_tests.html#deterministic-version
-
-計算量：O(log n)
+`is_prime(n.u64)`と同じ。
 
 ##### Parameters
 
