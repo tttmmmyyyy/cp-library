@@ -2,10 +2,10 @@ module CPLib.Arithmetic;
 
 import BoolArray::{BoolArray, BoolArray::{fill_true, get_size, make, set, @}};
 import Std::{
-    loop, undefined, Array, Bool, I128, I64, U32, U64, U8, Add::add, 
+    loop, undefined, Array, Bool, I128, I64, U128, U32, U64, U8, U128::shift_right, Add::add, 
     Array::{empty, fill, push_back, set, to_iter, @, @size}, I128::abs, I64::abs, Indexable::{iget, imod}, 
     Iterator::{check_all, filter_map, fold, get_first, loop_iter, loop_iter_s, range, range_step}, 
-    LoopState::{break, continue, is_continue}, Option::{as_some, none, some}, ToI128::i128, ToI64::i64, 
+    LoopState::{break, continue, is_break, is_continue}, Option::{as_some, none, some}, ToI128::i128, ToI64::i64, 
     ToU128::u128, ToU32::u32, ToU64::u64, ToU8::u8, Tuple2::{act_0, act_1}, U64::{bit_and, shift_right}
 };
 
@@ -468,7 +468,7 @@ _check_composite_miller_rabin = |n, a, d, s| (
 
 // Miller-Rabin 素数判定法（64bit版）
 // 
-// https://cp-algorithms.com/algebra/primality_tests.html#deterministic-version
+// 底は、2^64未満のすべての数で正しく判定する7個（https://miller-rabin.appspot.com）を使う。
 // 
 // 計算量：O(log n)
 //
@@ -477,21 +477,50 @@ _check_composite_miller_rabin = |n, a, d, s| (
 is_prime : U64 -> Bool;
 is_prime = |n| (
     if n < 2_U64 { false };
-    let (s, d) = loop((0, n-1_U64), |(s, d)|
-        if d % 2_U64 == 0_U64 {
-            continue $ (s + 1, d / 2_U64)
-        } else {
-            break $ (s, d)
-        }
+    // Montgomery乗算は法が奇数であることを要する
+    if n.bit_and(1_U64) == 0_U64 { n == 2_U64 };
+    let (s, d) = loop((0, n - 1_U64), |(s, d)|
+        if d.bit_and(1_U64) == 0_U64 { continue $ (s + 1, d.shift_right(1_U64)) } else { break $ (s, d) }
     );
-    match [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37].to_iter.loop_iter_s((), |a, _|
-        if n == a.u64 { break $ true };
-        if _check_composite_miller_rabin(n, a.u64, d, s) { break $ false };
-        continue $ ()
+    // 数xのMontgomery表現は x * 2^64 mod n。`mul`はMontgomery表現どうしの積を返す
+    let n_inv = range(0, 6).fold(n, |_, x| x * (2_U64 - n * x)); // n * n_inv = 1 (mod 2^64)
+    let mul = |x, y| _montgomery_reduce(n, n_inv, x.u128 * y.u128);
+    let one = (0_U64 - n) % n; // 2^64 mod n
+    let minus_one = n - one;
+    let r2 = (one.u128 * one.u128 % n.u128).u64; // 2^128 mod n。`mul(x, r2)`はxのMontgomery表現
+    match [2_U64, 325_U64, 9375_U64, 28178_U64, 450775_U64, 9780504_U64, 1795265022_U64].to_iter.loop_iter_s((), |a, _|
+        let a = a % n;
+        if a == 0_U64 { continue $ () };
+        // x = a^d
+        let x = loop((d, one, mul(a, r2)), |(e, pow, b)|
+            if e == 0_U64 { break $ pow };
+            let pow = if e.bit_and(1_U64) == 1_U64 { mul(pow, b) } else { pow };
+            continue $ (e.shift_right(1_U64), pow, mul(b, b))
+        );
+        if x == one || x == minus_one { continue $ () };
+        // a^(2^r * d) = -1 となる 1 <= r < s があれば、nは素数である可能性がある
+        let maybe_prime = range(1, s).loop_iter_s(x, |_, x|
+            let x = mul(x, x);
+            if x == minus_one { break $ () };
+            continue $ x
+        ).is_break;
+        if maybe_prime { continue $ () } else { break $ false }
     ) {
         break(r) => r,
         continue(_) => true
     }
+);
+
+// Montgomery簡約：t * 2^(-64) mod n を返す
+//
+// 制約：nは奇数, n * n_inv = 1 (mod 2^64), t < n * 2^64
+_montgomery_reduce : U64 -> U64 -> U128 -> U64;
+_montgomery_reduce = |n, n_inv, t| (
+    // m = t * n_inv (mod 2^64) とすると t - m * n は 2^64 で割り切れ、(t - m * n) / 2^64 は (-n, n) に入る
+    let hi = t.shift_right(64_U128).u64;
+    let m = t.u64 * n_inv;
+    let mn_hi = (m.u128 * n.u128).shift_right(64_U128).u64;
+    if hi >= mn_hi { hi - mn_hi } else { hi + (n - mn_hi) }
 );
 
 // Miller-Rabin 素数判定法（32bit版）

@@ -272,7 +272,7 @@ Type: `Std::U64 -> Std::Bool`
 
 Miller-Rabin 素数判定法（64bit版）
 
-https://cp-algorithms.com/algebra/primality_tests.html#deterministic-version
+底は、2^64未満のすべての数で正しく判定する7個（https://miller-rabin.appspot.com）を使う。
 
 計算量：O(log n)
 
