@@ -48,8 +48,6 @@ Type: `[m : CPLib.Memoize::Memory, CPLib.Memoize::Memory::Key m = k, CPLib.Memoi
 - キー`x`に対する値がメモリに存在する場合はそれを返す。
 - 存在しない場合はモナド`body`を作って実行し、結果をメモリに保存してから返す。
 
-`body`はメモリに値が無いときだけ作られる。このため、メモ化した再帰の計算量は、呼び出されるキーの数に比例する。
-
 ##### Parameters
 
 - `x` : メモ化のキー
