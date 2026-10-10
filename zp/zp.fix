@@ -37,7 +37,7 @@ import CPLib.Arithmetic::calc_primitive_root;
 import Std::{
     loop, undefined, Add, Array, Div, Eq, I64, Mul, Neg, Sub, ToString, U32, U64, Zero, 
     Array::{
-        empty, push_back, reserve, @, @size, _unsafe_get_bounds_unchecked,
+        fill, push_back, reserve, @, @size, _unsafe_get_bounds_unchecked,
         unsafe_set_bounds_unchecked, unsafe_swap_bounds_unchecked
     }, 
     Functor::map, I64::{bit_and, bit_xor, shift_left, shift_right}, Iterator::{fold, range, range_step}, 
@@ -121,8 +121,8 @@ make = |x| (
 // 計算量：O(log p)
 //
 // # Parameters
-// - `x` : `ZP p`型の数
 // - `e` : `I64`型の指数
+// - `x` : `ZP p`型の数
 power : [p : PrimeProvider] I64 -> ZP p -> ZP p;
 power = |e, x| (
     if x.@value == 0_U32 {
@@ -140,8 +140,8 @@ power = |e, x| (
 // x^e mod p を計算する（eが非負整数のとき）
 // 
 // # Parameters
+// - `e` : `U64`型の指数
 // - `x` : `ZP p`型の数
-// - `e` : `I64`型の指数
 _power_unsigned : [p : PrimeProvider] U64 -> ZP p -> ZP p;
 _power_unsigned = |e, x| (
     loop((e, ZP::make(1), x), |(e, pow, x)|
@@ -257,6 +257,8 @@ type FFTDirection = union {
 
 // `ZP p`型の配列に対して高速フーリエ変換を行う
 //
+// 入力の長さを2のべき乗に切り上げ、末尾を0で埋めてから変換する。返る配列の長さは切り上げた長さである（長さ3なら4）。順変換して逆変換すると、元の配列の末尾に0を足した、切り上げた長さの配列が返る。
+//
 // 制約：2^c | (p-1) かつ |x| <= 2^c なる c が存在する
 //
 // 計算量：O(n log n + sqrt(p))、n = |x|。pがこのモジュールに定義されている素数ならO(n log n)
@@ -301,31 +303,29 @@ fft = |dir, x| (
         (j, x)
     );
 
-    // 2 <= len <= n（lenは2のべき））の範囲で、1のlen乗根を計算しておく（逆順）。
-    let wlens = loop((n, Array::empty(32), w), |(len, wlens, w)|
-        if len == 1 { break $ wlens };
-        let wlens = wlens.push_back(w);
-        let w = w * w;
-        continue $ (len.shift_right(1), wlens, w)
+    // 回転因子の表：hが2のべきで0 <= j < hのとき、tw.@(h + j) = (1の2h乗根)^j
+    let tw = Array::fill(n, ZP::make(0));
+    let tw = loop((n / 2, tw, w), |(h, tw, wh)|
+        // whは1の2h乗根
+        if h == 0 { break $ tw };
+        let (tw, _) = range(0, h).fold((tw, ZP::make(1)), |j, (tw, t)|
+            (tw.unsafe_set_bounds_unchecked(h + j, t), t * wh)
+        );
+        continue $ (h / 2, tw, wh * wh)
     );
 
-    let x = loop((1, x), |(log_len, x)|
-        let len = 1.shift_left(log_len);
-        if len > n { break $ x };
-        let wlen = wlens.@(wlens.@size - log_len); // 1のlen乗根
-        let x = range_step(0, n, len).fold(x, |i, x|
-            let w = ZP::make(1);
-            let (_w, x) = range(0, len / 2).fold((w, x), |j, (w, x)|
+    // 長さ2hのブロックごとにバタフライ演算をする
+    let x = loop((1, x), |(h, x)|
+        if h >= n { break $ x };
+        let x = range_step(0, n, 2 * h).fold(x, |i, x|
+            range(0, h).fold(x, |j, x|
                 let u = x._unsafe_get_bounds_unchecked(i+j);
-                let v = x._unsafe_get_bounds_unchecked(i+j+len/2);
-                let v = v * w;
+                let v = x._unsafe_get_bounds_unchecked(i+j+h) * tw._unsafe_get_bounds_unchecked(h+j);
                 let x = x.unsafe_set_bounds_unchecked(i+j, u + v);
-                let x = x.unsafe_set_bounds_unchecked(i+j+len/2, u - v);
-                (w * wlen, x)
-            );
-            x
+                x.unsafe_set_bounds_unchecked(i+j+h, u - v)
+            )
         );
-        continue $ (log_len + 1, x)
+        continue $ (2 * h, x)
     );
 
     // 逆変換の場合は、nで割る

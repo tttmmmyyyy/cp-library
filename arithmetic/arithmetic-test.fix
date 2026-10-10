@@ -123,6 +123,12 @@ test_gcd = (
     assert_eq(|_|"gcd 6", calc_gcd(0, 0), 0);;
     assert_eq(|_|"gcd 7", calc_gcd(17, 19), 1);;
     assert_eq(|_|"gcd 8", calc_gcd(17, 17), 17);;
+    // `I64::minimum % -1`は溢れる
+    assert_eq(|_|"gcd 9", calc_gcd(I64::minimum, -1), 1);;
+    assert_eq(|_|"gcd 10", calc_gcd(-1, I64::minimum), 1);;
+    assert_eq(|_|"gcd 11", calc_gcd(I64::minimum, 1), 1);;
+    assert_eq(|_|"gcd 12", calc_gcd(I64::minimum, 6), 2);;
+    assert_eq(|_|"gcd 13", calc_gcd(I64::minimum, I64::maximum), 1);;
 
     pure()
 );
@@ -164,6 +170,15 @@ test_ext_gcd = (
     let (d, (x, y)) = ext_gcd(17, 17);
     assert_eq(|_|"ext_gcd 9a", d, 17);;
     assert_eq(|_|"ext_gcd 9b", x * 17 + y * 17, d);;
+
+    // `I64::minimum % -1`は溢れる
+    let (d, (x, y)) = ext_gcd(I64::minimum, -1);
+    assert_eq(|_|"ext_gcd 10a", d, 1);;
+    assert_eq(|_|"ext_gcd 10b", (x, y), (0, -1));;
+
+    let (d, (x, y)) = ext_gcd(-1, I64::minimum);
+    assert_eq(|_|"ext_gcd 11a", d, 1);;
+    assert_eq(|_|"ext_gcd 11b", (x, y), (-1, 0));;
 
     pure()
 );

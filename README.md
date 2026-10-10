@@ -13,7 +13,7 @@
 * Mod Int
   * `CPLib.ZP` : 静的な（すなわち、コンパイル時に決まる）素数を法とする整数の剰余環（体）の演算を提供します。またnumber theoretic transform（NTT）も提供します。
 * 整数論
-  * `CPLib.ZP.Arithmetic` : mod演算、GCD、拡張ユークリッドの互除法、pow_mod、inv_mod、中国剰余定理、素数リスト（篩）、素数判定（Miller-Rabin法）、floor_sum
+  * `CPLib.Arithmetic` : mod演算、GCD、拡張ユークリッドの互除法、pow_mod、inv_mod、中国剰余定理、素数リスト（篩）、素因数分解、素数判定（Miller-Rabin法）、オイラーのトーシェント関数、原始根、floor_sum、ピタゴラス数
 * セグメント木
   * `CPLib.Segtree` : 静的にモノイド構造が決まる場合のセグメント木。
   * `CPLib.DSegtree` : 動的にモノイド構造が決まる場合のセグメント木。
@@ -23,12 +23,12 @@
   * `CPLib.UnionFind` : Union-Find木の実装。
 * フロー・最小カット・二部グラフ
   * `CPLib.MaxFlow` : 最大フロー・最小カット（Dinic法）
-  * `CPLib.MinCostMaxFlow` : 最小コスト最大フロー
+  * `CPLib.MinCostFlow` : 最小コスト最大フロー
   * `CPLib.Bipartite` : 二部グラフの最大マッチング、最小辺被覆、最大独立集合、最小点被覆。
 * 文字列
   * `CPLib.String` : Suffix Array、LCP Array、Z Algorithm。
 * グラフ
-  * `CPLib.Graph` : グラフの表現と基本的なアルゴリズム。ダイクストラ法、連結成分分解、トポロジカルソート。
+  * `CPLib.Graph` : グラフの表現と基本的なアルゴリズム。ダイクストラ法、ベルマンフォード法、強連結成分分解（成分をトポロジカル順に返す）。
 * 2Sat
   * `CPLib.TwoSat` : 2-SAT問題
 * 畳み込み

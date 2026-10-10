@@ -32,9 +32,9 @@ Type: `Std::I64 -> Std::I64 -> CPLib.Bipartite::BipartiteGraph -> CPLib.Bipartit
 
 ##### Parameters
 
-- `graph` : 二部グラフ
 - `left` : 左側の頂点番号
 - `right` : 右側の頂点番号
+- `graph` : 二部グラフ
 
 #### create
 
@@ -63,14 +63,13 @@ Type: `CPLib.Bipartite::BipartiteGraph -> CPLib.Bipartite::BipartiteGraphFlow`
 
 Type: `CPLib.Bipartite::BipartiteGraphFlow -> (Std::Array Std::Bool, Std::Array Std::Bool)`
 
-二部グラフの最大孤立集合（最大安定集合）を取得する
+二部グラフの最大独立集合（最大安定集合）を取得する
 
 計算量：O(n)
 
 ##### Returns
 
-左側の頂点の被覆と右側の頂点の被覆をそれぞれ`Array Bool`として返す。
-ある頂点が被覆に含まれる場合は`true`、含まれない場合は`false`となる配列が返される。
+左側の頂点と右側の頂点のそれぞれについて、最大独立集合に含まれる頂点を`true`、含まれない頂点を`false`とする`Array Bool`を返す。
 
 ##### Parameters
 
