@@ -59,7 +59,7 @@ type Segtree m = struct {
 // - `n` : セグメント木の要素数
 init : [m : Monoid] I64 -> Segtree m;
 init = |n| (
-    let elems = Array::fill(n * 2, Monoid::unit);
+    let elems = fill(n * 2, Monoid::unit);
     Segtree { elems : elems, n : n }
 );
 
@@ -72,7 +72,7 @@ init = |n| (
 build : [m : Monoid] Array m -> Segtree m;
 build = |elems| (
     let n = elems.@size;
-    let tree = Array::fill(n * 2, Monoid::unit);
+    let tree = fill(n * 2, Monoid::unit);
     // [n, 2n)に要素をセット
     let tree = range(0, n).fold(tree, |i, tree| tree.set(n + i, elems.@(i)) );
     // [1, n)の範囲を計算

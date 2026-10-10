@@ -37,7 +37,7 @@ calc_suffix_array_i64 = |s| (
     let n = s.@size;
     let idx = range(0, n).to_array;
     let idx = idx.sort_by(|(l, r)| s.@(l) < s.@(r));
-    let s2 = Array::fill(n, 0);
+    let s2 = fill(n, 0);
     let (s2, now) = range(0, n).fold((s2, 0), |i, (s2, now)|
         let now = if i > 0 && s.@(idx.@(i - 1)) != s.@(idx.@(i)) { now + 1 } else { now };
         let s2 = s2.set(idx.@(i), now);
@@ -101,9 +101,9 @@ calc_lcp_array = |sa, s| s.get_bytes.pop_back.calc_lcp_array_any(sa);
 calc_lcp_array_any : [a : Eq] Array I64 -> Array a -> Array I64;
 calc_lcp_array_any = |sa, s| (
     let n = s.@size;
-    let rnk = Array::fill(n, 0);
+    let rnk = fill(n, 0);
     let rnk = range(0, n).fold(rnk, |i, rnk| rnk.set(sa.@(i), i));
-    let lcp = Array::fill(n - 1, 0);
+    let lcp = fill(n - 1, 0);
     range(0, n).fold((lcp, 0), |i, (lcp, h)|
         let h = if h > 0 { h - 1 } else { 0 };
         if rnk.@(i) == 0 { (lcp, h) };
@@ -143,7 +143,7 @@ calc_z_array_any : [a : Eq] Array a -> Array I64;
 calc_z_array_any = |s| (
     let n = s.@size;
     if n == 0 { [] };
-    let z = Array::fill(n, 0);
+    let z = fill(n, 0);
     let z = z.set(0, 0);
     let (_, z) = range(1, n).fold((0, z), |i, (j, z)|
         let k = if j + z.@(j) <= i { 0 } else { min(j + z.@(j) - i, z.@(i-j)) };
@@ -176,14 +176,14 @@ _sa_is = |upper, s| (
     if n < 40 {
         s._sa_doubling
     };
-    let sa = Array::fill(n, 0);
-    let ls = Array::fill(n, false);
+    let sa = fill(n, 0);
+    let ls = fill(n, false);
     let ls = range_step(n-2, -1, -1).fold(ls, |i, ls|
         let l = if s.@(i) == s.@(i+1) { ls.@(i+1) } else { s.@(i) < s.@(i+1) };
         ls.set(i, l)
     );
-    let sum_l = Array::fill(upper+1, 0);
-    let sum_s = Array::fill(upper+1, 0);
+    let sum_l = fill(upper+1, 0);
+    let sum_s = fill(upper+1, 0);
     let (sum_l, sum_s) = range(0, n).fold((sum_l, sum_s), |i, (sum_l, sum_s)|
         if !ls.@(i) {
             (sum_l, sum_s.mod(s.@(i), add(1)))
@@ -233,7 +233,7 @@ _sa_is = |upper, s| (
         );
         sa
     );
-    let lms_map = Array::fill(n+1, -1);
+    let lms_map = fill(n+1, -1);
     let (lms_map, m) = range(1, n).fold((lms_map, 0), |i, (lms_map, m)|
         if !ls.@(i-1) && ls.@(i) {
             let lms_map = lms_map.set(i, m);
@@ -242,7 +242,7 @@ _sa_is = |upper, s| (
         };
         (lms_map, m)
     );
-    let lms = Array::empty(m);
+    let lms = empty(m);
     let lms = range(1, n).fold(lms, |i, lms|
         if !ls.@(i-1) && ls.@(i) {
             lms.push_back(i)
@@ -252,12 +252,12 @@ _sa_is = |upper, s| (
     let sa = sa.induce(lms);
 
     if m > 0 {
-        let sorted_lms = Array::empty(m);
+        let sorted_lms = empty(m);
         let sorted_lms = sa.to_iter.fold(sorted_lms, |v, sorted_lms|
             if lms_map.@(v) != -1 { sorted_lms.push_back(v) };
             sorted_lms
         );
-        let rec_s = Array::fill(m, 0);
+        let rec_s = fill(m, 0);
         let rec_s = rec_s.set(lms_map.@(sorted_lms.@(0)), 0);
         let (rec_s, rec_upper) = range(1, m).fold((rec_s, 0), |i, (rec_s, rec_upper)|
             let l = sorted_lms.@(i-1);
@@ -292,9 +292,9 @@ _sa_is = |upper, s| (
 _sa_doubling : Array I64 -> Array I64;
 _sa_doubling = |s| (
     let n = s.@size;
-    let sa = range(0, n).fold(Array::fill(n, 0), |i, sa| sa.set(i, i) );
+    let sa = range(0, n).fold(fill(n, 0), |i, sa| sa.set(i, i) );
     let rnk = s;
-    let tmp = Array::fill(n, 0);
+    let tmp = fill(n, 0);
     loop((1, sa, rnk, tmp), |(k, sa, rnk, tmp)|
         if k >= n { break $ sa };
         let cmp = |(x, y)| (

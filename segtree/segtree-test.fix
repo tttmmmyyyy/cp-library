@@ -167,7 +167,7 @@ test_random = |is_build, rng| (
     let n = 100;
 
     let (tree, arr) = if !is_build {
-        let arr = Array::fill(n, Monoid::unit);
+        let arr = fill(n, Monoid::unit);
         (Segtree::init(n), arr)
     } else {
         let arr = range(0, n).map(|i| StrConcat::make(i.u8.to_string)).to_array;

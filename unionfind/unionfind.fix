@@ -34,8 +34,8 @@ type UnionFind = struct {
 create : I64 -> UnionFind;
 create = |size| UnionFind {
     parent : range(0, size).to_array,
-    rank : Array::fill(size, 0),
-    size : Array::fill(size, 1)
+    rank : fill(size, 0),
+    size : fill(size, 1)
 };
 
 // 指定された要素の親を取得する
@@ -143,7 +143,7 @@ get_group_size = |x, uf| (
 get_groups : UnionFind -> (UnionFind, Array (Array I64));
 get_groups = |uf| (
     let n = uf.@parent.@size;
-    let grps = Array::fill(n, none());
+    let grps = fill(n, none());
     let (uf, grps) = range(0, uf.@parent.@size).fold((uf, grps), |i, (uf, grps)|
         let (uf, p) = uf.find_parent(i);
         let grps = grps.mod(p, |g| 

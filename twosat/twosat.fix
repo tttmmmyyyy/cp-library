@@ -69,13 +69,13 @@ solve = |sat| (
     let n = sat.@n;
     let sccs = sat.@graph.calc_sccs;
     // 各リテラルのSCCグループインデックスを取得
-    let scc_idx = Array::fill(2 * n, 0);
+    let scc_idx = fill(2 * n, 0);
     let scc_idx = range(0, sccs.@size).fold(scc_idx, |i, scc_idx|
         let scc = sccs.@(i);
         scc.to_iter.fold(scc_idx, |v, scc_idx| scc_idx.set(v, i))
     );
     // 答えを構成する
-    let sol = Array::fill(n, false);
+    let sol = fill(n, false);
     match range(0, n).loop_iter_s(sol, |i, sol|
         let a = i;
         let b = a._not(n);

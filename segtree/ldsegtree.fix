@@ -69,8 +69,8 @@ type LDSegtree m a = struct {
 // - `act` : 右作用
 init : I64 -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((m, a) -> m) -> LDSegtree m a;
 init = |n, unit, op, act_unit, act_op, act| (
-    let elems = Array::fill(n * 2, unit);
-    let lazy = Array::fill(n * 2, act_unit);
+    let elems = fill(n * 2, unit);
+    let lazy = fill(n * 2, act_unit);
     LDSegtree { elems : elems, lazy : lazy, n : n, unit : unit, op : op, act_unit : act_unit, act_op : act_op, act : act }
 );
 
@@ -88,8 +88,8 @@ init = |n, unit, op, act_unit, act_op, act| (
 build : Array m -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((m, a) -> m) -> LDSegtree m a;
 build = |elems, unit, op, act_unit, act_op, act| (
     let n = elems.@size;
-    let lazy = Array::fill(n * 2, act_unit) : Array a;
-    let tree = Array::fill(n * 2, unit) : Array m;
+    let lazy = fill(n * 2, act_unit) : Array a;
+    let tree = fill(n * 2, unit) : Array m;
     // [n, 2n)に要素をセット
     let tree = range(0, n).fold(tree, |i, tree| tree.set(n + i, elems.@(i)) );
     // [1, n)の範囲を計算
