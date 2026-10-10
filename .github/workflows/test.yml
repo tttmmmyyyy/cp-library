@@ -1,0 +1,55 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # The fix this library requires is built from the head of fixlang's main branch, and the
+      # built binary is cached under that commit.
+      - name: Find fixlang's main commit
+        id: fixlang
+        shell: bash
+        run: echo "commit=$(git ls-remote https://github.com/tttmmmyyyy/fixlang.git refs/heads/main | cut -f1)" >> $GITHUB_OUTPUT
+
+      - name: Restore fix
+        id: cache-fix
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/fix
+          key: fix-${{ runner.os }}-${{ runner.arch }}-${{ steps.fixlang.outputs.commit }}
+
+      - name: Install LLVM
+        if: steps.cache-fix.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          if [[ "${{ runner.os }}" == "Linux" ]]; then
+            LLVM_URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.8/LLVM-22.1.8-Linux-X64.tar.xz"
+            mkdir -p "${RUNNER_TEMP}/llvm"
+            wget -q "$LLVM_URL" -O "${RUNNER_TEMP}/llvm.tar.xz"
+            tar -xf "${RUNNER_TEMP}/llvm.tar.xz" -C "${RUNNER_TEMP}/llvm" --strip-components=1
+            echo "LLVM_SYS_221_PREFIX=${RUNNER_TEMP}/llvm" >> $GITHUB_ENV
+          elif [[ "${{ runner.os }}" == "macOS" ]]; then
+            brew install llvm@22 openssl
+            echo "LLVM_SYS_221_PREFIX=$(brew --prefix llvm@22)" >> $GITHUB_ENV
+            echo "OPENSSL_DIR=$(brew --prefix openssl)" >> $GITHUB_ENV
+          fi
+
+      - name: Build fix
+        if: steps.cache-fix.outputs.cache-hit != 'true'
+        run: cargo install --locked --git https://github.com/tttmmmyyyy/fixlang.git --rev ${{ steps.fixlang.outputs.commit }}
+
+      - name: Run tests
+        run: fix test --allow-preliminary-commands
