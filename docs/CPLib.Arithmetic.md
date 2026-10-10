@@ -268,8 +268,6 @@ Type: `Std::U64 -> Std::Bool`
 
 Miller-Rabin 素数判定法
 
-底は、n < 4759123141 では2, 7, 61の3個、それ以外では2^64未満のすべての数で正しく判定する7個（https://miller-rabin.appspot.com）を使う。
-
 計算量：O(log n)
 
 ##### Parameters

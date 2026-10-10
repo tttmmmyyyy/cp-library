@@ -428,8 +428,6 @@ factorize_via_lp_table : U32 -> Array U32 -> Array (U32, U8) = |n, lp_table| (
 
 // Miller-Rabin 素数判定法
 // 
-// 底は、n < 4759123141 では2, 7, 61の3個、それ以外では2^64未満のすべての数で正しく判定する7個（https://miller-rabin.appspot.com）を使う。
-// 
 // 計算量：O(log n)
 //
 // # Parameters
@@ -448,7 +446,8 @@ is_prime = |n| (
     let one = (0_U64 - n) % n; // 2^64 mod n
     let minus_one = n - one;
     let r2 = (one.u128 * one.u128 % n.u128).u64; // 2^128 mod n。`mul(x, r2)`はxのMontgomery表現
-    // 4759123141は、底2, 7, 61のすべてで素数と区別できない最小の合成数
+    // 底は、4759123141未満のすべての数を正しく判定する3個と、2^64未満のすべての数を正しく判定する7個
+    // （https://miller-rabin.appspot.com）。4759123141は、底2, 7, 61のすべてで素数と区別できない最小の合成数。
     let bases = if n < 4759123141_U64 {
         [2_U64, 7_U64, 61_U64]
     } else {
