@@ -1,9 +1,9 @@
 module CPLib.IO.Test;
 
 import CPLib.IO::{stof, stofa, stoi, stoia, stoui, stouia};
-import EZS::{cd, run_o, run_wi_o, Context::default};
+import EZS::{cd, run_o, run_wi_o, run_wi_oec, Context::default};
 import Std::{
-    F64, IO, Debug::{assert, assert_eq}, IO::{eprintln, read_file_string, IOFail::to_result}, 
+    F64, IO, U8, Debug::{assert, assert_eq}, IO::{eprintln, read_file_string, IOFail::to_result}, 
     Monad::pure, Option::is_some, Result::{as_ok, is_ok}, String::{find, populate}
 };
 
@@ -32,6 +32,12 @@ test_io : IO () = (
     let output = *ezs.run_wi_o(["fix", "run", "--allow-preliminary-commands"], input);
     let found = output.find("PASS", 0).is_some;
     assert(|_|"IO test failed", found);;
+
+    // 入力が尽きたときと、読もうとした形の字句が無いときは、理由を書いて止まる
+    let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], "31 41");
+    assert(|_|"IO test failed: end of input", code != 0_U8 && err.find("unexpected end of input while reading an integer", 0).is_some);;
+    let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], "31 41 x");
+    assert(|_|"IO test failed: unexpected character", code != 0_U8 && err.find("unexpected character 'x' while reading an integer", 0).is_some);;
     eprintln("IO test passed!")
 );
 

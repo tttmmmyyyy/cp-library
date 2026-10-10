@@ -1,2 +1,2 @@
 lib.o : lib.c
-	gcc -o lib.o -c lib.c
+	gcc -O2 -o lib.o -c lib.c

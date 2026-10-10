@@ -1,10 +1,13 @@
 // 入出力や数値のパースを楽にする機能のためのモジュール
+//
+// `read_`で始まる関数は標準入力から空白文字区切りで読み込む。入力が尽きているときや、読もうとした形の
+// 字句が無いときは、理由を標準エラーに書いてプログラムを止める。
 module CPLib.IO;
 
 import Std::{
-    Array, F64, I64, IO, String, U64, U8, Array::fill, Array::mutate_elements_io, FromString::from_string,
-    Iterator::{collect_m, map, range, to_array}, Monad::pure, Result::as_ok, 
-    String::{borrow_c_str_io, is_empty, split, _unsafe_from_c_str}, ToString::to_string
+    Array, F64, I64, IO, String, U64, U8, Array::push_back, FromBytes::from_bytes, FromString::from_string,
+    Iterator::{collect_m, map, range, to_array}, LoopState::{break_m, continue_m}, Monad::pure, loop_m,
+    Result::as_ok, String::{is_empty, split}, ToU8::u8
 };
 
 // 文字列をパースして`I64`整数に変換する
@@ -68,20 +71,17 @@ read_f : IO F64;
 read_f = FFI_CALL_IO[F64 cp_lib_read_double()];
 
 // 空白文字を含まない文字列を一つ読み込む
-// 
-// # Parameters
-// - `n`: 読み込む文字列の長さの上限。バッファのメモリ量に影響する。
-read_s : I64 -> IO String;
-read_s = |n| (
-    let n = if n < 0 { 255 } else { n };
-    let format = "%" + n.to_string + "s";
-    let buf = Array::fill(n + 1, 0_U8);
-    let (buf, _err) = *buf.mutate_elements_io(|ptr| 
-        format.borrow_c_str_io(|format|
-            FFI_CALL_IO[CInt cp_lib_scanf(Ptr, Ptr), format, ptr]
-        )
-    );
-    String::_unsafe_from_c_str(buf).pure
+//
+// 空白文字を読み飛ばし、次の空白文字か入力の終わりまでを読む。
+read_s : IO String;
+read_s = (
+    let head = *FFI_CALL_IO[U8 cp_lib_read_token_head()];
+    let bytes = *loop_m([head], |bytes| (
+        let c = *FFI_CALL_IO[I64 cp_lib_read_token_next()];
+        if c < 0 { break_m $ bytes };
+        continue_m $ bytes.push_back(c.u8)
+    ));
+    pure $ bytes.push_back(0_U8).from_bytes.as_ok
 );
 
 // 非空白文字を一つ読み込む
@@ -113,9 +113,8 @@ read_fs = |n| range(0, n).map(|_| read_f).collect_m;
 // 
 // # Parameters
 // - `n`: 読み込む個数
-// - `m`: 各文字列の長さの上限
-read_ss : I64 -> I64 -> IO (Array String);
-read_ss = |n, m| range(0, n).map(|_| read_s(m)).collect_m;
+read_ss : I64 -> IO (Array String);
+read_ss = |n| range(0, n).map(|_| read_s).collect_m;
 
 // 非空白文字を指定された個数読み込む
 //
@@ -123,51 +122,3 @@ read_ss = |n, m| range(0, n).map(|_| read_s(m)).collect_m;
 // - `n`: 読み込む個数
 read_cs : I64 -> IO (Array U8);
 read_cs = |n| range(0, n).map(|_| read_c).collect_m;
-
-/*
-
-_i_format : String;
-_i_format = "%lld";
-
-read_i : IO I64;
-read_i = (
-    let buf = Box { value : 0 };
-    buf.mutate_elements_io(|ptr|
-        FFI_CALL_IO[CInt scanf(Ptr, Ptr), _i_format._get_c_str, ptr]
-    ).map(|(buf, _)| buf.@value)
-);
-
-_u_format : String;
-_u_format = "%llu\n";
-
-read_u : IO U64;
-read_u = (
-    let buf = Box { value : 0_U64 };
-    buf.mutate_elements_io(|ptr|
-        FFI_CALL_IO[CInt scanf(Ptr, Ptr), _u_format._get_c_str, ptr]
-    ).map(|(buf, _)| buf.@value)
-);
-
-_f_format : String;
-_f_format = "%lf";
-
-read_f : IO F64;
-read_f = (
-    let buf = Box { value : 0.0 };
-    buf.mutate_elements_io(|ptr| 
-        FFI_CALL_IO[CInt scanf(Ptr, Ptr), _f_format._get_c_str, ptr]
-    ).map(|(buf, _)| buf.@value)
-);
-
-_c_format : String;
-_c_format = " %c";
-
-read_c : IO U8;
-read_c = (
-    let buf = Box { value : 0_U8 };
-    buf.mutate_elements_io(|ptr|
-        FFI_CALL_IO[CInt scanf(Ptr, Ptr), _c_format._get_c_str, ptr]
-    ).map(|(buf, _)| buf.@value)
-);
-
-*/
