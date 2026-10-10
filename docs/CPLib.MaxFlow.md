@@ -220,7 +220,7 @@ Defined as: `type MaxFlowGraph c = unbox struct { ...fields... }`
 
 型パラメータ`c`は容量の型です。
 
-辺には足した順に0から番号を振る。内部では、k番目に足した辺を番号2kで、その逆辺を番号2k + 1で表す。
+辺には足した順に0から番号（`I64`）を振る。ac-libraryの`mf_graph`と同じく、`get_edge`などはこの番号で辺を指す。内部では、k番目に足した辺を番号2kで、その逆辺を番号2k + 1で表す。
 
 ##### field `n`
 
