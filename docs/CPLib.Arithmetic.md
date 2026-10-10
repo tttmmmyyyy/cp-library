@@ -28,6 +28,8 @@ Type: `Std::I64 -> Std::I64 -> Std::I64`
 
 2つの整数の最大公約数（非負整数）を計算する
 
+制約：最大公約数 <= I64::maximum
+
 計算量：O(log max(|a|, |b|))
 
 ##### Parameters
@@ -129,6 +131,8 @@ Type: `Std::I64 -> Std::I64 -> (Std::I64, (Std::I64, Std::I64))`
 
 2つの整数 `a`, `b` に対して、その最大公約数 `d >= 0` および、`ax + by = d` を満たす整数 `x`, `y` を求める
 
+制約：最大公約数 <= I64::maximum
+
 計算量：O(log max(|a|, |b|))
 
 ##### Returns
@@ -150,11 +154,11 @@ assert_eq(|_|"", 12 * x + 18 * y, 6)
 
 #### factorize
 
-Type: `Std::I64 -> Std::Array (Std::U32, Std::U8)`
+Type: `Std::I64 -> Std::Array (Std::I64, Std::U8)`
 
 試し割りにより、数を素因数分解する（素因子と指数のペアの配列で返す）
 
-制約：n >= 1, nの素因数 <= 4e9
+制約：n >= 1
 
 計算量：O(sqrt(n))
 
@@ -170,11 +174,11 @@ Type: `Std::I64 -> Std::Array (Std::U32, Std::U8)`
 
 #### factorize_flat
 
-Type: `Std::I64 -> Std::Array Std::U32`
+Type: `Std::I64 -> Std::Array Std::I64`
 
 試し割りにより、数を素因数分解する（素因子を重複ありのフラットな配列で返す）
 
-制約：n >= 1, nの素因数 <= 4e9
+制約：n >= 1
 
 計算量：O(sqrt(n))
 
