@@ -14,7 +14,7 @@ import BinaryHeap::{BinaryHeap::{get_size, get_top, pop, push}, MinBinaryHeap::e
 import CPLib.Trait::{Inf, Inf::inf};
 import Std::{
     loop, Additive, Array, Bool, Eq, I64, LessThan, 
-    Array::{empty, fill, mod, push_back, set, to_iter, @, @size}, 
+    Array::{empty, fill, mod, pop_back, push_back, set, to_iter, @, @size}, 
     Iterator::{fold, loop_iter, range, range_step}, LoopState::{break, continue}, Option::as_some, 
     Zero::zero
 };
@@ -224,58 +224,89 @@ bellman_ford = |start, graph| (
 // - `g` : グラフ
 calc_sccs : Graph c -> Array (Array I64);
 calc_sccs = |g| (
-    if g.get_size == 0 { [] };
+    let n = g.get_size;
 
-    // DFSして、各頂点の訪問完了順にスタックに積む。
-    let visited = Array::fill(g.get_size, false);
-    let stack = Array::empty(g.get_size);
-    let (visited, stack) = range(0, g.get_size).fold((visited, stack), |i, (visited, stack)|
-        if visited.@(i) { (visited, stack) };
-        g._scc_dfs1(i, visited, stack)
+    // 深さ優先探索をして、探索を終えた順に頂点を並べる
+    let visited = Array::fill(n, false);
+    let (_, visited, finished) = range(0, n).fold(([], visited, Array::empty(n)), |root, (stack, visited, finished)|
+        if visited.@(root) { (stack, visited, finished) };
+        _scc_dfs_postorder(g, root, stack, visited, finished)
     );
 
-    // 反転グラフを作成
-    let rg = Graph::create(g.get_size) : Graph (); // コストは不要なのでユニット型を使用
-    let rg = range(0, g.get_size).fold(rg, |from, rg|
-        g.@edges.@(from).to_iter.fold(rg, |Edge { to : to, data : _ }, rg|
-            rg.add_edge(to, from, ())
+    // 辺の向きを逆にしたグラフをCSR形式で作る：頂点vに入る辺の始点を、rlistの[rstart.@(v), rstart.@(v + 1))に並べる
+    let rstart = range(0, n).fold(Array::fill(n + 1, 0), |from, rstart|
+        g.@edges.@(from).to_iter.fold(rstart, |Edge { to : to, data : _ }, rstart| rstart.mod(to + 1, |x| x + 1))
+    );
+    let rstart = range(0, n).fold(rstart, |v, rstart| let x = rstart.@(v); rstart.mod(v + 1, |y| y + x));
+    let (rlist, _) = range(0, n).fold((Array::fill(rstart.@(n), 0), rstart), |from, (rlist, pos)|
+        g.@edges.@(from).to_iter.fold((rlist, pos), |Edge { to : to, data : _ }, (rlist, pos)|
+            let p = pos.@(to);
+            (rlist.set(p, from), pos.set(to, p + 1))
         )
     );
 
-    // 反転グラフを`stack`の逆順にDFSして、各強連結成分を求める。
-    let sccs = [];
-    let visited = range(0, visited.@size).fold(visited, |i, visited| visited.set(i, false)); // `visited`を初期化
-    let (visited, sccs) = range_step(stack.@size - 1, -1, -1).fold((visited, sccs), |stack_i, (visited, sccs)|
-        let node = stack.@(stack_i);
-        if visited.@(node) { (visited, sccs) };
-        let scc = []; // 新しい強連結成分を作成
-        let (visited, scc) = rg._scc_dfs2(node, visited, scc);
-        let sccs = sccs.push_back(scc);
-        (visited, sccs)
+    // 逆向きのグラフを、探索を終えた順の逆に深さ優先探索する。1回の探索で訪れる頂点が1つの強連結成分になる
+    let visited = Array::fill(n, false);
+    let (_, _, sccs) = range_step(n - 1, -1, -1).fold(([], visited, []), |i, (stack, visited, sccs)|
+        let root = finished.@(i);
+        if visited.@(root) { (stack, visited, sccs) };
+        let (stack, visited, scc) = _scc_dfs_preorder(rstart, rlist, root, stack, visited);
+        (stack, visited, sccs.push_back(scc))
     );
-
     sccs
 );
 
-// DFS1の実装
-_scc_dfs1 : I64 -> Array Bool -> Array I64 -> Graph c -> (Array Bool, Array I64);
-_scc_dfs1 = |node, visited, stack, g| (
-    let visited = visited.set(node, true);
-    let (visited, stack) = g.@edges.@(node).to_iter.loop_iter((visited, stack), |Edge { to : to, data : _ }, (visited, stack)| (
-        if visited.@(to) { continue $ (visited, stack) };
-        continue $ g._scc_dfs1(to, visited, stack)
-    ));
-    let stack = stack.push_back(node);
-    (visited, stack)
+// `root`から深さ優先探索をし、探索を終えた順に頂点を`finished`の末尾に加える
+//
+// 再帰の代わりに、(頂点, 次に調べる辺の添字)を積む配列`stack`をスタックとして使う。`stack`は空で渡し、空で返る。
+// 呼び出しごとに確保し直さないよう、呼び出し側が使い回す。
+//
+// # Parameters
+// - `graph` : グラフ
+// - `root` : 探索を始める頂点
+// - `stack` : 探索に使う空の配列
+// - `visited` : 訪れた頂点の印
+// - `finished` : 探索を終えた頂点の列
+_scc_dfs_postorder : Graph c -> I64 -> Array (I64, I64) -> Array Bool -> Array I64 -> (Array (I64, I64), Array Bool, Array I64);
+_scc_dfs_postorder = |g, root, stack, visited, finished| (
+    let visited = visited.set(root, true);
+    loop((stack.push_back((root, 0)), visited, finished), |(stack, visited, finished)|
+        if stack.@size == 0 { break $ (stack, visited, finished) };
+        let top = stack.@size - 1;
+        let (v, k) = stack.@(top);
+        let edges = g.@edges.@(v);
+        if k == edges.@size {
+            continue $ (stack.pop_back, visited, finished.push_back(v))
+        };
+        let stack = stack.set(top, (v, k + 1));
+        let to = edges.@(k).@to;
+        if visited.@(to) { continue $ (stack, visited, finished) };
+        continue $ (stack.push_back((to, 0)), visited.set(to, true), finished)
+    )
 );
 
-// DFS2の実装
-_scc_dfs2 : I64 -> Array Bool -> Array I64 -> Graph c -> (Array Bool, Array I64);
-_scc_dfs2 = |node, visited, scc, g| (
-    let visited = visited.set(node, true);
-    let scc = scc.push_back(node);
-    g.@edges.@(node).to_iter.loop_iter((visited, scc), |Edge { to : to, data : _ }, (visited, scc)| (
-        if visited.@(to) { continue $ (visited, scc) };
-        continue $ g._scc_dfs2(to, visited, scc)
-    ))
+// CSR形式のグラフを`root`から深さ優先探索し、訪れた頂点を訪れた順に並べて返す
+//
+// 再帰の代わりに、(頂点, 次に調べる辺の添字)を積む配列`stack`をスタックとして使う。`stack`は空で渡し、空で返る。
+// 呼び出しごとに確保し直さないよう、呼び出し側が使い回す。
+//
+// # Parameters
+// - `start` : 頂点vの辺の行き先が`list`の[start.@(v), start.@(v + 1))にある
+// - `list` : 辺の行き先を頂点ごとに並べた配列
+// - `root` : 探索を始める頂点
+// - `stack` : 探索に使う空の配列
+// - `visited` : 訪れた頂点の印
+_scc_dfs_preorder : Array I64 -> Array I64 -> I64 -> Array (I64, I64) -> Array Bool -> (Array (I64, I64), Array Bool, Array I64);
+_scc_dfs_preorder = |start, list, root, stack, visited| (
+    let visited = visited.set(root, true);
+    loop((stack.push_back((root, start.@(root))), visited, [root]), |(stack, visited, order)|
+        if stack.@size == 0 { break $ (stack, visited, order) };
+        let top = stack.@size - 1;
+        let (v, k) = stack.@(top);
+        if k == start.@(v + 1) { continue $ (stack.pop_back, visited, order) };
+        let stack = stack.set(top, (v, k + 1));
+        let to = list.@(k);
+        if visited.@(to) { continue $ (stack, visited, order) };
+        continue $ (stack.push_back((to, start.@(to))), visited.set(to, true), order.push_back(to))
+    )
 );

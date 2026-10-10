@@ -34,6 +34,12 @@ Type: `Std::IO ()`
 
 Type: `Std::IO ()`
 
+#### test_scc_long_path
+
+Type: `Std::IO ()`
+
+長い道のグラフ。頂点数に比例する深さで再帰する実装は、既定のスタックで溢れる
+
 #### test_scc_multiple_edges
 
 Type: `Std::IO ()`
