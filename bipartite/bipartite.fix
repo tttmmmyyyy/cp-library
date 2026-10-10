@@ -12,7 +12,6 @@
 // ```
 module CPLib.Bipartite;
 
-import CPLib.Graph::EdgeId;
 import CPLib.MaxFlow::{MaxFlowGraph, MaxFlowGraph::{add_edge, add_edge_id, create, get_flow, get_min_cut, maximize_flow}};
 import Std::{
     undefined, Array, Bool, I64, Array::{empty, fill, push_back, set, to_iter, @, @size}, Functor::map, 
@@ -30,8 +29,8 @@ type BipartiteGraph = struct {
 type BipartiteGraphFlow = struct {
     graph : BipartiteGraph,
     max_flow : MaxFlowGraph I64,
-    // 二部グラフの辺に対応する最大フローグラフの辺の識別子
-    edge_ids : Array EdgeId,
+    // 二部グラフの辺に対応する最大フローグラフの辺の番号
+    edge_ids : Array I64,
 };
 
 namespace BipartiteGraph {
@@ -149,7 +148,7 @@ namespace BipartiteGraphFlow {
 
     // 二部グラフの最小点被覆を取得する
     //
-    // 計算量：O(n)
+    // 計算量：O(n + m)
     //
     // # Returns
     // 左側の頂点の被覆と右側の頂点の被覆をそれぞれ`Array Bool`として返す。
@@ -167,7 +166,7 @@ namespace BipartiteGraphFlow {
 
     // 二部グラフの最大独立集合（最大安定集合）を取得する
     // 
-    // 計算量：O(n)
+    // 計算量：O(n + m)
     //
     // # Returns
     // 左側の頂点と右側の頂点のそれぞれについて、最大独立集合に含まれる頂点を`true`、含まれない頂点を`false`とする`Array Bool`を返す。
