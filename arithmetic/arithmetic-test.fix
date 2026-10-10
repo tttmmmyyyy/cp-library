@@ -259,6 +259,13 @@ test_miller_rabin_u64 = (
     // 2^63 を超える n では、法の乗算の積が 128 ビットを要する
     assert_eq(|_|"2^64-59 is prime", is_prime(18446744073709551557_U64), true);;
     assert_eq(|_|"4294967291 * 4294967279 is not prime", is_prime(18446743979220271189_U64), false);;
+    // 小さい底に対する強擬素数と Carmichael 数
+    assert_eq(|_|"3215031751", is_prime(3215031751_U64), false);;
+    assert_eq(|_|"3825123056546413051", is_prime(3825123056546413051_U64), false);;
+    assert_eq(|_|"561", is_prime(561_U64), false);;
+    // 2^64 未満の最大の素数と、その付近
+    assert_eq(|_|"2^64-1", is_prime(18446744073709551615_U64), false);;
+    assert_eq(|_|"2^64-58", is_prime(18446744073709551558_U64), false);;
     pure()
 );
 
