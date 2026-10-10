@@ -100,6 +100,8 @@ isqrt = |s| (
 
 // 2つの整数の最大公約数（非負整数）を計算する
 // 
+// 制約：最大公約数 <= I64::maximum
+//
 // 計算量：O(log max(|a|, |b|))
 //
 // # Parameters
@@ -107,13 +109,22 @@ isqrt = |s| (
 // - `b`: 整数
 calc_gcd : I64 -> I64 -> I64;
 calc_gcd = |a, b| (
+    // 互除法で溢れるのは`I64::minimum % -1`だけで、これは`a`か`b`が-1のときに限って現れる
+    if a == -1 || b == -1 { 1 };
+    _calc_gcd(a, b)
+);
+
+_calc_gcd : I64 -> I64 -> I64;
+_calc_gcd = |a, b| (
     if b == 0 { a.abs };
-    calc_gcd(b, a % b)
+    _calc_gcd(b, a % b)
 );
 
 // 拡張ユークリッドの互除法
 // 
 // 2つの整数 `a`, `b` に対して、その最大公約数 `d >= 0` および、`ax + by = d` を満たす整数 `x`, `y` を求める
+//
+// 制約：最大公約数 <= I64::maximum
 //
 // 計算量：O(log max(|a|, |b|))
 //
@@ -132,10 +143,18 @@ calc_gcd = |a, b| (
 // ```
 ext_gcd : I64 -> I64 -> (I64, (I64, I64));
 ext_gcd = |a, b| (
+    // 互除法で溢れるのは`I64::minimum % -1`だけで、これは`a`か`b`が-1のときに限って現れる
+    if a == -1 { (1, (-1, 0)) };
+    if b == -1 { (1, (0, -1)) };
+    _ext_gcd(a, b)
+);
+
+_ext_gcd : I64 -> I64 -> (I64, (I64, I64));
+_ext_gcd = |a, b| (
     if b == 0 { 
         if a >= 0 { (a, (1, 0)) } else { (-a, (-1, 0)) }
     };
-    let (d, (x1, y1)) = ext_gcd(b, a % b);
+    let (d, (x1, y1)) = _ext_gcd(b, a % b);
     (d, (y1, x1 - (a / b) * y1))
 );
 
