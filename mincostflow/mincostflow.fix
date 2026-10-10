@@ -21,7 +21,7 @@ import CPLib.Graph::{
 import CPLib.Trait::{Inf, Inf::inf};
 import Std::{
     loop, Additive, Array, Eq, I64, LessThan, Mul, Neg, Sub, Add::add, 
-    Array::{fill, mod, set, to_iter, @, @size}, Iterator::{count_up, fold, range, zip}, LessThan::min, 
+    Array::{fill, mod, set, to_iter, @, @size}, Functor::map, Iterator::{count_up, fold, range, zip}, LessThan::min, 
     LoopState::{break, continue}, Option::as_some, Tuple2::@0, Zero::zero
 };
 
@@ -145,7 +145,8 @@ namespace MinCostFlowGraph {
                 graph.add_edge(from, e.@to, e.@data.@cost)
             )
         );
-        let h = graph.bellman_ford(g.@s);
+        // sから到達できない頂点のポテンシャルは読まれないので、溢れない値としてゼロを置く
+        let h = graph.bellman_ford(g.@s).map(|d| if d == Inf::inf { zero } else { d });
         g.set_potential(h)
     );
 
@@ -197,21 +198,21 @@ namespace MinCostFlowGraph {
         let s = g.@s;
         let t = g.@t;
         let h = g.@potential; let g = g.set_potential([]); // ポテンシャル
-        let que = MinBinaryHeap::empty; // 最小ヒープ
         let dist = Array::fill(n, Inf::inf); // 距離
         let prevv = Array::fill(n, -1); // 直前にしらべた頂点
         let preve = Array::fill(n, -1); // 直前にしらべた辺
-        loop((g, flow_limit, zero, h, que, dist, prevv, preve), |(g, flow_rest, cost, h, que, dist, prevv, preve)| 
+        loop((g, flow_limit, zero, h, dist, prevv, preve), |(g, flow_rest, cost, h, dist, prevv, preve)| 
             if flow_rest == zero { break $ (g.set_potential(h), flow_limit - flow_rest, cost) };
-            // ダイクストラ法を用いてhを更新する
+            // ダイクストラ法でsからtまでの距離を求める。tを取り出した時点で打ち切る
             let dist = range(0, n).fold(dist, |i, dist| dist.set(i, Inf::inf)); // `dist`を初期化
             let dist = dist.set(s, zero);
-            let que = que.push(NodeDistance::make(s, zero));
-            let (que, dist, prevv, preve) = loop((que, dist, prevv, preve), |(que, dist, prevv, preve)|
-                if que.get_size == 0 { break $ (que, dist, prevv, preve) };
+            let que = MinBinaryHeap::empty.push(NodeDistance::make(s, zero)); // 最小ヒープ
+            let (dist, prevv, preve) = loop((que, dist, prevv, preve), |(que, dist, prevv, preve)|
+                if que.get_size == 0 { break $ (dist, prevv, preve) };
                 let NodeDistance { node : v, dist : d } = que.get_top.as_some;
                 let que = que.pop;
                 if dist.@(v) < d { continue $ (que, dist, prevv, preve) };
+                if v == t { break $ (dist, prevv, preve) };
                 let edges = g.@graph.@edges.@(v);
                 continue $ edges.to_iter.zip(count_up(0)).fold((que, dist, prevv, preve), |(Edge { to : to, data : e }, ei), (que, dist, prevv, preve)|
                     if !(e.@cap > zero) { (que, dist, prevv, preve) };
@@ -224,10 +225,11 @@ namespace MinCostFlowGraph {
                     (que, dist, prevv, preve)
                 )
             );
-            // tに到達不能なときはflow_restをゼロにして次のループで終了
-            if dist.@(t) == Inf::inf { break $ (g.set_potential(h), flow_limit - flow_rest, cost) };
-            // ポテンシャルを更新
-            let h = range(0, n).fold(h, |v, h| h.set(v, h.@(v) + dist.@(v)) );
+            // tに到達できないときは終了
+            let dt = dist.@(t);
+            if dt == Inf::inf { break $ (g.set_potential(h), flow_limit - flow_rest, cost) };
+            // ポテンシャルを更新する。距離がtより遠い頂点（tを取り出した時点で距離が確定していない頂点と、sから到達できない頂点）には、tまでの距離を足す
+            let h = range(0, n).fold(h, |v, h| h.set(v, h.@(v) + min(dist.@(v), dt)));
             // s-t最短路に沿ってフローを流す
             let d = loop((t, flow_rest), |(v, d)|
                 if v == s { break $ d };
@@ -246,7 +248,7 @@ namespace MinCostFlowGraph {
                 let g = g._add_flow(pv, pe, d);
                 continue $ (pv, g)
             );
-            continue $ (g, flow_rest, cost, h, que, dist, prevv, preve)
+            continue $ (g, flow_rest, cost, h, dist, prevv, preve)
         )
     );
 }

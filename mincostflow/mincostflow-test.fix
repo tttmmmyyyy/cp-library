@@ -1,13 +1,23 @@
 module CPLib.MinCostFlow.Test;
 
-import CPLib.MinCostFlow::MinCostFlowGraph::{add_edge_id, create, get_flow, maximize_flow_min_cost};
-import Std::{IO, Debug::assert_eq, Monad::pure};
+import CPLib.MinCostFlow::MinCostFlowGraph::{add_edge, add_edge_id, create, get_flow, maximize_flow_min_cost, set_potential_bf};
+import Random::{generate_I64_nonneg, init_by_seed, Random};
+import Std::{
+    loop, Array, Bool, I64, IO, Array::{fill, mod, push_back, set, to_iter, @, @size}, Debug::assert_eq, 
+    Functor::map, Iterator::{fold, fold_m, range}, LessThan::min, LoopState::{break, continue}, Monad::pure, Option, 
+    Option::{as_some, is_none, is_some, none, some}, Tuple4::{@2, @3}, 
+    ToString::to_string
+};
 
 // https://atcoder.jp/contests/language-test-202505/submissions/68408186
 
 test : IO ();
 test = (
     test_basic;;
+    test_unreachable;;
+    let rng = Random::init_by_seed(0_U64);
+    let rng = *test_random(false, rng);
+    let rng = *test_random(true, rng);
     pure()
 );
 
@@ -32,4 +42,125 @@ test_basic = (
     assert_eq(|_|"e5", g.get_flow(e5), 2);;
     assert_eq(|_|"e6", g.get_flow(e6), 4);;
     pure()
+);
+
+// sから到達できない頂点があるグラフで、増加路を2本流す
+test_unreachable : IO ();
+test_unreachable = (
+    // 頂点1にはどの辺も接続しない
+    let g = MinCostFlowGraph::create(3, 0, 2);
+    let (_, flow, cost) = g.add_edge(0, 2, 1, 1).add_edge(0, 2, 1, 5).maximize_flow_min_cost(2);
+    assert_eq(|_|"flow", flow, 2);;
+    assert_eq(|_|"cost", cost, 6);;
+    let (_, flow, cost) = g.add_edge(0, 2, 1, -1).add_edge(0, 2, 1, 5).set_potential_bf.maximize_flow_min_cost(2);
+    assert_eq(|_|"flow with set_potential_bf", flow, 2);;
+    assert_eq(|_|"cost with set_potential_bf", cost, 4);;
+    pure()
+);
+
+// 各辺の流量を総当たりして、流量ごとの最小コストを求める
+//
+// 戻り値の`f`番目の要素は流量`f`の最小コスト。流量`f`を流せないときは`none()`。
+//
+// # Parameters
+// - `n` : 頂点数
+// - `s` : 開始頂点番号
+// - `t` : 終了頂点番号
+// - `edges` : 辺 (始点, 終点, 容量, コスト) の配列
+min_costs_by_brute_force : I64 -> I64 -> I64 -> Array (I64, I64, I64, I64) -> Array (Option I64);
+min_costs_by_brute_force = |n, s, t, edges| (
+    let max_flow = edges.to_iter.fold(0, |(_, _, cap, _), sum| sum + cap);
+    loop((Array::fill(edges.@size, 0), Array::fill(max_flow + 1, none())), |(flows, min_costs)|
+        // 各頂点から出る流量と入る流量の差
+        let excess = range(0, edges.@size).fold(Array::fill(n, 0), |i, excess|
+            let (from, to, _, _) = edges.@(i);
+            excess.mod(from, |x| x + flows.@(i)).mod(to, |x| x - flows.@(i))
+        );
+        let is_flow = range(0, n).fold(true, |v, ok| ok && (v == s || v == t || excess.@(v) == 0));
+        let f = excess.@(s);
+        let min_costs = if !is_flow || f < 0 { min_costs } else {
+            let cost = range(0, edges.@size).fold(0, |i, sum| sum + edges.@(i).@3 * flows.@(i));
+            min_costs.mod(f, |c| if c.is_none || cost < c.as_some { some(cost) } else { c })
+        };
+        // 次の流量の組に進む
+        let (flows, carry) = range(0, edges.@size).fold((flows, true), |i, (flows, carry)|
+            if !carry { (flows, false) };
+            if flows.@(i) < edges.@(i).@2 { (flows.mod(i, |x| x + 1), false) };
+            (flows.set(i, 0), true)
+        );
+        if carry { break $ min_costs };
+        continue $ (flows, min_costs)
+    )
+);
+
+// 小さな乱択グラフで、総当たりと流量・コストを比べる
+//
+// 流量の上限を変えて`maximize_flow_min_cost`を2回続けて呼び、それぞれを比べる。
+//
+// # Parameters
+// - `negative` : 負のコストの辺を含め、`set_potential_bf`を呼ぶかどうか
+// - `rng` : 乱数生成器
+test_random : Bool -> Random -> IO Random;
+test_random = |negative, rng| (
+    range(0, 400).fold_m(rng, |_, rng|
+        let (rng, n) = rng.generate_I64_nonneg;
+        let n = 2 + n % 4;
+        let (rng, m) = rng.generate_I64_nonneg;
+        let m = m % 7;
+        let (rng, s) = rng.generate_I64_nonneg;
+        let s = s % n;
+        let (rng, t) = rng.generate_I64_nonneg;
+        let t = (s + 1 + t % (n - 1)) % n;
+        // 頂点ごとの値pを決め、辺u->vのコストにp[u] - p[v]を足すと、負の閉路を作らずに負のコストの辺を作れる
+        let (rng, p) = range(0, n).fold((rng, []), |_, (rng, p)|
+            let (rng, x) = rng.generate_I64_nonneg;
+            (rng, p.push_back(if negative { x % 6 } else { 0 }))
+        );
+        let (rng, edges) = range(0, m).fold((rng, []), |_, (rng, edges)|
+            let (rng, from) = rng.generate_I64_nonneg;
+            let from = from % n;
+            let (rng, to) = rng.generate_I64_nonneg;
+            let to = to % n;
+            let (rng, cap) = rng.generate_I64_nonneg;
+            let (rng, cost) = rng.generate_I64_nonneg;
+            (rng, edges.push_back((from, to, cap % 3, cost % 5 + p.@(from) - p.@(to))))
+        );
+        let min_costs = min_costs_by_brute_force(n, s, t, edges);
+        let max_flow = range(0, min_costs.@size).fold(0, |f, max_flow| if min_costs.@(f).is_some { f } else { max_flow });
+
+        let g = MinCostFlowGraph::create(n, s, t);
+        let (g, ids) = edges.to_iter.fold((g, []), |(from, to, cap, cost), (g, ids)|
+            let (g, id) = g.add_edge_id(from, to, cap, cost);
+            (g, ids.push_back(id))
+        );
+        let g = if negative { g.set_potential_bf } else { g };
+
+        let (rng, limit) = rng.generate_I64_nonneg;
+        let limit = limit % (max_flow + 3);
+        let (g, flow, cost) = g.maximize_flow_min_cost(limit);
+        let msg = |_| "edges=" + edges.to_string + " s=" + s.to_string + " t=" + t.to_string + " limit=" + limit.to_string;
+        assert_eq(msg, flow, min(limit, max_flow));;
+        assert_eq(msg, some(cost), min_costs.@(flow));;
+        // 各辺の流量が流量の保存と容量を満たし、コストの総和が返したコストに等しい
+        let flows = ids.map(|id| g.get_flow(id));
+        let excess = range(0, m).fold(Array::fill(n, 0), |i, excess|
+            let (from, to, _, _) = edges.@(i);
+            excess.mod(from, |x| x + flows.@(i)).mod(to, |x| x - flows.@(i))
+        );
+        range(0, n).fold_m((), |v, _|
+            assert_eq(msg, excess.@(v), if v == s { flow } else if v == t { -flow } else { 0 })
+        );;
+        range(0, m).fold_m((), |i, _|
+            assert_eq(msg, 0 <= flows.@(i) && flows.@(i) <= edges.@(i).@2, true)
+        );;
+        assert_eq(msg, range(0, m).fold(0, |i, sum| sum + edges.@(i).@3 * flows.@(i)), cost);;
+
+        let (rng, limit2) = rng.generate_I64_nonneg;
+        let limit2 = limit2 % (max_flow + 3);
+        let (_, flow2, cost2) = g.maximize_flow_min_cost(limit2);
+        let msg2 = |_| msg() + " limit2=" + limit2.to_string;
+        assert_eq(msg2, flow2, min(limit2, max_flow - flow));;
+        assert_eq(msg2, some(cost + cost2), min_costs.@(flow + flow2));;
+        pure $ rng
+    )
 );
