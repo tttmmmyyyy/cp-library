@@ -18,6 +18,18 @@ assert_eq(|_|"", g.dijkstra(0), [0, 5, 7])
 
 ### namespace CPLib.Graph
 
+#### @size
+
+Type: `CPLib.Graph::Graph c -> Std::I64`
+
+グラフの頂点数を取得する
+
+計算量：O(1)
+
+##### Parameters
+
+- `graph` : グラフ
+
 #### add_edge
 
 Type: `Std::I64 -> Std::I64 -> c -> CPLib.Graph::Graph c -> CPLib.Graph::Graph c`
@@ -128,15 +140,11 @@ Type: `CPLib.Graph::EdgeId -> CPLib.Graph::Graph c -> CPLib.Graph::Edge c`
 
 #### get_size
 
+**Deprecated**: Use `CPLib.Graph::@size` instead.
+
 Type: `CPLib.Graph::Graph c -> Std::I64`
 
-グラフの頂点数を取得する
-
-計算量：O(1)
-
-##### Parameters
-
-- `g` : グラフ
+`@size`の別名（非推奨）
 
 ### namespace CPLib.Graph::Edge
 

@@ -65,9 +65,13 @@ create = |n| (
 // 計算量：O(1)
 //
 // # Parameters
-// - `g` : グラフ
-get_size : Graph c -> I64;
-get_size = |g| g.@edges.@size;
+// - `graph` : グラフ
+@size : Graph c -> I64;
+@size = |g| g.@edges.@size;
+
+// `@size`の別名（非推奨）
+get_size : Graph c -> I64 = @size;
+DEPRECATED[get_size, "Use `CPLib.Graph::@size` instead."];
 
 // グラフに辺を追加する
 // 
@@ -141,7 +145,7 @@ impl [c : LessThan] NodeDistance c : LessThan {
 dijkstra : [c : Additive, c : LessThan, c : Inf] I64 -> Graph c -> Array c;
 dijkstra = |start, graph| (
     // The number of nodes in the graph.
-    let nn = graph.get_size;
+    let nn = graph.@size;
 
     // The array of distances to reach each node from the starting node.
     let dists = fill(nn, inf);
@@ -193,7 +197,7 @@ dijkstra = |start, graph| (
 // - `graph` : グラフ
 bellman_ford : [c : Additive, c : LessThan, c : Inf, c : Eq] I64 -> Graph c -> Array c;
 bellman_ford = |start, graph| (
-    let n = graph.get_size;
+    let n = graph.@size;
     let d = fill(n, inf);
     let d = d.set(start, zero);
     loop(d, |d|
@@ -224,7 +228,7 @@ bellman_ford = |start, graph| (
 // - `g` : グラフ
 calc_sccs : Graph c -> Array (Array I64);
 calc_sccs = |g| (
-    let n = g.get_size;
+    let n = g.@size;
 
     // 深さ優先探索をして、探索を終えた順に頂点を並べる
     let visited = fill(n, false);
