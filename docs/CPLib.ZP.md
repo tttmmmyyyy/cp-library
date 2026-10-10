@@ -18,24 +18,20 @@ Defined in cp-library@0.14.0
 幾つかの有名な素数nに対する PrimeProvider `Pn` はこのモジュールに定義されている。
 
 使用例：
-```
-module Main;
-
+```fix
 import CPLib.ZP;
 
 type P17 = unbox struct {};
 
 impl P17 : PrimeProvider {
     create = P17 {};
-    value = |p| 17_U32;
+    value = |_| 17_U32;
 }
 
-main : IO ();
-main = (
+main : IO () = (
     let zp = ZP::make(-5) : ZP P17;
     let zp = zp * zp;
-    assert_eq(|_|"case 1", zp.@value, 8_U32);; // (-5)*(-5) = 25 = 8 mod 17
-    pure()
+    assert_eq(|_|"", zp.@value, 8_U32) // (-5)*(-5) = 25 = 8 mod 17
 );
 ```
 

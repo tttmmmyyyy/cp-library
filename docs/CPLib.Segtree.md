@@ -6,26 +6,29 @@ Defined in cp-library@0.14.0
 
 使用方法：
 要素は`CPLib.Trait.Monoid`を実装している必要があります。
-先ずはwrapper型を作成し、`Monoid`を実装してください：
-```
+先ずはwrapper型を作成し、`Monoid`を実装してください。
+あとは、`init`や`build`を使ってセグメント木を作成し、
+`@`で要素を取得、`set`で要素を更新、`fold`で区間の畳み込みを計算できます。
+```fix
+import CPLib.Segtree;
+import CPLib.Trait;
+
 // 文字列の結合に関するモノイド
 type StrConcat = struct { v : String };
 namespace StrConcat {
-    make : String -> StrConcat;
-    make = |v| StrConcat { v : v };
+    make : String -> StrConcat = |v| StrConcat { v };
 }
 impl StrConcat : Monoid {
     unit = make("");
     op = |lhs, rhs| make $ lhs.@v + rhs.@v;
 }
-```
-あとは、`make_unit`や`make`を使ってセグメント木を作成し、
-`@`で要素を取得、`set`で要素を更新、`fold`で区間の畳み込みを計算できます。
-```
-let tree = Segtree::build(["a", "x", "c"].map(StrConcat::make));
-let tree = tree.set(1, make("b"));
-assert_eq(|_|"", tree.@(1), make("b"));;
-assert_eq(|_|"", tree.fold(0, 3), make("abc"));;
+
+main : IO () = (
+    let tree = build(["a", "x", "c"].map(make));
+    let tree = tree.set(1, make("b"));
+    assert_eq(|_|"", tree.@(1).@v, "b");;
+    assert_eq(|_|"", tree.fold(0, 3).@v, "abc")
+);
 ```
 
 制約・計算量の n は要素数です。計算量は`op`がO(1)で動くとしたものです。

@@ -5,7 +5,9 @@ Defined in cp-library@0.14.0
 関数のメモ化（memoize）
 
 基本的な使い方：
-```
+```fix
+import CPLib.Memoize;
+
 // フィボナッチ数列 mod 2^64 を計算するMemoizeモナド
 //
 // `m`はメモ化につかうメモリの型。`HashMap`や`Array`を呼び出し時に選択。
@@ -23,18 +25,12 @@ sum_fib : [m : Memory, Key m = I64, Value m = U64] I64 -> Memoize m U64 = |n| (
     range(0, n).fold_m(0.u64, |n, sum| pure $ sum + *fib(n))
 );
 
-test_hashmap : IO () = (
-    let m = sum_fib(1e5); // 答えを計算するモナドを作成
-    let x = m.run_with_hashmap(1e5); // キャパシティ（計算中に超えるとrehashが発生）
-    assert_eq(|_|"test_hashmap", x, 14406452726835625052_U64);;
-    pure()
-);
-
-test_array : IO () = (
-    let m = sum_fib(1e5); // 答えを計算するモナドを作成
-    let x = m.run_with_array(1e5); // サイズ（計算中に超えるとout of range）
-    assert_eq(|_|"test_array", x, 14406452726835625052_U64);;
-    pure()
+main : IO () = (
+    // 答えを計算するモナドを作成し、ハッシュマップ上で実行する。
+    // 引数はキャパシティ（計算中に超えるとrehashが発生）
+    assert_eq(|_|"", sum_fib(10).run_with_hashmap(10), 88_U64);;
+    // 配列上で実行する。引数はサイズ（計算中に超えるとout of range）
+    assert_eq(|_|"", sum_fib(10).run_with_array(10), 88_U64)
 );
 ```
 

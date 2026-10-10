@@ -6,6 +6,19 @@ Defined in cp-library@0.14.0
 
 制約・計算量の n は頂点数、m は辺数を表します。
 
+## Examples
+
+```fix
+// 頂点0から頂点3への最大フロー
+let g = create(4, 0, 3) : MaxFlowGraph I64;
+let (g, e01) = g.add_edge_id(0, 1, 2);
+let g = g.add_edge(0, 2, 1).add_edge(1, 2, 1).add_edge(1, 3, 1).add_edge(2, 3, 2);
+let (g, flow) = g.maximize_flow;
+assert_eq(|_|"", flow, 3);;
+assert_eq(|_|"", g.get_flow(e01), 2);;
+assert_eq(|_|"", g.get_min_cut, [true, false, false, false])
+```
+
 ## Values
 
 ### namespace CPLib.MaxFlow::Dinic

@@ -25,6 +25,15 @@ Type: `Std::Array Std::I64 -> Std::String -> Std::Array Std::I64`
 - `sa` : 対象の文字列のsuffix array
 - `s` : 対象の文字列
 
+##### Examples
+
+```fix
+let s = "abab";
+let sa = calc_suffix_array(s); // 接尾辞を辞書順に並べると "ab", "abab", "b", "bab"
+assert_eq(|_|"", sa, [2, 0, 3, 1]);;
+assert_eq(|_|"", calc_lcp_array(sa, s), [2, 0, 1])
+```
+
 #### calc_lcp_array_any
 
 Type: `[a : Std::Eq] Std::Array Std::I64 -> Std::Array a -> Std::Array Std::I64`

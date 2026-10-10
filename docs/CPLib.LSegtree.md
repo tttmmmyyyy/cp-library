@@ -14,23 +14,24 @@ Defined in cp-library@0.14.0
 - act(op(a, b), x) = act(b, act(a, x))
 
 使用例
-```
+```fix
+import CPLib.LSegtree;
+import CPLib.Trait;
+
 // 最大値モノイド
 type I64Max = struct { v : I64 };
 namespace I64Max {
-    make : I64 -> I64Max;
-    make = |v| I64Max { v : v };
+    make : I64 -> I64Max = |v| I64Max { v };
 }
 impl I64Max : Monoid {
-    unit = make(I64::minimum);
+    unit = make(minimum);
     op = |lhs, rhs| make $ lhs.@v.max(rhs.@v);
 }
 
 // 加法モノイド
 type I64Add = struct { v : I64 };
 namespace I64Add {
-    make : I64 -> I64Add;
-    make = |v| I64Add { v : v };
+    make : I64 -> I64Add = |v| I64Add { v };
 }
 impl I64Add : Monoid {
     unit = make(0);
@@ -40,20 +41,17 @@ impl I64Add : Monoid {
 // 加法モノイドの最大値モノイドに対する作用
 impl I64Add : Action {
     type Set I64Add = I64Max; // 作用を受ける集合の型
-    act = |a, x| I64Max::make(x.@v + a.@v);
+    act = |a, x| make(x.@v + a.@v);
 }
 
-main : IO ();
-main = (
-    let tree = LSegtree::init(3) : LSegtree I64Max I64Add;
-    let tree = tree.set(0, I64Max::make(1));
-    let tree = tree.set(1, I64Max::make(2));
-    let tree = tree.set(2, I64Max::make(3));
-    let (tree, res) = tree.fold(0, 3); // res.@v == 3
-    let tree = tree.set(1, I64Max::make(3)); // [1, 3, 3]
-    let tree = tree.act_range(0, 2, I64Add::make(1)); // [2, 4, 4]
-    let (tree, res) = tree.fold(0, 2); // res.@v == 4
-    pure()
+main : IO () = (
+    let tree = build([1, 2, 3].map(make)) : LSegtree I64Max I64Add;
+    let (tree, res) = tree.fold(0, 3);
+    assert_eq(|_|"", res.@v, 3);;
+    let tree = tree.set(1, make(3)); // [1, 3, 3]
+    let tree = tree.act_range(0, 2, make(1)); // [2, 4, 3]
+    let (_, res) = tree.fold(0, 2);
+    assert_eq(|_|"", res.@v, 4)
 );
 ```
 

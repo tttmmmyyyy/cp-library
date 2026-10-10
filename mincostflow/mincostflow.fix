@@ -1,6 +1,16 @@
 // 最小コスト最大流問題
 //
 // 制約・計算量の n は頂点数、m は辺数を表します。
+//
+// # Examples
+// ```fix
+// // 頂点0から頂点2へ、容量とコストを指定した辺を張る
+// let g = create(3, 0, 2) : MinCostFlowGraph I64;
+// let g = g.add_edge(0, 1, 2, 1).add_edge(1, 2, 1, 1).add_edge(0, 2, 1, 5);
+// // 流量の上限を10として流すと、流量2（0->1->2と0->2に1ずつ）、コスト2 + 5 = 7
+// let (_, flow, cost) = g.maximize_flow_min_cost(10);
+// assert_eq(|_|"", (flow, cost), (2, 7))
+// ```
 module CPLib.MinCostFlow;
 
 import BinaryHeap::{BinaryHeap::{get_size, get_top, pop, push}, MinBinaryHeap::empty};

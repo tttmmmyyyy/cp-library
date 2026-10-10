@@ -2,6 +2,20 @@
 
 Defined in cp-library@0.14.0
 
+Union-Find木
+
+要素の検索を伴う関数は、パス圧縮で更新したUnionFind木を結果とともに返します。
+
+## Examples
+
+```fix
+let uf = create(4).unite(0, 1).unite(1, 2);
+let (uf, united) = uf.is_united(0, 2);
+assert(|_|"", united);;
+let (_, size) = uf.get_group_size(3);
+assert_eq(|_|"", size, 1)
+```
+
 ## Values
 
 ### namespace CPLib.UnionFind
