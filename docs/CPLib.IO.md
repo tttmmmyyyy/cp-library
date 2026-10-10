@@ -1,8 +1,11 @@
 # CPLib.IO
 
-Defined in cp-library@0.14.0
+Defined in cp-library@0.15.0
 
 入出力や数値のパースを楽にする機能のためのモジュール
+
+`read_`で始まる関数は標準入力から空白文字区切りで読み込む。入力が尽きているときや、読もうとした形の
+字句が無いときは、理由を標準エラーに書いてプログラムを止める。
 
 ## Values
 
@@ -58,24 +61,21 @@ Type: `Std::I64 -> Std::IO (Std::Array Std::I64)`
 
 #### read_s
 
-Type: `Std::I64 -> Std::IO Std::String`
+Type: `Std::IO Std::String`
 
 空白文字を含まない文字列を一つ読み込む
 
-##### Parameters
-
-- `n`: 読み込む文字列の長さの上限。バッファのメモリ量に影響する。
+空白文字を読み飛ばし、次の空白文字か入力の終わりまでを読む。
 
 #### read_ss
 
-Type: `Std::I64 -> Std::I64 -> Std::IO (Std::Array Std::String)`
+Type: `Std::I64 -> Std::IO (Std::Array Std::String)`
 
 空白文字を含まない文字列を指定された個数読み込む
 
 ##### Parameters
 
 - `n`: 読み込む個数
-- `m`: 各文字列の長さの上限
 
 #### read_u
 
