@@ -21,7 +21,7 @@ import CPLib.Graph::{
 import CPLib.Trait::{Inf, Inf::inf};
 import Std::{
     loop, Additive, Array, Eq, I64, LessThan, Mul, Neg, Sub, Add::add, 
-    Array::{fill, mod, set, to_iter, @, @size}, Functor::map, Iterator::{count_up, fold, range, zip}, LessThan::min, 
+    Array::{fill, mod, set, to_iter, @, @size}, Iterator::{count_up, fold, range, zip}, LessThan::min, 
     LoopState::{break, continue}, Option::as_some, Tuple2::@0, Zero::zero
 };
 
@@ -146,7 +146,8 @@ namespace MinCostFlowGraph {
             )
         );
         // sから到達できない頂点のポテンシャルは読まれないので、溢れない値としてゼロを置く
-        let h = graph.bellman_ford(g.@s).map(|d| if d == Inf::inf { zero } else { d });
+        let h = graph.bellman_ford(g.@s);
+        let h = range(0, n).fold(h, |v, h| if h.@(v) == Inf::inf { h.set(v, zero) } else { h });
         g.set_potential(h)
     );
 
