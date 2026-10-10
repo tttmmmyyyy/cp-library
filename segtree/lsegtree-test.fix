@@ -30,8 +30,7 @@ test = (
 // 文字列の結合に関するモノイド
 type StrConcat = struct { v : String };
 namespace StrConcat {
-    make : String -> StrConcat;
-    make = |v| StrConcat { v : v };
+    make : String -> StrConcat = |v| StrConcat { v };
 }
 impl StrConcat : Monoid {
     unit = make("");
@@ -88,8 +87,7 @@ impl ShiftAlphabet : Action {
 // 最大値モノイド
 type I64Max = struct { v : I64 };
 namespace I64Max {
-    make : I64 -> I64Max;
-    make = |v| I64Max { v : v };
+    make : I64 -> I64Max = |v| I64Max { v };
 }
 impl I64Max : Monoid {
     unit = make(I64::minimum);
@@ -99,8 +97,7 @@ impl I64Max : Monoid {
 // 加法モノイド
 type I64Add = struct { v : I64 };
 namespace I64Add {
-    make : I64 -> I64Add;
-    make = |v| I64Add { v : v };
+    make : I64 -> I64Add = |v| I64Add { v };
 }
 impl I64Add : Monoid {
     unit = make(0);

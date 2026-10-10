@@ -16,8 +16,7 @@ import CPLib.Trait;
 // 文字列の結合に関するモノイド
 type StrConcat = struct { v : String };
 namespace StrConcat {
-    make : String -> StrConcat;
-    make = |v| StrConcat { v : v };
+    make : String -> StrConcat = |v| StrConcat { v };
 }
 impl StrConcat : Monoid {
     unit = make("");
