@@ -303,7 +303,7 @@ linear_sieve = |n| (
 
 // 試し割りにより、数を素因数分解する（素因子を重複ありのフラットな配列で返す）
 //
-// 制約：n >= 1, nの素因数 <= 4e9
+// 制約：n >= 1
 //
 // 計算量：O(sqrt(n))
 //
@@ -313,19 +313,19 @@ linear_sieve = |n| (
 // # Returns
 // 素因数分解の結果。素因子を昇順に並べた配列（同じ素因子はその指数分だけ繰り返し現れる）。
 // `n`が1の場合は空の配列を返す。
-factorize_flat : I64 -> Array U32;
+factorize_flat : I64 -> Array I64;
 factorize_flat = |n| (
     let (d, n, factors) = loop((2, n, []), |(d, n, factors)|
         if d > n / d { break $ (d, n, factors) };
         if n % d != 0 { continue $ (d + 1, n, factors) };
-        continue $ (d, n / d, factors.push_back(d.u32))
+        continue $ (d, n / d, factors.push_back(d))
     );
-    if n > 1 { factors.push_back(n.u32) } else { factors }
+    if n > 1 { factors.push_back(n) } else { factors }
 );
 
 // 試し割りにより、数を素因数分解する（素因子と指数のペアの配列で返す）
 //
-// 制約：n >= 1, nの素因数 <= 4e9
+// 制約：n >= 1
 //
 // 計算量：O(sqrt(n))
 //
@@ -336,7 +336,7 @@ factorize_flat = |n| (
 // 素因数分解の結果。
 // `(p, e)`の配列で、`p`は素因子、`e`はその指数を表す。`p`は昇順に並ぶ。
 // `n`が1の場合は空の配列を返す。
-factorize : I64 -> Array (U32, U8);
+factorize : I64 -> Array (I64, U8);
 factorize = |n| (
     let (d, n, factors) = loop((2, n, []), |(d, n, factors)|
         if d > n / d { break $ (d, n, factors) };
@@ -345,9 +345,9 @@ factorize = |n| (
             if n % d != 0 { break $ (n, e) };
             continue $ (n / d, e + 1_U8)
         );
-        continue $ (d + 1, n, factors.push_back((d.u32, e)))
+        continue $ (d + 1, n, factors.push_back((d, e)))
     );
-    if n > 1 { factors.push_back((n.u32, 1_U8)) } else { factors }
+    if n > 1 { factors.push_back((n, 1_U8)) } else { factors }
 );
 
 // オイラーのトーシェント関数 φ(n) を計算する
