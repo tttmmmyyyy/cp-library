@@ -75,6 +75,14 @@ calc_suffix_array_i64_upper = |upper, s| s._sa_is(upper);
 // # Parameters
 // - `sa` : 対象の文字列のsuffix array
 // - `s` : 対象の文字列
+//
+// # Examples
+// ```fix
+// let s = "abab";
+// let sa = calc_suffix_array(s); // 接尾辞を辞書順に並べると "ab", "abab", "b", "bab"
+// assert_eq(|_|"", sa, [2, 0, 3, 1]);;
+// assert_eq(|_|"", calc_lcp_array(sa, s), [2, 0, 1])
+// ```
 calc_lcp_array : Array I64 -> String -> Array I64;
 calc_lcp_array = |sa, s| s.get_bytes.pop_back.calc_lcp_array_any(sa);
 

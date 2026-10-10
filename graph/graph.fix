@@ -1,6 +1,13 @@
 // グラフの表現と基本的なアルゴリズム
 //
 // 制約・計算量の n は頂点数、m は辺数を表します。
+//
+// # Examples
+// ```fix
+// // 辺のデータをコストとして、ダイクストラ法で最短距離を求める
+// let g = create(3).add_edge(0, 1, 5).add_edge(1, 2, 2).add_edge(0, 2, 10);
+// assert_eq(|_|"", g.dijkstra(0), [0, 5, 7])
+// ```
 module CPLib.Graph;
 
 import BinaryHeap::{BinaryHeap::{get_size, get_top, pop, push}, MinBinaryHeap::empty};
