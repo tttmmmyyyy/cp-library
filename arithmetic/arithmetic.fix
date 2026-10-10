@@ -297,26 +297,20 @@ create_prime_list = |n| (
 // - `ps`: [0, n)の範囲の素数のリスト
 linear_sieve : U32 -> (Array U32, Array U32);
 linear_sieve = |n| (
-    let lp = Array::fill(n.i64, 0_U32);
-    let ps = [];
-    Iterator::range(2, n.i64).fold((lp, ps), |i, (lp, ps)|
-        let (lp, ps) = if lp.@(i) == 0_U32 {
-            let p = i.u32;
-            let lp = lp.set(i, p);
-            let ps = ps.push_back(p);
-            (lp, ps)
-        } else {
-            (lp, ps)
-        };
-        ps.to_iter.loop_iter((lp, ps), |p, (lp, ps)|
-            if i * p.i64 >= n.i64 { break $ (lp, ps) };
-            let lp = lp.set(i * p.i64, p);
-            if p == lp.@(i) {
-                break $ (lp, ps)
-            } else {
-                continue $ (lp, ps)
-            }
-        )
+    let n = n.i64;
+    let lp = Array::fill(n, 0_U32);
+    let ps = Array::empty(n / 10);
+    Iterator::range(2, n).fold((lp, ps), |i, (lp, ps)|
+        let (lp, ps) = if lp.@(i) == 0_U32 { (lp.set(i, i.u32), ps.push_back(i.u32)) } else { (lp, ps) };
+        // iの最小の素因数以下の素数pについて、i * pの最小の素因数はp
+        let lp_i = lp.@(i);
+        let lp = loop((0, lp), |(k, lp)|
+            if k >= ps.@size { break $ lp };
+            let p = ps.@(k);
+            if p > lp_i || i * p.i64 >= n { break $ lp };
+            continue $ (k + 1, lp.set(i * p.i64, p))
+        );
+        (lp, ps)
     )
 );
 
