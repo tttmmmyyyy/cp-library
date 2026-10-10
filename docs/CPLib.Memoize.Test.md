@@ -14,7 +14,7 @@ Type: `[m : CPLib.Memoize::Memory, CPLib.Memoize::Memory::Key m = Std::I64, CPLi
 
 `m`はメモ化につかうメモリの型。`HashMap`や`Array`を呼び出し時に選択。
 
-`fib`の結果をメモ化したいので`memoize(n) $ `で始める
+`fib`の結果をメモ化したいので`memoize(n) $ |_|`で始める
 
 #### sum_fib
 
@@ -35,6 +35,14 @@ Type: `Std::IO ()`
 #### test_hashmap
 
 Type: `Std::IO ()`
+
+#### test_speed
+
+Type: `Std::IO ()`
+
+メモ化した再帰の計算量が、呼び出されるキーの数に比例することを確かめる
+
+メモリに値があっても本体を作る実装では、このテストは終わらないか、スタックが溢れて止まる。
 
 ## Types and aliases
 

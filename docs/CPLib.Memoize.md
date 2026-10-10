@@ -12,8 +12,8 @@ import CPLib.Memoize;
 //
 // `m`はメモ化につかうメモリの型。`HashMap`や`Array`を呼び出し時に選択。
 //
-// 結果をメモしたいので、値を計算するモナドを `memoize(n)`に渡す
-fib : [m : Memory, Key m = I64, Value m = U64] I64 -> Memoize m U64 = |n| memoize(n) $ (
+// 結果をメモしたいので、値を計算するモナドを `memoize(n) $ |_|` の後に書く
+fib : [m : Memory, Key m = I64, Value m = U64] I64 -> Memoize m U64 = |n| memoize(n) $ |_| (
     if n <= 1 { pure $ n.u64 };
     pure $ *fib(n - 1) + *fib(n - 2)
 );
@@ -40,18 +40,20 @@ main : IO () = (
 
 #### memoize
 
-Type: `[m : CPLib.Memoize::Memory, CPLib.Memoize::Memory::Key m = k, CPLib.Memoize::Memory::Value m = v] k -> CPLib.Memoize::Memoize m v -> CPLib.Memoize::Memoize m v`
+Type: `[m : CPLib.Memoize::Memory, CPLib.Memoize::Memory::Key m = k, CPLib.Memoize::Memory::Value m = v] k -> Std::Lazy (CPLib.Memoize::Memoize m v) -> CPLib.Memoize::Memoize m v`
 
 モナドアクションをメモ化する
 
-`memoize(x) $ f` は、
+`memoize(x) $ |_| body` は、
 - キー`x`に対する値がメモリに存在する場合はそれを返す。
-- 存在しない場合はモナド`f`を実行し、結果をメモリに保存してから返す。
+- 存在しない場合はモナド`body`を作って実行し、結果をメモリに保存してから返す。
+
+`body`はメモリに値が無いときだけ作られる。このため、メモ化した再帰の計算量は、呼び出されるキーの数に比例する。
 
 ##### Parameters
 
 - `x` : メモ化のキー
-- `f` : キー`x`に対する値を計算するモナド
+- `f` : キー`x`に対する値を計算するモナドを返す関数
 
 #### run_with_array
 

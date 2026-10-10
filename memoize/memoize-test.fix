@@ -1,14 +1,17 @@
 module CPLib.Memoize.Test;
 
 import CPLib.Memoize::{memoize, run_with_array, run_with_hashmap, Memoize, Memory, Memory::{Key, Value}};
-import Std::{I64, IO, U64, Debug::assert_eq, Iterator::{fold_m, range}, Monad::pure, ToU64::u64};
+import Std::{
+    I64, IO, U64, Debug::{assert_eq, consumed_time_while_lazy}, IO::println, Iterator::{fold_m, range}, Monad::pure, 
+    String::populate, ToString::to_string, ToU64::u64
+};
 
 // フィボナッチ数列 mod 2^64 を計算する
 // 
 // `m`はメモ化につかうメモリの型。`HashMap`や`Array`を呼び出し時に選択。
 // 
-// `fib`の結果をメモ化したいので`memoize(n) $ `で始める
-fib : [m : Memory, Key m = I64, Value m = U64] I64 -> Memoize m U64 = |n| memoize(n) $ (
+// `fib`の結果をメモ化したいので`memoize(n) $ |_|`で始める
+fib : [m : Memory, Key m = I64, Value m = U64] I64 -> Memoize m U64 = |n| memoize(n) $ |_| (
     if n <= 1 { pure $ n.u64 };
     pure $ *fib(n - 1) + *fib(n - 2)
 );
@@ -34,9 +37,21 @@ test_array : IO () = (
     pure()
 );
 
+// メモ化した再帰の計算量が、呼び出されるキーの数に比例することを確かめる
+//
+// メモリに値があっても本体を作る実装では、このテストは終わらないか、スタックが溢れて止まる。
+test_speed : IO () = (
+    let n = 1e5;
+    let (x, time) = consumed_time_while_lazy(|_| fib(n).run_with_array(n + 1));
+    assert_eq(|_|"test_speed", x, 2754320626097736315_U64);;
+    println $ "[CPLib.Memoize.Test] fib({}): {}".populate([n.to_string, time.to_string]);;
+    pure()
+);
+
 test : IO ();
 test = (
     test_hashmap;;
     test_array;;
+    test_speed;;
     pure()
 );
