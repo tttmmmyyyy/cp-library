@@ -1,15 +1,26 @@
 module CPLib.MaxFlow.Test;
 
-import CPLib.MaxFlow::MaxFlowGraph::{add_edge, add_edge_id, create, get_flow, get_min_cut, maximize_flow};
+import CPLib.MaxFlow::{
+    MaxFlowEdge, MaxFlowGraph, MaxFlowEdge::{@cap, @flow, @from, @to}, 
+    MaxFlowGraph::{add_edge, add_edge_id, change_edge, create, get_edge, get_edges, get_flow, get_min_cut, maximize_flow, maximize_flow_with_limit}
+};
+import Random::{generate_I64_nonneg, init_by_seed, Random};
 import Std::{
-    IO, Debug::{assert_eq, consumed_time_while_lazy}, IO::println, Iterator::{fold, range}, Monad::pure, 
-    String::populate, ToString::to_string
+    loop, Array, Bool, I64, IO, Array::{fill, mod, push_back, to_iter, @, @size}, Debug::{assert, assert_eq, consumed_time_while_lazy}, 
+    IO::println, Iterator::{fold, fold_m, range}, LessThan::min, LoopState::{break, continue}, Monad::pure, 
+    String::populate, ToString::to_string, I64::{bit_and, maximum, shift_left}
 };
 
 test : IO ();
 test = (
     test_basic;;
     test_dead_end_speed;;
+    test_flow_limit;;
+    test_edges;;
+    test_min_cut_before_and_after_flow;;
+    test_long_path;;
+    let rng = Random::init_by_seed(0_U64);
+    let _ = *test_random(rng);
     pure()
 );
 
@@ -51,4 +62,118 @@ test_dead_end_speed = (
     assert_eq(|_|"test_dead_end_speed", flow, 1);;
     println("[CPLib.MaxFlow.Test] dead end chain({}): {}".populate([n.to_string, time.to_string]));;
     pure()
+);
+
+// 流量の上限を指定して流し、続きから流す
+test_flow_limit : IO ();
+test_flow_limit = (
+    // 0 -> 1 -> 3、0 -> 2 -> 3 に容量 2 ずつ。最大流は 4
+    let graph = MaxFlowGraph::create(4, 0, 3) : MaxFlowGraph I64;
+    let graph = graph.add_edge(0, 1, 2).add_edge(1, 3, 2).add_edge(0, 2, 2).add_edge(2, 3, 2);
+    let (graph, f0) = graph.maximize_flow_with_limit(0);
+    assert_eq(|_|"limit 0", f0, 0);;
+    let (graph, f1) = graph.maximize_flow_with_limit(3);
+    assert_eq(|_|"limit 3", f1, 3);;
+    let (graph, f2) = graph.maximize_flow_with_limit(3);
+    assert_eq(|_|"the rest", f2, 1);;
+    let (_, f3) = graph.maximize_flow;
+    assert_eq(|_|"nothing left", f3, 0);;
+    pure()
+);
+
+// 辺の状態を読み、書き換える
+test_edges : IO ();
+test_edges = (
+    let graph = MaxFlowGraph::create(3, 0, 2) : MaxFlowGraph I64;
+    let (graph, e0) = graph.add_edge_id(0, 1, 5);
+    let (graph, e1) = graph.add_edge_id(1, 2, 3);
+    assert_eq(|_|"edge ids", (e0, e1), (0, 1));;
+    let (graph, flow) = graph.maximize_flow;
+    assert_eq(|_|"flow", flow, 3);;
+    let e = graph.get_edge(e0);
+    assert_eq(|_|"get_edge", (e.@from, e.@to, e.@cap, e.@flow), (0, 1, 5, 3));;
+    let es = graph.get_edges;
+    assert_eq(|_|"get_edges size", es.@size, 2);;
+    assert_eq(|_|"get_edges order", (es.@(1).@from, es.@(1).@to, es.@(1).@cap, es.@(1).@flow), (1, 2, 3, 3));;
+    // 1 -> 2 の容量を 4 に広げると、もう 1 だけ流せる
+    let graph = graph.change_edge(e1, 4, 3);
+    let e = graph.get_edge(e1);
+    assert_eq(|_|"change_edge", (e.@cap, e.@flow), (4, 3));;
+    let (graph, flow) = graph.maximize_flow;
+    assert_eq(|_|"flow after change_edge", flow, 1);;
+    assert_eq(|_|"get_flow after change_edge", graph.get_flow(e1), 4);;
+    pure()
+);
+
+// 最小カットは、その時点の残余グラフから求める
+test_min_cut_before_and_after_flow : IO ();
+test_min_cut_before_and_after_flow = (
+    let graph = MaxFlowGraph::create(3, 0, 2) : MaxFlowGraph I64;
+    let graph = graph.add_edge(0, 1, 1).add_edge(1, 2, 1);
+    assert_eq(|_|"before maximize_flow", graph.get_min_cut, [true, true, true]);;
+    let (graph, _) = graph.maximize_flow;
+    assert_eq(|_|"after maximize_flow", graph.get_min_cut, [true, false, false]);;
+    let graph = graph.add_edge(0, 1, 5);
+    assert_eq(|_|"after add_edge", graph.get_min_cut, [true, true, false]);;
+    pure()
+);
+
+// 長い道のグラフ。頂点数に比例する深さで再帰する実装は、既定のスタックで溢れる
+test_long_path : IO ();
+test_long_path = (
+    let n = 200000;
+    let graph = range(0, n - 1).fold(MaxFlowGraph::create(n, 0, n - 1) : MaxFlowGraph I64, |i, graph| graph.add_edge(i, i + 1, 1));
+    let (_, flow) = graph.maximize_flow;
+    assert_eq(|_|"test_long_path", flow, 1);;
+    pure()
+);
+
+// 頂点の集合ごとのカットの容量を総当たりして、最小カットの容量を求める
+min_cut_by_brute_force : I64 -> I64 -> I64 -> Array (I64, I64, I64) -> I64;
+min_cut_by_brute_force = |n, s, t, edges| (
+    range(0, 1.shift_left(n)).fold(I64::maximum, |set, best|
+        let inside = |v| set.bit_and(1.shift_left(v)) != 0;
+        if !inside(s) || inside(t) { best };
+        let cut = edges.to_iter.fold(0, |(from, to, cap), sum| if inside(from) && !inside(to) { sum + cap } else { sum });
+        min(best, cut)
+    )
+);
+
+// 小さな乱択グラフで、最大流を総当たりの最小カットと比べ、辺の流量と最小カットを確かめる
+test_random : Random -> IO Random;
+test_random = |rng| (
+    range(0, 500).fold_m(rng, |_, rng|
+        let (rng, n) = rng.generate_I64_nonneg;
+        let n = 2 + n % 5;
+        let (rng, m) = rng.generate_I64_nonneg;
+        let m = m % 11;
+        let (rng, s) = rng.generate_I64_nonneg;
+        let s = s % n;
+        let (rng, t) = rng.generate_I64_nonneg;
+        let t = (s + 1 + t % (n - 1)) % n;
+        let (rng, edges) = range(0, m).fold((rng, []), |_, (rng, edges)|
+            let (rng, from) = rng.generate_I64_nonneg;
+            let (rng, to) = rng.generate_I64_nonneg;
+            let (rng, cap) = rng.generate_I64_nonneg;
+            (rng, edges.push_back((from % n, to % n, cap % 5)))
+        );
+        let msg = |_| "edges=" + edges.to_string + " s=" + s.to_string + " t=" + t.to_string;
+        let graph = edges.to_iter.fold(MaxFlowGraph::create(n, s, t) : MaxFlowGraph I64, |(from, to, cap), graph| graph.add_edge(from, to, cap));
+        let (graph, flow) = graph.maximize_flow;
+        assert_eq(msg, flow, min_cut_by_brute_force(n, s, t, edges));;
+        // 各辺の流量が容量を超えず、流量が保存される
+        let es = graph.get_edges;
+        range(0, m).fold_m((), |i, _| assert(msg, 0 <= es.@(i).@flow && es.@(i).@flow <= es.@(i).@cap));;
+        let excess = es.to_iter.fold(fill(n, 0), |e, excess| excess.mod(e.@from, |x| x + e.@flow).mod(e.@to, |x| x - e.@flow));
+        range(0, n).fold_m((), |v, _| assert_eq(msg, excess.@(v), if v == s { flow } else if v == t { -flow } else { 0 }));;
+        // get_min_cut の頂点の集合のカットの容量は、最大流に等しい
+        let cut = graph.get_min_cut;
+        assert(msg, cut.@(s) && !cut.@(t));;
+        let cut_cap = es.to_iter.fold(0, |e, sum| if cut.@(e.@from) && !cut.@(e.@to) { sum + e.@cap } else { sum });
+        assert_eq(msg, cut_cap, flow);;
+        // 2 回目は何も流れない
+        let (_, flow2) = graph.maximize_flow;
+        assert_eq(msg, flow2, 0);;
+        pure $ rng
+    )
 );
