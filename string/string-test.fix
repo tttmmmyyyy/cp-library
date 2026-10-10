@@ -4,8 +4,8 @@ import CPLib.String::{calc_lcp_array, calc_suffix_array, calc_suffix_array_i64, 
 import Random::{generate_U64, init_by_seed};
 import Std::{
     loop, IO, Array::{empty, fill, pop_back, push_back, @, @size}, Debug::{assert_eq, consumed_time_while_lazy}, 
-    Functor::{forget, map}, IO::println, Iterator::{fold, fold_m, map, range, to_array}, LoopState::{break, continue}, 
-    Monad::pure, String::{get_bytes, populate, _unsafe_from_c_str}, ToI64::i64, ToString::to_string, ToU8::u8
+    FromBytes::from_bytes, Functor::{forget, map}, IO::println, Iterator::{fold, fold_m, map, range, to_array}, LoopState::{break, continue}, 
+    Monad::pure, Result::as_ok, String::{get_bytes, populate}, ToI64::i64, ToString::to_string, ToU8::u8
 };
 
 // https://atcoder.jp/contests/language-test-202505/submissions/68577484
@@ -25,13 +25,13 @@ test_sa = (
     let rng = Random::init_by_seed(0_U64);
     range(0, 3).fold_m(rng, |_, rng|
         let n = 5e5;
-        let (s, _) = range(0, n).fold((Array::empty(n), rng), |_, (s, rng)|
+        let (s, _) = range(0, n).fold((empty(n), rng), |_, (s, rng)|
             let (rng, v) = rng.generate_U64;
             let v = (v % 26_U64).u8 + 'a';
             (s.push_back(v), rng)
         );
         let s = s.push_back('\0');
-        let s = String::_unsafe_from_c_str(s);
+        let s = s.from_bytes.as_ok;
         let sa0 = s.calc_suffix_array;
         let sa1 = s.get_bytes.map(i64).pop_back._sa_doubling;
         assert_eq(|_|"test_sa", sa0, sa1);;
@@ -80,7 +80,7 @@ test_z_random = (
 test_z_speed : IO ();
 test_z_speed = (
     let n = 1e5;
-    let s = Array::fill(n, 0);
+    let s = fill(n, 0);
     let (z, time) = consumed_time_while_lazy(|_| s.calc_z_array_any);
     assert_eq(|_|"test_z_speed", z.@(n - 1), 1);;
     println("[CPLib.String.Test] calc_z_array_any({}): {}".populate([n.to_string, time.to_string]))

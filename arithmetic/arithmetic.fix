@@ -259,7 +259,7 @@ create_prime_table = |size| (
     let table = range(2, size).loop_iter(table, |n, table|
         if n > (size - 1) / n { break $ table };
         if !table.@(n) { continue $ table };
-        let table = Iterator::range_step(2 * n, size, n).fold(table, |m, table| table.set(m, false));
+        let table = range_step(2 * n, size, n).fold(table, |m, table| table.set(m, false));
         continue $ table
     );
     table

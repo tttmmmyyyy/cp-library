@@ -70,9 +70,9 @@ test_unreachable = (
 min_costs_by_brute_force : I64 -> I64 -> I64 -> Array (I64, I64, I64, I64) -> Array (Option I64);
 min_costs_by_brute_force = |n, s, t, edges| (
     let max_flow = edges.to_iter.fold(0, |(_, _, cap, _), sum| sum + cap);
-    loop((Array::fill(edges.@size, 0), Array::fill(max_flow + 1, none())), |(flows, min_costs)|
+    loop((fill(edges.@size, 0), fill(max_flow + 1, none())), |(flows, min_costs)|
         // 各頂点から出る流量と入る流量の差
-        let excess = range(0, edges.@size).fold(Array::fill(n, 0), |i, excess|
+        let excess = range(0, edges.@size).fold(fill(n, 0), |i, excess|
             let (from, to, _, _) = edges.@(i);
             excess.mod(from, |x| x + flows.@(i)).mod(to, |x| x - flows.@(i))
         );
@@ -143,7 +143,7 @@ test_random = |negative, rng| (
         assert_eq(msg, some(cost), min_costs.@(flow));;
         // 各辺の流量が流量の保存と容量を満たし、コストの総和が返したコストに等しい
         let flows = ids.map(|id| g.get_flow(id));
-        let excess = range(0, m).fold(Array::fill(n, 0), |i, excess|
+        let excess = range(0, m).fold(fill(n, 0), |i, excess|
             let (from, to, _, _) = edges.@(i);
             excess.mod(from, |x| x + flows.@(i)).mod(to, |x| x - flows.@(i))
         );

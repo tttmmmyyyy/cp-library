@@ -198,7 +198,7 @@ namespace Dinic {
     reset_iter = |self| (
         let n = self.@graph.@size;
         if self.@iter.@size != n {
-            self.set_iter(Array::fill(n, 0))
+            self.set_iter(fill(n, 0))
         } else {
             self.(mod_iter $ |iter| range(0, iter.@size).fold(iter, |i, iter| iter.set(i, 0)))
         }
@@ -209,7 +209,7 @@ namespace Dinic {
     reset_level = |self| (
         let n = self.@graph.@size;
         if self.@level.@size != n {
-            self.set_level(Array::fill(n, -1))
+            self.set_level(fill(n, -1))
         } else {
             self.(mod_level $ |level| range(0, level.@size).fold(level, |i, level| level.set(i, -1)))
         }

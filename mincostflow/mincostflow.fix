@@ -70,7 +70,7 @@ namespace MinCostFlowGraph {
             graph : Graph::create(n),
             s : s,
             t : t,
-            potential : Array::fill(n, zero),
+            potential : fill(n, zero),
         }
     );
 
@@ -199,9 +199,9 @@ namespace MinCostFlowGraph {
         let s = g.@s;
         let t = g.@t;
         let h = g.@potential; let g = g.set_potential([]); // ポテンシャル
-        let dist = Array::fill(n, Inf::inf); // 距離
-        let prevv = Array::fill(n, -1); // 直前にしらべた頂点
-        let preve = Array::fill(n, -1); // 直前にしらべた辺
+        let dist = fill(n, Inf::inf); // 距離
+        let prevv = fill(n, -1); // 直前にしらべた頂点
+        let preve = fill(n, -1); // 直前にしらべた辺
         loop((g, flow_limit, zero, h, dist, prevv, preve), |(g, flow_rest, cost, h, dist, prevv, preve)| 
             if flow_rest == zero { break $ (g.set_potential(h), flow_limit - flow_rest, cost) };
             // ダイクストラ法でsからtまでの距離を求める。tを取り出した時点で打ち切る

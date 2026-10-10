@@ -304,7 +304,7 @@ fft = |dir, x| (
     );
 
     // 回転因子の表：hが2のべきで0 <= j < hのとき、tw.@(h + j) = (1の2h乗根)^j
-    let tw = Array::fill(n, ZP::make(0));
+    let tw = fill(n, ZP::make(0));
     let tw = loop((n / 2, tw, w), |(h, tw, wh)|
         // whは1の2h乗根
         if h == 0 { break $ tw };
