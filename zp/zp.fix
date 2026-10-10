@@ -36,10 +36,7 @@ module CPLib.ZP;
 import CPLib.Arithmetic::calc_primitive_root;
 import Std::{
     loop, undefined, Add, Array, Div, Eq, I64, Mul, Neg, Sub, ToString, U32, U64, Zero, 
-    Array::{
-        fill, push_back, reserve, @, @size, _unsafe_get_bounds_unchecked,
-        unsafe_set_bounds_unchecked, unsafe_swap_bounds_unchecked
-    }, 
+    Array::{fill, push_back, reserve, set, swap, @, @size}, 
     Functor::map, I64::{bit_and, bit_xor, shift_left, shift_right}, Iterator::{fold, range, range_step}, 
     LoopState::{break, continue}, ToI64::i64, ToString::to_string, ToU32::u32, ToU64::u64, 
     U64::{bit_and, bit_or, shift_right}
@@ -299,7 +296,7 @@ fft = |dir, x| (
             continue $ (bit, j)
         );
         
-        let x = if i < j { x.unsafe_swap_bounds_unchecked(i, j) } else { x };
+        let x = if i < j { x.swap(i, j) } else { x };
         (j, x)
     );
 
@@ -309,7 +306,7 @@ fft = |dir, x| (
         // whは1の2h乗根
         if h == 0 { break $ tw };
         let (tw, _) = range(0, h).fold((tw, ZP::make(1)), |j, (tw, t)|
-            (tw.unsafe_set_bounds_unchecked(h + j, t), t * wh)
+            (tw.set(h + j, t), t * wh)
         );
         continue $ (h / 2, tw, wh * wh)
     );
@@ -319,10 +316,10 @@ fft = |dir, x| (
         if h >= n { break $ x };
         let x = range_step(0, n, 2 * h).fold(x, |i, x|
             range(0, h).fold(x, |j, x|
-                let u = x._unsafe_get_bounds_unchecked(i+j);
-                let v = x._unsafe_get_bounds_unchecked(i+j+h) * tw._unsafe_get_bounds_unchecked(h+j);
-                let x = x.unsafe_set_bounds_unchecked(i+j, u + v);
-                x.unsafe_set_bounds_unchecked(i+j+h, u - v)
+                let u = x.@(i+j);
+                let v = x.@(i+j+h) * tw.@(h+j);
+                let x = x.set(i+j, u + v);
+                x.set(i+j+h, u - v)
             )
         );
         continue $ (2 * h, x)
