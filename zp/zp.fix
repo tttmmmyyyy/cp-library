@@ -37,7 +37,7 @@ import CPLib.Arithmetic::calc_primitive_root;
 import Std::{
     loop, undefined, Add, Array, Div, Eq, I64, Mul, Neg, Sub, ToString, U32, U64, Zero, 
     Array::{
-        empty, push_back, reserve, @, @size, _unsafe_get_bounds_unchecked,
+        fill, push_back, reserve, @, @size, _unsafe_get_bounds_unchecked,
         unsafe_set_bounds_unchecked, unsafe_swap_bounds_unchecked
     }, 
     Functor::map, I64::{bit_and, bit_xor, shift_left, shift_right}, Iterator::{fold, range, range_step}, 
@@ -303,31 +303,29 @@ fft = |dir, x| (
         (j, x)
     );
 
-    // 2 <= len <= n（lenは2のべき））の範囲で、1のlen乗根を計算しておく（逆順）。
-    let wlens = loop((n, Array::empty(32), w), |(len, wlens, w)|
-        if len == 1 { break $ wlens };
-        let wlens = wlens.push_back(w);
-        let w = w * w;
-        continue $ (len.shift_right(1), wlens, w)
+    // 回転因子の表：hが2のべきで0 <= j < hのとき、tw.@(h + j) = (1の2h乗根)^j
+    let tw = Array::fill(n, ZP::make(0));
+    let tw = loop((n / 2, tw, w), |(h, tw, wh)|
+        // whは1の2h乗根
+        if h == 0 { break $ tw };
+        let (tw, _) = range(0, h).fold((tw, ZP::make(1)), |j, (tw, t)|
+            (tw.unsafe_set_bounds_unchecked(h + j, t), t * wh)
+        );
+        continue $ (h / 2, tw, wh * wh)
     );
 
-    let x = loop((1, x), |(log_len, x)|
-        let len = 1.shift_left(log_len);
-        if len > n { break $ x };
-        let wlen = wlens.@(wlens.@size - log_len); // 1のlen乗根
-        let x = range_step(0, n, len).fold(x, |i, x|
-            let w = ZP::make(1);
-            let (_w, x) = range(0, len / 2).fold((w, x), |j, (w, x)|
+    // 長さ2hのブロックごとにバタフライ演算をする
+    let x = loop((1, x), |(h, x)|
+        if h >= n { break $ x };
+        let x = range_step(0, n, 2 * h).fold(x, |i, x|
+            range(0, h).fold(x, |j, x|
                 let u = x._unsafe_get_bounds_unchecked(i+j);
-                let v = x._unsafe_get_bounds_unchecked(i+j+len/2);
-                let v = v * w;
+                let v = x._unsafe_get_bounds_unchecked(i+j+h) * tw._unsafe_get_bounds_unchecked(h+j);
                 let x = x.unsafe_set_bounds_unchecked(i+j, u + v);
-                let x = x.unsafe_set_bounds_unchecked(i+j+len/2, u - v);
-                (w * wlen, x)
-            );
-            x
+                x.unsafe_set_bounds_unchecked(i+j+h, u - v)
+            )
         );
-        continue $ (log_len + 1, x)
+        continue $ (2 * h, x)
     );
 
     // 逆変換の場合は、nで割る
