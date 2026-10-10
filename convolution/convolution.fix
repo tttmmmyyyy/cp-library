@@ -93,7 +93,7 @@ convolve_i64 = |a, b| (
 
     let offset = [0_U64, 0_U64, __M1M2M3, 2_U64 * __M1M2M3, 3_U64 * __M1M2M3];
 
-    let c = Array::fill(n + m - 1, 0);
+    let c = fill(n + m - 1, 0);
     range(0, n + m - 1).fold(c, |i, c|
         let x = 0_U64;
         let x = x + (c1.@(i).@value.u64 * i1) % __M1 * __M2M3;

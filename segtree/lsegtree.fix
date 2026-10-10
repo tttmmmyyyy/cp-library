@@ -85,8 +85,8 @@ type LSegtree m a = struct {
 // - `n` : セグメント木の要素数
 init : [m : Monoid, a : Monoid] I64 -> LSegtree m a;
 init = |n| (
-    let elems = Array::fill(n * 2, Monoid::unit);
-    let lazy = Array::fill(n * 2, Monoid::unit);
+    let elems = fill(n * 2, Monoid::unit);
+    let lazy = fill(n * 2, Monoid::unit);
     LSegtree { elems : elems, lazy : lazy, n : n }
 );
 
@@ -99,8 +99,8 @@ init = |n| (
 build : [m : Monoid, a : Monoid] Array m -> LSegtree m a;
 build = |elems| (
     let n = elems.@size;
-    let lazy = Array::fill(n * 2, Monoid::unit) : Array a;
-    let tree = Array::fill(n * 2, Monoid::unit) : Array m;
+    let lazy = fill(n * 2, Monoid::unit) : Array a;
+    let tree = fill(n * 2, Monoid::unit) : Array m;
     // [n, 2n)に要素をセット
     let tree = range(0, n).fold(tree, |i, tree| tree.set(n + i, elems.@(i)) );
     // [1, n)の範囲を計算

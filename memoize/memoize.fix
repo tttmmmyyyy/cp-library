@@ -84,7 +84,7 @@ run_with_hashmap : I64 -> Memoize (HashMap k v) a -> a = |capacity| (
 // - `size` : 配列のサイズ。計算中に超えた場合はout of rangeでプログラム終了。
 // - `f` : メモ化モナド
 run_with_array : I64 -> Memoize (Array (Option v)) a -> a = |size| (
-    run_with_memory(Array::fill(size, none()))
+    run_with_memory(fill(size, none()))
 );
 
 // モナドアクションをメモ化する

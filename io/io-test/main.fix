@@ -1,7 +1,7 @@
 module Main;
 
 import CPLib.IO::{read_c, read_cs, read_f, read_fs, read_i, read_is, read_s, read_ss, read_u, read_us};
-import Std::{F64, IO, Array::@, Debug::assert, Functor::map, IO::println, Monad::pure, String::{get_bytes, get_size}, ToU64::u64};
+import Std::{F64, IO, Array::@, Debug::assert, Functor::map, IO::println, Monad::pure, String::{get_bytes, @size}, ToU64::u64};
 
 main : IO ();
 main = (
@@ -37,7 +37,7 @@ main = (
 
     // 入力の終わりで止まる長い字句
     let s = *read_s;
-    assert(|_|"11", s.get_size == 1000 && s.get_bytes.@(0) == 'x' && s.get_bytes.@(999) == 'x');;
+    assert(|_|"11", s.@size == 1000 && s.get_bytes.@(0) == 'x' && s.get_bytes.@(999) == 'x');;
 
     "PASS".println
 );

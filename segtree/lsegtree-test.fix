@@ -6,9 +6,9 @@ import CPLib.Trait::{Action, Monoid, Action::act, Monoid::{op, unit}};
 import Random::{generate_I64_nonneg, init_by_seed, Random};
 import Std::{
     Bool, Eq, I64, IO, String, ToString, Array::{fill, push_back, set, @}, 
-    Debug::{assert_eq, consumed_time_while_lazy}, Functor::map, I64::minimum, IO::println, 
-    Iterator::{fold, fold_m, map, range, to_array}, LessThan::max, Monad::pure, 
-    String::{from_U8, get_bytes, populate, _unsafe_from_c_str}, ToI64::i64, ToString::to_string, 
+    Debug::{assert_eq, consumed_time_while_lazy}, FromBytes::from_bytes, Functor::map, I64::minimum, IO::println, 
+    Iterator::{fold, fold_m, map, range, to_array}, LessThan::max, Monad::pure, Result::as_ok, 
+    String::{from_U8, get_bytes, populate}, ToI64::i64, ToString::to_string, 
     ToU8::u8
 };
 
@@ -79,7 +79,7 @@ impl ShiftAlphabet : Action {
             let x = x.u8 + 'a';
             x
         );
-        let s = String::_unsafe_from_c_str(bytes);
+        let s = bytes.from_bytes.as_ok;
         StrConcat::make(s)
     );
 }
@@ -122,7 +122,7 @@ gen_random_alphabetical_string = |rng| (
         (bytes, rng)
     );
     let bytes = bytes.push_back('\0');
-    let s = String::_unsafe_from_c_str(bytes);
+    let s = bytes.from_bytes.as_ok;
     (rng, s)
 );
 
@@ -141,7 +141,7 @@ test_random = |is_build, rng| (
     let n = 100;
 
     let (tree, arr) = if !is_build {
-        let arr = Array::fill(n, StrConcat::make(""));
+        let arr = fill(n, StrConcat::make(""));
         (LSegtree::init(n), arr)
     } else {
         let arr = range(0, n).map(|i| 

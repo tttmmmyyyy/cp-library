@@ -14,6 +14,19 @@ test = (
     test_scc;;
     test_scc_self_loop;;
     test_scc_multiple_edges;;
+    test_scc_long_path;;
+    pure()
+);
+
+// 長い道のグラフ。頂点数に比例する深さで再帰する実装は、既定のスタックで溢れる
+test_scc_long_path : IO ();
+test_scc_long_path = (
+    let n = 200000;
+    let g = range(0, n - 1).fold(Graph::create(n) : Graph (), |i, g| g.add_edge(i, i + 1, ()));
+    let sccs = g.calc_sccs;
+    assert_eq(|_|"test_scc_long_path size", sccs.@size, n);;
+    assert_eq(|_|"test_scc_long_path first", sccs.@(0), [0]);;
+    assert_eq(|_|"test_scc_long_path last", sccs.@(n - 1), [n - 1]);;
     pure()
 );
 
