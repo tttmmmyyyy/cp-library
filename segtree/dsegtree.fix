@@ -40,9 +40,9 @@ type DSegtree m = struct {
 // 計算量：O(n)
 //
 // # Parameters
+// - `n` : セグメント木の要素数
 // - `unit` : モノイドの単位元
 // - `op` : モノイドの演算子
-// - `n` : セグメント木の要素数
 init : I64 -> m -> ((m, m) -> m) -> DSegtree m;
 init = |n, unit, op| (
     let elems = Array::fill(n * 2, unit);
@@ -54,9 +54,9 @@ init = |n, unit, op| (
 // 計算量：O(n)
 //
 // # Parameters
+// - `elems` : セグメント木の要素を格納する配列
 // - `unit` : モノイドの単位元
 // - `op` : モノイドの演算子
-// - `elems` : セグメント木の要素を格納する配列
 build : Array m -> m -> ((m, m) -> m) -> DSegtree m;
 build = |elems, unit, op| (
     let n = elems.@size;
@@ -123,6 +123,7 @@ set = |i, value, tree| (
 // # Parameters
 // - `l` : 区間の左端 (0-indexed)
 // - `r` : 区間の右端 (0-indexed, exclusive)
+// - `tree` : セグメント木
 fold : I64 -> I64 -> DSegtree m -> m;
 fold = |l, r, tree| (
     let n = tree.@n;

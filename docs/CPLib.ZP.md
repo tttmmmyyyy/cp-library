@@ -45,6 +45,8 @@ Type: `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::FFTDirection -> Std::Array (CPLib
 
 `ZP p`型の配列に対して高速フーリエ変換を行う
 
+入力の長さを2のべき乗に切り上げ、末尾を0で埋めてから変換する。返る配列の長さは切り上げた長さである（長さ3なら4）。逆変換もこの長さで割る。
+
 制約：2^c | (p-1) かつ |x| <= 2^c なる c が存在する
 
 計算量：O(n log n + sqrt(p))、n = |x|。pがこのモジュールに定義されている素数ならO(n log n)
@@ -92,8 +94,8 @@ xが0かつeが負のときはプログラムを終了する。
 
 ##### Parameters
 
-- `x` : `ZP p`型の数
 - `e` : `I64`型の指数
+- `x` : `ZP p`型の数
 
 #### primitive_root
 

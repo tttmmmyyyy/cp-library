@@ -33,11 +33,11 @@ Type: `[c : CPLib.MinCostFlow::CapCostLike] Std::I64 -> Std::I64 -> c -> c -> CP
 
 ##### Parameters
 
-- `graph` : グラフ
 - `from` : 始点の頂点番号
 - `to` : 終点の頂点番号
 - `cap` : 辺の容量
 - `cost` : 辺のコスト
+- `g` : グラフ
 
 #### add_edge_id
 
@@ -53,11 +53,11 @@ Type: `[c : CPLib.MinCostFlow::CapCostLike] Std::I64 -> Std::I64 -> c -> c -> CP
 
 ##### Parameters
 
-- `graph` : グラフ
 - `from` : 始点の頂点番号
 - `to` : 終点の頂点番号
 - `cap` : 辺の容量
 - `cost` : 辺のコスト
+- `g` : グラフ
 
 #### create
 

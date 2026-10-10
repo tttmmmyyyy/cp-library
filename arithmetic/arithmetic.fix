@@ -211,18 +211,18 @@ inv_mod = |m, a| (
     inv_x.pmod(m)
 );
 
-// [0, n)の範囲での素数テーブルを作成する
+// [0, size)の範囲での素数テーブルを作成する
 //
 // 配列（`BoolArray`）`table`は素数テーブルであり、`table.@(n)`が`true`の場合に`n`が素数であることを意味する。
 // 
 // 注意：戻り値の要素に`@(n)`でアクセスするには`import BoolArray;`が必要です。
 //
-// 制約：n >= 1
+// 制約：size >= 1
 //
-// 計算量：O(n log log n)
+// 計算量：O(size log log size)
 //
 // # Parameters
-// - `n` : 素数テーブルの上限（exclusive）
+// - `size` : 素数テーブルの上限（exclusive）
 //
 // # Examples
 // ```fix
@@ -556,15 +556,15 @@ _inv_gcd = |a, b| (
 // assert_eq(|_|"", lift_crt([0, 1], [2, 4]), (0, 0))
 // ```
 lift_crt : Array I64 -> Array I64 -> (I64, I64);
-lift_crt = |r, m| (
-    // if r.get_size != m.get_size { undefined("[lift_crt] `rs` and `ms` must have the same size") };
-    let n = r.@size;
+lift_crt = |rs, ms| (
+    // if rs.get_size != ms.get_size { undefined("[lift_crt] `rs` and `ms` must have the same size") };
+    let n = rs.@size;
     let r0 = 0; let m0 = 1;
 
     range(0, n).loop_iter((r0, m0), |i, (r0, m0)|
-        // if m.@(i) <= 0 { undefined("[lift_crt] `ms.@(i)` must be positive") };
-        let r1 = r.@(i).pmod(m.@(i));
-        let m1 = m.@(i);
+        // if ms.@(i) <= 0 { undefined("[lift_crt] `ms.@(i)` must be positive") };
+        let r1 = rs.@(i).pmod(ms.@(i));
+        let m1 = ms.@(i);
         let (r0, r1, m0, m1) = if m0 < m1 {
             (r1, r0, m1, m0)
         } else {

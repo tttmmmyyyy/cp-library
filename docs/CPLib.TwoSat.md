@@ -58,7 +58,7 @@ Type: `CPLib.TwoSat::TwoSat -> Std::Option (Std::Array Std::Bool)`
 
 ##### Returns
 
-充足不能な場合は`none()`。充足可能な場合は`some(arr)`を返す。`arr.@(i)`は各リテラルの真偽値を表す。
+充足不能な場合は`none()`。充足可能な場合は`some(arr)`を返す。`arr`の長さは変数の数で、`arr.@(i)`は変数`i`に割り当てる値を表す。
 
 ##### Parameters
 

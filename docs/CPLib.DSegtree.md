@@ -47,9 +47,9 @@ Type: `Std::Array m -> m -> ((m, m) -> m) -> CPLib.DSegtree::DSegtree m`
 
 ##### Parameters
 
+- `elems` : セグメント木の要素を格納する配列
 - `unit` : モノイドの単位元
 - `op` : モノイドの演算子
-- `elems` : セグメント木の要素を格納する配列
 
 #### fold
 
@@ -65,6 +65,7 @@ Type: `Std::I64 -> Std::I64 -> CPLib.DSegtree::DSegtree m -> m`
 
 - `l` : 区間の左端 (0-indexed)
 - `r` : 区間の右端 (0-indexed, exclusive)
+- `tree` : セグメント木
 
 #### init
 
@@ -76,9 +77,9 @@ Type: `Std::I64 -> m -> ((m, m) -> m) -> CPLib.DSegtree::DSegtree m`
 
 ##### Parameters
 
+- `n` : セグメント木の要素数
 - `unit` : モノイドの単位元
 - `op` : モノイドの演算子
-- `n` : セグメント木の要素数
 
 #### set
 

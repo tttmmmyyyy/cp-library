@@ -79,10 +79,10 @@ namespace MaxFlowGraph {
     // 計算量：ならしO(1)
     // 
     // # Parameters
-    // - `graph` : グラフ
     // - `from` : 始点の頂点番号
     // - `to` : 終点の頂点番号
     // - `cap` : 辺の容量
+    // - `g` : グラフ
     add_edge : [c : CapacityLike] I64 -> I64 -> c -> MaxFlowGraph c -> MaxFlowGraph c;
     add_edge = |from, to, cap, g| g.add_edge_id(from, to, cap).@0;
 
@@ -95,10 +95,10 @@ namespace MaxFlowGraph {
     // 計算量：ならしO(1)
     // 
     // # Parameters
-    // - `graph` : グラフ
     // - `from` : 始点の頂点番号
     // - `to` : 終点の頂点番号
     // - `cap` : 辺の容量
+    // - `g` : グラフ
     add_edge_id : [c : CapacityLike] I64 -> I64 -> c -> MaxFlowGraph c -> (MaxFlowGraph c, EdgeId);
     add_edge_id = |from, to, cap, g| (
         let reve_idx = g.@graph.@edges.@(to).@size;  // 次に`to`に追加される予定の辺のインデックス
@@ -144,12 +144,12 @@ namespace MaxFlowGraph {
     // 
     // `s`から到達可能な頂点を`true`、到達不可能な頂点を`false`とする配列を返す。
     // 
-    // 注：最小カットにおいて除去される辺の容量の和は`maximize_flow`で得られたフローの量に等しい。
+    // 注：最小カットにおいて除去される辺の容量の和は、それまでに`maximize_flow`が返したフローの量の和に等しい。
     // 
     // 計算量：O(n)
     // 
     // # Parameters
-    // - `graph` : グラフ
+    // - `g` : グラフ
     get_min_cut : [c : CapacityLike] MaxFlowGraph c -> Array Bool;
     get_min_cut = |g| g.@level.map(|l| l >= 0);
 
@@ -159,7 +159,7 @@ namespace MaxFlowGraph {
     // - `v` : 始点の頂点番号
     // - `e` : 辺のインデックス
     // - `f` : 流すフローの量
-    // - `graph` : グラフ
+    // - `g` : グラフ
     _add_flow : [c : CapacityLike] I64 -> I64 -> c -> MaxFlowGraph c -> MaxFlowGraph c;
     _add_flow = |v, e, f, g| (
         let (rv, re) = g.@graph.@edges.@(v).@(e).|e| (e.@to, e.@data.@1); // 逆辺の(v, e)
@@ -258,6 +258,7 @@ namespace Dinic {
     // # Parameters
     // - `v` : 現在の頂点
     // - `f` : 流してよいフローの量
+    // - `self` : グラフ
     dfs : [c : CapacityLike] I64 -> c -> MaxFlowGraph c -> (MaxFlowGraph c, c);
     dfs = |v, f, self| (
         // 終了地点に到達したら終了

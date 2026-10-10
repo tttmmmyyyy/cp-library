@@ -123,7 +123,7 @@ Type: `CPLib.Graph::EdgeId -> CPLib.Graph::Graph c -> CPLib.Graph::Edge c`
 
 ##### Parameters
 
-- `edge_id` : 辺の識別子
+- `eid` : 辺の識別子
 - `graph` : グラフ
 
 #### get_size

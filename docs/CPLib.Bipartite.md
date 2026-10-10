@@ -32,9 +32,9 @@ Type: `Std::I64 -> Std::I64 -> CPLib.Bipartite::BipartiteGraph -> CPLib.Bipartit
 
 ##### Parameters
 
-- `graph` : 二部グラフ
 - `left` : 左側の頂点番号
 - `right` : 右側の頂点番号
+- `graph` : 二部グラフ
 
 #### create
 
@@ -69,12 +69,11 @@ Type: `CPLib.Bipartite::BipartiteGraphFlow -> (Std::Array Std::Bool, Std::Array 
 
 ##### Returns
 
-左側の頂点の被覆と右側の頂点の被覆をそれぞれ`Array Bool`として返す。
-ある頂点が被覆に含まれる場合は`true`、含まれない場合は`false`となる配列が返される。
+左側の頂点と右側の頂点のそれぞれについて、最大独立集合に含まれる頂点を`true`、含まれない頂点を`false`とする`Array Bool`を返す。
 
 ##### Parameters
 
-- `max_flow` : 二部グラフの最大フロー
+- `flow` : 二部グラフの最大フロー
 
 #### get_max_matching
 
@@ -90,7 +89,7 @@ Type: `CPLib.Bipartite::BipartiteGraphFlow -> Std::Array Std::Bool`
 
 ##### Parameters
 
-- `max_flow` : 二部グラフの最大フロー
+- `flow` : 二部グラフの最大フロー
 
 #### get_min_edge_cover
 
@@ -108,7 +107,7 @@ Type: `CPLib.Bipartite::BipartiteGraphFlow -> Std::Array Std::Bool`
 
 ##### Parameters
 
-- `max_flow` : 二部グラフの最大フロー
+- `flow` : 二部グラフの最大フロー
 
 #### get_min_vertex_cover
 
@@ -125,7 +124,7 @@ Type: `CPLib.Bipartite::BipartiteGraphFlow -> (Std::Array Std::Bool, Std::Array 
 
 ##### Parameters
 
-- `max_flow` : 二部グラフの最大フロー
+- `flow` : 二部グラフの最大フロー
 
 ## Types and aliases
 

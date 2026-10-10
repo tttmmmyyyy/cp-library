@@ -107,7 +107,7 @@ add_edge_id = |from, to, data, graph| (
 // 計算量：O(1)
 //
 // # Parameters
-// - `edge_id` : 辺の識別子
+// - `eid` : 辺の識別子
 // - `graph` : グラフ
 get_edge : EdgeId -> Graph c -> Edge c;
 get_edge = |eid, graph| graph.@edges.@(eid.@from).@(eid.@idx);

@@ -69,19 +69,19 @@ Type: `Std::I64 -> Std::Array Std::U32`
 
 Type: `Std::I64 -> BoolArray::BoolArray`
 
-[0, n)の範囲での素数テーブルを作成する
+[0, size)の範囲での素数テーブルを作成する
 
 配列（`BoolArray`）`table`は素数テーブルであり、`table.@(n)`が`true`の場合に`n`が素数であることを意味する。
 
 注意：戻り値の要素に`@(n)`でアクセスするには`import BoolArray;`が必要です。
 
-制約：n >= 1
+制約：size >= 1
 
-計算量：O(n log log n)
+計算量：O(size log log size)
 
 ##### Parameters
 
-- `n` : 素数テーブルの上限（exclusive）
+- `size` : 素数テーブルの上限（exclusive）
 
 ##### Examples
 
