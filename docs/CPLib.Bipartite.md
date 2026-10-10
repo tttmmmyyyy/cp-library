@@ -63,7 +63,7 @@ Type: `CPLib.Bipartite::BipartiteGraph -> CPLib.Bipartite::BipartiteGraphFlow`
 
 Type: `CPLib.Bipartite::BipartiteGraphFlow -> (Std::Array Std::Bool, Std::Array Std::Bool)`
 
-二部グラフの最大孤立集合（最大安定集合）を取得する
+二部グラフの最大独立集合（最大安定集合）を取得する
 
 計算量：O(n)
 
