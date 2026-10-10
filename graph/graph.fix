@@ -65,9 +65,9 @@ create = |n| (
 // 計算量：O(1)
 //
 // # Parameters
-// - `graph` : グラフ
+// - `g` : グラフ
 get_size : Graph c -> I64;
-get_size = |graph| graph.@edges.@size;
+get_size = |g| g.@edges.@size;
 
 // グラフに辺を追加する
 // 
@@ -107,10 +107,10 @@ add_edge_id = |from, to, data, graph| (
 // 計算量：O(1)
 //
 // # Parameters
-// - `edge_id` : 辺の識別子
+// - `eid` : 辺の識別子
 // - `graph` : グラフ
 get_edge : EdgeId -> Graph c -> Edge c;
-get_edge = |edge_id, graph| graph.@edges.@(edge_id.@from).@(edge_id.@idx);
+get_edge = |eid, graph| graph.@edges.@(eid.@from).@(eid.@idx);
 
 // ノードとその距離を表す型（ダイクストラ法などで使用）
 type NodeDistance c = struct {
@@ -221,23 +221,23 @@ bellman_ford = |start, graph| (
 // 計算量：O(n + m)
 //
 // # Parameters
-// - `graph` : グラフ
+// - `g` : グラフ
 calc_sccs : Graph c -> Array (Array I64);
-calc_sccs = |graph| (
-    if graph.get_size == 0 { [] };
+calc_sccs = |g| (
+    if g.get_size == 0 { [] };
 
     // DFSして、各頂点の訪問完了順にスタックに積む。
-    let visited = Array::fill(graph.get_size, false);
-    let stack = Array::empty(graph.get_size);
-    let (visited, stack) = range(0, graph.get_size).fold((visited, stack), |i, (visited, stack)|
+    let visited = Array::fill(g.get_size, false);
+    let stack = Array::empty(g.get_size);
+    let (visited, stack) = range(0, g.get_size).fold((visited, stack), |i, (visited, stack)|
         if visited.@(i) { (visited, stack) };
-        graph._scc_dfs1(i, visited, stack)
+        g._scc_dfs1(i, visited, stack)
     );
 
     // 反転グラフを作成
-    let rg = Graph::create(graph.get_size) : Graph (); // コストは不要なのでユニット型を使用
-    let rg = range(0, graph.get_size).fold(rg, |from, rg|
-        graph.@edges.@(from).to_iter.fold(rg, |Edge { to : to, data : _ }, rg|
+    let rg = Graph::create(g.get_size) : Graph (); // コストは不要なのでユニット型を使用
+    let rg = range(0, g.get_size).fold(rg, |from, rg|
+        g.@edges.@(from).to_iter.fold(rg, |Edge { to : to, data : _ }, rg|
             rg.add_edge(to, from, ())
         )
     );

@@ -82,7 +82,7 @@ Type: `CPLib.Graph::Graph c -> Std::Array (Std::Array Std::I64)`
 
 ##### Parameters
 
-- `graph` : グラフ
+- `g` : グラフ
 
 #### create
 
@@ -123,7 +123,7 @@ Type: `CPLib.Graph::EdgeId -> CPLib.Graph::Graph c -> CPLib.Graph::Edge c`
 
 ##### Parameters
 
-- `edge_id` : 辺の識別子
+- `eid` : 辺の識別子
 - `graph` : グラフ
 
 #### get_size
@@ -136,7 +136,7 @@ Type: `CPLib.Graph::Graph c -> Std::I64`
 
 ##### Parameters
 
-- `graph` : グラフ
+- `g` : グラフ
 
 ### namespace CPLib.Graph::Edge
 

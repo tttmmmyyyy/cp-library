@@ -37,7 +37,7 @@ Type: `[c : CPLib.MinCostFlow::CapCostLike] Std::I64 -> Std::I64 -> c -> c -> CP
 - `to` : 終点の頂点番号
 - `cap` : 辺の容量
 - `cost` : 辺のコスト
-- `graph` : グラフ
+- `g` : グラフ
 
 #### add_edge_id
 
@@ -57,7 +57,7 @@ Type: `[c : CPLib.MinCostFlow::CapCostLike] Std::I64 -> Std::I64 -> c -> c -> CP
 - `to` : 終点の頂点番号
 - `cap` : 辺の容量
 - `cost` : 辺のコスト
-- `graph` : グラフ
+- `g` : グラフ
 
 #### create
 
@@ -85,7 +85,7 @@ Type: `[c : CPLib.MinCostFlow::CapCostLike] CPLib.Graph::EdgeId -> CPLib.MinCost
 
 ##### Parameters
 
-- `edge_id` : `add_edge`で得た辺の識別子
+- `eid` : `add_edge`で得た辺の識別子
 - `graph` : グラフ
 
 #### maximize_flow_min_cost
@@ -106,7 +106,7 @@ Type: `[c : CPLib.MinCostFlow::CapCostLike] c -> CPLib.MinCostFlow::MinCostFlowG
 ##### Parameters
 
 - `flow_limit` : 流すフローの最大値
-- `graph` : 最小フロー問題のグラフ
+- `g` : 最小フロー問題のグラフ
 
 #### set_potential_bf
 

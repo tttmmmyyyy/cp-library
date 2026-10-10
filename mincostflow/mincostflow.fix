@@ -85,9 +85,9 @@ namespace MinCostFlowGraph {
     // - `to` : 終点の頂点番号
     // - `cap` : 辺の容量
     // - `cost` : 辺のコスト
-    // - `graph` : グラフ
+    // - `g` : グラフ
     add_edge : [c : CapCostLike] I64 -> I64 -> c -> c -> MinCostFlowGraph c -> MinCostFlowGraph c;
-    add_edge = |from, to, cap, cost, graph| graph.add_edge_id(from, to, cap, cost).@0;
+    add_edge = |from, to, cap, cost, g| g.add_edge_id(from, to, cap, cost).@0;
 
     // グラフに辺を追加する（辺IDを返す）
     // 
@@ -102,18 +102,18 @@ namespace MinCostFlowGraph {
     // - `to` : 終点の頂点番号
     // - `cap` : 辺の容量
     // - `cost` : 辺のコスト
-    // - `graph` : グラフ
+    // - `g` : グラフ
     add_edge_id : [c : CapCostLike] I64 -> I64 -> c -> c -> MinCostFlowGraph c -> (MinCostFlowGraph c, EdgeId);
-    add_edge_id = |from, to, cap, cost, graph| (
-        let n_to_edges = graph.@graph.@edges.@(to).@size;
+    add_edge_id = |from, to, cap, cost, g| (
+        let n_to_edges = g.@graph.@edges.@(to).@size;
         let data = EdgeData {
             cost : cost,
             cap : cap,
             rev : n_to_edges,  // 次に`to`に追加される予定の辺のインデックス
             init_cap : cap
         };
-        let graph = graph.(mod_graph $ add_edge(from, to, data));
-        let eidx = graph.@graph.@edges.@(from).@size - 1;
+        let g = g.(mod_graph $ add_edge(from, to, data));
+        let eidx = g.@graph.@edges.@(from).@size - 1;
 
         let data = EdgeData {
             cost : -cost,
@@ -121,9 +121,9 @@ namespace MinCostFlowGraph {
             rev : eidx,
             init_cap : zero
         };
-        let graph = graph.(mod_graph $ add_edge(to, from, data));
+        let g = g.(mod_graph $ add_edge(to, from, data));
 
-        (graph, EdgeId { from : from, idx : eidx })
+        (g, EdgeId { from : from, idx : eidx })
     );
 
     // ベルマンフォード法を使ってポテンシャルを更新する
@@ -157,13 +157,13 @@ namespace MinCostFlowGraph {
     // - `v` : 始点の頂点番号
     // - `e` : 辺のインデックス
     // - `f` : 流すフローの量
-    // - `graph` : グラフ
+    // - `g` : グラフ
     _add_flow : [c : CapCostLike] I64 -> I64 -> c -> MinCostFlowGraph c -> MinCostFlowGraph c;
-    _add_flow = |v, e, f, graph| (
-        let (rv, re) = graph.@graph.@edges.@(v).@(e).|e| (e.@to, e.@data.@rev); // 逆辺の(v, e)
-        let graph = graph.(mod_graph $ mod_edges $ mod(v) $ mod(e) $ mod_data $ mod_cap $ add(-f));
-        let graph = graph.(mod_graph $ mod_edges $ mod(rv) $ mod(re) $ mod_data $ mod_cap $ add(f));
-        graph
+    _add_flow = |v, e, f, g| (
+        let (rv, re) = g.@graph.@edges.@(v).@(e).|e| (e.@to, e.@data.@rev); // 逆辺の(v, e)
+        let g = g.(mod_graph $ mod_edges $ mod(v) $ mod(e) $ mod_data $ mod_cap $ add(-f));
+        let g = g.(mod_graph $ mod_edges $ mod(rv) $ mod(re) $ mod_data $ mod_cap $ add(f));
+        g
     );
 
     // ある辺に流れているフローを取得する
@@ -171,11 +171,11 @@ namespace MinCostFlowGraph {
     // 計算量：O(1)
     // 
     // # Parameters
-    // - `edge_id` : `add_edge`で得た辺の識別子
+    // - `eid` : `add_edge`で得た辺の識別子
     // - `graph` : グラフ
     get_flow : [c : CapCostLike] EdgeId -> MinCostFlowGraph c -> c;
-    get_flow = |edge_id, graph| (
-        let e = graph.@graph.get_edge(edge_id).@data;
+    get_flow = |eid, graph| (
+        let e = graph.@graph.get_edge(eid).@data;
         e.@init_cap - e.@cap
     );
 
@@ -192,18 +192,18 @@ namespace MinCostFlowGraph {
     // 
     // # Parameters
     // - `flow_limit` : 流すフローの最大値
-    // - `graph` : 最小フロー問題のグラフ
+    // - `g` : 最小フロー問題のグラフ
     maximize_flow_min_cost : [c : CapCostLike] c -> MinCostFlowGraph c -> (MinCostFlowGraph c, c, c);
-    maximize_flow_min_cost = |flow_limit, graph| (
-        let n = graph.@graph.@edges.@size;
-        let s = graph.@s;
-        let t = graph.@t;
-        let h = graph.@potential; let graph = graph.set_potential([]); // ポテンシャル
+    maximize_flow_min_cost = |flow_limit, g| (
+        let n = g.@graph.@edges.@size;
+        let s = g.@s;
+        let t = g.@t;
+        let h = g.@potential; let g = g.set_potential([]); // ポテンシャル
         let dist = Array::fill(n, Inf::inf); // 距離
         let prevv = Array::fill(n, -1); // 直前にしらべた頂点
         let preve = Array::fill(n, -1); // 直前にしらべた辺
-        loop((graph, flow_limit, zero, h, dist, prevv, preve), |(graph, flow_rest, cost, h, dist, prevv, preve)| 
-            if flow_rest == zero { break $ (graph.set_potential(h), flow_limit - flow_rest, cost) };
+        loop((g, flow_limit, zero, h, dist, prevv, preve), |(g, flow_rest, cost, h, dist, prevv, preve)| 
+            if flow_rest == zero { break $ (g.set_potential(h), flow_limit - flow_rest, cost) };
             // ダイクストラ法でsからtまでの距離を求める。tを取り出した時点で打ち切る
             let dist = range(0, n).fold(dist, |i, dist| dist.set(i, Inf::inf)); // `dist`を初期化
             let dist = dist.set(s, zero);
@@ -214,7 +214,7 @@ namespace MinCostFlowGraph {
                 let que = que.pop;
                 if dist.@(v) < d { continue $ (que, dist, prevv, preve) };
                 if v == t { break $ (dist, prevv, preve) };
-                let edges = graph.@graph.@edges.@(v);
+                let edges = g.@graph.@edges.@(v);
                 continue $ edges.to_iter.zip(count_up(0)).fold((que, dist, prevv, preve), |(Edge { to : to, data : e }, ei), (que, dist, prevv, preve)|
                     if !(e.@cap > zero) { (que, dist, prevv, preve) };
                     let new_d = d + e.@cost + h.@(v) - h.@(to);
@@ -228,7 +228,7 @@ namespace MinCostFlowGraph {
             );
             // tに到達できないときは終了
             let dt = dist.@(t);
-            if dt == Inf::inf { break $ (graph.set_potential(h), flow_limit - flow_rest, cost) };
+            if dt == Inf::inf { break $ (g.set_potential(h), flow_limit - flow_rest, cost) };
             // ポテンシャルを更新する。距離がtより遠い頂点（tを取り出した時点で距離が確定していない頂点と、sから到達できない頂点）には、tまでの距離を足す
             let h = range(0, n).fold(h, |v, h| h.set(v, h.@(v) + min(dist.@(v), dt)));
             // s-t最短路に沿ってフローを流す
@@ -236,20 +236,20 @@ namespace MinCostFlowGraph {
                 if v == s { break $ d };
                 let pv = prevv.@(v);
                 let pe = preve.@(v);
-                let c = graph.@graph.@edges.@(pv).@(pe).@data.@cap; // 前の辺の容量
+                let c = g.@graph.@edges.@(pv).@(pe).@data.@cap; // 前の辺の容量
                 let d = min(d, c);
                 continue $ (pv, d)
             );
             let flow_rest = flow_rest - d;
             let cost = cost + d * h.@(t);
-            let graph = loop((t, graph), |(v, graph)|
-                if v == s { break $ graph };
+            let g = loop((t, g), |(v, g)|
+                if v == s { break $ g };
                 let pv = prevv.@(v);
                 let pe = preve.@(v);
-                let graph = graph._add_flow(pv, pe, d);
-                continue $ (pv, graph)
+                let g = g._add_flow(pv, pe, d);
+                continue $ (pv, g)
             );
-            continue $ (graph, flow_rest, cost, h, dist, prevv, preve)
+            continue $ (g, flow_rest, cost, h, dist, prevv, preve)
         )
     );
 }
