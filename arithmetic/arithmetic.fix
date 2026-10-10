@@ -256,7 +256,7 @@ create_prime_table = |size| (
     let table = BoolArray::make(size).fill_true;
     let size = table.get_size;
     let table = table.set(0, false).set(1, false);
-    let table = Iterator::range(2, size).loop_iter(table, |n, table|
+    let table = range(2, size).loop_iter(table, |n, table|
         if n > (size - 1) / n { break $ table };
         if !table.@(n) { continue $ table };
         let table = Iterator::range_step(2 * n, size, n).fold(table, |m, table| table.set(m, false));
@@ -276,9 +276,9 @@ create_prime_table = |size| (
 create_prime_list : I64 -> Array U32;
 create_prime_list = |n| (
     let table = create_prime_table(n);
-    let count = Iterator::range(0, n).fold(0, |i, cnt| if table.@(i) { cnt + 1 } else { cnt });
-    let list = Array::empty(count);
-    let list = Iterator::range(0, n).fold(list, |p, list|
+    let count = range(0, n).fold(0, |i, cnt| if table.@(i) { cnt + 1 } else { cnt });
+    let list = empty(count);
+    let list = range(0, n).fold(list, |p, list|
         if table.@(p) { list.push_back(p.u32) } else { list }
     );
     list
@@ -298,9 +298,9 @@ create_prime_list = |n| (
 linear_sieve : U32 -> (Array U32, Array U32);
 linear_sieve = |n| (
     let n = n.i64;
-    let lp = Array::fill(n, 0_U32);
-    let ps = Array::empty(n / 10);
-    Iterator::range(2, n).fold((lp, ps), |i, (lp, ps)|
+    let lp = fill(n, 0_U32);
+    let ps = empty(n / 10);
+    range(2, n).fold((lp, ps), |i, (lp, ps)|
         let (lp, ps) = if lp.@(i) == 0_U32 { (lp.set(i, i.u32), ps.push_back(i.u32)) } else { (lp, ps) };
         // iの最小の素因数以下の素数pについて、i * pの最小の素因数はp
         let lp_i = lp.@(i);
@@ -396,7 +396,7 @@ euler_tortient = |n| (
 // - `n`: 表の上限（exclusive）
 euler_tortient_table : I64 -> Array I64;
 euler_tortient_table = |n| (
-    let table = Array::fill(n, 0);
+    let table = fill(n, 0);
     let table = range(0, n).fold(table, |i, table| table.set(i, i));
     range(2, n).fold(table, |i, table|
         if table.@(i) != i { table };
