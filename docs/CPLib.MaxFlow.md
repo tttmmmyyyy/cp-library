@@ -43,6 +43,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> c -> CPLib.MaxFlow::MaxFlow
 
 - `v` : 現在の頂点
 - `f` : 流してよいフローの量
+- `graph` : グラフ
 
 #### reset_iter
 
@@ -76,10 +77,10 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxF
 
 ##### Parameters
 
-- `graph` : グラフ
 - `from` : 始点の頂点番号
 - `to` : 終点の頂点番号
 - `cap` : 辺の容量
+- `graph` : グラフ
 
 #### add_edge_id
 
@@ -95,10 +96,10 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxF
 
 ##### Parameters
 
-- `graph` : グラフ
 - `from` : 始点の頂点番号
 - `to` : 終点の頂点番号
 - `cap` : 辺の容量
+- `graph` : グラフ
 
 #### create
 
@@ -139,7 +140,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowGraph c -> Std::A
 
 `s`から到達可能な頂点を`true`、到達不可能な頂点を`false`とする配列を返す。
 
-注：最小カットにおいて除去される辺の容量の和は`maximize_flow`で得られたフローの量に等しい。
+注：最小カットにおいて除去される辺の容量の和は、それまでに`maximize_flow`が返したフローの量の和に等しい。
 
 計算量：O(n)
 

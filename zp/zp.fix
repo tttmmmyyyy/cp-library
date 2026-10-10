@@ -121,8 +121,8 @@ make = |x| (
 // 計算量：O(log p)
 //
 // # Parameters
-// - `x` : `ZP p`型の数
 // - `e` : `I64`型の指数
+// - `x` : `ZP p`型の数
 power : [p : PrimeProvider] I64 -> ZP p -> ZP p;
 power = |e, x| (
     if x.@value == 0_U32 {
@@ -140,8 +140,8 @@ power = |e, x| (
 // x^e mod p を計算する（eが非負整数のとき）
 // 
 // # Parameters
+// - `e` : `U64`型の指数
 // - `x` : `ZP p`型の数
-// - `e` : `I64`型の指数
 _power_unsigned : [p : PrimeProvider] U64 -> ZP p -> ZP p;
 _power_unsigned = |e, x| (
     loop((e, ZP::make(1), x), |(e, pow, x)|
@@ -256,6 +256,8 @@ type FFTDirection = union {
 };
 
 // `ZP p`型の配列に対して高速フーリエ変換を行う
+//
+// 入力の長さを2のべき乗に切り上げ、末尾を0で埋めてから変換する。返る配列の長さは切り上げた長さである（長さ3なら4）。順変換して逆変換すると、元の配列の末尾に0を足した、切り上げた長さの配列が返る。
 //
 // 制約：2^c | (p-1) かつ |x| <= 2^c なる c が存在する
 //
