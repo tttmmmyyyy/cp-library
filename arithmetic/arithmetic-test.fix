@@ -249,9 +249,9 @@ test_prime_list = (
 
 test_miller_rabin_u64 : IO ();
 test_miller_rabin_u64 = (
-    let _N = 1e5;
-    let prime_table = create_prime_table(_N);
-    range(0, _N).fold_m((), |n, _|
+    let __N = 1e5;
+    let prime_table = create_prime_table(__N);
+    range(0, __N).fold_m((), |n, _|
         assert_eq(|_|"check_is_prime_u64: " + n.to_string, prime_table.@(n), is_prime(n.u64))
     );;
     assert_eq(|_|"2^61-1 is prime", is_prime(1_U64.shift_left(61_U64) - 1_U64), true);;
@@ -264,9 +264,9 @@ test_miller_rabin_u64 = (
 
 test_miller_rabin_u32 : IO ();
 test_miller_rabin_u32 = (
-    let _N = 1e5;
-    let prime_table = create_prime_table(_N);
-    range(0, _N).fold_m((), |n, _|
+    let __N = 1e5;
+    let prime_table = create_prime_table(__N);
+    range(0, __N).fold_m((), |n, _|
         assert_eq(|_|"check_is_prime_u32: " + n.to_string, prime_table.@(n), is_prime_32(n.u32))
     );;
     assert_eq(|_|"2^31-1 is prime", is_prime_32(1_U32.shift_left(31_U32) - 1_U32), true);;
@@ -283,9 +283,9 @@ test_miller_rabin_u32 = (
 
 test_inv_gcd : IO ();
 test_inv_gcd = (
-    let _N = 1e3;
+    let __N = 1e3;
     let rng = Random::init_by_seed(0_U64);
-    range(0, _N).fold_m(rng, |_, rng|
+    range(0, __N).fold_m(rng, |_, rng|
         let (rng, a) = rng.generate_U64;
         let a = a.i64;
         let (rng, b) = rng.generate_I64_nonneg;
@@ -301,9 +301,9 @@ test_inv_gcd = (
 
 test_crt : IO ();
 test_crt = (
-    let _N = 1e3;
+    let __N = 1e3;
     let rng = Random::init_by_seed(0_U64);
-    range(0, _N).fold_m(rng, |_, rng|
+    range(0, __N).fold_m(rng, |_, rng|
         // 解がある場合のみチェック
         let (rng, m0) = rng.generate_I64_nonneg;
         let m0 = max(1, m0 % (I32::maximum.i64 - 1));
