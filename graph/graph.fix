@@ -233,11 +233,15 @@ calc_sccs = |g| (
         _scc_dfs_postorder(g, root, stack, visited, finished)
     );
 
-    // 辺の向きを逆にしたグラフをCSR形式で作る：頂点vに入る辺の始点を、rlistの[rstart.@(v), rstart.@(v + 1))に並べる
+    // 辺の向きを逆にしたグラフをCSR形式の2つの配列で作る。
+    // - rlist：頂点0に入る辺の始点、頂点1に入る辺の始点、…を、この順に詰めて並べた配列（長さは辺の数）
+    // - rstart：長さn + 1の配列。頂点vに入る辺の始点は、rlistの[rstart.@(v), rstart.@(v + 1))にある
+    // rstartは、各頂点に入る辺の数を数えて累積和を取って作る
     let rstart = range(0, n).fold(fill(n + 1, 0), |from, rstart|
         g.@edges.@(from).to_iter.fold(rstart, |Edge { to : to, data : _ }, rstart| rstart.mod(to + 1, |x| x + 1))
     );
     let rstart = range(0, n).fold(rstart, |v, rstart| let x = rstart.@(v); rstart.mod(v + 1, |y| y + x));
+    // 元のグラフの辺を順に見て、行き先の頂点の区間に始点を書く。posは各頂点の区間で次に書く位置
     let (rlist, _) = range(0, n).fold((fill(rstart.@(n), 0), rstart), |from, (rlist, pos)|
         g.@edges.@(from).to_iter.fold((rlist, pos), |Edge { to : to, data : _ }, (rlist, pos)|
             let p = pos.@(to);
@@ -291,8 +295,8 @@ _scc_dfs_postorder = |g, root, stack, visited, finished| (
 // 呼び出しごとに確保し直さないよう、呼び出し側が使い回す。
 //
 // # Parameters
-// - `start` : 頂点vの辺の行き先が`list`の[start.@(v), start.@(v + 1))にある
-// - `list` : 辺の行き先を頂点ごとに並べた配列
+// - `start` : 長さが頂点数 + 1の配列。頂点vから出る辺の行き先は、`list`の[start.@(v), start.@(v + 1))にある
+// - `list` : 頂点0から出る辺の行き先、頂点1から出る辺の行き先、…を、この順に詰めて並べた配列
 // - `root` : 探索を始める頂点
 // - `stack` : 探索に使う空の配列
 // - `visited` : 訪れた頂点の印
