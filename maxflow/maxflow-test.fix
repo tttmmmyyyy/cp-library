@@ -115,6 +115,10 @@ test_min_cut_before_and_after_flow = (
     assert_eq(|_|"after maximize_flow", graph.get_min_cut, [true, false, false]);;
     let graph = graph.add_edge(0, 1, 5);
     assert_eq(|_|"after add_edge", graph.get_min_cut, [true, true, false]);;
+    // 頂点3には、終了地点2が見つかった後でしか届かない
+    let graph = MaxFlowGraph::create(4, 0, 2) : MaxFlowGraph I64;
+    let graph = graph.add_edge(0, 2, 1).add_edge(0, 1, 1).add_edge(1, 3, 1);
+    assert_eq(|_|"a vertex found after the sink", graph.get_min_cut, [true, true, true, true]);;
     pure()
 );
 
