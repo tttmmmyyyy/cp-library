@@ -47,6 +47,7 @@ test_stoi = (
     assert_eq(|_|"stoi 2", stoi("-123"), -123);;
     assert_eq(|_|"stoi 3", stoi("9223372036854775807"), 9223372036854775807);;
     assert_eq(|_|"stoi 4", stoi("-9223372036854775808"), -9223372036854775808);;
+    assert_eq(|_|"stoi 5", stoi(" 42\n"), 42);;
 
     pure()
 );
@@ -54,6 +55,7 @@ test_stoi = (
 test_stoui : IO ();
 test_stoui = (
     assert_eq(|_|"stoui 1", stoui("18446744073709551615"), 18446744073709551615_U64);;
+    assert_eq(|_|"stoui 2", stoui("7\r\n"), 7_U64);;
 
     pure()
 );
@@ -67,6 +69,7 @@ test_stof = (
     assert_eq(|_|"stof 5", stof("0"), 0.0);;
     assert_eq(|_|"stof 6", stof("1"), 1.0);;
     assert_eq(|_|"stof 7", stof("-1"), -1.0);;
+    assert_eq(|_|"stof 8", stof("\t0.5\n"), 0.5);;
     pure()
 );
 
@@ -76,6 +79,10 @@ test_stoia = (
     assert_eq(|_|"stoia 3", stoia("42"), [42]);;
     assert_eq(|_|"stoia 1", stoia("1 2 3"), [1, 2, 3]);;
     assert_eq(|_|"stoia 2", stoia("-1 -2 -3"), [-1, -2, -3]);;
+    // 前後の空白文字と、連続した空白文字
+    assert_eq(|_|"stoia 4", stoia("1 2 3\n"), [1, 2, 3]);;
+    assert_eq(|_|"stoia 5", stoia("  1  2\t3 "), [1, 2, 3]);;
+    assert_eq(|_|"stoia 6", stoia(" \n"), []);;
     pure()
 );
 
@@ -84,6 +91,7 @@ test_stouia = (
     assert_eq(|_|"stouia 1", stouia(""), []);;
     assert_eq(|_|"stouia 2", stouia("18446744073709551615"), [18446744073709551615_U64]);;
     assert_eq(|_|"stouia 3", stouia("18446744073709551615 18446744073709551615"), [18446744073709551615_U64, 18446744073709551615_U64]);;
+    assert_eq(|_|"stouia 4", stouia(" 1  2\n"), [1_U64, 2_U64]);;
     pure()
 );
 
@@ -93,5 +101,6 @@ test_stofa = (
     assert_eq(|_|"stofa 2", stofa("3.14"), [3.14]);;
     assert_eq(|_|"stofa 2", stofa("3.14 -2.72"), [3.14, -2.72]);;
     assert_eq(|_|"stofa 3", stofa("1.0 2 -3"), [1.0, 2.0, -3.0]);;
+    assert_eq(|_|"stofa 4", stofa("1.5  -2\n"), [1.5, -2.0]);;
     pure()
 );

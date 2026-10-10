@@ -5,58 +5,101 @@
 module CPLib.IO;
 
 import Std::{
-    Array, F64, I64, IO, String, U64, U8, Array::push_back, FromBytes::from_bytes, FromString::from_string,
-    Iterator::{collect_m, map, range, to_array}, LoopState::{break_m, continue_m}, Monad::pure, loop_m,
-    Result::as_ok, String::{is_empty, split}, ToU8::u8
+    undefined, Array, F64, FromString, I64, IO, Ptr, String, U64, U8, Array::push_back, FromBytes::from_bytes,
+    FromString::from_string, Iterator, Iterator::{collect_m, generate, map, range, to_array, Item}, 
+    LoopState::{break_m, continue_m}, Monad::pure, loop_m, Option::{none, some}, Ptr::add_offset, 
+    Result::{as_ok, err, ok}, String::{borrow_c_str, get_sub, strip_spaces}, ToI64::i64, ToU8::u8
 };
 
 // 文字列をパースして`I64`整数に変換する
 //
+// 前後の空白文字は無視する。整数として読めないときは、その文字列を標準エラーに書いてプログラムを止める。
+//
 // # Parameters
 // - `s`: 変換したい文字列
 stoi : String -> I64;
-stoi = |s| s.from_string.as_ok;
+stoi = |s| s.strip_spaces._parse("I64");
 
 // 文字列をパースして`U64`整数に変換する
+//
+// 前後の空白文字は無視する。整数として読めないときは、その文字列を標準エラーに書いてプログラムを止める。
 //
 // # Parameters
 // - `s`: 変換したい文字列
 stoui : String -> U64;
-stoui = |s| s.from_string.as_ok;
+stoui = |s| s.strip_spaces._parse("U64");
 
-// 文字列をパースして`F64`整数に変換する
+// 文字列をパースして`F64`に変換する
+//
+// 前後の空白文字は無視する。浮動小数点数として読めないときは、その文字列を標準エラーに書いてプログラムを止める。
 //
 // # Parameters
 // - `s`: 変換したい文字列
 stof : String -> F64;
-stof = |s| s.from_string.as_ok;
+stof = |s| s.strip_spaces._parse("F64");
 
 // "X Y Z"というフォーマットの文字列をパースして`I64`の配列`[X, Y, Z]`に変換する。
 // 
+// 数は空白文字の並びで区切る。前後の空白文字（行末の改行など）は無視する。
+//
 // "stoia" = "String TO Integer Array"
 //
 // # Parameters
 // - `s`: 変換したい文字列
 stoia : String -> Array I64;
-stoia = |s| if s.is_empty { [] } else { s.split(" ").map(stoi).to_array };
+stoia = |s| s._split_spaces.map(_parse("I64")).to_array;
 
 // "X Y Z"というフォーマットの文字列をパースして`U64`の配列`[X, Y, Z]`に変換する。
+//
+// 数は空白文字の並びで区切る。前後の空白文字（行末の改行など）は無視する。
 //
 // "stouia" = "String TO Unsigned Integer Array"
 // 
 // # Parameters
 // - `s`: 変換したい文字列
 stouia : String -> Array U64;
-stouia = |s| if s.is_empty { [] } else { s.split(" ").map(stoui).to_array };
+stouia = |s| s._split_spaces.map(_parse("U64")).to_array;
 
 // "X Y Z"というフォーマットの文字列をパースして`F64`の配列`[X, Y, Z]`に変換する。
+//
+// 数は空白文字の並びで区切る。前後の空白文字（行末の改行など）は無視する。
 //
 // "stofa" = "String TO Float Array"
 //
 // # Parameters
 // - `s`: 変換したい文字列
 stofa : String -> Array F64;
-stofa = |s| if s.is_empty { [] } else { s.split(" ").map(stof).to_array };
+stofa = |s| s._split_spaces.map(_parse("F64")).to_array;
+
+// 文字列を値に変換する。変換できないときは、その文字列と型の名前を標準エラーに書いてプログラムを止める。
+//
+// # Parameters
+// - `type_name`: 変換先の型の名前
+// - `s`: 変換したい文字列
+_parse : [a : FromString] String -> String -> a;
+_parse = |type_name, s| (
+    match s.from_string {
+        ok(x) => x,
+        err(_) => undefined("CPLib.IO: cannot parse \"" + s + "\" as " + type_name)
+    }
+);
+
+// 文字列を空白文字の並びで区切り、空でない字句を順に返す
+//
+// 空白文字は' ', '\t', '\n', '\v', '\f', '\r'である。
+_split_spaces : [?it : Iterator, Item ?it = String] String -> ?it;
+_split_spaces = |s| (
+    // 状態は、次の字句を探し始める位置
+    generate(0, |i|
+        let (start, end) = s.borrow_c_str(|str| " \t\n\u000b\u000c\r".borrow_c_str(|spaces|
+            let start = i + FFI_CALL[CSizeT strspn(Ptr, Ptr), str.add_offset(i), spaces].i64;
+            let end = start + FFI_CALL[CSizeT strcspn(Ptr, Ptr), str.add_offset(start), spaces].i64;
+            (start, end)
+        ));
+        if start == end { none() };
+        some $ (end, s.get_sub(start, end))
+    )
+);
 
 // `I64`を一つ読み込む
 read_i : IO I64;
