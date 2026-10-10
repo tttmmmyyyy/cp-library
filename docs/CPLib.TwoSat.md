@@ -6,6 +6,14 @@ Defined in cp-library@0.14.0
 
 制約・計算量の n は変数の数、m は節の数を表します。
 
+## Examples
+
+```fix
+// 節 (x0 = true) or (x0 = true)（すなわち x0 = true）と、節 (x0 = false) or (x1 = true) を追加して解く
+let sat = create(2).add_clause(0, true, 0, true).add_clause(0, false, 1, true);
+assert_eq(|_|"", sat.solve, some([true, true]))
+```
+
 ## Values
 
 ### namespace CPLib.TwoSat

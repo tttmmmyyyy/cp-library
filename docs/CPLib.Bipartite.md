@@ -6,6 +6,16 @@ Defined in cp-library@0.14.0
 
 計算量の n は頂点数（左右の合計）、m は辺数を表します。
 
+## Examples
+
+```fix
+// 左右に2頂点ずつある二部グラフ
+let g = create(2, 2).add_edge(0, 0).add_edge(0, 1).add_edge(1, 1);
+let flow = g.maximize_flow;
+// 最大マッチングは辺(0, 0)と辺(1, 1)
+assert_eq(|_|"", flow.get_max_matching, [true, false, true])
+```
+
 ## Values
 
 ### namespace CPLib.Bipartite::BipartiteGraph

@@ -14,6 +14,21 @@ Defined in cp-library@0.14.0
 - act(op(x, y), a) = op(act(x, a), act(y, a))
 - act(x, act_op(a, b)) = act(act(x, a), b)
 
+## Examples
+
+```fix
+// 区間への加算と、区間の最大値の取得ができるセグメント木
+let tree = build(
+    [1, 2, 3],
+    I64::minimum, |(x, y)| max(x, y), // 値モノイド：最大値
+    0, |(a, b)| a + b,                // 作用モノイド：加法
+    |(x, a)| x + a                    // 作用：加算
+);
+let tree = tree.act_range(0, 2, 10); // [11, 12, 3]
+let (_, res) = tree.fold(1, 3);
+assert_eq(|_|"", res, 12)
+```
+
 ## Values
 
 ### namespace CPLib.LDSegtree

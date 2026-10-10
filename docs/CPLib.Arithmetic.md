@@ -83,6 +83,16 @@ Type: `Std::I64 -> BoolArray::BoolArray`
 
 - `n` : 素数テーブルの上限（exclusive）
 
+##### Examples
+
+```fix
+import BoolArray;
+
+let table = create_prime_table(10);
+assert(|_|"", table.@(7));;
+assert(|_|"", !table.@(9))
+```
+
 #### euler_tortient
 
 Type: `Std::I64 -> Std::I64`
@@ -129,6 +139,14 @@ Type: `Std::I64 -> Std::I64 -> (Std::I64, (Std::I64, Std::I64))`
 
 - `a`: 整数
 - `b`: 整数
+
+##### Examples
+
+```fix
+let (d, (x, y)) = ext_gcd(12, 18);
+assert_eq(|_|"", d, 6);;
+assert_eq(|_|"", 12 * x + 18 * y, 6)
+```
 
 #### factorize
 
@@ -190,6 +208,13 @@ Type: `Std::U32 -> Std::Array Std::U32 -> Std::Array (Std::U32, Std::U8)`
 `(p, e)`の配列で、`p`は素因子、`e`はその指数を表す。`p`は昇順に並ぶ。
 `n`が0の場合は空の配列を返す。
 
+##### Examples
+
+```fix
+let (lp, _) = linear_sieve(100_U32);
+assert_eq(|_|"", factorize_via_lp_table(12_U32, lp), [(2_U32, 2_U8), (3_U32, 1_U8)]) // 12 = 2^2 * 3
+```
+
 #### floor_sum
 
 Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::I64 -> Std::I64`
@@ -209,6 +234,13 @@ ac-libraryのmathにある同名の関数の移植です。
 - `a`
 - `b`
 
+##### Examples
+
+```fix
+// floor(1/3) + floor(3/3) + floor(5/3) + floor(7/3) = 0 + 1 + 1 + 2
+assert_eq(|_|"", floor_sum(4, 3, 2, 1), 4)
+```
+
 #### inv_mod
 
 Type: `Std::I64 -> Std::I64 -> Std::I64`
@@ -223,6 +255,12 @@ Type: `Std::I64 -> Std::I64 -> Std::I64`
 
 - `m`: 法
 - `a`: 整数
+
+##### Examples
+
+```fix
+assert_eq(|_|"", 3.inv_mod(7), 5) // 3 * 5 = 15 = 1 mod 7
+```
 
 #### is_prime
 
@@ -283,6 +321,15 @@ Type: `Std::Array Std::I64 -> Std::Array Std::I64 -> (Std::I64, Std::I64)`
 - `rs`: r(i)の配列
 - `ms`: m(i)の配列
 
+##### Examples
+
+```fix
+// x = 2 (mod 3) かつ x = 3 (mod 5) <=> x = 8 (mod 15)
+assert_eq(|_|"", lift_crt([2, 3], [3, 5]), (8, 15));;
+// x = 0 (mod 2) かつ x = 1 (mod 4) には解がない
+assert_eq(|_|"", lift_crt([0, 1], [2, 4]), (0, 0))
+```
+
 #### linear_sieve
 
 Type: `Std::U32 -> (Std::Array Std::U32, Std::Array Std::U32)`
@@ -334,6 +381,12 @@ C言語の%演算子とは異なり、負の数に対しても正の余りを返
 - `m`: 除数
 - `x`: 被除数
 
+##### Examples
+
+```fix
+assert_eq(|_|"", (-7).pmod(3), 2)
+```
+
 #### pow_mod
 
 Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::I64`
@@ -349,6 +402,12 @@ Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::I64`
 - `e`: 指数
 - `m`: 法
 - `x`: 底
+
+##### Examples
+
+```fix
+assert_eq(|_|"", 2.pow_mod(10, 1000), 24) // 2^10 = 1024
+```
 
 #### pow_mod_u
 

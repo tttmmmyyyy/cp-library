@@ -47,6 +47,12 @@ Type: `Std::I64 -> Std::I64 -> CPLib.Bits::BitCombinationIterator`
 - `n` : ビット数
 - `m` : 立っているビット数
 
+##### Examples
+
+```fix
+assert_eq(|_|"", bit_combinations(3, 2).to_array, [0b011, 0b101, 0b110])
+```
+
 #### bit_flip
 
 Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> a`
@@ -86,6 +92,12 @@ Type: `Std::I64 -> CPLib.Bits::BitSubsetIterator`
 ##### Parameters
 
 - `set` : 全体集合
+
+##### Examples
+
+```fix
+assert_eq(|_|"", bit_subsets(0b101).to_array, [0b101, 0b100, 0b001, 0b000])
+```
 
 #### to_string_bits
 

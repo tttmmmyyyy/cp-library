@@ -26,6 +26,13 @@ Type: `[a : Std::LessThanOrEq] Std::I64 -> Std::I64 -> Std::Array a -> Std::Opti
 - `end`: 区間の終了インデックス (exclusive)
 - `arr`: 配列
 
+##### Examples
+
+```fix
+assert_eq(|_|"", [1, 2, 3].next_permutation(0, 3), some([1, 3, 2]));;
+assert_eq(|_|"", [3, 2, 1].next_permutation(0, 3), none())
+```
+
 ## Types and aliases
 
 ## Traits and aliases
