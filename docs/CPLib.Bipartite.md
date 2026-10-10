@@ -73,7 +73,7 @@ Type: `CPLib.Bipartite::BipartiteGraphFlow -> (Std::Array Std::Bool, Std::Array 
 
 ##### Parameters
 
-- `flow` : 二部グラフの最大フロー
+- `max_flow` : 二部グラフの最大フロー
 
 #### get_max_matching
 
@@ -89,7 +89,7 @@ Type: `CPLib.Bipartite::BipartiteGraphFlow -> Std::Array Std::Bool`
 
 ##### Parameters
 
-- `flow` : 二部グラフの最大フロー
+- `max_flow` : 二部グラフの最大フロー
 
 #### get_min_edge_cover
 
@@ -107,7 +107,7 @@ Type: `CPLib.Bipartite::BipartiteGraphFlow -> Std::Array Std::Bool`
 
 ##### Parameters
 
-- `flow` : 二部グラフの最大フロー
+- `max_flow` : 二部グラフの最大フロー
 
 #### get_min_vertex_cover
 
@@ -124,7 +124,7 @@ Type: `CPLib.Bipartite::BipartiteGraphFlow -> (Std::Array Std::Bool, Std::Array 
 
 ##### Parameters
 
-- `flow` : 二部グラフの最大フロー
+- `max_flow` : 二部グラフの最大フロー
 
 ## Types and aliases
 

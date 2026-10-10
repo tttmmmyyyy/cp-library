@@ -20,8 +20,8 @@ import Std::{
 // 計算量：O(n log n + sqrt(p))、n = |a| + |b|。pが`CPLib.ZP`に定義されている素数ならO(n log n)
 // 
 // # Parameters
-// - `x` : 畳み込まれる配列1
-// - `y` : 畳み込まれる配列2
+// - `a` : 畳み込まれる配列1
+// - `b` : 畳み込まれる配列2
 //
 // # Examples
 // ```fix

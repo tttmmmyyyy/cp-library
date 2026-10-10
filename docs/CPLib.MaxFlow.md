@@ -43,7 +43,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> c -> CPLib.MaxFlow::MaxFlow
 
 - `v` : 現在の頂点
 - `f` : 流してよいフローの量
-- `self` : グラフ
+- `graph` : グラフ
 
 #### reset_iter
 
@@ -80,7 +80,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxF
 - `from` : 始点の頂点番号
 - `to` : 終点の頂点番号
 - `cap` : 辺の容量
-- `g` : グラフ
+- `graph` : グラフ
 
 #### add_edge_id
 
@@ -99,7 +99,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxF
 - `from` : 始点の頂点番号
 - `to` : 終点の頂点番号
 - `cap` : 辺の容量
-- `g` : グラフ
+- `graph` : グラフ
 
 #### create
 
@@ -146,7 +146,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowGraph c -> Std::A
 
 ##### Parameters
 
-- `g` : グラフ
+- `graph` : グラフ
 
 #### maximize_flow
 

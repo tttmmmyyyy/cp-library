@@ -235,7 +235,7 @@ impl ZP p : ToString {
 // 与えられた64ビット整数と等しいかより大きい最小の2のべき乗を計算する
 // 
 // # Parameters
-// - `n`: 64ビット整数
+// - `x`: 64ビット整数
 _calc_next_pot : U64 -> U64;
 _calc_next_pot = |n| (
     if n <= 1_U64 { 1_U64 };

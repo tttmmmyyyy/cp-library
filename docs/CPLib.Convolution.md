@@ -37,8 +37,8 @@ Type: `[p : CPLib.ZP::PrimeProvider] Std::Array (CPLib.ZP::ZP p) -> Std::Array (
 
 ##### Parameters
 
-- `x` : 畳み込まれる配列1
-- `y` : 畳み込まれる配列2
+- `a` : 畳み込まれる配列1
+- `b` : 畳み込まれる配列2
 
 ##### Examples
 

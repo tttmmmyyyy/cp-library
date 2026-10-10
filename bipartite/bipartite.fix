@@ -100,7 +100,7 @@ namespace BipartiteGraphFlow {
     // 第i番目に追加した辺がマッチングに含まれる場合は`true`、含まれない場合は`false`とする配列
     //
     // # Parameters
-    // - `flow` : 二部グラフの最大フロー
+    // - `max_flow` : 二部グラフの最大フロー
     get_max_matching : BipartiteGraphFlow -> Array Bool;
     get_max_matching = |flow| flow.@edge_ids.map(|eid| flow.@max_flow.get_flow(eid) > 0);
 
@@ -114,7 +114,7 @@ namespace BipartiteGraphFlow {
     // 第i番目に追加した辺がカバーに含まれる場合は`true`、含まれない場合は`false`とする配列
     //
     // # Parameters
-    // - `flow` : 二部グラフの最大フロー
+    // - `max_flow` : 二部グラフの最大フロー
     get_min_edge_cover : BipartiteGraphFlow -> Array Bool;
     get_min_edge_cover = |flow| (
         let edge_n = flow.@graph.@edges.@size;
@@ -156,7 +156,7 @@ namespace BipartiteGraphFlow {
     // ある頂点が被覆に含まれる場合は`true`、含まれない場合は`false`となる配列が返される。
     //
     // # Parameters
-    // - `flow` : 二部グラフの最大フロー
+    // - `max_flow` : 二部グラフの最大フロー
     get_min_vertex_cover : BipartiteGraphFlow -> (Array Bool, Array Bool);
     get_min_vertex_cover = |flow| (
         let min_cut = flow.@max_flow.get_min_cut; // 第i番目の頂点に残余グラフで到達可能かどうかの配列
@@ -173,7 +173,7 @@ namespace BipartiteGraphFlow {
     // 左側の頂点と右側の頂点のそれぞれについて、最大独立集合に含まれる頂点を`true`、含まれない頂点を`false`とする`Array Bool`を返す。
     // 
     // # Parameters
-    // - `flow` : 二部グラフの最大フロー
+    // - `max_flow` : 二部グラフの最大フロー
     get_max_indep_set : BipartiteGraphFlow -> (Array Bool, Array Bool);
     get_max_indep_set = |flow| (
         let (left_cover, right_cover) = flow.get_min_vertex_cover;
