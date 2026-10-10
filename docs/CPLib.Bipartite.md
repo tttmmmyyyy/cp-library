@@ -65,7 +65,7 @@ Type: `CPLib.Bipartite::BipartiteGraphFlow -> (Std::Array Std::Bool, Std::Array 
 
 二部グラフの最大独立集合（最大安定集合）を取得する
 
-計算量：O(n)
+計算量：O(n + m)
 
 ##### Returns
 
@@ -115,7 +115,7 @@ Type: `CPLib.Bipartite::BipartiteGraphFlow -> (Std::Array Std::Bool, Std::Array 
 
 二部グラフの最小点被覆を取得する
 
-計算量：O(n)
+計算量：O(n + m)
 
 ##### Returns
 
@@ -164,9 +164,9 @@ Type: `CPLib.MaxFlow::MaxFlowGraph Std::I64`
 
 ##### field `edge_ids`
 
-Type: `Std::Array CPLib.Graph::EdgeId`
+Type: `Std::Array Std::I64`
 
-二部グラフの辺に対応する最大フローグラフの辺の識別子
+二部グラフの辺に対応する最大フローグラフの辺の番号
 
 ## Traits and aliases
 
