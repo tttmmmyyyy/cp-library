@@ -129,13 +129,3 @@ int64_t cp_lib_read_token_next(void)
     }
     return c;
 }
-
-int64_t cp_lib_popcount64(uint64_t x)
-{
-    return __builtin_popcountll(x);
-}
-
-int64_t cp_lib_popcount32(uint32_t x)
-{
-    return __builtin_popcount(x);
-}
