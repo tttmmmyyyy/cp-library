@@ -13,7 +13,7 @@ Defined in cp-library@0.14.0
 
 ```fix
 // 区間の最小値を求めるセグメント木
-let tree = build([5, 3, 8], I64::maximum, |(x, y)| min(x, y));
+let tree = build([5, 3, 8], maximum, |(x, y)| min(x, y));
 let tree = tree.set(1, 9); // [5, 9, 8]
 assert_eq(|_|"", tree.fold(1, 3), 8)
 ```
