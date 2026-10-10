@@ -66,33 +66,33 @@ convolve_i64 = |a, b| (
     if n == 0 || m == 0 { [] };
     if n + m - 1 > 1.shift_left(24) { undefined("[convolve_i64] n + m - 1 > 2^24") };
 
-    let _M1 = 754974721_U64; // 2^24
-    let _M2 = 167772161_U64; // 2^25
-    let _M3 = 469762049_U64; // 2^26
-    let _M1M2 = _M1 * _M2;
-    let _M1M3 = _M1 * _M3;
-    let _M2M3 = _M2 * _M3;
-    let _M1M2M3 = _M1M2 * _M3;
+    let __M1 = 754974721_U64; // 2^24
+    let __M2 = 167772161_U64; // 2^25
+    let __M3 = 469762049_U64; // 2^26
+    let __M1M2 = __M1 * __M2;
+    let __M1M3 = __M1 * __M3;
+    let __M2M3 = __M2 * __M3;
+    let __M1M2M3 = __M1M2 * __M3;
 
     let c1 = convolve_zp(a.map(make), b.map(make)) : Array (ZP P754974721);
     let c2 = convolve_zp(a.map(make), b.map(make)) : Array (ZP P167772161);
     let c3 = convolve_zp(a.map(make), b.map(make)) : Array (ZP P469762049);
 
-    let i1 = _inv_gcd(_M2M3.i64, _M1.i64).@1.u64;
-    let i2 = _inv_gcd(_M1M3.i64, _M2.i64).@1.u64;
-    let i3 = _inv_gcd(_M1M2.i64, _M3.i64).@1.u64;
+    let i1 = _inv_gcd(__M2M3.i64, __M1.i64).@1.u64;
+    let i2 = _inv_gcd(__M1M3.i64, __M2.i64).@1.u64;
+    let i3 = _inv_gcd(__M1M2.i64, __M3.i64).@1.u64;
 
-    let offset = [0_U64, 0_U64, _M1M2M3, 2_U64 * _M1M2M3, 3_U64 * _M1M2M3];
+    let offset = [0_U64, 0_U64, __M1M2M3, 2_U64 * __M1M2M3, 3_U64 * __M1M2M3];
 
     let c = Array::fill(n + m - 1, 0);
     range(0, n + m - 1).fold(c, |i, c|
         let x = 0_U64;
-        let x = x + (c1.@(i).@value.u64 * i1) % _M1 * _M2M3;
-        let x = x + (c2.@(i).@value.u64 * i2) % _M2 * _M1M3;
-        let x = x + (c3.@(i).@value.u64 * i3) % _M3 * _M1M2;
+        let x = x + (c1.@(i).@value.u64 * i1) % __M1 * __M2M3;
+        let x = x + (c2.@(i).@value.u64 * i2) % __M2 * __M1M3;
+        let x = x + (c3.@(i).@value.u64 * i3) % __M3 * __M1M2;
 
-        let diff = c1.@(i).@value.i64 - x.i64.pmod(_M1.i64);
-        let diff = if diff < 0 { diff + _M1.i64 } else { diff };
+        let diff = c1.@(i).@value.i64 - x.i64.pmod(__M1.i64);
+        let diff = if diff < 0 { diff + __M1.i64 } else { diff };
         let x = x - offset.@(diff % 5);
         c.unsafe_set_bounds_unchecked(i, x.i64)
     )
