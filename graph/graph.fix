@@ -57,7 +57,7 @@ namespace Edge {
 // - `n` : 頂点数
 create : I64 -> Graph c;
 create = |n| (
-    Graph { edges : Array::fill(n, []) }
+    Graph { edges : fill(n, []) }
 );
 
 // グラフの頂点数を取得する
@@ -144,7 +144,7 @@ dijkstra = |start, graph| (
     let nn = graph.get_size;
 
     // The array of distances to reach each node from the starting node.
-    let dists = Array::fill(nn, inf);
+    let dists = fill(nn, inf);
     let dists = dists.set(start, zero);
 
     // The binary heap to store the nodes to visit.
@@ -194,7 +194,7 @@ dijkstra = |start, graph| (
 bellman_ford : [c : Additive, c : LessThan, c : Inf, c : Eq] I64 -> Graph c -> Array c;
 bellman_ford = |start, graph| (
     let n = graph.get_size;
-    let d = Array::fill(n, inf);
+    let d = fill(n, inf);
     let d = d.set(start, zero);
     loop(d, |d|
         let (d, update) = range(0, n).fold((d, false), |i, (d, update)|
@@ -227,18 +227,18 @@ calc_sccs = |g| (
     let n = g.get_size;
 
     // 深さ優先探索をして、探索を終えた順に頂点を並べる
-    let visited = Array::fill(n, false);
+    let visited = fill(n, false);
     let (_, visited, finished) = range(0, n).fold(([], visited, Array::empty(n)), |root, (stack, visited, finished)|
         if visited.@(root) { (stack, visited, finished) };
         _scc_dfs_postorder(g, root, stack, visited, finished)
     );
 
     // 辺の向きを逆にしたグラフをCSR形式で作る：頂点vに入る辺の始点を、rlistの[rstart.@(v), rstart.@(v + 1))に並べる
-    let rstart = range(0, n).fold(Array::fill(n + 1, 0), |from, rstart|
+    let rstart = range(0, n).fold(fill(n + 1, 0), |from, rstart|
         g.@edges.@(from).to_iter.fold(rstart, |Edge { to : to, data : _ }, rstart| rstart.mod(to + 1, |x| x + 1))
     );
     let rstart = range(0, n).fold(rstart, |v, rstart| let x = rstart.@(v); rstart.mod(v + 1, |y| y + x));
-    let (rlist, _) = range(0, n).fold((Array::fill(rstart.@(n), 0), rstart), |from, (rlist, pos)|
+    let (rlist, _) = range(0, n).fold((fill(rstart.@(n), 0), rstart), |from, (rlist, pos)|
         g.@edges.@(from).to_iter.fold((rlist, pos), |Edge { to : to, data : _ }, (rlist, pos)|
             let p = pos.@(to);
             (rlist.set(p, from), pos.set(to, p + 1))
@@ -246,7 +246,7 @@ calc_sccs = |g| (
     );
 
     // 逆向きのグラフを、探索を終えた順の逆に深さ優先探索する。1回の探索で訪れる頂点が1つの強連結成分になる
-    let visited = Array::fill(n, false);
+    let visited = fill(n, false);
     let (_, _, sccs) = range_step(n - 1, -1, -1).fold(([], visited, []), |i, (stack, visited, sccs)|
         let root = finished.@(i);
         if visited.@(root) { (stack, visited, sccs) };
