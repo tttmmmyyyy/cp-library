@@ -9,8 +9,8 @@
 // // 
 // // `m`はメモ化につかうメモリの型。`HashMap`や`Array`を呼び出し時に選択。
 // // 
-// // 結果をメモしたいので、値を計算するモナドを `memoize(n)`に渡す
-// fib : [m : Memory, Key m = I64, Value m = U64] I64 -> Memoize m U64 = |n| memoize(n) $ (
+// // 結果をメモしたいので、値を計算するモナドを `memoize(n) $ |_|` の後に書く
+// fib : [m : Memory, Key m = I64, Value m = U64] I64 -> Memoize m U64 = |n| memoize(n) $ |_| (
 //     if n <= 1 { pure $ n.u64 };
 //     pure $ *fib(n - 1) + *fib(n - 2)
 // );
@@ -34,7 +34,7 @@ module CPLib.Memoize;
 
 import Hash::HashKey;
 import HashMap::{empty, find, insert, HashMap};
-import Std::{Array, I64, Monad, Option, Array::{fill, set, @}, Monad::pure, Option::{none, some}, Tuple2::@1};
+import Std::{Array, I64, Lazy, Monad, Option, Array::{fill, set, @}, Monad::pure, Option::{none, some}, Tuple2::@1};
 
 // メモ化モナド
 // 
@@ -89,18 +89,18 @@ run_with_array : I64 -> Memoize (Array (Option v)) a -> a = |size| (
 
 // モナドアクションをメモ化する
 // 
-// `memoize(x) $ f` は、
+// `memoize(x) $ |_| body` は、
 // - キー`x`に対する値がメモリに存在する場合はそれを返す。
-// - 存在しない場合はモナド`f`を実行し、結果をメモリに保存してから返す。
+// - 存在しない場合はモナド`body`を作って実行し、結果をメモリに保存してから返す。
 // 
 // # Parameters
 // - `x` : メモ化のキー
-// - `f` : キー`x`に対する値を計算するモナド
-memoize : [m : Memory, Key m = k, Value m = v] k -> Memoize m v -> Memoize m v = |x, f| (
+// - `f` : キー`x`に対する値を計算するモナドを返す関数
+memoize : [m : Memory, Key m = k, Value m = v] k -> Lazy (Memoize m v) -> Memoize m v = |x, f| (
     match *_get(x) {
         some(y) => pure(y),
         none() => (
-            let y = *f;
+            let y = *f();
             _put(x, y);;
             pure(y)
         )
