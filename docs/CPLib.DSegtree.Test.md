@@ -27,6 +27,14 @@ Type: `Std::Bool -> Random::Random -> Std::IO Random::Random`
 - `is_build` : セグメント木をbuildで構築するかどうか。そうでないときはinitで構築する
 - `rng` : 乱数生成器
 
+#### test_set_leaves_index_zero
+
+Type: `Std::IO ()`
+
+`set`が使われない添字0の要素を書き換えないことのテスト
+
+書き換えると、文字列の連結のように`op`を重ねるほど値が大きくなるモノイドでは、`set`のたびに根の値が添字0の要素に連結される。
+
 #### test_speed
 
 Type: `Std::IO ()`
