@@ -1,255 +1,375 @@
-// 最小コスト最大流問題
+// 最小費用流問題
 //
 // 制約・計算量の n は頂点数、m は辺数を表します。
 //
 // # Examples
 // ```fix
-// // 頂点0から頂点2へ、容量とコストを指定した辺を張る
-// let g = create(3, 0, 2) : MinCostFlowGraph I64;
+// // 容量とコストを指定した辺を張る
+// let g = create(3) : MinCostFlowGraph I64;
 // let g = g.add_edge(0, 1, 2, 1).add_edge(1, 2, 1, 1).add_edge(0, 2, 1, 5);
-// // 流量の上限を10として流すと、流量2（0->1->2と0->2に1ずつ）、コスト2 + 5 = 7
-// let (_, flow, cost) = g.maximize_flow_min_cost(10);
+// // 頂点0から頂点2へ流量の上限を10として流すと、流量2（0->1->2と0->2に1ずつ）、コスト2 + 5 = 7
+// let (_, flow, cost) = g.maximize_flow_min_cost_with_limit(0, 2, 10);
 // assert_eq(|_|"", (flow, cost), (2, 7))
 // ```
 module CPLib.MinCostFlow;
 
 import BinaryHeap::{BinaryHeap::{get_size, get_top, pop, push}, MinBinaryHeap::empty};
-import CPLib.Graph::{
-    add_edge, bellman_ford, create, get_edge, Edge, EdgeId, Graph, NodeDistance, 
-    Edge::{mod_data, @data, @to}, Graph::{mod_edges, @edges}, NodeDistance::make
-};
+import CPLib.Graph::{NodeDistance, NodeDistance::make};
 import CPLib.Trait::{Inf, Inf::inf};
 import Std::{
-    loop, Additive, Array, Eq, I64, LessThan, Mul, Neg, Sub, Add::add, 
-    Array::{fill, mod, set, to_iter, @, @size}, Iterator::{count_up, fold, range, zip}, LessThan::min, 
-    LoopState::{break, continue}, Option::as_some, Tuple2::@0, Zero::zero
+    loop, undefined, Additive, Array, Bool, Eq, I64, LessThan, Mul, Neg, Sub,
+    Array::{fill, mod, push_back, set, to_iter, @, @size}, I64::bit_xor, Indexable::ixchg,
+    Iterator::{fold, map, range, to_array}, LessThan::min, LoopState::{break, continue}, Option::as_some,
+    Tuple2::@0, Zero::zero
 };
 
 // フローの容量およびコストに要求されるトレイト
-// 
+//
 // 注：Fixの`Mul`トレイトは`lhs`と`rhs`に同じ型のみを受け付けるため、容量とコストは同じ型である必要があります。
 trait CapCostLike = Additive + Mul + Neg + Sub + LessThan + Inf + Eq;
 
-type EdgeData c = struct {
-    // コスト
-    cost : c,
-    // 現在の容量
-    cap : c,
-    // 逆辺のインデックス
-    rev : I64,
-    // 初期容量
-    init_cap : c,
+// 最小費用流問題のグラフの型
+//
+// 型パラメータ`c`は容量とコストの型です。
+type MinCostFlowGraph c = struct {
+    // 頂点数
+    _n : I64,
+    // 内部の辺ごとの行き先の頂点。k番目に足した辺を内部の辺2kで、その逆辺を内部の辺2k + 1で表す
+    _to : Array I64,
+    // 内部の辺ごとの残余容量。k番目に足した辺の逆辺の残余容量は、その辺に流れている量に等しい
+    _cap : Array c,
+    // 足した辺ごとのコスト。逆辺のコストは、その符号を反転したもの
+    _cost : Array c,
 };
 
-// 最小フロー問題のグラフの型
-type MinCostFlowGraph c = struct {
-    // グラフ
-    graph : Graph (EdgeData c),
-    // 開始地点
-    s : I64,
-    // 終了地点
-    t : I64,
-    // ポテンシャル
-    potential : Array c,
+// 最小費用流問題のグラフの辺の番号
+//
+// `add_edge`と`add_edge_id`で足した辺に、足した順に0から振られる。足した辺がm本なら、番号は0以上m未満である。
+type MinCostFlowEdgeId = I64;
+
+// 最小費用流問題のグラフの辺の状態
+type MinCostFlowEdge c = struct {
+    // 始点の頂点番号
+    from : I64,
+    // 終点の頂点番号
+    to : I64,
+    // 容量
+    cap : c,
+    // 流れている量
+    flow : c,
+    // 流量1あたりのコスト
+    cost : c,
 };
 
 namespace MinCostFlowGraph {
-    // グラフを作成する
-    // 
-    // 制約：0 <= s, t < n, s != t
+    // 辺のないグラフを作成する
     //
-    // 計算量：O(n)
+    // 計算量：O(1)
     //
     // # Parameters
     // - `n` : 頂点数
-    // - `s` : 開始頂点番号
-    // - `t` : 終了頂点番号
-    create : [c : CapCostLike] I64 -> I64 -> I64 -> MinCostFlowGraph c;
-    create = |n, s, t| (
-        MinCostFlowGraph { 
-            graph : Graph::create(n),
-            s : s,
-            t : t,
-            potential : fill(n, zero),
-        }
-    );
+    create : I64 -> MinCostFlowGraph c;
+    create = |n| MinCostFlowGraph { _n : n, _to : [], _cap : [], _cost : [] };
 
     // グラフに辺を追加する
-    // 
+    //
     // 制約：0 <= from, to < n, cap >= 0
     //
     // 計算量：ならしO(1)
-    // 
+    //
     // # Parameters
     // - `from` : 始点の頂点番号
     // - `to` : 終点の頂点番号
     // - `cap` : 辺の容量
-    // - `cost` : 辺のコスト
+    // - `cost` : 辺の流量1あたりのコスト
     // - `graph` : グラフ
     add_edge : [c : CapCostLike] I64 -> I64 -> c -> c -> MinCostFlowGraph c -> MinCostFlowGraph c;
     add_edge = |from, to, cap, cost, g| g.add_edge_id(from, to, cap, cost).@0;
 
-    // グラフに辺を追加する（辺IDを返す）
-    // 
-    // 追加された辺の識別子を返す。
-    // 
+    // グラフに辺を追加する（辺の番号を返す）
+    //
+    // 辺の番号は、`add_edge`で足した辺も含めて、足した順に0から振られる。
+    //
     // 制約：0 <= from, to < n, cap >= 0
     //
     // 計算量：ならしO(1)
-    // 
+    //
     // # Parameters
     // - `from` : 始点の頂点番号
     // - `to` : 終点の頂点番号
     // - `cap` : 辺の容量
-    // - `cost` : 辺のコスト
+    // - `cost` : 辺の流量1あたりのコスト
     // - `graph` : グラフ
-    add_edge_id : [c : CapCostLike] I64 -> I64 -> c -> c -> MinCostFlowGraph c -> (MinCostFlowGraph c, EdgeId);
+    add_edge_id : [c : CapCostLike] I64 -> I64 -> c -> c -> MinCostFlowGraph c -> (MinCostFlowGraph c, MinCostFlowEdgeId);
     add_edge_id = |from, to, cap, cost, g| (
-        let n_to_edges = g.@graph.@edges.@(to).@size;
-        let data = EdgeData {
-            cost : cost,
-            cap : cap,
-            rev : n_to_edges,  // 次に`to`に追加される予定の辺のインデックス
-            init_cap : cap
-        };
-        let g = g.(mod_graph $ add_edge(from, to, data));
-        let eidx = g.@graph.@edges.@(from).@size - 1;
-
-        let data = EdgeData {
-            cost : -cost,
-            cap : zero,
-            rev : eidx,
-            init_cap : zero
-        };
-        let g = g.(mod_graph $ add_edge(to, from, data));
-
-        (g, EdgeId { from : from, idx : eidx })
+        let n = g.@_n;
+        if !(0 <= from && from < n && 0 <= to && to < n) { undefined("CPLib.MinCostFlow: add_edge got a vertex out of range") };
+        if cap < zero { undefined("CPLib.MinCostFlow: add_edge got a negative capacity") };
+        // 辺は足した順の番号（MinCostFlowEdgeId、つまりI64）で指す。ac-libraryのmcf_graphのadd_edge、get_edgeに合わせている
+        let id = g.@_cost.@size;
+        let g = g.mod__to(|ts| ts.push_back(to).push_back(from));
+        let g = g.mod__cap(|cs| cs.push_back(cap).push_back(zero));
+        let g = g.mod__cost(|cs| cs.push_back(cost));
+        (g, id)
     );
 
-    // ベルマンフォード法を使ってポテンシャルを更新する
+    // 辺に流れている量を取得する
     //
-    // ベルマンフォード法を使って`graph.@potential`を更新し、負の辺がある場合も動作するようにします。
-    //
-    // 制約：負の閉路がない
-    //
-    // 計算量：O(n (n + m))
-    set_potential_bf : [c : CapCostLike] MinCostFlowGraph c -> MinCostFlowGraph c;
-    set_potential_bf = |g| (
-        let n = g.@graph.@edges.@size;
-        // cap > 0な辺からなるグラフを作成する
-        let graph = Graph::create(n);
-        let graph = range(0, n).fold(graph, |from, graph|
-            let edges = g.@graph.@edges.@(from);
-            edges.to_iter.fold(graph, |e, graph|
-                if !(e.@data.@cap > zero) { graph };
-                graph.add_edge(from, e.@to, e.@data.@cost)
-            )
-        );
-        // sから到達できない頂点のポテンシャルは読まれないので、溢れない値としてゼロを置く
-        let h = graph.bellman_ford(g.@s);
-        let h = range(0, n).fold(h, |v, h| if h.@(v) == Inf::inf { h.set(v, zero) } else { h });
-        g.set_potential(h)
-    );
-
-    // ある辺にフローを流す
-    // 
-    // # Parameters
-    // - `v` : 始点の頂点番号
-    // - `e` : 辺のインデックス
-    // - `f` : 流すフローの量
-    // - `graph` : グラフ
-    _add_flow : [c : CapCostLike] I64 -> I64 -> c -> MinCostFlowGraph c -> MinCostFlowGraph c;
-    _add_flow = |v, e, f, g| (
-        let (rv, re) = g.@graph.@edges.@(v).@(e).|e| (e.@to, e.@data.@rev); // 逆辺の(v, e)
-        let g = g.(mod_graph $ mod_edges $ mod(v) $ mod(e) $ mod_data $ mod_cap $ add(-f));
-        let g = g.(mod_graph $ mod_edges $ mod(rv) $ mod(re) $ mod_data $ mod_cap $ add(f));
-        g
-    );
-
-    // ある辺に流れているフローを取得する
-    // 
     // 計算量：O(1)
-    // 
+    //
     // # Parameters
-    // - `eid` : `add_edge`で得た辺の識別子
+    // - `edge_id` : 辺の番号（0 <= edge_id < 足した辺の数）
     // - `graph` : グラフ
-    get_flow : [c : CapCostLike] EdgeId -> MinCostFlowGraph c -> c;
-    get_flow = |eid, graph| (
-        let e = graph.@graph.get_edge(eid).@data;
-        e.@init_cap - e.@cap
+    get_flow : [c : CapCostLike] MinCostFlowEdgeId -> MinCostFlowGraph c -> c;
+    get_flow = |i, g| g.@_cap.@(2 * i + 1);
+
+    // 辺の状態を取得する
+    //
+    // 計算量：O(1)
+    //
+    // # Parameters
+    // - `edge_id` : 辺の番号（0 <= edge_id < 足した辺の数）
+    // - `graph` : グラフ
+    get_edge : [c : CapCostLike] MinCostFlowEdgeId -> MinCostFlowGraph c -> MinCostFlowEdge c;
+    get_edge = |i, g| (
+        let flow = g.@_cap.@(2 * i + 1);
+        MinCostFlowEdge {
+            from : g.@_to.@(2 * i + 1), to : g.@_to.@(2 * i), cap : g.@_cap.@(2 * i) + flow, flow : flow, cost : g.@_cost.@(i)
+        }
     );
 
-    // 最小コスト最大フローを計算する
-    // 
-    // 指定された量を上限として流せるだけ流し、流れたフローとコストを返す。
-    // 
+    // すべての辺の状態を、足した順に並べて取得する
+    //
+    // 計算量：O(m)
+    //
+    // # Parameters
+    // - `graph` : グラフ
+    get_edges : [c : CapCostLike] MinCostFlowGraph c -> Array (MinCostFlowEdge c);
+    get_edges = |g| range(0, g.@_cost.@size).map(|i| g.get_edge(i)).to_array;
+
+    // 頂点`s`から頂点`t`へ流せるだけ流し、その流量を流すコストを最小にする
+    //
+    // 流した後のグラフと、新たに流した量と、そのコストを返す。
+    // 何度でも呼べて、2回目以降はそれまでに流した状態から続けて流す。`s`と`t`は呼ぶたびに変えてよい。
+    //
     // 制約：
-    // - 辺のコスト >= 0（負のコストの辺があるときは、先に`set_potential_bf`を呼ぶ）
+    // - 0 <= s, t < n, s != t
+    // - 残余グラフに、コストの和が負の閉路がない。負のコストの辺があってもよい。破ると理由を書いて止まる
     // - 流量とコストの総和が`c`に収まる
     // - n * (辺のコストの絶対値の最大) <= 8e18（`c`が`I64`のとき）
     //
-    // 計算量：O(F (n + m) log(n + m))、Fは流量（容量が整数のとき）
-    // 
+    // 計算量：O(F (n + m) log(n + m))、Fは流した量（容量が整数のとき）。
+    // 残余グラフに負のコストの辺があるとき（負のコストの辺を足したときと、2回目以降に呼ぶとき）は、O(n m)を足す
+    //
     // # Parameters
-    // - `flow_limit` : 流すフローの最大値
-    // - `g` : 最小フロー問題のグラフ
-    maximize_flow_min_cost : [c : CapCostLike] c -> MinCostFlowGraph c -> (MinCostFlowGraph c, c, c);
-    maximize_flow_min_cost = |flow_limit, g| (
-        let n = g.@graph.@edges.@size;
-        let s = g.@s;
-        let t = g.@t;
-        let h = g.@potential; let g = g.set_potential([]); // ポテンシャル
-        let dist = fill(n, Inf::inf); // 距離
-        let prevv = fill(n, -1); // 直前にしらべた頂点
-        let preve = fill(n, -1); // 直前にしらべた辺
-        loop((g, flow_limit, zero, h, dist, prevv, preve), |(g, flow_rest, cost, h, dist, prevv, preve)| 
-            if flow_rest == zero { break $ (g.set_potential(h), flow_limit - flow_rest, cost) };
-            // ダイクストラ法でsからtまでの距離を求める。tを取り出した時点で打ち切る
-            let dist = range(0, n).fold(dist, |i, dist| dist.set(i, Inf::inf)); // `dist`を初期化
-            let dist = dist.set(s, zero);
-            let que = MinBinaryHeap::empty.push(NodeDistance::make(s, zero)); // 最小ヒープ
-            let (dist, prevv, preve) = loop((que, dist, prevv, preve), |(que, dist, prevv, preve)|
-                if que.get_size == 0 { break $ (dist, prevv, preve) };
-                let NodeDistance { node : v, dist : d } = que.get_top.as_some;
-                let que = que.pop;
-                if dist.@(v) < d { continue $ (que, dist, prevv, preve) };
-                if v == t { break $ (dist, prevv, preve) };
-                let edges = g.@graph.@edges.@(v);
-                continue $ edges.to_iter.zip(count_up(0)).fold((que, dist, prevv, preve), |(Edge { to : to, data : e }, ei), (que, dist, prevv, preve)|
-                    if !(e.@cap > zero) { (que, dist, prevv, preve) };
-                    let new_d = d + e.@cost + h.@(v) - h.@(to);
-                    if !(dist.@(to) > new_d) { (que, dist, prevv, preve) };
-                    let dist = dist.set(to, new_d);
-                    let prevv = prevv.set(to, v);
-                    let preve = preve.set(to, ei);
-                    let que = que.push(NodeDistance::make(to, new_d));
-                    (que, dist, prevv, preve)
-                )
-            );
-            // tに到達できないときは終了
+    // - `s` : 流し出す頂点の番号
+    // - `t` : 流し込む頂点の番号
+    // - `graph` : グラフ
+    maximize_flow_min_cost : [c : CapCostLike] I64 -> I64 -> MinCostFlowGraph c -> (MinCostFlowGraph c, c, c);
+    maximize_flow_min_cost = |s, t, g| g.maximize_flow_min_cost_with_limit(s, t, Inf::inf);
+
+    // 頂点`s`から頂点`t`へ、流した量が上限に達するまで流せるだけ流し、その流量を流すコストを最小にする
+    //
+    // 流した後のグラフと、新たに流した量（上限以下）と、そのコストを返す。上限が0以下なら何も流さず0を返す。
+    // 何度でも呼べて、2回目以降はそれまでに流した状態から続けて流す。`s`と`t`は呼ぶたびに変えてよい。
+    //
+    // 制約：
+    // - 0 <= s, t < n, s != t
+    // - 残余グラフに、コストの和が負の閉路がない。負のコストの辺があってもよい。破ると理由を書いて止まる
+    // - 流量とコストの総和が`c`に収まる
+    // - n * (辺のコストの絶対値の最大) <= 8e18（`c`が`I64`のとき）
+    //
+    // 計算量：O(F (n + m) log(n + m))、Fは流した量（容量が整数のとき）。
+    // 残余グラフに負のコストの辺があるとき（負のコストの辺を足したときと、2回目以降に呼ぶとき）は、O(n m)を足す
+    //
+    // # Parameters
+    // - `s` : 流し出す頂点の番号
+    // - `t` : 流し込む頂点の番号
+    // - `flow_limit` : 流す量の上限
+    // - `graph` : グラフ
+    maximize_flow_min_cost_with_limit : [c : CapCostLike] I64 -> I64 -> c -> MinCostFlowGraph c -> (MinCostFlowGraph c, c, c);
+    maximize_flow_min_cost_with_limit = |s, t, flow_limit, g| (
+        if s == t { undefined("CPLib.MinCostFlow: s and t must differ") };
+        let n = g.@_n;
+        let (g, cap) = g[^_cap].ixchg([]);
+        let res = g._make_residual(cap);
+        let h = res._initial_potential(n);
+        let (res, flow, cost) = loop((res, h, zero, zero), |(res, h, flow, cost)|
+            if !(flow < flow_limit) { break $ (res, flow, cost) };
+            let (dist, prev) = res._dijkstra(n, s, t, h);
             let dt = dist.@(t);
-            if dt == Inf::inf { break $ (g.set_potential(h), flow_limit - flow_rest, cost) };
+            if dt == Inf::inf { break $ (res, flow, cost) };
             // ポテンシャルを更新する。距離がtより遠い頂点（tを取り出した時点で距離が確定していない頂点と、sから到達できない頂点）には、tまでの距離を足す
-            let h = range(0, n).fold(h, |v, h| h.set(v, h.@(v) + min(dist.@(v), dt)));
-            // s-t最短路に沿ってフローを流す
-            let d = loop((t, flow_rest), |(v, d)|
-                if v == s { break $ d };
-                let pv = prevv.@(v);
-                let pe = preve.@(v);
-                let c = g.@graph.@edges.@(pv).@(pe).@data.@cap; // 前の辺の容量
-                let d = min(d, c);
-                continue $ (pv, d)
-            );
-            let flow_rest = flow_rest - d;
-            let cost = cost + d * h.@(t);
-            let g = loop((t, g), |(v, g)|
-                if v == s { break $ g };
-                let pv = prevv.@(v);
-                let pe = preve.@(v);
-                let g = g._add_flow(pv, pe, d);
-                continue $ (pv, g)
-            );
-            continue $ (g, flow_rest, cost, h, dist, prevv, preve)
-        )
+            let h = range(0, n).fold(h, |v, h| h.mod(v, |x| x + min(dist.@(v), dt)));
+            let (res, d) = res._augment_shortest_path(s, t, prev, flow_limit + (-flow));
+            // 更新したポテンシャルの下では、sからtへの最短路のコストはh(t) - h(s)
+            continue $ (res, h, flow + d, cost + d * (h.@(t) - h.@(s)))
+        );
+        (g.set__cap(res._residual_capacities_by_edge_id(cap)), flow, cost)
+    );
+
+    // 残余グラフを、内部の辺を始点ごとにまとめた並び（CSR形式）で作る
+    //
+    // # Parameters
+    // - `cap` : 内部の辺の番号ごとの残余容量
+    // - `graph` : グラフ
+    _make_residual : [c : CapCostLike] Array c -> MinCostFlowGraph c -> _ResidualGraph c;
+    _make_residual = |cap, g| (
+        let n = g.@_n;
+        let to = g.@_to;
+        let cost = g.@_cost;
+        let m2 = to.@size;
+        // 内部の辺eの始点は、逆辺e ^ 1の行き先
+        let out_degree = range(0, m2).fold(fill(n, 0), |e, deg| deg.mod(to.@(e.bit_xor(1)), |d| d + 1));
+        let start = range(0, n).fold(fill(n + 1, 0), |v, start| start.set(v + 1, start.@(v) + out_degree.@(v)));
+        // 内部の辺を番号の小さい順に見て、始点の区間に並べる。nextは各頂点の区間で次に置く位置
+        let (pos, _) = range(0, m2).fold((fill(m2, 0), start), |e, (pos, next)|
+            let v = to.@(e.bit_xor(1));
+            let p = next.@(v);
+            (pos.set(e, p), next.set(v, p + 1))
+        );
+        let (res_to, res_rev, res_cap, res_cost) = range(0, m2).fold(
+            (fill(m2, 0), fill(m2, 0), fill(m2, zero), fill(m2, zero)), |e, (res_to, res_rev, res_cap, res_cost)|
+            let p = pos.@(e);
+            let c = cost.@(e / 2);
+            (
+                res_to.set(p, to.@(e)), res_rev.set(p, pos.@(e.bit_xor(1))), res_cap.set(p, cap.@(e)),
+                res_cost.set(p, if e.bit_xor(1) > e { c } else { -c })
+            )
+        );
+        _ResidualGraph { start : start, pos : pos, to : res_to, rev : res_rev, cap : res_cap, cost : res_cost }
     );
 }
+
+// 最小費用流を求める間の残余グラフ
+//
+// 内部の辺を始点ごとにまとめて並べる（CSR形式）。頂点vから出る辺は、位置[start.@(v), start.@(v + 1))にある。
+type _ResidualGraph c = struct {
+    // 長さが頂点数 + 1の配列。頂点vから出る辺の位置は[start.@(v), start.@(v + 1))
+    start : Array I64,
+    // 内部の辺の番号ごとの位置
+    pos : Array I64,
+    // 位置ごとの行き先の頂点
+    to : Array I64,
+    // 位置ごとの、逆辺の位置
+    rev : Array I64,
+    // 位置ごとの残余容量
+    cap : Array c,
+    // 位置ごとのコスト
+    cost : Array c,
+};
+
+// 残余容量を内部の辺の番号の順に並べ直して返す
+//
+// # Parameters
+// - `cap` : 書き戻す先の配列（内部の辺の番号ごと）
+// - `res` : 残余グラフ
+_residual_capacities_by_edge_id : Array c -> _ResidualGraph c -> Array c;
+_residual_capacities_by_edge_id = |cap, res| (
+    let pos = res.@pos;
+    let res_cap = res.@cap;
+    range(0, pos.@size).fold(cap, |e, cap| cap.set(e, res_cap.@(pos.@(e))))
+);
+
+// 最初のポテンシャルを求める
+//
+// 残余容量のあるすべての辺u->vで、コスト + h(u) - h(v) >= 0となるhを返す。
+// 残余容量のある辺のコストがすべて0以上なら、すべて0である。
+// そうでなければ、すべての頂点へコスト0の辺を張った仮想の始点から、ベルマンフォード法で最短距離を求める。
+// 残余グラフに、コストの和が負の閉路があれば止まる。
+//
+// # Parameters
+// - `n` : 頂点数
+// - `res` : 残余グラフ
+_initial_potential : [c : CapCostLike] I64 -> _ResidualGraph c -> Array c;
+_initial_potential = |n, res| (
+    let start = res.@start;
+    let to = res.@to;
+    let cap = res.@cap;
+    let cost = res.@cost;
+    let m2 = to.@size;
+    let h = fill(n, zero);
+    if range(0, m2).fold(true, |p, ok| ok && !(cap.@(p) > zero && cost.@(p) < zero)) { h };
+    // 仮想の始点からの最短路は、グラフの辺をn - 1本以下しか通らないので、n - 1周で縮まなくなる。n周目にも縮む頂点があれば、負の閉路がある
+    loop((0, h), |(round, h)|
+        let (h, changed) = range(0, n).fold((h, false), |v, (h, changed)|
+            range(start.@(v), start.@(v + 1)).fold((h, changed), |p, (h, changed)|
+                if !(cap.@(p) > zero) { (h, changed) };
+                let w = to.@(p);
+                let d = h.@(v) + cost.@(p);
+                if !(d < h.@(w)) { (h, changed) };
+                (h.set(w, d), true)
+            )
+        );
+        if !changed { break $ h };
+        if round == n - 1 { undefined("CPLib.MinCostFlow: the residual graph has a cycle of negative cost") };
+        continue $ (round + 1, h)
+    )
+);
+
+// ポテンシャル`h`で補正したコストで、開始地点`s`からダイクストラ法で距離を求める
+//
+// 各頂点の距離と、その頂点に最短路で入る辺の位置を返す。終了地点`t`を取り出した時点で打ち切る。
+// 到達できない頂点と、打ち切りで距離が確定していない頂点の距離は、確定した値以上である（到達できない頂点は`Inf::inf`）。
+//
+// # Parameters
+// - `n` : 頂点数
+// - `s` : 開始地点
+// - `t` : 終了地点
+// - `h` : ポテンシャル
+// - `res` : 残余グラフ
+_dijkstra : [c : CapCostLike] I64 -> I64 -> I64 -> Array c -> _ResidualGraph c -> (Array c, Array I64);
+_dijkstra = |n, s, t, h, res| (
+    let start = res.@start;
+    let to = res.@to;
+    let cap = res.@cap;
+    let cost = res.@cost;
+    let dist = fill(n, Inf::inf).set(s, zero);
+    let prev = fill(n, -1);
+    let que = MinBinaryHeap::empty.push(NodeDistance::make(s, zero));
+    loop((que, dist, prev), |(que, dist, prev)|
+        if que.get_size == 0 { break $ (dist, prev) };
+        let NodeDistance { node : v, dist : d } = que.get_top.as_some;
+        let que = que.pop;
+        if dist.@(v) < d { continue $ (que, dist, prev) };
+        if v == t { break $ (dist, prev) };
+        let hv = h.@(v);
+        continue $ range(start.@(v), start.@(v + 1)).fold((que, dist, prev), |p, (que, dist, prev)|
+            if !(cap.@(p) > zero) { (que, dist, prev) };
+            let w = to.@(p);
+            let new_d = d + cost.@(p) + hv - h.@(w);
+            if !(dist.@(w) > new_d) { (que, dist, prev) };
+            (que.push(NodeDistance::make(w, new_d)), dist.set(w, new_d), prev.set(w, p))
+        )
+    )
+);
+
+// 最短路に沿って、`s`から`t`へ流せるだけ（`flow_rest`以下）流す
+//
+// 更新した残余グラフと、流した量を返す。
+//
+// # Parameters
+// - `s` : 開始地点
+// - `t` : 終了地点
+// - `prev` : 各頂点に最短路で入る辺の位置
+// - `flow_rest` : 流してよい量
+// - `res` : 残余グラフ
+_augment_shortest_path : [c : CapCostLike] I64 -> I64 -> Array I64 -> c -> _ResidualGraph c -> (_ResidualGraph c, c);
+_augment_shortest_path = |s, t, prev, flow_rest, res| (
+    let to = res.@to;
+    let rev = res.@rev;
+    let (res, cap) = res[^cap].ixchg([]);
+    // 辺の位置pの始点は、逆辺の行き先
+    let from = |p| to.@(rev.@(p));
+    let d = loop((t, flow_rest), |(v, d)|
+        if v == s { break $ d };
+        let p = prev.@(v);
+        continue $ (from(p), min(d, cap.@(p)))
+    );
+    let cap = loop((t, cap), |(v, cap)|
+        if v == s { break $ cap };
+        let p = prev.@(v);
+        continue $ (from(p), cap.mod(p, |x| x + (-d)).mod(rev.@(p), |x| x + d))
+    );
+    (res.set_cap(cap), d)
+);

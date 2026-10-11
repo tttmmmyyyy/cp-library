@@ -29,17 +29,23 @@ Type: `Std::IO ()`
 
 Type: `Std::IO ()`
 
+#### test_edges
+
+Type: `Std::IO ()`
+
+辺の状態を読む
+
 #### test_random
 
 Type: `Std::Bool -> Random::Random -> Std::IO Random::Random`
 
 小さな乱択グラフで、総当たりと流量・コストを比べる
 
-流量の上限を変えて`maximize_flow_min_cost`を2回続けて呼び、それぞれを比べる。
+流量の上限を変えて`maximize_flow_min_cost_with_limit`を2回続けて呼び、それぞれを比べる。
 
 ##### Parameters
 
-- `negative` : 負のコストの辺を含め、`set_potential_bf`を呼ぶかどうか
+- `negative` : 負のコストの辺を含めるかどうか
 - `rng` : 乱数生成器
 
 #### test_unreachable

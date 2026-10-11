@@ -1,6 +1,9 @@
 module CPLib.MinCostFlow.Test;
 
-import CPLib.MinCostFlow::MinCostFlowGraph::{add_edge, add_edge_id, create, get_flow, maximize_flow_min_cost, set_potential_bf};
+import CPLib.MinCostFlow::{
+    MinCostFlowEdge, MinCostFlowGraph, MinCostFlowEdge::{@cap, @cost, @flow, @from, @to}, 
+    MinCostFlowGraph::{add_edge, add_edge_id, create, get_edge, get_edges, get_flow, maximize_flow_min_cost, maximize_flow_min_cost_with_limit}
+};
 import Random::{generate_I64_nonneg, init_by_seed, Random};
 import Std::{
     loop, Array, Bool, I64, IO, Array::{fill, mod, push_back, set, to_iter, @, @size}, Debug::assert_eq, 
@@ -15,6 +18,7 @@ test : IO ();
 test = (
     test_basic;;
     test_unreachable;;
+    test_edges;;
     let rng = Random::init_by_seed(0_U64);
     let rng = *test_random(false, rng);
     let rng = *test_random(true, rng);
@@ -23,7 +27,7 @@ test = (
 
 test_basic : IO ();
 test_basic = (
-    let g = MinCostFlowGraph::create(5, 0, 4);
+    let g = MinCostFlowGraph::create(5);
     let (g, e0) = g.add_edge_id(0, 1, 10, 2);
     let (g, e1) = g.add_edge_id(0, 2, 2, 4);
     let (g, e2) = g.add_edge_id(1, 2, 6, 6);
@@ -31,7 +35,7 @@ test_basic = (
     let (g, e4) = g.add_edge_id(2, 4, 5, 2);
     let (g, e5) = g.add_edge_id(3, 2, 3, 3);
     let (g, e6) = g.add_edge_id(3, 4, 8, 6);
-    let (g, flow, cost) = g.maximize_flow_min_cost(9);
+    let (g, flow, cost) = g.maximize_flow_min_cost_with_limit(0, 4, 9);
     assert_eq(|_|"flow", flow, 9);;
     assert_eq(|_|"cost", cost, 80);;
     assert_eq(|_|"e0", g.get_flow(e0), 7);;
@@ -48,13 +52,30 @@ test_basic = (
 test_unreachable : IO ();
 test_unreachable = (
     // 頂点1にはどの辺も接続しない
-    let g = MinCostFlowGraph::create(3, 0, 2);
-    let (_, flow, cost) = g.add_edge(0, 2, 1, 1).add_edge(0, 2, 1, 5).maximize_flow_min_cost(2);
+    let g = MinCostFlowGraph::create(3);
+    let (_, flow, cost) = g.add_edge(0, 2, 1, 1).add_edge(0, 2, 1, 5).maximize_flow_min_cost(0, 2);
     assert_eq(|_|"flow", flow, 2);;
     assert_eq(|_|"cost", cost, 6);;
-    let (_, flow, cost) = g.add_edge(0, 2, 1, -1).add_edge(0, 2, 1, 5).set_potential_bf.maximize_flow_min_cost(2);
-    assert_eq(|_|"flow with set_potential_bf", flow, 2);;
-    assert_eq(|_|"cost with set_potential_bf", cost, 4);;
+    let (_, flow, cost) = g.add_edge(0, 2, 1, -1).add_edge(0, 2, 1, 5).maximize_flow_min_cost(0, 2);
+    assert_eq(|_|"flow with a negative cost", flow, 2);;
+    assert_eq(|_|"cost with a negative cost", cost, 4);;
+    pure()
+);
+
+// 辺の状態を読む
+test_edges : IO ();
+test_edges = (
+    let g = MinCostFlowGraph::create(3) : MinCostFlowGraph I64;
+    let (g, e0) = g.add_edge_id(0, 1, 2, 3);
+    let g = g.add_edge(1, 2, 1, 4);
+    let (g, e2) = g.add_edge_id(0, 2, 5, 10);
+    assert_eq(|_|"edge ids", (e0, e2), (0, 2));;
+    let (g, flow, cost) = g.maximize_flow_min_cost_with_limit(0, 2, 2);
+    assert_eq(|_|"flow and cost", (flow, cost), (2, 17));;
+    let e = g.get_edge(e0);
+    assert_eq(|_|"get_edge", (e.@from, e.@to, e.@cap, e.@flow, e.@cost), (0, 1, 2, 1, 3));;
+    let es = g.get_edges;
+    assert_eq(|_|"get_edges", es.map(|e| (e.@from, e.@to, e.@cap, e.@flow, e.@cost)), [(0, 1, 2, 1, 3), (1, 2, 1, 1, 4), (0, 2, 5, 1, 10)]);;
     pure()
 );
 
@@ -95,10 +116,10 @@ min_costs_by_brute_force = |n, s, t, edges| (
 
 // 小さな乱択グラフで、総当たりと流量・コストを比べる
 //
-// 流量の上限を変えて`maximize_flow_min_cost`を2回続けて呼び、それぞれを比べる。
+// 流量の上限を変えて`maximize_flow_min_cost_with_limit`を2回続けて呼び、それぞれを比べる。
 //
 // # Parameters
-// - `negative` : 負のコストの辺を含め、`set_potential_bf`を呼ぶかどうか
+// - `negative` : 負のコストの辺を含めるかどうか
 // - `rng` : 乱数生成器
 test_random : Bool -> Random -> IO Random;
 test_random = |negative, rng| (
@@ -128,16 +149,15 @@ test_random = |negative, rng| (
         let min_costs = min_costs_by_brute_force(n, s, t, edges);
         let max_flow = range(0, min_costs.@size).fold(0, |f, max_flow| if min_costs.@(f).is_some { f } else { max_flow });
 
-        let g = MinCostFlowGraph::create(n, s, t);
+        let g = MinCostFlowGraph::create(n);
         let (g, ids) = edges.to_iter.fold((g, []), |(from, to, cap, cost), (g, ids)|
             let (g, id) = g.add_edge_id(from, to, cap, cost);
             (g, ids.push_back(id))
         );
-        let g = if negative { g.set_potential_bf } else { g };
 
         let (rng, limit) = rng.generate_I64_nonneg;
         let limit = limit % (max_flow + 3);
-        let (g, flow, cost) = g.maximize_flow_min_cost(limit);
+        let (g, flow, cost) = g.maximize_flow_min_cost_with_limit(s, t, limit);
         let msg = |_| "edges=" + edges.to_string + " s=" + s.to_string + " t=" + t.to_string + " limit=" + limit.to_string;
         assert_eq(msg, flow, min(limit, max_flow));;
         assert_eq(msg, some(cost), min_costs.@(flow));;
@@ -157,7 +177,7 @@ test_random = |negative, rng| (
 
         let (rng, limit2) = rng.generate_I64_nonneg;
         let limit2 = limit2 % (max_flow + 3);
-        let (_, flow2, cost2) = g.maximize_flow_min_cost(limit2);
+        let (_, flow2, cost2) = g.maximize_flow_min_cost_with_limit(s, t, limit2);
         let msg2 = |_| msg() + " limit2=" + limit2.to_string;
         assert_eq(msg2, flow2, min(limit2, max_flow - flow));;
         assert_eq(msg2, some(cost + cost2), min_costs.@(flow + flow2));;
