@@ -36,30 +36,13 @@ UnionFind木を作成する
 
 - `size` : UnionFind木のサイズ
 
-#### find_leader
-
-Type: `Std::I64 -> CPLib.UnionFind::UnionFind -> (CPLib.UnionFind::UnionFind, Std::I64)`
-
-指定された要素の属するグループの代表元を取得する
-
-パス圧縮を行うため、UnionFindの状態も変化する
-
-制約：0 <= x < size
-
-計算量：ならしO(α(size))
-
-##### Parameters
-
-- `x` : 対象となる要素
-- `uf` : UnionFind木
-
 #### find_parent
 
-**Deprecated**: Use `CPLib.UnionFind::find_leader` instead.
+**Deprecated**: Use `CPLib.UnionFind::get_leader` instead.
 
 Type: `Std::I64 -> CPLib.UnionFind::UnionFind -> (CPLib.UnionFind::UnionFind, Std::I64)`
 
-`find_leader`の別名（非推奨）
+`get_leader`の別名（非推奨）
 
 #### get_group_size
 
@@ -92,6 +75,23 @@ Type: `CPLib.UnionFind::UnionFind -> (CPLib.UnionFind::UnionFind, Std::Array (St
 
 ##### Parameters
 
+- `uf` : UnionFind木
+
+#### get_leader
+
+Type: `Std::I64 -> CPLib.UnionFind::UnionFind -> (CPLib.UnionFind::UnionFind, Std::I64)`
+
+指定された要素の属するグループの代表元を取得する
+
+パス圧縮を行うため、UnionFindの状態も変化する
+
+制約：0 <= x < size
+
+計算量：ならしO(α(size))
+
+##### Parameters
+
+- `x` : 対象となる要素
 - `uf` : UnionFind木
 
 #### is_united
