@@ -41,6 +41,18 @@
   * `CPLib.Misc` : next_permutation。
   * `CPLib.Memoize` : メモ化モナドの実装。ハッシュマップや配列をメモリ領域として利用可能。
 
+## 関数の名前
+
+値を返す関数の名前は、次の決まりで先頭の動詞を選んでいます。
+
+* `get_X`：軽い処理。計算量が、出力の大きさに比例する程度か、それ以下のもの。ただしα(n)は定数と同程度と扱います。
+   * 例：`get_edge`（O(1)）、`get_group_size`（ならしO(α(n))）、`get_edges`（O(m)、出力の大きさm）、`get_groups`（O(n α(n))、出力の大きさn）
+* `calc_X`：重い処理。計算量が、出力の大きさを超えるもの。
+   * 例：`calc_gcd`、`calc_suffix_array`、`calc_sccs`（O(n + m)、出力の大きさn）、`calc_min_cut`（O(n + m)、出力の大きさn）
+* データ構造の中身を変えることが目的の関数（流す、足す、作る）は、その動作の動詞で始めます。
+   * 例：`maximize_flow`、`add_edge`、`create`
+* 真偽値を返す問いは`is_X`です。例：`is_prime`、`is_united`
+
 ## 注意
 
 一部のアルゴリズムは、既定のスタック上限ではスタックオーバーフローする場合があります。その場合は`ulimit -s unlimited`としてから実行してください（AtCoderのジャッジでも同様の設定です）。

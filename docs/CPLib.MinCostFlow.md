@@ -29,7 +29,7 @@ Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MinCostFlow::MinCos
 
 グラフに辺を追加する
 
-制約：0 <= from, to < n, cap >= 0。costは負でもよい（負の閉路については、型`MinCostFlowGraph`の説明にある、`maximize_flow_min_cost`、`maximize_flow_min_cost_with_limit`、`calc_min_cost_slope`、`calc_min_cost_slope_with_limit`の制約を見よ）
+制約：0 <= from, to < n, cap >= 0。costは負でもよい（負の閉路については、型`MinCostFlowGraph`の説明にある、`maximize_flow_min_cost`、`maximize_flow_min_cost_with_limit`、`maximize_flow_min_cost_slope`、`maximize_flow_min_cost_slope_with_limit`の制約を見よ）
 
 計算量：ならしO(1)
 
@@ -49,7 +49,7 @@ Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MinCostFlow::MinCos
 
 辺の番号は、`add_edge`で足した辺も含めて、足した順に0から振られる。
 
-制約：0 <= from, to < n, cap >= 0。costは負でもよい（負の閉路については、型`MinCostFlowGraph`の説明にある、`maximize_flow_min_cost`、`maximize_flow_min_cost_with_limit`、`calc_min_cost_slope`、`calc_min_cost_slope_with_limit`の制約を見よ）
+制約：0 <= from, to < n, cap >= 0。costは負でもよい（負の閉路については、型`MinCostFlowGraph`の説明にある、`maximize_flow_min_cost`、`maximize_flow_min_cost_with_limit`、`maximize_flow_min_cost_slope`、`maximize_flow_min_cost_slope_with_limit`の制約を見よ）
 
 計算量：ならしO(1)
 
@@ -59,51 +59,6 @@ Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MinCostFlow::MinCos
 - `to` : 終点の頂点番号
 - `cap` : 辺の容量
 - `cost` : 辺の流量1あたりのコスト
-- `graph` : グラフ
-
-#### calc_min_cost_slope
-
-Type: `Std::I64 -> Std::I64 -> CPLib.MinCostFlow::MinCostFlowGraph -> (CPLib.MinCostFlow::MinCostFlowGraph, Std::Array (Std::I64, Std::I64))`
-
-頂点`s`から頂点`t`へ流せるだけ流し、流量ごとの最小コストを折れ線で返す
-
-流量xを流すときの最小コストをg(x)とすると、gは下に凸な折れ線である。流した後のグラフと、gの折れ点(x, g(x))の列を返す。
-xはこの呼び出しで流した量、g(x)はそのコストである。
-- 最初の点は(0, 0)、最後の点は(流した量, そのコスト)
-- xは狭義単調増加で、3点が一直線に並ぶことはない
-
-何度でも呼べて、2回目以降はそれまでに流した状態から続けて流す。`s`と`t`は呼ぶたびに変えてよい。
-
-制約：型`MinCostFlowGraph`の説明にある、この関数の制約を見よ
-
-計算量：O(F (n + m) log(n + m))、Fは流した量。
-容量が正の辺にコストが負のものがあるとき（負のコストの辺を足したときと、2回目以降に呼ぶとき）は、追加でO(n (n + m))かかる
-
-##### Parameters
-
-- `s` : 流し出す頂点の番号
-- `t` : 流し込む頂点の番号
-- `graph` : グラフ
-
-#### calc_min_cost_slope_with_limit
-
-Type: `Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MinCostFlow::MinCostFlowGraph -> (CPLib.MinCostFlow::MinCostFlowGraph, Std::Array (Std::I64, Std::I64))`
-
-頂点`s`から頂点`t`へ、流した量が上限に達するまで流せるだけ流し、流量ごとの最小コストを折れ線で返す
-
-`calc_min_cost_slope`と同じく、流した後のグラフと、流量ごとの最小コストの折れ点の列を返す。
-最後の点の流量は上限以下である。上限が0以下なら何も流さず[(0, 0)]を返す。
-
-制約：型`MinCostFlowGraph`の説明にある、この関数の制約を見よ
-
-計算量：O(F (n + m) log(n + m))、Fは流した量。
-容量が正の辺にコストが負のものがあるとき（負のコストの辺を足したときと、2回目以降に呼ぶとき）は、追加でO(n (n + m))かかる
-
-##### Parameters
-
-- `s` : 流し出す頂点の番号
-- `t` : 流し込む頂点の番号
-- `flow_limit` : 流す量の上限
 - `graph` : グラフ
 
 #### create
@@ -174,6 +129,51 @@ Type: `Std::I64 -> Std::I64 -> CPLib.MinCostFlow::MinCostFlowGraph -> (CPLib.Min
 
 - `s` : 流し出す頂点の番号
 - `t` : 流し込む頂点の番号
+- `graph` : グラフ
+
+#### maximize_flow_min_cost_slope
+
+Type: `Std::I64 -> Std::I64 -> CPLib.MinCostFlow::MinCostFlowGraph -> (CPLib.MinCostFlow::MinCostFlowGraph, Std::Array (Std::I64, Std::I64))`
+
+頂点`s`から頂点`t`へ流せるだけ流し、流量ごとの最小コストを折れ線で返す
+
+流量xを流すときの最小コストをg(x)とすると、gは下に凸な折れ線である。流した後のグラフと、gの折れ点(x, g(x))の列を返す。
+xはこの呼び出しで流した量、g(x)はそのコストである。
+- 最初の点は(0, 0)、最後の点は(流した量, そのコスト)
+- xは狭義単調増加で、3点が一直線に並ぶことはない
+
+何度でも呼べて、2回目以降はそれまでに流した状態から続けて流す。`s`と`t`は呼ぶたびに変えてよい。
+
+制約：型`MinCostFlowGraph`の説明にある、この関数の制約を見よ
+
+計算量：O(F (n + m) log(n + m))、Fは流した量。
+容量が正の辺にコストが負のものがあるとき（負のコストの辺を足したときと、2回目以降に呼ぶとき）は、追加でO(n (n + m))かかる
+
+##### Parameters
+
+- `s` : 流し出す頂点の番号
+- `t` : 流し込む頂点の番号
+- `graph` : グラフ
+
+#### maximize_flow_min_cost_slope_with_limit
+
+Type: `Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MinCostFlow::MinCostFlowGraph -> (CPLib.MinCostFlow::MinCostFlowGraph, Std::Array (Std::I64, Std::I64))`
+
+頂点`s`から頂点`t`へ、流した量が上限に達するまで流せるだけ流し、流量ごとの最小コストを折れ線で返す
+
+`maximize_flow_min_cost_slope`と同じく、流した後のグラフと、流量ごとの最小コストの折れ点の列を返す。
+最後の点の流量は上限以下である。上限が0以下なら何も流さず[(0, 0)]を返す。
+
+制約：型`MinCostFlowGraph`の説明にある、この関数の制約を見よ
+
+計算量：O(F (n + m) log(n + m))、Fは流した量。
+容量が正の辺にコストが負のものがあるとき（負のコストの辺を足したときと、2回目以降に呼ぶとき）は、追加でO(n (n + m))かかる
+
+##### Parameters
+
+- `s` : 流し出す頂点の番号
+- `t` : 流し込む頂点の番号
+- `flow_limit` : 流す量の上限
 - `graph` : グラフ
 
 #### maximize_flow_min_cost_with_limit
@@ -253,7 +253,7 @@ Defined as: `type MinCostFlowGraph = unbox struct { ...fields... }`
 
 容量とコストは`I64`で表す。
 
-`maximize_flow_min_cost`、`maximize_flow_min_cost_with_limit`、`calc_min_cost_slope`、`calc_min_cost_slope_with_limit`の制約：
+`maximize_flow_min_cost`、`maximize_flow_min_cost_with_limit`、`maximize_flow_min_cost_slope`、`maximize_flow_min_cost_slope_with_limit`の制約：
 - 0 <= s, t < n, s != t
 - 負の閉路がない：容量が正の辺をたどる閉路で、コストの和が負のものがない。
   流した後に辺を足してから再度流すときは、流れている辺の逆向き（コストの符号を反転した辺）も閉路に含める。

@@ -16,7 +16,7 @@ let g = g.add_edge(0, 2, 1).add_edge(1, 2, 1).add_edge(1, 3, 1).add_edge(2, 3, 2
 let (g, flow) = g.maximize_flow(0, 3);
 assert_eq(|_|"", flow, 3);;
 assert_eq(|_|"", g.get_flow(e01), 2);;
-assert_eq(|_|"", g.get_min_cut(0), [true, false, false, false])
+assert_eq(|_|"", g.calc_min_cut(0), [true, false, false, false])
 ```
 
 ## Values
@@ -57,6 +57,25 @@ Type: `Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MaxFlow::MaxFlowGraph -> (CPLib
 - `from` : 始点の頂点番号
 - `to` : 終点の頂点番号
 - `cap` : 辺の容量
+- `graph` : グラフ
+
+#### calc_min_cut
+
+Type: `Std::I64 -> CPLib.MaxFlow::MaxFlowGraph -> Std::Array Std::Bool`
+
+最小カットを取得する
+
+残余グラフの上で、頂点`s`から到達できる頂点を`true`、到達できない頂点を`false`とする配列を返す。
+`maximize_flow(s, t)`の後では、`true`の頂点の集合が、`s`と`t`を分ける最小カットの`s`の側になる。
+ただし、`s`と`t`以外のすべての頂点で、流れ込む量と流れ出す量が等しいとき（`change_edge`でこれを崩していないとき）に限る。
+
+制約：0 <= s < n
+
+計算量：O(n + m)
+
+##### Parameters
+
+- `s` : 到達を調べる始点の頂点番号
 - `graph` : グラフ
 
 #### change_edge
@@ -126,25 +145,6 @@ Type: `CPLib.MaxFlow::MaxFlowEdgeId -> CPLib.MaxFlow::MaxFlowGraph -> Std::I64`
 ##### Parameters
 
 - `edge_id` : 辺の番号（0 <= edge_id < 足した辺の数）
-- `graph` : グラフ
-
-#### get_min_cut
-
-Type: `Std::I64 -> CPLib.MaxFlow::MaxFlowGraph -> Std::Array Std::Bool`
-
-最小カットを取得する
-
-残余グラフの上で、頂点`s`から到達できる頂点を`true`、到達できない頂点を`false`とする配列を返す。
-`maximize_flow(s, t)`の後では、`true`の頂点の集合が、`s`と`t`を分ける最小カットの`s`の側になる。
-ただし、`s`と`t`以外のすべての頂点で、流れ込む量と流れ出す量が等しいとき（`change_edge`でこれを崩していないとき）に限る。
-
-制約：0 <= s < n
-
-計算量：O(n + m)
-
-##### Parameters
-
-- `s` : 到達を調べる始点の頂点番号
 - `graph` : グラフ
 
 #### maximize_flow

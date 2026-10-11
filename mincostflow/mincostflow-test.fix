@@ -3,7 +3,7 @@ module CPLib.MinCostFlow.Test;
 import CPLib.MinCostFlow::{
     MinCostFlowEdge, MinCostFlowGraph, MinCostFlowEdge::{@cap, @cost, @flow, @from, @to}, 
     MinCostFlowGraph::{
-        add_edge, add_edge_id, calc_min_cost_slope, calc_min_cost_slope_with_limit, create, get_edge, get_edges, get_flow, 
+        add_edge, add_edge_id, maximize_flow_min_cost_slope, maximize_flow_min_cost_slope_with_limit, create, get_edge, get_edges, get_flow, 
         maximize_flow_min_cost, maximize_flow_min_cost_with_limit
     }
 };
@@ -93,11 +93,11 @@ test_slope = (
     // 0 -> 2 にコスト1で容量1、0 -> 1 -> 2 にコスト2で容量2、0 -> 2 にコスト4で容量1
     let g = MinCostFlowGraph::create(3);
     let g = g.add_edge(0, 2, 1, 1).add_edge(0, 1, 2, 1).add_edge(1, 2, 2, 1).add_edge(0, 2, 1, 4);
-    let (_, slope) = g.calc_min_cost_slope(0, 2);
+    let (_, slope) = g.maximize_flow_min_cost_slope(0, 2);
     assert_eq(|_|"slope", slope, [(0, 0), (1, 1), (3, 5), (4, 9)]);;
-    let (_, slope) = g.calc_min_cost_slope_with_limit(0, 2, 2);
+    let (_, slope) = g.maximize_flow_min_cost_slope_with_limit(0, 2, 2);
     assert_eq(|_|"slope with limit", slope, [(0, 0), (1, 1), (2, 3)]);;
-    let (_, slope) = g.calc_min_cost_slope_with_limit(0, 2, 0);
+    let (_, slope) = g.maximize_flow_min_cost_slope_with_limit(0, 2, 0);
     assert_eq(|_|"slope with limit 0", slope, [(0, 0)]);;
     pure()
 );
@@ -244,7 +244,7 @@ test_random = |negative, rng| (
         let limit = limit % (max_flow + 3);
         let msg = |_| "edges=" + edges.to_string + " s=" + s.to_string + " t=" + t.to_string + " limit=" + limit.to_string;
         // 折れ線は(0, 0)から始まり、流量は狭義単調増加、3点が一直線に並ばず、各流量で総当たりの最小コストに一致する
-        let (_, slope) = g.calc_min_cost_slope_with_limit(s, t, limit);
+        let (_, slope) = g.maximize_flow_min_cost_slope_with_limit(s, t, limit);
         let k = slope.@size;
         assert_eq(msg, slope.@(0), (0, 0));;
         assert_eq(msg, slope.@(k - 1).@0, min(limit, max_flow));;
