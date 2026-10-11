@@ -7,7 +7,7 @@ import CPLib.ZP::{
 };
 import Std::{
     undefined, Array, I64, 
-    Array::{fill, push_back, reserve, set, truncate, @, @size}, 
+    Array::{fill, push_back, reserve, truncate, @, @size, unsafe_set_bounds_unchecked}, 
     Functor::map, I64::shift_left, Iterator::{fold, range}, ToI64::i64, ToU64::u64, Tuple2::@1
 };
 
@@ -46,8 +46,8 @@ convolve_zp = |x, y| (
     let x = x.ZP::fft(forward());
     let y = y.ZP::fft(forward());
 
-    // xとyの各要素を掛け合わせる
-    let x = range(0, pot).fold(x, |i, x| x.set(i, x.@(i) * y.@(i)));
+    // xとyの各要素を掛け合わせる。xとyの長さはpotなので、添字iは範囲内にある
+    let x = range(0, pot).fold(x, |i, x| x.unsafe_set_bounds_unchecked(i, x.@(i) * y.@(i)));
 
     // 逆変換を行う
     let x = x.ZP::fft(inverse());
@@ -93,6 +93,7 @@ convolve_i64 = |a, b| (
 
     let offset = [0_U64, 0_U64, __M1M2M3, 2_U64 * __M1M2M3, 3_U64 * __M1M2M3];
 
+    // cの長さはn + m - 1なので、添字iは範囲内にある
     let c = fill(n + m - 1, 0);
     range(0, n + m - 1).fold(c, |i, c|
         let x = 0_U64;
@@ -103,6 +104,6 @@ convolve_i64 = |a, b| (
         let diff = c1.@(i).@value.i64 - x.i64.pmod(__M1.i64);
         let diff = if diff < 0 { diff + __M1.i64 } else { diff };
         let x = x - offset.@(diff % 5);
-        c.set(i, x.i64)
+        c.unsafe_set_bounds_unchecked(i, x.i64)
     )
 );

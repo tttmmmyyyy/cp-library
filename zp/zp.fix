@@ -36,7 +36,10 @@ module CPLib.ZP;
 import CPLib.Arithmetic::calc_primitive_root;
 import Std::{
     loop, undefined, Add, Array, Div, Eq, I64, Mul, Neg, Sub, ToString, U32, U64, Zero, 
-    Array::{fill, push_back, reserve, set, swap, @, @size}, 
+    Array::{
+        fill, push_back, reserve, @, @size, unsafe_get_bounds_unchecked,
+        unsafe_set_bounds_unchecked, unsafe_swap_bounds_unchecked
+    }, 
     Functor::map, I64::{bit_and, bit_xor, shift_left, shift_right}, Iterator::{fold, range, range_step}, 
     LoopState::{break, continue}, ToI64::i64, ToString::to_string, ToU32::u32, ToU64::u64, 
     U64::{bit_and, bit_or, shift_right}
@@ -284,6 +287,9 @@ fft = |dir, x| (
     let w = ZP::primitive_root._power_unsigned(d.u64);
     let w = match dir { forward() => w, inverse() => w.inv };
 
+    // 以下で配列x（長さn）とtw（長さn）を読み書きする添字は、ループの範囲から0以上n未満に収まる。
+    // 利用者の入力によらないので、境界検査を外した関数を使う
+
     // bit-reversal permutation
     let (_, x) = range(1, n).fold((0, x), |i, (j, x)|
         // iをビット反転したものをjに設定
@@ -296,7 +302,7 @@ fft = |dir, x| (
             continue $ (bit, j)
         );
         
-        let x = if i < j { x.swap(i, j) } else { x };
+        let x = if i < j { x.unsafe_swap_bounds_unchecked(i, j) } else { x };
         (j, x)
     );
 
@@ -306,7 +312,7 @@ fft = |dir, x| (
         // whは1の2h乗根
         if h == 0 { break $ tw };
         let (tw, _) = range(0, h).fold((tw, ZP::make(1)), |j, (tw, t)|
-            (tw.set(h + j, t), t * wh)
+            (tw.unsafe_set_bounds_unchecked(h + j, t), t * wh)
         );
         continue $ (h / 2, tw, wh * wh)
     );
@@ -316,10 +322,10 @@ fft = |dir, x| (
         if h >= n { break $ x };
         let x = range_step(0, n, 2 * h).fold(x, |i, x|
             range(0, h).fold(x, |j, x|
-                let u = x.@(i+j);
-                let v = x.@(i+j+h) * tw.@(h+j);
-                let x = x.set(i+j, u + v);
-                x.set(i+j+h, u - v)
+                let u = x.unsafe_get_bounds_unchecked(i+j);
+                let v = x.unsafe_get_bounds_unchecked(i+j+h) * tw.unsafe_get_bounds_unchecked(h+j);
+                let x = x.unsafe_set_bounds_unchecked(i+j, u + v);
+                x.unsafe_set_bounds_unchecked(i+j+h, u - v)
             )
         );
         continue $ (2 * h, x)
