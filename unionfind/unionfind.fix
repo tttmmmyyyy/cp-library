@@ -13,7 +13,7 @@
 module CPLib.UnionFind;
 
 import Std::{
-    loop, Array, Bool, I64, Array::{fill, mod, push_back, set, @, @size}, Indexable::ixchg, Iterator::{fold, range}, 
+    loop, Array, Bool, I64, Array::{fill, mod, push_back, set, @, @size}, Iterator::{fold, range}, 
     LoopState::{break, continue}
 };
 
@@ -48,9 +48,7 @@ create = |size| UnionFind { _parent_or_size : fill(size, -1) };
 // - `uf` : UnionFind木
 get_leader : I64 -> UnionFind -> (UnionFind, I64);
 get_leader = |x, uf| (
-    let (uf, ps) = uf[^_parent_or_size].ixchg([]);
-    let (ps, r) = _find_root(x, ps);
-    (uf.set__parent_or_size(ps), r)
+    _find_root(x, uf)
 );
 
 // `get_leader`の別名（非推奨）
@@ -63,16 +61,16 @@ DEPRECATED[find_parent, "Use `CPLib.UnionFind::get_leader` instead."];
 //
 // # Parameters
 // - `x` : 対象となる要素
-// - `ps` : 要素ごとの親、または根のときは-(グループの大きさ)
-_find_root : I64 -> Array I64 -> (Array I64, I64);
-_find_root = |x, ps| (
-    let r = loop(x, |v| let p = ps.@(v); if p < 0 { break $ v } else { continue $ p });
-    let ps = loop((x, ps), |(v, ps)|
-        let p = ps.@(v);
-        if p < 0 || p == r { break $ ps };
-        continue $ (p, ps.set(v, r))
+// - `uf` : UnionFind木
+_find_root : I64 -> UnionFind -> (UnionFind, I64);
+_find_root = |x, uf| (
+    let r = loop(x, |v| let p = uf.@_parent_or_size.@(v); if p < 0 { break $ v } else { continue $ p });
+    let uf = loop((x, uf), |(v, uf)|
+        let p = uf.@_parent_or_size.@(v);
+        if p < 0 || p == r { break $ uf };
+        continue $ (p, uf.mod__parent_or_size(set(v, r)))
     );
-    (ps, r)
+    (uf, r)
 );
 
 // 2つの要素を同じグループにする
@@ -89,14 +87,13 @@ _find_root = |x, ps| (
 // - `uf` : UnionFind木
 unite : I64 -> I64 -> UnionFind -> UnionFind;
 unite = |x, y, uf| (
-    let (uf, ps) = uf[^_parent_or_size].ixchg([]);
-    let (ps, rx) = _find_root(x, ps);
-    let (ps, ry) = _find_root(y, ps);
-    if rx == ry { uf.set__parent_or_size(ps) };
-    // 大きいほうの根の下に、小さいほうの根をつなぐ。根の値は-(大きさ)なので、値の小さいほうが大きい
+    let (uf, rx) = _find_root(x, uf);
+    let (uf, ry) = _find_root(y, uf);
+    if rx == ry { uf };
+    let ps = uf.@_parent_or_size;
     let (rx, ry) = if ps.@(rx) <= ps.@(ry) { (rx, ry) } else { (ry, rx) };
-    let ps = ps.set(rx, ps.@(rx) + ps.@(ry)).set(ry, rx);
-    uf.set__parent_or_size(ps)
+    let sz = ps.@(rx) + ps.@(ry);
+    uf.mod__parent_or_size(|ps| ps.set(rx, sz).set(ry, rx))
 );
 
 // 2つの要素が同じグループに属しているかどうかを判定する
@@ -113,10 +110,9 @@ unite = |x, y, uf| (
 // - `uf` : UnionFind木
 is_united : I64 -> I64 -> UnionFind -> (UnionFind, Bool);
 is_united = |x, y, uf| (
-    let (uf, ps) = uf[^_parent_or_size].ixchg([]);
-    let (ps, rx) = _find_root(x, ps);
-    let (ps, ry) = _find_root(y, ps);
-    (uf.set__parent_or_size(ps), rx == ry)
+    let (uf, rx) = _find_root(x, uf);
+    let (uf, ry) = _find_root(y, uf);
+    (uf, rx == ry)
 );
 
 // 指定された要素が属するグループのサイズを取得する
@@ -132,10 +128,8 @@ is_united = |x, y, uf| (
 // - `uf` : UnionFind木
 get_group_size : I64 -> UnionFind -> (UnionFind, I64);
 get_group_size = |x, uf| (
-    let (uf, ps) = uf[^_parent_or_size].ixchg([]);
-    let (ps, r) = _find_root(x, ps);
-    let size = -ps.@(r);
-    (uf.set__parent_or_size(ps), size)
+    let (uf, r) = _find_root(x, uf);
+    (uf, -uf.@_parent_or_size.@(r))
 );
 
 // グループの配列を取得する
@@ -150,14 +144,12 @@ get_group_size = |x, uf| (
 // - `uf` : UnionFind木
 get_groups : UnionFind -> (UnionFind, Array (Array I64));
 get_groups = |uf| (
-    let (uf, ps) = uf[^_parent_or_size].ixchg([]);
-    let n = ps.@size;
-    // group_of_root.@(r)は、根rのグループのgroupsの中での位置。まだ無ければ-1
-    let (ps, _, groups) = range(0, n).fold((ps, fill(n, -1), []), |i, (ps, group_of_root, groups)|
-        let (ps, r) = _find_root(i, ps);
+    let n = uf.@_parent_or_size.@size;
+    let (uf, _, groups) = range(0, n).fold((uf, fill(n, -1), []), |i, (uf, group_of_root, groups)|
+        let (uf, r) = _find_root(i, uf);
         let g = group_of_root.@(r);
-        if g >= 0 { (ps, group_of_root, groups.mod(g, push_back(i))) };
-        (ps, group_of_root.set(r, groups.@size), groups.push_back([i]))
+        if g >= 0 { (uf, group_of_root, groups.mod(g, push_back(i))) };
+        (uf, group_of_root.set(r, groups.@size), groups.push_back([i]))
     );
-    (uf.set__parent_or_size(ps), groups)
+    (uf, groups)
 );
