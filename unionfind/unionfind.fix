@@ -46,14 +46,18 @@ create = |size| UnionFind { _parent_or_size : fill(size, -1) };
 // # Parameters
 // - `x` : 対象となる要素
 // - `uf` : UnionFind木
-find_parent : I64 -> UnionFind -> (UnionFind, I64);
-find_parent = |x, uf| (
+find_leader : I64 -> UnionFind -> (UnionFind, I64);
+find_leader = |x, uf| (
     let (uf, ps) = uf[^_parent_or_size].ixchg([]);
     let (ps, r) = _find_root(x, ps);
     (uf.set__parent_or_size(ps), r)
 );
 
-// 要素`x`の根を求め、通った頂点の親を根に書き換える
+// `find_leader`の別名（非推奨）
+find_parent : I64 -> UnionFind -> (UnionFind, I64) = find_leader;
+DEPRECATED[find_parent, "Use `CPLib.UnionFind::find_leader` instead."];
+
+// 要素`x`の根を求め、通った要素の親を根に書き換える
 //
 // 根までたどって根を求めてから、もう一度たどって親を書き換える。親がすでに根の要素には書き込まない。
 //

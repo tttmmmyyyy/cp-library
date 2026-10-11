@@ -36,7 +36,7 @@ UnionFind木を作成する
 
 - `size` : UnionFind木のサイズ
 
-#### find_parent
+#### find_leader
 
 Type: `Std::I64 -> CPLib.UnionFind::UnionFind -> (CPLib.UnionFind::UnionFind, Std::I64)`
 
@@ -52,6 +52,14 @@ Type: `Std::I64 -> CPLib.UnionFind::UnionFind -> (CPLib.UnionFind::UnionFind, St
 
 - `x` : 対象となる要素
 - `uf` : UnionFind木
+
+#### find_parent
+
+**Deprecated**: Use `CPLib.UnionFind::find_leader` instead.
+
+Type: `Std::I64 -> CPLib.UnionFind::UnionFind -> (CPLib.UnionFind::UnionFind, Std::I64)`
+
+`find_leader`の別名（非推奨）
 
 #### get_group_size
 

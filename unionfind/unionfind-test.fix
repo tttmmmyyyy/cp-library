@@ -1,6 +1,6 @@
 module CPLib.UnionFind.Test;
 
-import CPLib.UnionFind::{create, find_parent, get_group_size, get_groups, is_united, unite};
+import CPLib.UnionFind::{create, find_leader, get_group_size, get_groups, is_united, unite};
 import Random::{generate_I64_nonneg, init_by_seed, Random};
 import Std::{
     Array, I64, IO, Array::{fill, mod, push_back, set, sort_by, @, @size}, Debug::{assert_eq, consumed_time_while_lazy}, 
@@ -152,14 +152,14 @@ test_random = |rng| (
             let (uf, size) = uf.get_group_size(x);
             assert_eq(msg, size, range(0, n).fold(0, |i, c| if label.@(i) == label.@(x) { c + 1 } else { c }));;
             // 代表元はxと同じグループの要素で、代表元の代表元はそれ自身
-            let (uf, rx) = uf.find_parent(x);
+            let (uf, rx) = uf.find_leader(x);
             assert_eq(msg, label.@(rx), label.@(x));;
-            assert_eq(msg, uf.find_parent(rx).@1, rx);;
+            assert_eq(msg, uf.find_leader(rx).@1, rx);;
             range(0, n).fold_m(uf, |y, uf|
                 let (uf, united) = uf.is_united(x, y);
                 assert_eq(msg, united, label.@(x) == label.@(y));;
                 // 代表元が一致することと、同じグループに属することは同値
-                let (uf, ry) = uf.find_parent(y);
+                let (uf, ry) = uf.find_leader(y);
                 assert_eq(msg, rx == ry, label.@(x) == label.@(y));;
                 pure $ uf
             )
