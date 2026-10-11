@@ -6,8 +6,8 @@ import CPLib.MaxFlow::{
 };
 import Random::{generate_I64_nonneg, init_by_seed, Random};
 import Std::{
-    loop, Array, Bool, I64, IO, Array::{fill, mod, push_back, to_iter, @, @size}, Debug::{assert, assert_eq, consumed_time_while_lazy}, 
-    IO::println, Iterator::{fold, fold_m, range}, LessThan::min, LoopState::{break, continue}, Monad::pure, 
+    loop, Array, Bool, I64, IO, Array::{fill, mod, push_back, set, to_iter, @, @size}, Debug::{assert, assert_eq, consumed_time_while_lazy}, 
+    IO::println, Iterator::{fold, fold_m, map, range, to_array}, LessThan::{max, min}, LoopState::{break, continue}, Monad::pure, 
     String::populate, ToString::to_string, I64::{bit_and, maximum, shift_left}
 };
 
@@ -21,7 +21,8 @@ test = (
     test_decrease_capacity;;
     test_long_path;;
     let rng = Random::init_by_seed(0_U64);
-    let _ = *test_random(rng);
+    let rng = *test_random(rng);
+    let _ = *test_random_operations(rng);
     pure()
 );
 
@@ -71,6 +72,9 @@ test_flow_limit = (
     // 0 -> 1 -> 3、0 -> 2 -> 3 に容量 2 ずつ。最大流は 4
     let graph = MaxFlowGraph::create(4) : MaxFlowGraph I64;
     let graph = graph.add_edge(0, 1, 2).add_edge(1, 3, 2).add_edge(0, 2, 2).add_edge(2, 3, 2);
+    // 上限が負なら何も流さない
+    let (graph, f_neg) = graph.maximize_flow_with_limit(0, 3, -2);
+    assert_eq(|_|"negative limit", (f_neg, graph.get_flow(0)), (0, 0));;
     let (graph, f0) = graph.maximize_flow_with_limit(0, 3, 0);
     assert_eq(|_|"limit 0", f0, 0);;
     let (graph, f1) = graph.maximize_flow_with_limit(0, 3, 3);
@@ -206,6 +210,92 @@ test_random = |rng| (
         let (graph, flow2) = graph.maximize_flow(s, t);
         assert_eq(msg, flow2, 0);;
         assert_eq(msg, graph.get_min_cut(s), cut);;
+        pure $ rng
+    )
+);
+
+// 0以上k未満の乱数
+rand_below : I64 -> Random -> (Random, I64);
+rand_below = |k, rng| (
+    let (rng, x) = rng.generate_I64_nonneg;
+    (rng, x % k)
+);
+
+// 辺の状態から、残余グラフの辺を(始点, 終点, 残余容量)の列にする
+residual_arcs : Array (MaxFlowEdge I64) -> Array (I64, I64, I64);
+residual_arcs = |es| es.to_iter.fold([], |e, arcs| arcs.push_back((e.@from, e.@to, e.@cap - e.@flow)).push_back((e.@to, e.@from, e.@flow)));
+
+// 残余容量が正の辺をたどって、頂点sから届く頂点
+reachable_by_brute_force : I64 -> I64 -> Array (I64, I64, I64) -> Array Bool;
+reachable_by_brute_force = |n, s, arcs| (
+    loop(fill(n, false).set(s, true), |reached|
+        let next = arcs.to_iter.fold(reached, |(from, to, cap), r| if r.@(from) && cap > 0 { r.set(to, true) } else { r });
+        if next == reached { break $ reached } else { continue $ next }
+    )
+);
+
+// 頂点ごとの、流れ出す量から流れ込む量を引いた値
+net_outflow : I64 -> Array (MaxFlowEdge I64) -> Array I64;
+net_outflow = |n, es| es.to_iter.fold(fill(n, 0), |e, x| x.mod(e.@from, |y| y + e.@flow).mod(e.@to, |y| y - e.@flow));
+
+// 辺を足す、辺を書き換える、最小カットを聞く、開始地点・終了地点・上限を変えて流す、を乱択で混ぜ、
+// 流すたびに、流した量がその時点の残余グラフの最小カット（と上限）に等しく、開始地点と終了地点以外の頂点の差を変えないことを確かめる
+test_random_operations : Random -> IO Random;
+test_random_operations = |rng| (
+    range(0, 2000).fold_m(rng, |_, rng|
+        let (rng, n) = rng.rand_below(6);
+        let n = n + 2;
+        let (rng, m) = rng.rand_below(14);
+        let (rng, graph) = range(0, m).fold((rng, create(n) : MaxFlowGraph I64), |_, (rng, graph)|
+            let (rng, from) = rng.rand_below(n);
+            let (rng, to) = rng.rand_below(n);
+            let (rng, cap) = rng.rand_below(6);
+            (rng, graph.add_edge(from, to, cap))
+        );
+        let (rng, ops) = rng.rand_below(8);
+        let (rng, _) = *range(0, ops + 1).fold_m((rng, graph), |op, (rng, graph)|
+            let msg = |_| "op=" + op.to_string + " edges=" + graph.get_edges.to_iter.map(|e| (e.@from, e.@to, e.@cap, e.@flow)).to_array.to_string;
+            let m = graph.get_edges.@size;
+            let (rng, kind) = rng.rand_below(5);
+            if kind == 0 {
+                let (rng, from) = rng.rand_below(n);
+                let (rng, to) = rng.rand_below(n);
+                let (rng, cap) = rng.rand_below(6);
+                pure $ (rng, graph.add_edge(from, to, cap))
+            };
+            if kind == 1 && m > 0 {
+                let (rng, i) = rng.rand_below(m);
+                let (rng, cap) = rng.rand_below(6);
+                let (rng, flow) = rng.rand_below(cap + 1);
+                let graph = graph.change_edge(i, cap, flow);
+                let e = graph.get_edge(i);
+                assert_eq(msg, (e.@cap, e.@flow), (cap, flow));;
+                pure $ (rng, graph)
+            };
+            if kind == 2 {
+                let (rng, s) = rng.rand_below(n);
+                assert_eq(msg, graph.get_min_cut(s), reachable_by_brute_force(n, s, residual_arcs(graph.get_edges)));;
+                pure $ (rng, graph)
+            };
+            let (rng, s) = rng.rand_below(n);
+            let (rng, t) = rng.rand_below(n - 1);
+            let t = (s + 1 + t) % n;
+            let (rng, limit) = rng.rand_below(9);
+            // 上限は-2以上6以下か、無し
+            let limit = if limit == 8 { I64::maximum } else { limit - 2 };
+            let before = graph.get_edges;
+            let expected = min(max(limit, 0), min_cut_by_brute_force(n, s, t, residual_arcs(before)));
+            let (graph, flow) = if limit == I64::maximum { graph.maximize_flow(s, t) } else { graph.maximize_flow_with_limit(s, t, limit) };
+            let msg = |_| msg() + " s=" + s.to_string + " t=" + t.to_string + " limit=" + limit.to_string;
+            assert_eq(msg, flow, expected);;
+            let after = graph.get_edges;
+            after.to_iter.fold_m((), |e, _| assert(msg, 0 <= e.@flow && e.@flow <= e.@cap));;
+            range(0, m).fold_m((), |i, _| assert_eq(msg, after.@(i).@cap, before.@(i).@cap));;
+            let x0 = net_outflow(n, before);
+            let x1 = net_outflow(n, after);
+            range(0, n).fold_m((), |v, _| assert_eq(msg, x1.@(v) - x0.@(v), if v == s { flow } else if v == t { -flow } else { 0 }));;
+            pure $ (rng, graph)
+        );
         pure $ rng
     )
 );

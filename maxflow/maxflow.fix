@@ -39,7 +39,7 @@ type MaxFlowGraph c = struct {
 
 // 最大フロー問題のグラフの辺の番号
 //
-// `add_edge_id`が返す。辺には足した順に0から番号が振られる。
+// `add_edge`と`add_edge_id`で足した辺に、足した順に0から振られる。足した辺がm本なら、番号は0以上m未満である。
 type MaxFlowEdgeId = I64;
 
 // 最大フロー問題のグラフの辺の状態
@@ -80,7 +80,7 @@ namespace MaxFlowGraph {
 
     // グラフに辺を追加する（辺の番号を返す）
     //
-    // 辺の番号は、足した順に0から振られる。
+    // 辺の番号は、`add_edge`で足した辺も含めて、足した順に0から振られる。
     //
     // 制約：0 <= from, to < n, cap >= 0
     //
@@ -105,7 +105,7 @@ namespace MaxFlowGraph {
     // 計算量：O(1)
     //
     // # Parameters
-    // - `edge_id` : `add_edge_id`で得た辺の番号
+    // - `edge_id` : 辺の番号（0 <= edge_id < 足した辺の数）
     // - `graph` : グラフ
     get_flow : [c : CapacityLike] MaxFlowEdgeId -> MaxFlowGraph c -> c;
     get_flow = |i, g| g.@_cap.@(2 * i + 1);
@@ -115,7 +115,7 @@ namespace MaxFlowGraph {
     // 計算量：O(1)
     //
     // # Parameters
-    // - `edge_id` : `add_edge_id`で得た辺の番号
+    // - `edge_id` : 辺の番号（0 <= edge_id < 足した辺の数）
     // - `graph` : グラフ
     get_edge : [c : CapacityLike] MaxFlowEdgeId -> MaxFlowGraph c -> MaxFlowEdge c;
     get_edge = |i, g| (
@@ -141,9 +141,9 @@ namespace MaxFlowGraph {
     // 計算量：O(1)
     //
     // # Parameters
-    // - `edge_id` : `add_edge_id`で得た辺の番号
+    // - `edge_id` : 辺の番号（0 <= edge_id < 足した辺の数）
     // - `new_cap` : 新しい容量
-    // - `new_flow` : 新しく流れている量
+    // - `new_flow` : 新しい流量
     // - `graph` : グラフ
     change_edge : [c : CapacityLike] MaxFlowEdgeId -> c -> c -> MaxFlowGraph c -> MaxFlowGraph c;
     change_edge = |i, new_cap, new_flow, g| (
@@ -157,7 +157,7 @@ namespace MaxFlowGraph {
     //
     // 制約：0 <= s, t < n, s != t、流せる量 < `Inf::inf`
     //
-    // 計算量：O(n^2 m)。辺の容量がすべて1ならO((n + m) sqrt(m))
+    // 計算量：O(n^2 m)。辺の容量がすべて1ならO((n + m) sqrt(m))。容量が整数なら、流した量をFとしてO(F (n + m))でもある
     //
     // # Parameters
     // - `s` : 流し出す頂点の番号
@@ -168,12 +168,12 @@ namespace MaxFlowGraph {
 
     // 頂点`s`から頂点`t`へ、流した量が上限に達するまで、流せるだけ流す
     //
-    // 流した後のグラフと、新たに流した量（上限以下）を返す。何度でも呼べて、2回目以降はそれまでに流した状態から続けて流す。
+    // 流した後のグラフと、新たに流した量（上限以下）を返す。上限が0以下なら何も流さず0を返す。何度でも呼べて、2回目以降はそれまでに流した状態から続けて流す。
     // `s`と`t`以外の各頂点では、流れ込む量と流れ出す量の差を変えずに流す。
     //
     // 制約：0 <= s, t < n, s != t
     //
-    // 計算量：O(n^2 m)。辺の容量がすべて1ならO((n + m) sqrt(m))
+    // 計算量：O(n^2 m)。辺の容量がすべて1ならO((n + m) sqrt(m))。容量が整数なら、流した量をFとしてO(F (n + m))でもある
     //
     // # Parameters
     // - `s` : 流し出す頂点の番号
@@ -182,12 +182,12 @@ namespace MaxFlowGraph {
     // - `graph` : グラフ
     maximize_flow_with_limit : [c : CapacityLike] I64 -> I64 -> c -> MaxFlowGraph c -> (MaxFlowGraph c, c);
     maximize_flow_with_limit = |s, t, flow_limit, g| (
-        if s == t { undefined("CPLib.MaxFlow: maximize_flow needs s != t") };
+        if s == t { undefined("CPLib.MaxFlow: s and t must differ") };
         let n = g.@_n;
         let (g, cap) = g[^_cap].ixchg([]);
         let res = g._make_residual(cap);
         let (res, flow) = loop((res, zero), |(res, flow)|
-            if flow == flow_limit { break $ (res, flow) };
+            if !(flow < flow_limit) { break $ (res, flow) };
             let level = res._bfs(n, s, t);
             if level.@(t) < 0 { break $ (res, flow) };
             continue $ res._augment_blocking_flow(level, s, t, flow_limit, flow)
@@ -199,6 +199,7 @@ namespace MaxFlowGraph {
     // 
     // 残余グラフの上で、頂点`s`から到達できる頂点を`true`、到達できない頂点を`false`とする配列を返す。
     // `maximize_flow(s, t)`の後では、`true`の頂点の集合が、`s`と`t`を分ける最小カットの`s`の側になる。
+    // ただし、`s`と`t`以外のすべての頂点で、流れ込む量と流れ出す量が等しいとき（`change_edge`でこれを崩していないとき）に限る。
     // 
     // 制約：0 <= s < n
     // 
@@ -324,7 +325,7 @@ _augment_blocking_flow = |level, s, t, flow_limit, flow, res| (
     // iter.@(v)は、頂点vから出る辺のうち次に調べるものの位置
     let iter = start;
     let (cap, flow) = loop((s, empty(level_t), cap, flow, level, iter), |(v, path, cap, flow, level, iter)|
-        if flow == flow_limit { break $ (cap, flow) };
+        if !(flow < flow_limit) { break $ (cap, flow) };
         if v == t {
             // 道に沿って、残余容量の最小値（と残りの上限）だけ流す
             let d = path.to_iter.fold(flow_limit + (-flow), |k, d| min(d, cap.@(k)));

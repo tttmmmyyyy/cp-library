@@ -46,7 +46,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxF
 
 グラフに辺を追加する（辺の番号を返す）
 
-辺の番号は、足した順に0から振られる。
+辺の番号は、`add_edge`で足した辺も含めて、足した順に0から振られる。
 
 制約：0 <= from, to < n, cap >= 0
 
@@ -73,9 +73,9 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowEdgeId -> c -> c 
 
 ##### Parameters
 
-- `edge_id` : `add_edge_id`で得た辺の番号
+- `edge_id` : 辺の番号（0 <= edge_id < 足した辺の数）
 - `new_cap` : 新しい容量
-- `new_flow` : 新しく流れている量
+- `new_flow` : 新しい流量
 - `graph` : グラフ
 
 #### create
@@ -100,7 +100,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowEdgeId -> CPLib.M
 
 ##### Parameters
 
-- `edge_id` : `add_edge_id`で得た辺の番号
+- `edge_id` : 辺の番号（0 <= edge_id < 足した辺の数）
 - `graph` : グラフ
 
 #### get_edges
@@ -125,7 +125,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowEdgeId -> CPLib.M
 
 ##### Parameters
 
-- `edge_id` : `add_edge_id`で得た辺の番号
+- `edge_id` : 辺の番号（0 <= edge_id < 足した辺の数）
 - `graph` : グラフ
 
 #### get_min_cut
@@ -136,6 +136,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> CPLib.MaxFlow::MaxFlowGraph
 
 残余グラフの上で、頂点`s`から到達できる頂点を`true`、到達できない頂点を`false`とする配列を返す。
 `maximize_flow(s, t)`の後では、`true`の頂点の集合が、`s`と`t`を分ける最小カットの`s`の側になる。
+ただし、`s`と`t`以外のすべての頂点で、流れ込む量と流れ出す量が等しいとき（`change_edge`でこれを崩していないとき）に限る。
 
 制約：0 <= s < n
 
@@ -157,7 +158,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> CPLib.MaxFlow::
 
 制約：0 <= s, t < n, s != t、流せる量 < `Inf::inf`
 
-計算量：O(n^2 m)。辺の容量がすべて1ならO((n + m) sqrt(m))
+計算量：O(n^2 m)。辺の容量がすべて1ならO((n + m) sqrt(m))。容量が整数なら、流した量をFとしてO(F (n + m))でもある
 
 ##### Parameters
 
@@ -171,12 +172,12 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxF
 
 頂点`s`から頂点`t`へ、流した量が上限に達するまで、流せるだけ流す
 
-流した後のグラフと、新たに流した量（上限以下）を返す。何度でも呼べて、2回目以降はそれまでに流した状態から続けて流す。
+流した後のグラフと、新たに流した量（上限以下）を返す。上限が0以下なら何も流さず0を返す。何度でも呼べて、2回目以降はそれまでに流した状態から続けて流す。
 `s`と`t`以外の各頂点では、流れ込む量と流れ出す量の差を変えずに流す。
 
 制約：0 <= s, t < n, s != t
 
-計算量：O(n^2 m)。辺の容量がすべて1ならO((n + m) sqrt(m))
+計算量：O(n^2 m)。辺の容量がすべて1ならO((n + m) sqrt(m))。容量が整数なら、流した量をFとしてO(F (n + m))でもある
 
 ##### Parameters
 
@@ -225,7 +226,7 @@ Defined as: `type MaxFlowEdgeId = Std::I64`
 
 最大フロー問題のグラフの辺の番号
 
-`add_edge_id`が返す。辺には足した順に0から番号が振られる。
+`add_edge`と`add_edge_id`で足した辺に、足した順に0から振られる。足した辺がm本なら、番号は0以上m未満である。
 
 #### MaxFlowGraph
 

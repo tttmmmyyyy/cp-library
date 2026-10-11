@@ -12,6 +12,30 @@ Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::Array (Std::I64, Std::I64, Std::
 
 頂点の集合ごとのカットの容量を総当たりして、最小カットの容量を求める
 
+#### net_outflow
+
+Type: `Std::I64 -> Std::Array (CPLib.MaxFlow::MaxFlowEdge Std::I64) -> Std::Array Std::I64`
+
+頂点ごとの、流れ出す量から流れ込む量を引いた値
+
+#### rand_below
+
+Type: `Std::I64 -> Random::Random -> (Random::Random, Std::I64)`
+
+0以上k未満の乱数
+
+#### reachable_by_brute_force
+
+Type: `Std::I64 -> Std::I64 -> Std::Array (Std::I64, Std::I64, Std::I64) -> Std::Array Std::Bool`
+
+残余容量が正の辺をたどって、頂点sから届く頂点
+
+#### residual_arcs
+
+Type: `Std::Array (CPLib.MaxFlow::MaxFlowEdge Std::I64) -> Std::Array (Std::I64, Std::I64, Std::I64)`
+
+辺の状態から、残余グラフの辺を(始点, 終点, 残余容量)の列にする
+
 #### test
 
 Type: `Std::IO ()`
@@ -66,6 +90,13 @@ Type: `Std::IO ()`
 Type: `Random::Random -> Std::IO Random::Random`
 
 小さな乱択グラフで、最大流を総当たりの最小カットと比べ、辺の流量と最小カットを確かめる
+
+#### test_random_operations
+
+Type: `Random::Random -> Std::IO Random::Random`
+
+辺を足す、辺を書き換える、最小カットを聞く、開始地点・終了地点・上限を変えて流す、を乱択で混ぜ、
+流すたびに、流した量がその時点の残余グラフの最小カット（と上限）に等しく、開始地点と終了地点以外の頂点の差を変えないことを確かめる
 
 ## Types and aliases
 
