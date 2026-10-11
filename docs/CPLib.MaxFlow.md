@@ -42,7 +42,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxF
 
 #### add_edge_id
 
-Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxFlow::MaxFlowGraph c -> (CPLib.MaxFlow::MaxFlowGraph c, Std::I64)`
+Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxFlow::MaxFlowGraph c -> (CPLib.MaxFlow::MaxFlowGraph c, CPLib.MaxFlow::MaxFlowEdgeId)`
 
 グラフに辺を追加する（辺の番号を返す）
 
@@ -61,7 +61,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxF
 
 #### change_edge
 
-Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> c -> c -> CPLib.MaxFlow::MaxFlowGraph c -> CPLib.MaxFlow::MaxFlowGraph c`
+Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowEdgeId -> c -> c -> CPLib.MaxFlow::MaxFlowGraph c -> CPLib.MaxFlow::MaxFlowGraph c`
 
 辺の容量と流れている量を書き換える
 
@@ -96,7 +96,7 @@ Type: `Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MaxFlow::MaxFlowGraph c`
 
 #### get_edge
 
-Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> CPLib.MaxFlow::MaxFlowGraph c -> CPLib.MaxFlow::MaxFlowEdge c`
+Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowEdgeId -> CPLib.MaxFlow::MaxFlowGraph c -> CPLib.MaxFlow::MaxFlowEdge c`
 
 辺の状態を取得する
 
@@ -121,7 +121,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowGraph c -> Std::A
 
 #### get_flow
 
-Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> CPLib.MaxFlow::MaxFlowGraph c -> c`
+Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowEdgeId -> CPLib.MaxFlow::MaxFlowGraph c -> c`
 
 辺に流れている量を取得する
 
@@ -211,6 +211,14 @@ Type: `c`
 Type: `c`
 
 流れている量
+
+#### MaxFlowEdgeId
+
+Defined as: `type MaxFlowEdgeId = Std::I64`
+
+最大フロー問題のグラフの辺の番号
+
+`add_edge_id`が返す。辺には足した順に0から番号が振られる。
 
 #### MaxFlowGraph
 

@@ -41,6 +41,11 @@ type MaxFlowGraph c = struct {
     _cap : Array c,
 };
 
+// 最大フロー問題のグラフの辺の番号
+//
+// `add_edge_id`が返す。辺には足した順に0から番号が振られる。
+type MaxFlowEdgeId = I64;
+
 // 最大フロー問題のグラフの辺の状態
 type MaxFlowEdge c = struct {
     // 始点の頂点番号
@@ -94,9 +99,9 @@ namespace MaxFlowGraph {
     // - `to` : 終点の頂点番号
     // - `cap` : 辺の容量
     // - `graph` : グラフ
-    add_edge_id : [c : CapacityLike] I64 -> I64 -> c -> MaxFlowGraph c -> (MaxFlowGraph c, I64);
+    add_edge_id : [c : CapacityLike] I64 -> I64 -> c -> MaxFlowGraph c -> (MaxFlowGraph c, MaxFlowEdgeId);
     add_edge_id = |from, to, cap, g| (
-        // 辺は足した順の番号（I64）で指す。ac-libraryのmf_graphのadd_edge、get_edge、change_edgeに合わせている
+        // 辺は足した順の番号（MaxFlowEdgeId、つまりI64）で指す。ac-libraryのmf_graphのadd_edge、get_edge、change_edgeに合わせている
         let id = g.@_to.@size / 2;
         let g = g.mod__to(|ts| ts.push_back(to).push_back(from));
         let g = g.mod__cap(|cs| cs.push_back(cap).push_back(zero));
@@ -110,7 +115,7 @@ namespace MaxFlowGraph {
     // # Parameters
     // - `edge_id` : `add_edge_id`で得た辺の番号
     // - `graph` : グラフ
-    get_flow : [c : CapacityLike] I64 -> MaxFlowGraph c -> c;
+    get_flow : [c : CapacityLike] MaxFlowEdgeId -> MaxFlowGraph c -> c;
     get_flow = |i, g| g.@_cap.@(2 * i + 1);
 
     // 辺の状態を取得する
@@ -120,7 +125,7 @@ namespace MaxFlowGraph {
     // # Parameters
     // - `edge_id` : `add_edge_id`で得た辺の番号
     // - `graph` : グラフ
-    get_edge : [c : CapacityLike] I64 -> MaxFlowGraph c -> MaxFlowEdge c;
+    get_edge : [c : CapacityLike] MaxFlowEdgeId -> MaxFlowGraph c -> MaxFlowEdge c;
     get_edge = |i, g| (
         let flow = g.@_cap.@(2 * i + 1);
         MaxFlowEdge { from : g.@_to.@(2 * i + 1), to : g.@_to.@(2 * i), cap : g.@_cap.@(2 * i) + flow, flow : flow }
@@ -148,7 +153,7 @@ namespace MaxFlowGraph {
     // - `new_cap` : 新しい容量
     // - `new_flow` : 新しく流れている量
     // - `graph` : グラフ
-    change_edge : [c : CapacityLike] I64 -> c -> c -> MaxFlowGraph c -> MaxFlowGraph c;
+    change_edge : [c : CapacityLike] MaxFlowEdgeId -> c -> c -> MaxFlowGraph c -> MaxFlowGraph c;
     change_edge = |i, new_cap, new_flow, g| (
         g.mod__cap(|cs| cs.set(2 * i, new_cap + (-new_flow)).set(2 * i + 1, new_flow))
     );
