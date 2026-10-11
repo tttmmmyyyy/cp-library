@@ -28,6 +28,8 @@ UnionFind木を作成する
 
 `0`から`size - 1`までの`size`個の要素を持つUnionFind木を作成する
 
+制約：size >= 0
+
 計算量：O(size)
 
 ##### Parameters
@@ -36,20 +38,11 @@ UnionFind木を作成する
 
 #### find_parent
 
+**Deprecated**: Use `CPLib.UnionFind::get_leader` instead.
+
 Type: `Std::I64 -> CPLib.UnionFind::UnionFind -> (CPLib.UnionFind::UnionFind, Std::I64)`
 
-指定された要素の親を取得する
-
-パス圧縮を行うため、UnionFindの状態も変化する
-
-制約：0 <= x < size
-
-計算量：ならしO(α(size))
-
-##### Parameters
-
-- `x` : 対象となる要素
-- `uf` : UnionFind木
+`get_leader`の別名（非推奨）
 
 #### get_group_size
 
@@ -74,7 +67,7 @@ Type: `CPLib.UnionFind::UnionFind -> (CPLib.UnionFind::UnionFind, Std::Array (St
 
 グループの配列を取得する
 
-グループの配列[g0, g1, g2, ...]を返す
+グループの配列[g0, g1, g2, ...]を返す。各グループの要素は昇順で、グループは最小の要素の昇順に並ぶ。
 
 パス圧縮を行うため、UnionFindの状態も変化する
 
@@ -82,6 +75,23 @@ Type: `CPLib.UnionFind::UnionFind -> (CPLib.UnionFind::UnionFind, Std::Array (St
 
 ##### Parameters
 
+- `uf` : UnionFind木
+
+#### get_leader
+
+Type: `Std::I64 -> CPLib.UnionFind::UnionFind -> (CPLib.UnionFind::UnionFind, Std::I64)`
+
+指定された要素の属するグループの代表元を取得する
+
+パス圧縮を行うため、UnionFindの状態も変化する
+
+制約：0 <= x < size
+
+計算量：ならしO(α(size))
+
+##### Parameters
+
+- `x` : 対象となる要素
 - `uf` : UnionFind木
 
 #### is_united
@@ -108,6 +118,8 @@ Type: `Std::I64 -> Std::I64 -> CPLib.UnionFind::UnionFind -> CPLib.UnionFind::Un
 
 2つの要素を同じグループにする
 
+すでに同じグループに属しているなら何もしない。
+
 制約：0 <= x, y < size
 
 計算量：ならしO(α(size))
@@ -125,18 +137,6 @@ Type: `Std::I64 -> Std::I64 -> CPLib.UnionFind::UnionFind -> CPLib.UnionFind::Un
 #### UnionFind
 
 Defined as: `type UnionFind = unbox struct { ...fields... }`
-
-##### field `parent`
-
-Type: `Std::Array Std::I64`
-
-##### field `rank`
-
-Type: `Std::Array Std::I64`
-
-##### field `size`
-
-Type: `Std::Array Std::I64`
 
 ## Traits and aliases
 

@@ -13,32 +13,29 @@
 module CPLib.UnionFind;
 
 import Std::{
-    Array, Bool, I64, Array::{fill, mod, push_back, set, to_iter, @, @size}, 
-    Iterator::{filter_map, fold, range, to_array}, Option::{none, some}
+    loop, Array, Bool, I64, Array::{fill, mod, push_back, set, @, @size}, Iterator::{fold, range}, 
+    LoopState::{break, continue}
 };
 
 type UnionFind = struct {
-    parent : Array I64,
-    rank : Array I64,
-    size : Array I64,
+    // 要素xが根なら-(xの属するグループの大きさ)、そうでなければxの親
+    _parent_or_size : Array I64,
 };
 
 // UnionFind木を作成する
 // 
 // `0`から`size - 1`までの`size`個の要素を持つUnionFind木を作成する
 // 
+// 制約：size >= 0
+//
 // 計算量：O(size)
 //
 // # Parameters
 // - `size` : UnionFind木のサイズ
 create : I64 -> UnionFind;
-create = |size| UnionFind {
-    parent : range(0, size).to_array,
-    rank : fill(size, 0),
-    size : fill(size, 1)
-};
+create = |size| UnionFind { _parent_or_size : fill(size, -1) };
 
-// 指定された要素の親を取得する
+// 指定された要素の属するグループの代表元を取得する
 // 
 // パス圧縮を行うため、UnionFindの状態も変化する
 // 
@@ -49,19 +46,36 @@ create = |size| UnionFind {
 // # Parameters
 // - `x` : 対象となる要素
 // - `uf` : UnionFind木
-find_parent : I64 -> UnionFind -> (UnionFind, I64);
-find_parent = |x, uf| (
-    let y = uf.@parent.@(x);
-    if y == x {
-        (uf, x)
-    } else {
-        let (uf, y) = uf.find_parent(y);
-        let uf = uf.mod_parent(set(x, y));
-        (uf, y)
-    }
+get_leader : I64 -> UnionFind -> (UnionFind, I64);
+get_leader = |x, uf| (
+    _find_root(x, uf)
+);
+
+// `get_leader`の別名（非推奨）
+find_parent : I64 -> UnionFind -> (UnionFind, I64) = get_leader;
+DEPRECATED[find_parent, "Use `CPLib.UnionFind::get_leader` instead."];
+
+// 要素`x`の根を求め、通った要素の親を根に書き換える
+//
+// 根までたどって根を求めてから、もう一度たどって親を書き換える。親がすでに根の要素には書き込まない。
+//
+// # Parameters
+// - `x` : 対象となる要素
+// - `uf` : UnionFind木
+_find_root : I64 -> UnionFind -> (UnionFind, I64);
+_find_root = |x, uf| (
+    let r = loop(x, |v| let p = uf.@_parent_or_size.@(v); if p < 0 { break $ v } else { continue $ p });
+    let uf = loop((x, uf), |(v, uf)|
+        let p = uf.@_parent_or_size.@(v);
+        if p < 0 || p == r { break $ uf };
+        continue $ (p, uf.mod__parent_or_size(set(v, r)))
+    );
+    (uf, r)
 );
 
 // 2つの要素を同じグループにする
+// 
+// すでに同じグループに属しているなら何もしない。
 // 
 // 制約：0 <= x, y < size
 //
@@ -73,25 +87,13 @@ find_parent = |x, uf| (
 // - `uf` : UnionFind木
 unite : I64 -> I64 -> UnionFind -> UnionFind;
 unite = |x, y, uf| (
-    let (uf, px) = uf.find_parent(x);
-    let (uf, py) = uf.find_parent(y);
-    if px == py {
-        uf // すでに同じグループに属している場合は何もしない
-    };
-    let px_rank = uf.@rank.@(px);
-    let py_rank = uf.@rank.@(py);
-    let new_size = uf.@size.@(px) + uf.@size.@(py);
-    if px_rank < py_rank {
-        let uf = uf.mod_parent(set(px, py));
-        uf.mod_size(set(py, new_size))
-    } else if px_rank > py_rank {
-        let uf = uf.mod_parent(set(py, px));
-        uf.mod_size(set(px, new_size))
-    } else { // rank[px] == rank[py]
-        let uf = uf.mod_parent(set(py, px));
-        let uf = uf.mod_rank(set(px, px_rank + 1));
-        uf.mod_size(set(px, new_size))
-    }
+    let (uf, rx) = _find_root(x, uf);
+    let (uf, ry) = _find_root(y, uf);
+    if rx == ry { uf };
+    let ps = uf.@_parent_or_size;
+    let (rx, ry) = if ps.@(rx) <= ps.@(ry) { (rx, ry) } else { (ry, rx) };
+    let sz = ps.@(rx) + ps.@(ry);
+    uf.mod__parent_or_size(|ps| ps.set(rx, sz).set(ry, rx))
 );
 
 // 2つの要素が同じグループに属しているかどうかを判定する
@@ -108,9 +110,9 @@ unite = |x, y, uf| (
 // - `uf` : UnionFind木
 is_united : I64 -> I64 -> UnionFind -> (UnionFind, Bool);
 is_united = |x, y, uf| (
-    let (uf, px) = uf.find_parent(x);
-    let (uf, py) = uf.find_parent(y);
-    (uf, px == py)
+    let (uf, rx) = _find_root(x, uf);
+    let (uf, ry) = _find_root(y, uf);
+    (uf, rx == ry)
 );
 
 // 指定された要素が属するグループのサイズを取得する
@@ -126,13 +128,13 @@ is_united = |x, y, uf| (
 // - `uf` : UnionFind木
 get_group_size : I64 -> UnionFind -> (UnionFind, I64);
 get_group_size = |x, uf| (
-    let (uf, px) = uf.find_parent(x);
-    (uf, uf.@size.@(px))
+    let (uf, r) = _find_root(x, uf);
+    (uf, -uf.@_parent_or_size.@(r))
 );
 
 // グループの配列を取得する
 // 
-// グループの配列[g0, g1, g2, ...]を返す
+// グループの配列[g0, g1, g2, ...]を返す。各グループの要素は昇順で、グループは最小の要素の昇順に並ぶ。
 // 
 // パス圧縮を行うため、UnionFindの状態も変化する
 // 
@@ -142,18 +144,12 @@ get_group_size = |x, uf| (
 // - `uf` : UnionFind木
 get_groups : UnionFind -> (UnionFind, Array (Array I64));
 get_groups = |uf| (
-    let n = uf.@parent.@size;
-    let grps = fill(n, none());
-    let (uf, grps) = range(0, uf.@parent.@size).fold((uf, grps), |i, (uf, grps)|
-        let (uf, p) = uf.find_parent(i);
-        let grps = grps.mod(p, |g| 
-            match g {
-                some(g) => some(g.push_back(i)),
-                none() => some([i])
-            }
-        );
-        (uf, grps)
+    let n = uf.@_parent_or_size.@size;
+    let (uf, _, groups) = range(0, n).fold((uf, fill(n, -1), []), |i, (uf, group_of_root, groups)|
+        let (uf, r) = _find_root(i, uf);
+        let g = group_of_root.@(r);
+        if g >= 0 { (uf, group_of_root, groups.mod(g, push_back(i))) };
+        (uf, group_of_root.set(r, groups.@size), groups.push_back([i]))
     );
-    let grps = grps.to_iter.filter_map(|g| g).to_array;
-    (uf, grps)
+    (uf, groups)
 );

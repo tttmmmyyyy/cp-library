@@ -1,10 +1,10 @@
 module CPLib.UnionFind.Test;
 
-import CPLib.UnionFind::{create, get_group_size, get_groups, is_united, unite};
-import Random::{generate_I64_nonneg, init_by_seed};
+import CPLib.UnionFind::{create, get_leader, get_group_size, get_groups, is_united, unite};
+import Random::{generate_I64_nonneg, init_by_seed, Random};
 import Std::{
-    IO, Array::{sort_by, @size}, Debug::{assert_eq, consumed_time_while_lazy}, Functor::map, IO::println, 
-    Iterator::{fold, range}, Monad::pure, String::populate, ToString::to_string, Tuple2::@1
+    Array, I64, IO, Array::{fill, mod, push_back, set, sort_by, @, @size}, Debug::{assert_eq, consumed_time_while_lazy}, 
+    Functor::map, IO::println, Iterator::{fold, fold_m, range}, Monad::pure, String::populate, ToString::to_string, Tuple2::@1
 };
 
 // https://atcoder.jp/contests/language-test-202505/submissions/68392520
@@ -13,6 +13,7 @@ test : IO ();
 test = (
     test_zero;;
     test_by_hand;;
+    let _ = *test_random(Random::init_by_seed(0_U64));
     test_speed;;
     pure()
 );
@@ -127,4 +128,50 @@ test_speed = (
     println $ "[CPLib.UnionFind.Test] UnionFind({}): {}".populate([n.to_string, time.to_string]);;
 
     pure()
+);
+
+// 要素ごとのグループの番号を持つ素朴な実装と、乱択の操作列で比べる
+test_random : Random -> IO Random;
+test_random = |rng| (
+    range(0, 300).fold_m(rng, |_, rng|
+        let (rng, n) = rng.generate_I64_nonneg;
+        let n = 1 + n % 8;
+        let (rng, ops) = rng.generate_I64_nonneg;
+        let ops = ops % 20;
+        let (rng, uf, label, log) = range(0, ops).fold((rng, UnionFind::create(n), range(0, n).fold([], |i, a| a.push_back(i)), ""), |_, (rng, uf, label, log)|
+            let (rng, x) = rng.generate_I64_nonneg;
+            let (rng, y) = rng.generate_I64_nonneg;
+            let (x, y) = (x % n, y % n);
+            // yのグループの番号を、すべてxのグループの番号に替える
+            let (lx, ly) = (label.@(x), label.@(y));
+            let label = range(0, n).fold(label, |i, label| if label.@(i) == ly { label.set(i, lx) } else { label });
+            (rng, uf.unite(x, y), label, log + " unite(" + x.to_string + "," + y.to_string + ")")
+        );
+        let msg = |_| "n=" + n.to_string + log;
+        let uf = *range(0, n).fold_m(uf, |x, uf|
+            let (uf, size) = uf.get_group_size(x);
+            assert_eq(msg, size, range(0, n).fold(0, |i, c| if label.@(i) == label.@(x) { c + 1 } else { c }));;
+            // 代表元はxと同じグループの要素で、代表元の代表元はそれ自身
+            let (uf, rx) = uf.get_leader(x);
+            assert_eq(msg, label.@(rx), label.@(x));;
+            assert_eq(msg, uf.get_leader(rx).@1, rx);;
+            range(0, n).fold_m(uf, |y, uf|
+                let (uf, united) = uf.is_united(x, y);
+                assert_eq(msg, united, label.@(x) == label.@(y));;
+                // 代表元が一致することと、同じグループに属することは同値
+                let (uf, ry) = uf.get_leader(y);
+                assert_eq(msg, rx == ry, label.@(x) == label.@(y));;
+                pure $ uf
+            )
+        );
+        // 素朴なグループの配列：要素を昇順に見て、初めて出たグループの番号に新しい位置を割り当てる
+        let (_, expected) = range(0, n).fold((fill(n, -1), []), |i, (pos, groups)|
+            let g = pos.@(label.@(i));
+            if g >= 0 { (pos, groups.mod(g, push_back(i))) };
+            (pos.set(label.@(i), groups.@size), groups.push_back([i]))
+        );
+        let (_, groups) = uf.get_groups;
+        assert_eq(msg, groups, expected);;
+        pure $ rng
+    )
 );
