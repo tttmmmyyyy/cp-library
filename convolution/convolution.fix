@@ -46,7 +46,7 @@ convolve_zp = |x, y| (
     let x = x.ZP::fft(forward());
     let y = y.ZP::fft(forward());
 
-    // xとyの各要素を掛け合わせる
+    // xとyの各要素を掛け合わせる。xとyの長さはpotなので、添字iは範囲内にある
     let x = range(0, pot).fold(x, |i, x| x.unsafe_set_bounds_unchecked(i, x.@(i) * y.@(i)));
 
     // 逆変換を行う
@@ -93,6 +93,7 @@ convolve_i64 = |a, b| (
 
     let offset = [0_U64, 0_U64, __M1M2M3, 2_U64 * __M1M2M3, 3_U64 * __M1M2M3];
 
+    // cの長さはn + m - 1なので、添字iは範囲内にある
     let c = fill(n + m - 1, 0);
     range(0, n + m - 1).fold(c, |i, c|
         let x = 0_U64;
