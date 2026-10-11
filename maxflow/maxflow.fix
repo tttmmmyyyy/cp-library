@@ -93,6 +93,9 @@ namespace MaxFlowGraph {
     // - `graph` : グラフ
     add_edge_id : [c : CapacityLike] I64 -> I64 -> c -> MaxFlowGraph c -> (MaxFlowGraph c, MaxFlowEdgeId);
     add_edge_id = |from, to, cap, g| (
+        let n = g.@_n;
+        if !(0 <= from && from < n && 0 <= to && to < n) { undefined("CPLib.MaxFlow: add_edge got a vertex out of range") };
+        if cap < zero { undefined("CPLib.MaxFlow: add_edge got a negative capacity") };
         // 辺は足した順の番号（MaxFlowEdgeId、つまりI64）で指す。ac-libraryのmf_graphのadd_edge、get_edge、change_edgeに合わせている
         let id = g.@_to.@size / 2;
         let g = g.mod__to(|ts| ts.push_back(to).push_back(from));
