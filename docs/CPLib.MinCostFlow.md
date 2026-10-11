@@ -29,7 +29,7 @@ Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MinCostFlow::MinCos
 
 グラフに辺を追加する
 
-制約：0 <= from, to < n, cap >= 0。costは負でもよい（負の閉路については`MinCostFlowGraph`の、流す関数の制約を見よ）
+制約：0 <= from, to < n, cap >= 0。costは負でもよい（負の閉路については、型`MinCostFlowGraph`の説明にある、`maximize_flow_min_cost`、`maximize_flow_min_cost_with_limit`、`calc_min_cost_slope`、`calc_min_cost_slope_with_limit`の制約を見よ）
 
 計算量：ならしO(1)
 
@@ -49,7 +49,7 @@ Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MinCostFlow::MinCos
 
 辺の番号は、`add_edge`で足した辺も含めて、足した順に0から振られる。
 
-制約：0 <= from, to < n, cap >= 0。costは負でもよい（負の閉路については`MinCostFlowGraph`の、流す関数の制約を見よ）
+制約：0 <= from, to < n, cap >= 0。costは負でもよい（負の閉路については、型`MinCostFlowGraph`の説明にある、`maximize_flow_min_cost`、`maximize_flow_min_cost_with_limit`、`calc_min_cost_slope`、`calc_min_cost_slope_with_limit`の制約を見よ）
 
 計算量：ならしO(1)
 
@@ -74,7 +74,7 @@ xはこの呼び出しで流した量、g(x)はそのコストである。
 
 何度でも呼べて、2回目以降はそれまでに流した状態から続けて流す。`s`と`t`は呼ぶたびに変えてよい。
 
-制約：`MinCostFlowGraph`の、流す関数の制約を見よ
+制約：型`MinCostFlowGraph`の説明にある、この関数の制約を見よ
 
 計算量：O(F (n + m) log(n + m))、Fは流した量。
 容量が正の辺にコストが負のものがあるとき（負のコストの辺を足したときと、2回目以降に呼ぶとき）は、O(n (n + m))を足す
@@ -94,7 +94,7 @@ Type: `Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MinCostFlow::MinCostFlowGraph -
 `calc_min_cost_slope`と同じく、流した後のグラフと、流量ごとの最小コストの折れ点の列を返す。
 最後の点の流量は上限以下である。上限が0以下なら何も流さず[(0, 0)]を返す。
 
-制約：`MinCostFlowGraph`の、流す関数の制約を見よ
+制約：型`MinCostFlowGraph`の説明にある、この関数の制約を見よ
 
 計算量：O(F (n + m) log(n + m))、Fは流した量。
 容量が正の辺にコストが負のものがあるとき（負のコストの辺を足したときと、2回目以降に呼ぶとき）は、O(n (n + m))を足す
@@ -165,7 +165,7 @@ Type: `Std::I64 -> Std::I64 -> CPLib.MinCostFlow::MinCostFlowGraph -> (CPLib.Min
 流した後のグラフと、新たに流した量と、そのコストを返す。
 何度でも呼べて、2回目以降はそれまでに流した状態から続けて流す。`s`と`t`は呼ぶたびに変えてよい。
 
-制約：`MinCostFlowGraph`の、流す関数の制約を見よ
+制約：型`MinCostFlowGraph`の説明にある、この関数の制約を見よ
 
 計算量：O(F (n + m) log(n + m))、Fは流した量。
 容量が正の辺にコストが負のものがあるとき（負のコストの辺を足したときと、2回目以降に呼ぶとき）は、O(n (n + m))を足す
@@ -185,7 +185,7 @@ Type: `Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MinCostFlow::MinCostFlowGraph -
 流した後のグラフと、新たに流した量（上限以下）と、そのコストを返す。上限が0以下なら何も流さず0を返す。
 何度でも呼べて、2回目以降はそれまでに流した状態から続けて流す。`s`と`t`は呼ぶたびに変えてよい。
 
-制約：`MinCostFlowGraph`の、流す関数の制約を見よ
+制約：型`MinCostFlowGraph`の説明にある、この関数の制約を見よ
 
 計算量：O(F (n + m) log(n + m))、Fは流した量。
 容量が正の辺にコストが負のものがあるとき（負のコストの辺を足したときと、2回目以降に呼ぶとき）は、O(n (n + m))を足す
@@ -253,7 +253,7 @@ Defined as: `type MinCostFlowGraph = unbox struct { ...fields... }`
 
 容量とコストは`I64`で表す。
 
-流す関数（`maximize_flow_min_cost`、`calc_min_cost_slope`と、それぞれの`_with_limit`）の制約：
+`maximize_flow_min_cost`、`maximize_flow_min_cost_with_limit`、`calc_min_cost_slope`、`calc_min_cost_slope_with_limit`の制約：
 - 0 <= s, t < n, s != t
 - 負の閉路がない：容量が正の辺をたどる閉路で、コストの和が負のものがない。
   流した後に辺を足してから再度流すときは、流れている辺の逆向き（コストの符号を反転した辺）も閉路に含める。
