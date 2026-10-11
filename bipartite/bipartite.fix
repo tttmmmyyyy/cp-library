@@ -76,7 +76,7 @@ namespace BipartiteGraph {
         let n = bg.@left_size + bg.@right_size + 2; // 開始と終了の頂点を含む
         let s = n - 2;
         let t = n - 1;
-        let graph = MaxFlowGraph::create(n, s, t);
+        let graph = MaxFlowGraph::create(n);
         let graph = range(0, bg.@left_size).fold(graph, |i, graph| graph.add_edge(s, i, 1));
         let graph = range(0, bg.@right_size).fold(graph, |i, graph| graph.add_edge(bg.@left_size + i, t, 1));
         let eids = empty(bg.@edges.@size);
@@ -84,7 +84,7 @@ namespace BipartiteGraph {
             let (graph, eid) = graph.add_edge_id(left, bg.@left_size + right, 1);
             (graph, push_back(eid, eids))
         );
-        let (graph, flow) = graph.maximize_flow;
+        let (graph, flow) = graph.maximize_flow(s, t);
         BipartiteGraphFlow { graph : bg, max_flow : graph, _edge_ids : eids }
     );
 
@@ -158,7 +158,9 @@ namespace BipartiteGraphFlow {
     // - `max_flow` : 二部グラフの最大フロー
     get_min_vertex_cover : BipartiteGraphFlow -> (Array Bool, Array Bool);
     get_min_vertex_cover = |flow| (
-        let min_cut = flow.@max_flow.get_min_cut; // 第i番目の頂点に残余グラフで到達可能かどうかの配列
+        // `maximize_flow`は、開始地点を左右の頂点の後ろに置いた
+        let s = flow.@graph.@left_size + flow.@graph.@right_size;
+        let min_cut = flow.@max_flow.get_min_cut(s); // 第i番目の頂点に残余グラフで到達可能かどうかの配列
         let left_cover = range(0, flow.@graph.@left_size).map(|i| !min_cut.@(i)).to_array;
         let right_cover = range(0, flow.@graph.@right_size).map(|i| min_cut.@(flow.@graph.@left_size + i)).to_array;
         (left_cover, right_cover)

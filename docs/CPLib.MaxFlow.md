@@ -10,13 +10,13 @@ Defined in cp-library@0.15.0
 
 ```fix
 // 頂点0から頂点3への最大フロー
-let g = create(4, 0, 3) : MaxFlowGraph I64;
+let g = create(4) : MaxFlowGraph I64;
 let (g, e01) = g.add_edge_id(0, 1, 2);
 let g = g.add_edge(0, 2, 1).add_edge(1, 2, 1).add_edge(1, 3, 1).add_edge(2, 3, 2);
-let (g, flow) = g.maximize_flow;
+let (g, flow) = g.maximize_flow(0, 3);
 assert_eq(|_|"", flow, 3);;
 assert_eq(|_|"", g.get_flow(e01), 2);;
-assert_eq(|_|"", g.get_min_cut, [true, false, false, false])
+assert_eq(|_|"", g.get_min_cut(0), [true, false, false, false])
 ```
 
 ## Values
@@ -65,7 +65,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowEdgeId -> c -> c 
 
 辺の容量と流れている量を書き換える
 
-他の辺は書き換えないので、流量の保存則が崩れることがある。
+他の辺は書き換えないので、辺の両端の頂点で、流れ込む量と流れ出す量が等しくなくなることがある。
 
 制約：0 <= new_flow <= new_cap
 
@@ -80,19 +80,15 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowEdgeId -> c -> c 
 
 #### create
 
-Type: `Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MaxFlow::MaxFlowGraph c`
+Type: `Std::I64 -> CPLib.MaxFlow::MaxFlowGraph c`
 
-グラフを作成する
-
-制約：0 <= s, t < n, s != t
+辺のないグラフを作成する
 
 計算量：O(1)
 
 ##### Parameters
 
 - `n` : 頂点数
-- `s` : 開始頂点番号
-- `t` : 終了頂点番号
 
 #### get_edge
 
@@ -134,47 +130,58 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowEdgeId -> CPLib.M
 
 #### get_min_cut
 
-Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowGraph c -> Std::Array Std::Bool`
+Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> CPLib.MaxFlow::MaxFlowGraph c -> Std::Array Std::Bool`
 
 最小カットを取得する
 
-残余グラフの上で、開始地点から到達できる頂点を`true`、到達できない頂点を`false`とする配列を返す。
-`maximize_flow`の後では、`true`の頂点の集合が最小カットの開始地点側になる。
+残余グラフの上で、頂点`s`から到達できる頂点を`true`、到達できない頂点を`false`とする配列を返す。
+`maximize_flow(s, t)`の後では、`true`の頂点の集合が、`s`と`t`を分ける最小カットの`s`の側になる。
+
+制約：0 <= s < n
 
 計算量：O(n + m)
 
 ##### Parameters
 
+- `s` : 到達を調べる始点の頂点番号
 - `graph` : グラフ
 
 #### maximize_flow
 
-Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowGraph c -> (CPLib.MaxFlow::MaxFlowGraph c, c)`
+Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> CPLib.MaxFlow::MaxFlowGraph c -> (CPLib.MaxFlow::MaxFlowGraph c, c)`
 
-開始地点から終了地点へ、流せるだけ流す
+頂点`s`から頂点`t`へ、流せるだけ流す
 
 流した後のグラフと、新たに流した量を返す。何度でも呼べて、2回目以降はそれまでに流した状態から続けて流す。
+`s`と`t`以外の各頂点では、流れ込む量と流れ出す量の差を変えずに流す。
 
-制約：最大流量 < `Inf::inf`
+制約：0 <= s, t < n, s != t、流せる量 < `Inf::inf`
 
 計算量：O(n^2 m)。辺の容量がすべて1ならO((n + m) sqrt(m))
 
 ##### Parameters
 
+- `s` : 流し出す頂点の番号
+- `t` : 流し込む頂点の番号
 - `graph` : グラフ
 
 #### maximize_flow_with_limit
 
-Type: `[c : CPLib.MaxFlow::CapacityLike] c -> CPLib.MaxFlow::MaxFlowGraph c -> (CPLib.MaxFlow::MaxFlowGraph c, c)`
+Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxFlow::MaxFlowGraph c -> (CPLib.MaxFlow::MaxFlowGraph c, c)`
 
-開始地点から終了地点へ、流した量が上限に達するまで、流せるだけ流す
+頂点`s`から頂点`t`へ、流した量が上限に達するまで、流せるだけ流す
 
 流した後のグラフと、新たに流した量（上限以下）を返す。何度でも呼べて、2回目以降はそれまでに流した状態から続けて流す。
+`s`と`t`以外の各頂点では、流れ込む量と流れ出す量の差を変えずに流す。
+
+制約：0 <= s, t < n, s != t
 
 計算量：O(n^2 m)。辺の容量がすべて1ならO((n + m) sqrt(m))
 
 ##### Parameters
 
+- `s` : 流し出す頂点の番号
+- `t` : 流し込む頂点の番号
 - `flow_limit` : 流す量の上限
 - `graph` : グラフ
 
