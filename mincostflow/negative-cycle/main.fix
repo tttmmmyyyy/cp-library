@@ -1,0 +1,17 @@
+// 標準入力で選んだグラフに流す。0：sから届く負の閉路がある、1：同じグラフに上限0で流す
+module Main;
+
+import CPLib.IO::read_i;
+import CPLib.MinCostFlow::{MinCostFlowGraph, MinCostFlowGraph::{add_edge, create, maximize_flow_min_cost, maximize_flow_min_cost_with_limit}};
+import Std::{I64, IO, IO::println, Iterator::{fold, range}, ToString::to_string};
+
+main : IO ();
+main = (
+    let case = *read_i;
+    // 頂点0 -> 1 -> ... -> n - 1 -> 0の閉路。コストの和が負で、n * (コストの絶対値) = 5e17
+    let n = 19;
+    let c = 500000000000000000 / n;
+    let g = range(0, n).fold(MinCostFlowGraph::create(n), |v, g| g.add_edge(v, (v + 1) % n, 1, -c));
+    let (_, flow, cost) = if case == 0 { g.maximize_flow_min_cost(0, 1) } else { g.maximize_flow_min_cost_with_limit(0, 1, 0) };
+    println((flow, cost).to_string)
+);

@@ -14,7 +14,7 @@ Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::Array (Std::I64, Std::I64, Std::
 
 #### net_outflow
 
-Type: `Std::I64 -> Std::Array (CPLib.MaxFlow::MaxFlowEdge Std::I64) -> Std::Array Std::I64`
+Type: `Std::I64 -> Std::Array CPLib.MaxFlow::MaxFlowEdge -> Std::Array Std::I64`
 
 頂点ごとの、流れ出す量から流れ込む量を引いた値
 
@@ -32,7 +32,7 @@ Type: `Std::I64 -> Std::I64 -> Std::Array (Std::I64, Std::I64, Std::I64) -> Std:
 
 #### residual_arcs
 
-Type: `Std::Array (CPLib.MaxFlow::MaxFlowEdge Std::I64) -> Std::Array (Std::I64, Std::I64, Std::I64)`
+Type: `Std::Array CPLib.MaxFlow::MaxFlowEdge -> Std::Array (Std::I64, Std::I64, Std::I64)`
 
 辺の状態から、残余グラフの辺を(始点, 終点, 残余容量)の列にする
 

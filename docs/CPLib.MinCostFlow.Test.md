@@ -21,6 +21,12 @@ Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::Array (Std::I64, Std::I64, Std::
 - `t` : 終了頂点番号
 - `edges` : 辺 (始点, 終点, 容量, コスト) の配列
 
+#### slope_cost_at
+
+Type: `Std::I64 -> Std::Array (Std::I64, Std::I64) -> Std::I64`
+
+折れ線slopeの、流量fでの値
+
 #### test
 
 Type: `Std::IO ()`
@@ -29,18 +35,48 @@ Type: `Std::IO ()`
 
 Type: `Std::IO ()`
 
+#### test_change_terminals
+
+Type: `Std::IO ()`
+
+呼ぶたびにsとtを変え、前の呼び出しで流した量を逆辺で押し戻す
+
+#### test_cost_bound
+
+Type: `Std::IO ()`
+
+コストの絶対値の最大をCとして、n * C が制約の上限 5e17 のグラフで、負のコストの辺があるときと、2回目に呼ぶときに溢れない
+
+#### test_edges
+
+Type: `Std::IO ()`
+
+辺の状態を読む
+
+#### test_negative_cycle
+
+Type: `Std::IO ()`
+
+sから届く負の閉路があると、ポテンシャルが溢れる前に理由を書いて止まる。上限が0なら流さないので止まらない
+
 #### test_random
 
 Type: `Std::Bool -> Random::Random -> Std::IO Random::Random`
 
 小さな乱択グラフで、総当たりと流量・コストを比べる
 
-流量の上限を変えて`maximize_flow_min_cost`を2回続けて呼び、それぞれを比べる。
+流量の上限を変えて`maximize_flow_min_cost_with_limit`を2回続けて呼び、それぞれを比べる。
 
 ##### Parameters
 
-- `negative` : 負のコストの辺を含め、`set_potential_bf`を呼ぶかどうか
+- `negative` : 負のコストの辺を含めるかどうか
 - `rng` : 乱数生成器
+
+#### test_slope
+
+Type: `Std::IO ()`
+
+流量ごとの最小コストの折れ線
 
 #### test_unreachable
 
