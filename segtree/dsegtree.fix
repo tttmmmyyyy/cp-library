@@ -104,7 +104,7 @@ set = |i, value, tree| (
     let tree = tree.mod_elems(set(i, value));
     // `i`の親ノードをすべて更新
     loop((i, tree), |(i, tree)|
-        if i == 0 { break $ tree }; // ルートノードに到達したら終了
+        if i <= 1 { break $ tree }; // 根（添字1）を更新したら終了
         let i = i / 2; // 親ノードに移動
         let left = tree.@elems.@(i * 2);
         let right = tree.@elems.@(i * 2 + 1);
