@@ -20,8 +20,8 @@ import CPLib.Graph::{NodeDistance, NodeDistance::make};
 import Std::{
     loop, undefined, Array, Bool, I64,
     Array::{fill, mod, pop_back, push_back, set, to_iter, @, @size}, I64::bit_xor, Indexable::ixchg,
-    Iterator::{fold, map, range, to_array}, LessThan::min, LoopState::{break, continue}, Option::as_some,
-    Tuple2::{@0, @1}, I64::{maximum, minimum}
+    Iterator::{fold, map, range, to_array}, LessThan::{max, min}, LoopState::{break, continue}, Option::as_some,
+    Tuple2::{@0, @1}, I64::{abs, maximum, minimum}
 };
 
 // 最小費用流問題のグラフの型
@@ -150,9 +150,9 @@ namespace MinCostFlowGraph {
     //
     // 制約：
     // - 0 <= s, t < n, s != t
-    // - 容量が正の辺からなる閉路で、コストの和が負のものがない（`s`から届く範囲で）。流すとこの条件は保たれるので、
-    //   破れうるのは辺を足したときである。破ると理由を書いて止まる
-    // - 流量とコストの総和が`I64`に収まる
+    // - 容量が正の辺からなる閉路で、コストの和が負のものがない。流すとこの条件は保たれるので、破れうるのは辺を足したときである。
+    //   `s`から届く閉路でこれを破ると、理由を書いて止まる
+    // - 辺の容量の総和と、(辺のコストの絶対値 * 容量)の総和が、どちらも4e18以下
     // - n * (辺のコストの絶対値の最大) <= 5e17
     //
     // 計算量：O(F (n + m) log(n + m))、Fは流した量。
@@ -172,9 +172,9 @@ namespace MinCostFlowGraph {
     //
     // 制約：
     // - 0 <= s, t < n, s != t
-    // - 容量が正の辺からなる閉路で、コストの和が負のものがない（`s`から届く範囲で）。流すとこの条件は保たれるので、
-    //   破れうるのは辺を足したときである。破ると理由を書いて止まる
-    // - 流量とコストの総和が`I64`に収まる
+    // - 容量が正の辺からなる閉路で、コストの和が負のものがない。流すとこの条件は保たれるので、破れうるのは辺を足したときである。
+    //   `s`から届く閉路でこれを破ると、理由を書いて止まる
+    // - 辺の容量の総和と、(辺のコストの絶対値 * 容量)の総和が、どちらも4e18以下
     // - n * (辺のコストの絶対値の最大) <= 5e17
     //
     // 計算量：O(F (n + m) log(n + m))、Fは流した量。
@@ -203,9 +203,9 @@ namespace MinCostFlowGraph {
     //
     // 制約：
     // - 0 <= s, t < n, s != t
-    // - 容量が正の辺からなる閉路で、コストの和が負のものがない（`s`から届く範囲で）。流すとこの条件は保たれるので、
-    //   破れうるのは辺を足したときである。破ると理由を書いて止まる
-    // - 流量とコストの総和が`I64`に収まる
+    // - 容量が正の辺からなる閉路で、コストの和が負のものがない。流すとこの条件は保たれるので、破れうるのは辺を足したときである。
+    //   `s`から届く閉路でこれを破ると、理由を書いて止まる
+    // - 辺の容量の総和と、(辺のコストの絶対値 * 容量)の総和が、どちらも4e18以下
     // - n * (辺のコストの絶対値の最大) <= 5e17
     //
     // 計算量：O(F (n + m) log(n + m))、Fは流した量。
@@ -225,9 +225,9 @@ namespace MinCostFlowGraph {
     //
     // 制約：
     // - 0 <= s, t < n, s != t
-    // - 容量が正の辺からなる閉路で、コストの和が負のものがない（`s`から届く範囲で）。流すとこの条件は保たれるので、
-    //   破れうるのは辺を足したときである。破ると理由を書いて止まる
-    // - 流量とコストの総和が`I64`に収まる
+    // - 容量が正の辺からなる閉路で、コストの和が負のものがない。流すとこの条件は保たれるので、破れうるのは辺を足したときである。
+    //   `s`から届く閉路でこれを破ると、理由を書いて止まる
+    // - 辺の容量の総和と、(辺のコストの絶対値 * 容量)の総和が、どちらも4e18以下
     // - n * (辺のコストの絶対値の最大) <= 5e17
     //
     // 計算量：O(F (n + m) log(n + m))、Fは流した量。
@@ -241,6 +241,7 @@ namespace MinCostFlowGraph {
     calc_min_cost_slope_with_limit : I64 -> I64 -> I64 -> MinCostFlowGraph -> (MinCostFlowGraph, Array (I64, I64));
     calc_min_cost_slope_with_limit = |s, t, flow_limit, g| (
         if s == t { undefined("CPLib.MinCostFlow: s and t must differ") };
+        if !(0 < flow_limit) { (g, [(0, 0)]) };
         let n = g.@_n;
         let (g, cap) = g[^_cap].ixchg([]);
         let res = g._make_residual(cap);
@@ -343,6 +344,10 @@ _initial_potential = |n, s, t, res| (
     let cap = res.@cap;
     let m2 = arc.@size;
     if range(0, m2).fold(true, |p, ok| ok && !(cap.@(p) > 0 && arc.@(p).@1 < 0)) { fill(n, 0) };
+    // 負の閉路がなければ、sからの最短距離は-(n - 1) * (残余容量のある辺のコストの絶対値の最大)以上で、途中の値もそれを下回らない。
+    // 下回ったら負の閉路がある。値が溢れる前に、ここで止める
+    let lower = -(n - 1) * range(0, m2).fold(0, |p, c| if cap.@(p) > 0 { max(c, abs(arc.@(p).@1)) } else { c });
+    let negative_cycle = "CPLib.MinCostFlow: a cycle of negative cost is reachable from s";
     // sからの最短路は辺をn - 1本以下しか通らないので、n - 1周で縮まなくなる。n周目にも縮む頂点があれば、負の閉路がある
     let dist = loop((0, fill(n, I64::maximum).set(s, 0)), |(round, dist)|
         let (dist, changed) = range(0, n).fold((dist, false), |v, (dist, changed)|
@@ -352,11 +357,12 @@ _initial_potential = |n, s, t, res| (
                 let (w, c) = arc.@(p);
                 let d = dist.@(v) + c;
                 if !(d < dist.@(w)) { (dist, changed) };
+                if d < lower { undefined(negative_cycle) };
                 (dist.set(w, d), true)
             )
         );
         if !changed { break $ dist };
-        if round == n - 1 { undefined("CPLib.MinCostFlow: a cycle of negative cost is reachable from s") };
+        if round == n - 1 { undefined(negative_cycle) };
         continue $ (round + 1, dist)
     );
     let base = if dist.@(t) == I64::maximum { 0 } else { dist.@(t) };

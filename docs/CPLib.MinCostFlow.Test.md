@@ -53,6 +53,12 @@ Type: `Std::IO ()`
 
 辺の状態を読む
 
+#### test_negative_cycle
+
+Type: `Std::IO ()`
+
+sから届く負の閉路があると、ポテンシャルが溢れる前に理由を書いて止まる。上限が0なら流さないので止まらない
+
 #### test_random
 
 Type: `Std::Bool -> Random::Random -> Std::IO Random::Random`

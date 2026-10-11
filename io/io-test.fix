@@ -38,6 +38,8 @@ test_io : IO () = (
     assert(|_|"IO test failed: end of input", code != 0_U8 && err.find("unexpected end of input while reading an integer", 0).is_some);;
     let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], "31 41 x");
     assert(|_|"IO test failed: unexpected character", code != 0_U8 && err.find("unexpected character 'x' while reading an integer", 0).is_some);;
+    // 後のテストのために、作業ディレクトリをライブラリのルートに戻す
+    ezs.cd("../..");;
     eprintln("IO test passed!")
 );
 
