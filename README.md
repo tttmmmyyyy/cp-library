@@ -23,7 +23,7 @@
   * `CPLib.UnionFind` : Union-Find木の実装。
 * フロー・最小カット・二部グラフ
   * `CPLib.MaxFlow` : 最大フロー・最小カット（Dinic法）
-  * `CPLib.MinCostFlow` : 最小コスト最大フロー
+  * `CPLib.MinCostFlow` : 最小費用流（逐次最短路法、負のコストの辺も可）
   * `CPLib.Bipartite` : 二部グラフの最大マッチング、最小辺被覆、最大独立集合、最小点被覆。
 * 文字列
   * `CPLib.String` : Suffix Array、LCP Array、Z Algorithm。

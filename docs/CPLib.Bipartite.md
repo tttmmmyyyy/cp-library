@@ -160,7 +160,7 @@ Type: `CPLib.Bipartite::BipartiteGraph`
 
 ##### field `max_flow`
 
-Type: `CPLib.MaxFlow::MaxFlowGraph Std::I64`
+Type: `CPLib.MaxFlow::MaxFlowGraph`
 
 ## Traits and aliases
 

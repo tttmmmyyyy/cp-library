@@ -10,7 +10,7 @@ Defined in cp-library@0.15.0
 
 ```fix
 // 頂点0から頂点3への最大フロー
-let g = create(4) : MaxFlowGraph I64;
+let g = create(4);
 let (g, e01) = g.add_edge_id(0, 1, 2);
 let g = g.add_edge(0, 2, 1).add_edge(1, 2, 1).add_edge(1, 3, 1).add_edge(2, 3, 2);
 let (g, flow) = g.maximize_flow(0, 3);
@@ -25,7 +25,7 @@ assert_eq(|_|"", g.get_min_cut(0), [true, false, false, false])
 
 #### add_edge
 
-Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxFlow::MaxFlowGraph c -> CPLib.MaxFlow::MaxFlowGraph c`
+Type: `Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MaxFlow::MaxFlowGraph -> CPLib.MaxFlow::MaxFlowGraph`
 
 グラフに辺を追加する
 
@@ -42,7 +42,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxF
 
 #### add_edge_id
 
-Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxFlow::MaxFlowGraph c -> (CPLib.MaxFlow::MaxFlowGraph c, CPLib.MaxFlow::MaxFlowEdgeId)`
+Type: `Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MaxFlow::MaxFlowGraph -> (CPLib.MaxFlow::MaxFlowGraph, CPLib.MaxFlow::MaxFlowEdgeId)`
 
 グラフに辺を追加する（辺の番号を返す）
 
@@ -61,7 +61,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxF
 
 #### change_edge
 
-Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowEdgeId -> c -> c -> CPLib.MaxFlow::MaxFlowGraph c -> CPLib.MaxFlow::MaxFlowGraph c`
+Type: `CPLib.MaxFlow::MaxFlowEdgeId -> Std::I64 -> Std::I64 -> CPLib.MaxFlow::MaxFlowGraph -> CPLib.MaxFlow::MaxFlowGraph`
 
 辺の容量と流れている量を書き換える
 
@@ -80,7 +80,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowEdgeId -> c -> c 
 
 #### create
 
-Type: `Std::I64 -> CPLib.MaxFlow::MaxFlowGraph c`
+Type: `Std::I64 -> CPLib.MaxFlow::MaxFlowGraph`
 
 辺のないグラフを作成する
 
@@ -92,7 +92,7 @@ Type: `Std::I64 -> CPLib.MaxFlow::MaxFlowGraph c`
 
 #### get_edge
 
-Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowEdgeId -> CPLib.MaxFlow::MaxFlowGraph c -> CPLib.MaxFlow::MaxFlowEdge c`
+Type: `CPLib.MaxFlow::MaxFlowEdgeId -> CPLib.MaxFlow::MaxFlowGraph -> CPLib.MaxFlow::MaxFlowEdge`
 
 辺の状態を取得する
 
@@ -105,7 +105,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowEdgeId -> CPLib.M
 
 #### get_edges
 
-Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowGraph c -> Std::Array (CPLib.MaxFlow::MaxFlowEdge c)`
+Type: `CPLib.MaxFlow::MaxFlowGraph -> Std::Array CPLib.MaxFlow::MaxFlowEdge`
 
 すべての辺の状態を、足した順に並べて取得する
 
@@ -117,7 +117,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowGraph c -> Std::A
 
 #### get_flow
 
-Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowEdgeId -> CPLib.MaxFlow::MaxFlowGraph c -> c`
+Type: `CPLib.MaxFlow::MaxFlowEdgeId -> CPLib.MaxFlow::MaxFlowGraph -> Std::I64`
 
 辺に流れている量を取得する
 
@@ -130,7 +130,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowEdgeId -> CPLib.M
 
 #### get_min_cut
 
-Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> CPLib.MaxFlow::MaxFlowGraph c -> Std::Array Std::Bool`
+Type: `Std::I64 -> CPLib.MaxFlow::MaxFlowGraph -> Std::Array Std::Bool`
 
 最小カットを取得する
 
@@ -149,14 +149,14 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> CPLib.MaxFlow::MaxFlowGraph
 
 #### maximize_flow
 
-Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> CPLib.MaxFlow::MaxFlowGraph c -> (CPLib.MaxFlow::MaxFlowGraph c, c)`
+Type: `Std::I64 -> Std::I64 -> CPLib.MaxFlow::MaxFlowGraph -> (CPLib.MaxFlow::MaxFlowGraph, Std::I64)`
 
 頂点`s`から頂点`t`へ、流せるだけ流す
 
 流した後のグラフと、新たに流した量を返す。何度でも呼べて、2回目以降はそれまでに流した状態から続けて流す。
 `s`と`t`以外の各頂点では、流れ込む量と流れ出す量の差を変えずに流す。
 
-制約：0 <= s, t < n, s != t、流せる量 < `Inf::inf`
+制約：0 <= s, t < n, s != t、流せる量 < `I64::maximum`
 
 計算量：O(n^2 m)。辺の容量がすべて1ならO((n + m) sqrt(m))。容量が整数なら、流した量をFとしてO(F (n + m))でもある
 
@@ -168,7 +168,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> CPLib.MaxFlow::
 
 #### maximize_flow_with_limit
 
-Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxFlow::MaxFlowGraph c -> (CPLib.MaxFlow::MaxFlowGraph c, c)`
+Type: `Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MaxFlow::MaxFlowGraph -> (CPLib.MaxFlow::MaxFlowGraph, Std::I64)`
 
 頂点`s`から頂点`t`へ、流した量が上限に達するまで、流せるだけ流す
 
@@ -192,7 +192,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxF
 
 #### MaxFlowEdge
 
-Defined as: `type MaxFlowEdge c = unbox struct { ...fields... }`
+Defined as: `type MaxFlowEdge = unbox struct { ...fields... }`
 
 最大フロー問題のグラフの辺の状態
 
@@ -210,13 +210,13 @@ Type: `Std::I64`
 
 ##### field `cap`
 
-Type: `c`
+Type: `Std::I64`
 
 容量
 
 ##### field `flow`
 
-Type: `c`
+Type: `Std::I64`
 
 流れている量
 
@@ -230,20 +230,12 @@ Defined as: `type MaxFlowEdgeId = Std::I64`
 
 #### MaxFlowGraph
 
-Defined as: `type MaxFlowGraph c = unbox struct { ...fields... }`
+Defined as: `type MaxFlowGraph = unbox struct { ...fields... }`
 
 最大フロー問題のグラフの型
 
-型パラメータ`c`は容量の型です。
+容量は`I64`で表す。
 
 ## Traits and aliases
-
-### namespace CPLib.MaxFlow
-
-#### trait `CapacityLike = Std::Additive + Std::Neg + Std::LessThan + Std::Eq + CPLib.Trait::Inf`
-
-Kind: `*`
-
-容量に要求されるトレイト
 
 ## Trait implementations

@@ -10,11 +10,13 @@ Defined in cp-library@0.15.0
 
 ```fix
 // 容量とコストを指定した辺を張る
-let g = create(3) : MinCostFlowGraph I64;
-let g = g.add_edge(0, 1, 2, 1).add_edge(1, 2, 1, 1).add_edge(0, 2, 1, 5);
-// 頂点0から頂点2へ流量の上限を10として流すと、流量2（0->1->2と0->2に1ずつ）、コスト2 + 5 = 7
-let (_, flow, cost) = g.maximize_flow_min_cost_with_limit(0, 2, 10);
-assert_eq(|_|"", (flow, cost), (2, 7))
+let g = create(3);
+let g = g.add_edge(0, 1, 2, 1).add_edge(1, 2, 1, 1);
+let (g, e02) = g.add_edge_id(0, 2, 1, 5);
+// 頂点0から頂点2へ流すと、流量2（0->1->2と0->2に1ずつ）、コスト2 + 5 = 7
+let (g, flow, cost) = g.maximize_flow_min_cost(0, 2);
+assert_eq(|_|"", (flow, cost), (2, 7));;
+assert_eq(|_|"", g.get_flow(e02), 1)
 ```
 
 ## Values
@@ -23,11 +25,11 @@ assert_eq(|_|"", (flow, cost), (2, 7))
 
 #### add_edge
 
-Type: `[c : CPLib.MinCostFlow::CapCostLike] Std::I64 -> Std::I64 -> c -> c -> CPLib.MinCostFlow::MinCostFlowGraph c -> CPLib.MinCostFlow::MinCostFlowGraph c`
+Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MinCostFlow::MinCostFlowGraph -> CPLib.MinCostFlow::MinCostFlowGraph`
 
 グラフに辺を追加する
 
-制約：0 <= from, to < n, cap >= 0
+制約：0 <= from, to < n, cap >= 0。costは負でもよい（負の閉路については`maximize_flow_min_cost`の制約を見よ）
 
 計算量：ならしO(1)
 
@@ -41,13 +43,13 @@ Type: `[c : CPLib.MinCostFlow::CapCostLike] Std::I64 -> Std::I64 -> c -> c -> CP
 
 #### add_edge_id
 
-Type: `[c : CPLib.MinCostFlow::CapCostLike] Std::I64 -> Std::I64 -> c -> c -> CPLib.MinCostFlow::MinCostFlowGraph c -> (CPLib.MinCostFlow::MinCostFlowGraph c, CPLib.MinCostFlow::MinCostFlowEdgeId)`
+Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MinCostFlow::MinCostFlowGraph -> (CPLib.MinCostFlow::MinCostFlowGraph, CPLib.MinCostFlow::MinCostFlowEdgeId)`
 
 グラフに辺を追加する（辺の番号を返す）
 
 辺の番号は、`add_edge`で足した辺も含めて、足した順に0から振られる。
 
-制約：0 <= from, to < n, cap >= 0
+制約：0 <= from, to < n, cap >= 0。costは負でもよい（負の閉路については`maximize_flow_min_cost`の制約を見よ）
 
 計算量：ならしO(1)
 
@@ -59,9 +61,64 @@ Type: `[c : CPLib.MinCostFlow::CapCostLike] Std::I64 -> Std::I64 -> c -> c -> CP
 - `cost` : 辺の流量1あたりのコスト
 - `graph` : グラフ
 
+#### calc_min_cost_slope
+
+Type: `Std::I64 -> Std::I64 -> CPLib.MinCostFlow::MinCostFlowGraph -> (CPLib.MinCostFlow::MinCostFlowGraph, Std::Array (Std::I64, Std::I64))`
+
+頂点`s`から頂点`t`へ流せるだけ流し、流量ごとの最小コストを折れ線で返す
+
+流量xを流すときの最小コストをg(x)とすると、gは下に凸な折れ線である。流した後のグラフと、gの折れ点(x, g(x))の列を返す。
+xはこの呼び出しで流した量、g(x)はそのコストである。
+- 最初の点は(0, 0)、最後の点は(流した量, そのコスト)
+- xは狭義単調増加で、3点が一直線に並ぶことはない
+
+何度でも呼べて、2回目以降はそれまでに流した状態から続けて流す。`s`と`t`は呼ぶたびに変えてよい。
+
+制約：
+- 0 <= s, t < n, s != t
+- 容量が正の辺からなる閉路で、コストの和が負のものがない（`s`から届く範囲で）。流すとこの条件は保たれるので、
+  破れうるのは辺を足したときである。破ると理由を書いて止まる
+- 流量とコストの総和が`I64`に収まる
+- n * (辺のコストの絶対値の最大) <= 5e17
+
+計算量：O(F (n + m) log(n + m))、Fは流した量。
+容量が正の辺にコストが負のものがあるとき（負のコストの辺を足したときと、2回目以降に呼ぶとき）は、O(n (n + m))を足す
+
+##### Parameters
+
+- `s` : 流し出す頂点の番号
+- `t` : 流し込む頂点の番号
+- `graph` : グラフ
+
+#### calc_min_cost_slope_with_limit
+
+Type: `Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MinCostFlow::MinCostFlowGraph -> (CPLib.MinCostFlow::MinCostFlowGraph, Std::Array (Std::I64, Std::I64))`
+
+頂点`s`から頂点`t`へ、流した量が上限に達するまで流せるだけ流し、流量ごとの最小コストを折れ線で返す
+
+`calc_min_cost_slope`と同じく、流した後のグラフと、流量ごとの最小コストの折れ点の列を返す。
+最後の点の流量は上限以下である。上限が0以下なら何も流さず[(0, 0)]を返す。
+
+制約：
+- 0 <= s, t < n, s != t
+- 容量が正の辺からなる閉路で、コストの和が負のものがない（`s`から届く範囲で）。流すとこの条件は保たれるので、
+  破れうるのは辺を足したときである。破ると理由を書いて止まる
+- 流量とコストの総和が`I64`に収まる
+- n * (辺のコストの絶対値の最大) <= 5e17
+
+計算量：O(F (n + m) log(n + m))、Fは流した量。
+容量が正の辺にコストが負のものがあるとき（負のコストの辺を足したときと、2回目以降に呼ぶとき）は、O(n (n + m))を足す
+
+##### Parameters
+
+- `s` : 流し出す頂点の番号
+- `t` : 流し込む頂点の番号
+- `flow_limit` : 流す量の上限
+- `graph` : グラフ
+
 #### create
 
-Type: `Std::I64 -> CPLib.MinCostFlow::MinCostFlowGraph c`
+Type: `Std::I64 -> CPLib.MinCostFlow::MinCostFlowGraph`
 
 辺のないグラフを作成する
 
@@ -73,7 +130,7 @@ Type: `Std::I64 -> CPLib.MinCostFlow::MinCostFlowGraph c`
 
 #### get_edge
 
-Type: `[c : CPLib.MinCostFlow::CapCostLike] CPLib.MinCostFlow::MinCostFlowEdgeId -> CPLib.MinCostFlow::MinCostFlowGraph c -> CPLib.MinCostFlow::MinCostFlowEdge c`
+Type: `CPLib.MinCostFlow::MinCostFlowEdgeId -> CPLib.MinCostFlow::MinCostFlowGraph -> CPLib.MinCostFlow::MinCostFlowEdge`
 
 辺の状態を取得する
 
@@ -86,7 +143,7 @@ Type: `[c : CPLib.MinCostFlow::CapCostLike] CPLib.MinCostFlow::MinCostFlowEdgeId
 
 #### get_edges
 
-Type: `[c : CPLib.MinCostFlow::CapCostLike] CPLib.MinCostFlow::MinCostFlowGraph c -> Std::Array (CPLib.MinCostFlow::MinCostFlowEdge c)`
+Type: `CPLib.MinCostFlow::MinCostFlowGraph -> Std::Array CPLib.MinCostFlow::MinCostFlowEdge`
 
 すべての辺の状態を、足した順に並べて取得する
 
@@ -98,7 +155,7 @@ Type: `[c : CPLib.MinCostFlow::CapCostLike] CPLib.MinCostFlow::MinCostFlowGraph 
 
 #### get_flow
 
-Type: `[c : CPLib.MinCostFlow::CapCostLike] CPLib.MinCostFlow::MinCostFlowEdgeId -> CPLib.MinCostFlow::MinCostFlowGraph c -> c`
+Type: `CPLib.MinCostFlow::MinCostFlowEdgeId -> CPLib.MinCostFlow::MinCostFlowGraph -> Std::I64`
 
 辺に流れている量を取得する
 
@@ -111,7 +168,7 @@ Type: `[c : CPLib.MinCostFlow::CapCostLike] CPLib.MinCostFlow::MinCostFlowEdgeId
 
 #### maximize_flow_min_cost
 
-Type: `[c : CPLib.MinCostFlow::CapCostLike] Std::I64 -> Std::I64 -> CPLib.MinCostFlow::MinCostFlowGraph c -> (CPLib.MinCostFlow::MinCostFlowGraph c, c, c)`
+Type: `Std::I64 -> Std::I64 -> CPLib.MinCostFlow::MinCostFlowGraph -> (CPLib.MinCostFlow::MinCostFlowGraph, Std::I64, Std::I64)`
 
 頂点`s`から頂点`t`へ流せるだけ流し、その流量を流すコストを最小にする
 
@@ -120,12 +177,13 @@ Type: `[c : CPLib.MinCostFlow::CapCostLike] Std::I64 -> Std::I64 -> CPLib.MinCos
 
 制約：
 - 0 <= s, t < n, s != t
-- 残余グラフに、コストの和が負の閉路がない。負のコストの辺があってもよい。破ると理由を書いて止まる
-- 流量とコストの総和が`c`に収まる
-- n * (辺のコストの絶対値の最大) <= 8e18（`c`が`I64`のとき）
+- 容量が正の辺からなる閉路で、コストの和が負のものがない（`s`から届く範囲で）。流すとこの条件は保たれるので、
+  破れうるのは辺を足したときである。破ると理由を書いて止まる
+- 流量とコストの総和が`I64`に収まる
+- n * (辺のコストの絶対値の最大) <= 5e17
 
-計算量：O(F (n + m) log(n + m))、Fは流した量（容量が整数のとき）。
-残余グラフに負のコストの辺があるとき（負のコストの辺を足したときと、2回目以降に呼ぶとき）は、O(n m)を足す
+計算量：O(F (n + m) log(n + m))、Fは流した量。
+容量が正の辺にコストが負のものがあるとき（負のコストの辺を足したときと、2回目以降に呼ぶとき）は、O(n (n + m))を足す
 
 ##### Parameters
 
@@ -135,7 +193,7 @@ Type: `[c : CPLib.MinCostFlow::CapCostLike] Std::I64 -> Std::I64 -> CPLib.MinCos
 
 #### maximize_flow_min_cost_with_limit
 
-Type: `[c : CPLib.MinCostFlow::CapCostLike] Std::I64 -> Std::I64 -> c -> CPLib.MinCostFlow::MinCostFlowGraph c -> (CPLib.MinCostFlow::MinCostFlowGraph c, c, c)`
+Type: `Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MinCostFlow::MinCostFlowGraph -> (CPLib.MinCostFlow::MinCostFlowGraph, Std::I64, Std::I64)`
 
 頂点`s`から頂点`t`へ、流した量が上限に達するまで流せるだけ流し、その流量を流すコストを最小にする
 
@@ -144,12 +202,13 @@ Type: `[c : CPLib.MinCostFlow::CapCostLike] Std::I64 -> Std::I64 -> c -> CPLib.M
 
 制約：
 - 0 <= s, t < n, s != t
-- 残余グラフに、コストの和が負の閉路がない。負のコストの辺があってもよい。破ると理由を書いて止まる
-- 流量とコストの総和が`c`に収まる
-- n * (辺のコストの絶対値の最大) <= 8e18（`c`が`I64`のとき）
+- 容量が正の辺からなる閉路で、コストの和が負のものがない（`s`から届く範囲で）。流すとこの条件は保たれるので、
+  破れうるのは辺を足したときである。破ると理由を書いて止まる
+- 流量とコストの総和が`I64`に収まる
+- n * (辺のコストの絶対値の最大) <= 5e17
 
-計算量：O(F (n + m) log(n + m))、Fは流した量（容量が整数のとき）。
-残余グラフに負のコストの辺があるとき（負のコストの辺を足したときと、2回目以降に呼ぶとき）は、O(n m)を足す
+計算量：O(F (n + m) log(n + m))、Fは流した量。
+容量が正の辺にコストが負のものがあるとき（負のコストの辺を足したときと、2回目以降に呼ぶとき）は、O(n (n + m))を足す
 
 ##### Parameters
 
@@ -164,7 +223,7 @@ Type: `[c : CPLib.MinCostFlow::CapCostLike] Std::I64 -> Std::I64 -> c -> CPLib.M
 
 #### MinCostFlowEdge
 
-Defined as: `type MinCostFlowEdge c = unbox struct { ...fields... }`
+Defined as: `type MinCostFlowEdge = unbox struct { ...fields... }`
 
 最小費用流問題のグラフの辺の状態
 
@@ -182,19 +241,19 @@ Type: `Std::I64`
 
 ##### field `cap`
 
-Type: `c`
+Type: `Std::I64`
 
 容量
 
 ##### field `flow`
 
-Type: `c`
+Type: `Std::I64`
 
 流れている量
 
 ##### field `cost`
 
-Type: `c`
+Type: `Std::I64`
 
 流量1あたりのコスト
 
@@ -208,22 +267,12 @@ Defined as: `type MinCostFlowEdgeId = Std::I64`
 
 #### MinCostFlowGraph
 
-Defined as: `type MinCostFlowGraph c = unbox struct { ...fields... }`
+Defined as: `type MinCostFlowGraph = unbox struct { ...fields... }`
 
 最小費用流問題のグラフの型
 
-型パラメータ`c`は容量とコストの型です。
+容量とコストは`I64`で表す。
 
 ## Traits and aliases
-
-### namespace CPLib.MinCostFlow
-
-#### trait `CapCostLike = Std::Additive + Std::Mul + Std::Neg + Std::Sub + Std::LessThan + CPLib.Trait::Inf + Std::Eq`
-
-Kind: `*`
-
-フローの容量およびコストに要求されるトレイト
-
-注：Fixの`Mul`トレイトは`lhs`と`rhs`に同じ型のみを受け付けるため、容量とコストは同じ型である必要があります。
 
 ## Trait implementations
