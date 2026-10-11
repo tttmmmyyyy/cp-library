@@ -2,7 +2,7 @@ module CPLib.MaxFlow.Test;
 
 import CPLib.MaxFlow::{
     MaxFlowEdge, MaxFlowGraph, MaxFlowEdge::{@cap, @flow, @from, @to}, 
-    MaxFlowGraph::{add_edge, add_edge_id, change_edge, create, get_edge, get_edges, get_flow, get_min_cut, maximize_flow, maximize_flow_with_limit}
+    MaxFlowGraph::{add_edge, add_edge_id, change_edge, create, get_edge, get_edges, get_flow, calc_min_cut, maximize_flow, maximize_flow_with_limit}
 };
 import Random::{generate_I64_nonneg, init_by_seed, Random};
 import Std::{
@@ -45,7 +45,7 @@ test_basic = (
     assert_eq(|_|"", graph.get_flow(eid4), 5);;
     assert_eq(|_|"", graph.get_flow(eid5), 0);;
     assert_eq(|_|"", graph.get_flow(eid6), 6);;
-    let min_cut = graph.get_min_cut(0);
+    let min_cut = graph.calc_min_cut(0);
     assert_eq(|_|"", min_cut, [true, true, true, false, false]);;
     pure()
 );
@@ -83,7 +83,7 @@ test_flow_limit = (
     assert_eq(|_|"the rest", f2, 1);;
     let (graph, f3) = graph.maximize_flow(0, 3);
     assert_eq(|_|"nothing left", f3, 0);;
-    assert_eq(|_|"min cut after flowing in parts", graph.get_min_cut(0), [true, false, false, false]);;
+    assert_eq(|_|"min cut after flowing in parts", graph.calc_min_cut(0), [true, false, false, false]);;
     pure()
 );
 
@@ -116,12 +116,12 @@ test_min_cut_before_and_after_flow : IO ();
 test_min_cut_before_and_after_flow = (
     let graph = MaxFlowGraph::create(3);
     let graph = graph.add_edge(0, 1, 1).add_edge(1, 2, 1);
-    assert_eq(|_|"before maximize_flow", graph.get_min_cut(0), [true, true, true]);;
+    assert_eq(|_|"before maximize_flow", graph.calc_min_cut(0), [true, true, true]);;
     let (graph, _) = graph.maximize_flow(0, 2);
-    assert_eq(|_|"after maximize_flow", graph.get_min_cut(0), [true, false, false]);;
-    assert_eq(|_|"from another vertex", graph.get_min_cut(1), [true, true, false]);;
+    assert_eq(|_|"after maximize_flow", graph.calc_min_cut(0), [true, false, false]);;
+    assert_eq(|_|"from another vertex", graph.calc_min_cut(1), [true, true, false]);;
     let graph = graph.add_edge(0, 1, 5);
-    assert_eq(|_|"after add_edge", graph.get_min_cut(0), [true, true, false]);;
+    assert_eq(|_|"after add_edge", graph.calc_min_cut(0), [true, true, false]);;
     pure()
 );
 
@@ -201,15 +201,15 @@ test_random = |rng| (
         range(0, m).fold_m((), |i, _| assert(msg, 0 <= es.@(i).@flow && es.@(i).@flow <= es.@(i).@cap));;
         let excess = es.to_iter.fold(fill(n, 0), |e, excess| excess.mod(e.@from, |x| x + e.@flow).mod(e.@to, |x| x - e.@flow));
         range(0, n).fold_m((), |v, _| assert_eq(msg, excess.@(v), if v == s { flow } else if v == t { -flow } else { 0 }));;
-        // get_min_cut の頂点の集合のカットの容量は、最大流に等しい
-        let cut = graph.get_min_cut(s);
+        // calc_min_cut の頂点の集合のカットの容量は、最大流に等しい
+        let cut = graph.calc_min_cut(s);
         assert(msg, cut.@(s) && !cut.@(t));;
         let cut_cap = es.to_iter.fold(0, |e, sum| if cut.@(e.@from) && !cut.@(e.@to) { sum + e.@cap } else { sum });
         assert_eq(msg, cut_cap, flow);;
         // 2 回目は何も流れず、最小カットも変わらない
         let (graph, flow2) = graph.maximize_flow(s, t);
         assert_eq(msg, flow2, 0);;
-        assert_eq(msg, graph.get_min_cut(s), cut);;
+        assert_eq(msg, graph.calc_min_cut(s), cut);;
         pure $ rng
     )
 );
@@ -274,7 +274,7 @@ test_random_operations = |rng| (
             };
             if kind == 2 {
                 let (rng, s) = rng.rand_below(n);
-                assert_eq(msg, graph.get_min_cut(s), reachable_by_brute_force(n, s, residual_arcs(graph.get_edges)));;
+                assert_eq(msg, graph.calc_min_cut(s), reachable_by_brute_force(n, s, residual_arcs(graph.get_edges)));;
                 pure $ (rng, graph)
             };
             let (rng, s) = rng.rand_below(n);

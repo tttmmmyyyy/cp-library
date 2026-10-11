@@ -12,7 +12,7 @@
 // ```
 module CPLib.Bipartite;
 
-import CPLib.MaxFlow::{MaxFlowEdgeId, MaxFlowGraph, MaxFlowGraph::{add_edge, add_edge_id, create, get_flow, get_min_cut, maximize_flow}};
+import CPLib.MaxFlow::{MaxFlowEdgeId, MaxFlowGraph, MaxFlowGraph::{add_edge, add_edge_id, create, get_flow, calc_min_cut, maximize_flow}};
 import Std::{
     undefined, Array, Bool, I64, Array::{empty, fill, push_back, set, to_iter, @, @size}, Functor::map, 
     Iterator::{count_up, fold, map, range, to_array, zip}
@@ -114,8 +114,8 @@ namespace BipartiteGraphFlow {
     //
     // # Parameters
     // - `max_flow` : 二部グラフの最大フロー
-    get_min_edge_cover : BipartiteGraphFlow -> Array Bool;
-    get_min_edge_cover = |flow| (
+    calc_min_edge_cover : BipartiteGraphFlow -> Array Bool;
+    calc_min_edge_cover = |flow| (
         let edge_n = flow.@graph.@edges.@size;
         let matching = flow.get_max_matching;
         let l_cov = fill(flow.@graph.@left_size, false);
@@ -145,6 +145,10 @@ namespace BipartiteGraphFlow {
         );
         min_cov
     );
+    // `calc_min_edge_cover`の別名（非推奨）
+    get_min_edge_cover : BipartiteGraphFlow -> Array Bool = calc_min_edge_cover;
+    DEPRECATED[get_min_edge_cover, "Use `CPLib.Bipartite::BipartiteGraphFlow::calc_min_edge_cover` instead."];
+
 
     // 二部グラフの最小点被覆を取得する
     //
@@ -156,15 +160,19 @@ namespace BipartiteGraphFlow {
     //
     // # Parameters
     // - `max_flow` : 二部グラフの最大フロー
-    get_min_vertex_cover : BipartiteGraphFlow -> (Array Bool, Array Bool);
-    get_min_vertex_cover = |flow| (
+    calc_min_vertex_cover : BipartiteGraphFlow -> (Array Bool, Array Bool);
+    calc_min_vertex_cover = |flow| (
         // `maximize_flow`は、開始地点を左右の頂点の後ろに置いた
         let s = flow.@graph.@left_size + flow.@graph.@right_size;
-        let min_cut = flow.@max_flow.get_min_cut(s); // 第i番目の頂点に残余グラフで到達可能かどうかの配列
+        let min_cut = flow.@max_flow.calc_min_cut(s); // 第i番目の頂点に残余グラフで到達可能かどうかの配列
         let left_cover = range(0, flow.@graph.@left_size).map(|i| !min_cut.@(i)).to_array;
         let right_cover = range(0, flow.@graph.@right_size).map(|i| min_cut.@(flow.@graph.@left_size + i)).to_array;
         (left_cover, right_cover)
     );
+    // `calc_min_vertex_cover`の別名（非推奨）
+    get_min_vertex_cover : BipartiteGraphFlow -> (Array Bool, Array Bool) = calc_min_vertex_cover;
+    DEPRECATED[get_min_vertex_cover, "Use `CPLib.Bipartite::BipartiteGraphFlow::calc_min_vertex_cover` instead."];
+
 
     // 二部グラフの最大独立集合（最大安定集合）を取得する
     // 
@@ -175,11 +183,15 @@ namespace BipartiteGraphFlow {
     // 
     // # Parameters
     // - `max_flow` : 二部グラフの最大フロー
-    get_max_indep_set : BipartiteGraphFlow -> (Array Bool, Array Bool);
-    get_max_indep_set = |flow| (
-        let (left_cover, right_cover) = flow.get_min_vertex_cover;
+    calc_max_indep_set : BipartiteGraphFlow -> (Array Bool, Array Bool);
+    calc_max_indep_set = |flow| (
+        let (left_cover, right_cover) = flow.calc_min_vertex_cover;
         let left_stable = left_cover.map(|x| !x);
         let right_stable = right_cover.map(|x| !x);
         (left_stable, right_stable)
     );
+    // `calc_max_indep_set`の別名（非推奨）
+    get_max_indep_set : BipartiteGraphFlow -> (Array Bool, Array Bool) = calc_max_indep_set;
+    DEPRECATED[get_max_indep_set, "Use `CPLib.Bipartite::BipartiteGraphFlow::calc_max_indep_set` instead."];
+
 }

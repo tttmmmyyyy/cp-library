@@ -11,7 +11,7 @@
 // let (g, flow) = g.maximize_flow(0, 3);
 // assert_eq(|_|"", flow, 3);;
 // assert_eq(|_|"", g.get_flow(e01), 2);;
-// assert_eq(|_|"", g.get_min_cut(0), [true, false, false, false])
+// assert_eq(|_|"", g.calc_min_cut(0), [true, false, false, false])
 // ```
 module CPLib.MaxFlow;
 
@@ -207,8 +207,8 @@ namespace MaxFlowGraph {
     // # Parameters
     // - `s` : 到達を調べる始点の頂点番号
     // - `graph` : グラフ
-    get_min_cut : I64 -> MaxFlowGraph -> Array Bool;
-    get_min_cut = |s, g| (
+    calc_min_cut : I64 -> MaxFlowGraph -> Array Bool;
+    calc_min_cut = |s, g| (
         let level = g._make_residual(g.@_cap)._bfs(g.@_n, s, -1);
         level.to_iter.map(|l| l >= 0).to_array
     );

@@ -28,7 +28,7 @@ import Std::{
 //
 // 容量とコストは`I64`で表す。
 //
-// `maximize_flow_min_cost`、`maximize_flow_min_cost_with_limit`、`calc_min_cost_slope`、`calc_min_cost_slope_with_limit`の制約：
+// `maximize_flow_min_cost`、`maximize_flow_min_cost_with_limit`、`maximize_flow_min_cost_slope`、`maximize_flow_min_cost_slope_with_limit`の制約：
 // - 0 <= s, t < n, s != t
 // - 負の閉路がない：容量が正の辺をたどる閉路で、コストの和が負のものがない。
 //   流した後に辺を足してから再度流すときは、流れている辺の逆向き（コストの符号を反転した辺）も閉路に含める。
@@ -77,7 +77,7 @@ namespace MinCostFlowGraph {
 
     // グラフに辺を追加する
     //
-    // 制約：0 <= from, to < n, cap >= 0。costは負でもよい（負の閉路については、型`MinCostFlowGraph`の説明にある、`maximize_flow_min_cost`、`maximize_flow_min_cost_with_limit`、`calc_min_cost_slope`、`calc_min_cost_slope_with_limit`の制約を見よ）
+    // 制約：0 <= from, to < n, cap >= 0。costは負でもよい（負の閉路については、型`MinCostFlowGraph`の説明にある、`maximize_flow_min_cost`、`maximize_flow_min_cost_with_limit`、`maximize_flow_min_cost_slope`、`maximize_flow_min_cost_slope_with_limit`の制約を見よ）
     //
     // 計算量：ならしO(1)
     //
@@ -94,7 +94,7 @@ namespace MinCostFlowGraph {
     //
     // 辺の番号は、`add_edge`で足した辺も含めて、足した順に0から振られる。
     //
-    // 制約：0 <= from, to < n, cap >= 0。costは負でもよい（負の閉路については、型`MinCostFlowGraph`の説明にある、`maximize_flow_min_cost`、`maximize_flow_min_cost_with_limit`、`calc_min_cost_slope`、`calc_min_cost_slope_with_limit`の制約を見よ）
+    // 制約：0 <= from, to < n, cap >= 0。costは負でもよい（負の閉路については、型`MinCostFlowGraph`の説明にある、`maximize_flow_min_cost`、`maximize_flow_min_cost_with_limit`、`maximize_flow_min_cost_slope`、`maximize_flow_min_cost_slope_with_limit`の制約を見よ）
     //
     // 計算量：ならしO(1)
     //
@@ -185,7 +185,7 @@ namespace MinCostFlowGraph {
     // - `graph` : グラフ
     maximize_flow_min_cost_with_limit : I64 -> I64 -> I64 -> MinCostFlowGraph -> (MinCostFlowGraph, I64, I64);
     maximize_flow_min_cost_with_limit = |s, t, flow_limit, g| (
-        let (g, slope) = g.calc_min_cost_slope_with_limit(s, t, flow_limit);
+        let (g, slope) = g.maximize_flow_min_cost_slope_with_limit(s, t, flow_limit);
         let (flow, cost) = slope.@(slope.@size - 1);
         (g, flow, cost)
     );
@@ -208,12 +208,12 @@ namespace MinCostFlowGraph {
     // - `s` : 流し出す頂点の番号
     // - `t` : 流し込む頂点の番号
     // - `graph` : グラフ
-    calc_min_cost_slope : I64 -> I64 -> MinCostFlowGraph -> (MinCostFlowGraph, Array (I64, I64));
-    calc_min_cost_slope = |s, t, g| g.calc_min_cost_slope_with_limit(s, t, I64::maximum);
+    maximize_flow_min_cost_slope : I64 -> I64 -> MinCostFlowGraph -> (MinCostFlowGraph, Array (I64, I64));
+    maximize_flow_min_cost_slope = |s, t, g| g.maximize_flow_min_cost_slope_with_limit(s, t, I64::maximum);
 
     // 頂点`s`から頂点`t`へ、流した量が上限に達するまで流せるだけ流し、流量ごとの最小コストを折れ線で返す
     //
-    // `calc_min_cost_slope`と同じく、流した後のグラフと、流量ごとの最小コストの折れ点の列を返す。
+    // `maximize_flow_min_cost_slope`と同じく、流した後のグラフと、流量ごとの最小コストの折れ点の列を返す。
     // 最後の点の流量は上限以下である。上限が0以下なら何も流さず[(0, 0)]を返す。
     //
     // 制約：型`MinCostFlowGraph`の説明にある、この関数の制約を見よ
@@ -226,8 +226,8 @@ namespace MinCostFlowGraph {
     // - `t` : 流し込む頂点の番号
     // - `flow_limit` : 流す量の上限
     // - `graph` : グラフ
-    calc_min_cost_slope_with_limit : I64 -> I64 -> I64 -> MinCostFlowGraph -> (MinCostFlowGraph, Array (I64, I64));
-    calc_min_cost_slope_with_limit = |s, t, flow_limit, g| (
+    maximize_flow_min_cost_slope_with_limit : I64 -> I64 -> I64 -> MinCostFlowGraph -> (MinCostFlowGraph, Array (I64, I64));
+    maximize_flow_min_cost_slope_with_limit = |s, t, flow_limit, g| (
         if s == t { undefined("CPLib.MinCostFlow: s and t must differ") };
         if !(0 < flow_limit) { (g, [(0, 0)]) };
         let n = g.@_n;
