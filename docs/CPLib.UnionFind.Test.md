@@ -14,6 +14,12 @@ Type: `Std::IO ()`
 
 Type: `Std::IO ()`
 
+#### test_random
+
+Type: `Random::Random -> Std::IO Random::Random`
+
+要素ごとのグループの番号を持つ素朴な実装と、乱択の操作列で比べる
+
 #### test_speed
 
 Type: `Std::IO ()`

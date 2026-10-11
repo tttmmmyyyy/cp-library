@@ -38,7 +38,7 @@ UnionFind木を作成する
 
 Type: `Std::I64 -> CPLib.UnionFind::UnionFind -> (CPLib.UnionFind::UnionFind, Std::I64)`
 
-指定された要素の親を取得する
+指定された要素の属するグループの代表元を取得する
 
 パス圧縮を行うため、UnionFindの状態も変化する
 
@@ -74,7 +74,7 @@ Type: `CPLib.UnionFind::UnionFind -> (CPLib.UnionFind::UnionFind, Std::Array (St
 
 グループの配列を取得する
 
-グループの配列[g0, g1, g2, ...]を返す
+グループの配列[g0, g1, g2, ...]を返す。各グループの要素は昇順で、グループは最小の要素の昇順に並ぶ。
 
 パス圧縮を行うため、UnionFindの状態も変化する
 
@@ -125,18 +125,6 @@ Type: `Std::I64 -> Std::I64 -> CPLib.UnionFind::UnionFind -> CPLib.UnionFind::Un
 #### UnionFind
 
 Defined as: `type UnionFind = unbox struct { ...fields... }`
-
-##### field `parent`
-
-Type: `Std::Array Std::I64`
-
-##### field `rank`
-
-Type: `Std::Array Std::I64`
-
-##### field `size`
-
-Type: `Std::Array Std::I64`
 
 ## Traits and aliases
 
