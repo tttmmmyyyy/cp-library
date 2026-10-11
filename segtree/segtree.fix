@@ -114,15 +114,14 @@ set = |i, value, tree| (
     let n = tree.@n;
     let i = i + n;
     let tree = tree.mod_elems(set(i, value));
-    // `i`の親ノードをすべて更新
-    loop((i, tree), |(i, tree)|
-        if i == 0 { break $ tree }; // ルートノードに到達したら終了
-        let i = i / 2; // 親ノードに移動
-        let left = tree.@elems.@(i * 2);
-        let right = tree.@elems.@(i * 2 + 1);
+    // `i`の祖先ノードを下から順にすべて更新
+    loop((i / 2, tree), |(p, tree)|
+        if p == 0 { break $ tree }; // 根（添字1）を更新したら終了
+        let left = tree.@elems.@(p * 2);
+        let right = tree.@elems.@(p * 2 + 1);
         let value = Monoid::op(left, right);
-        let tree = tree.mod_elems(set(i, value));
-        continue $ (i, tree)
+        let tree = tree.mod_elems(set(p, value));
+        continue $ (p / 2, tree)
     )
 );
 
