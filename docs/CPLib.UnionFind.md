@@ -28,6 +28,8 @@ UnionFind木を作成する
 
 `0`から`size - 1`までの`size`個の要素を持つUnionFind木を作成する
 
+制約：size >= 0
+
 計算量：O(size)
 
 ##### Parameters
@@ -107,6 +109,8 @@ Type: `Std::I64 -> Std::I64 -> CPLib.UnionFind::UnionFind -> (CPLib.UnionFind::U
 Type: `Std::I64 -> Std::I64 -> CPLib.UnionFind::UnionFind -> CPLib.UnionFind::UnionFind`
 
 2つの要素を同じグループにする
+
+すでに同じグループに属しているなら何もしない。
 
 制約：0 <= x, y < size
 

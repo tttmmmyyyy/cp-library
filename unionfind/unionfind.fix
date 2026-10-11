@@ -13,7 +13,8 @@
 module CPLib.UnionFind;
 
 import Std::{
-    Array, Bool, I64, Array::{fill, mod, push_back, set, @, @size}, Indexable::ixchg, Iterator::{fold, range}
+    loop, Array, Bool, I64, Array::{fill, mod, push_back, set, @, @size}, Indexable::ixchg, Iterator::{fold, range}, 
+    LoopState::{break, continue}
 };
 
 type UnionFind = struct {
@@ -25,6 +26,8 @@ type UnionFind = struct {
 // 
 // `0`から`size - 1`までの`size`個の要素を持つUnionFind木を作成する
 // 
+// 制約：size >= 0
+//
 // 計算量：O(size)
 //
 // # Parameters
@@ -52,22 +55,25 @@ find_parent = |x, uf| (
 
 // 要素`x`の根を求め、通った頂点の親を根に書き換える
 //
-// 大きさの小さい木を大きい木の下につなぐので、木の高さはO(log size)で、再帰はその深さで止まる。
+// 根までたどって根を求めてから、もう一度たどって親を書き換える。親がすでに根の要素には書き込まない。
 //
 // # Parameters
 // - `x` : 対象となる要素
 // - `ps` : 要素ごとの親、または根のときは-(グループの大きさ)
 _find_root : I64 -> Array I64 -> (Array I64, I64);
 _find_root = |x, ps| (
-    let p = ps.@(x);
-    if p < 0 { (ps, x) };
-    let (ps, r) = _find_root(p, ps);
-    // 親がすでに根なら書き込まない
-    if r == p { (ps, r) };
-    (ps.set(x, r), r)
+    let r = loop(x, |v| let p = ps.@(v); if p < 0 { break $ v } else { continue $ p });
+    let ps = loop((x, ps), |(v, ps)|
+        let p = ps.@(v);
+        if p < 0 || p == r { break $ ps };
+        continue $ (p, ps.set(v, r))
+    );
+    (ps, r)
 );
 
 // 2つの要素を同じグループにする
+// 
+// すでに同じグループに属しているなら何もしない。
 // 
 // 制約：0 <= x, y < size
 //
