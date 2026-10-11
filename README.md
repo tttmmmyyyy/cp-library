@@ -49,9 +49,10 @@
    * 例：`get_edge`（O(1)）、`get_group_size`（ならしO(α(n))）、`get_edges`（O(m)、出力の大きさm）、`get_groups`（O(n α(n))、出力の大きさn）
 * `calc_X`：重い処理。計算量が、出力の大きさを超えるもの。
    * 例：`calc_gcd`、`calc_suffix_array`、`calc_sccs`（O(n + m)、出力の大きさn）、`calc_min_cut`（O(n + m)、出力の大きさn）
-* データ構造の中身を変えることが目的の関数（流す、足す、作る）は、その動作の動詞で始めます。
+* データ構造の中身を変えることが目的の関数は、処理に対応した動詞で始めます。
    * 例：`maximize_flow`、`add_edge`、`create`
-* 真偽値を返す問いは`is_X`です。例：`is_prime`、`is_united`
+* 真偽値を返す関数は`is_X`です。
+   * 例：`is_prime`、`is_united`
 
 ## 注意
 
