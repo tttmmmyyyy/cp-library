@@ -28,19 +28,17 @@ trait CapacityLike = Additive + Neg + LessThan + Eq + Inf;
 // 最大フロー問題のグラフの型
 //
 // 型パラメータ`c`は容量の型です。
-//
-// 辺には足した順に0から番号（`I64`）を振る。ac-libraryの`mf_graph`と同じく、`get_edge`などはこの番号で辺を指す。内部では、k番目に足した辺を番号2kで、その逆辺を番号2k + 1で表す。
 type MaxFlowGraph c = struct {
     // 頂点数
-    n : I64,
+    _n : I64,
     // 開始地点
-    s : I64,
+    _s : I64,
     // 終了地点
-    t : I64,
-    // 内部の辺ごとの行き先の頂点（長さは足した辺の数の2倍）
-    to : Array I64,
-    // 内部の辺ごとの残余容量（長さは足した辺の数の2倍）。k番目に足した辺の逆辺の残余容量は、その辺に流れている量に等しい
-    cap : Array c,
+    _t : I64,
+    // 内部の辺ごとの行き先の頂点。k番目に足した辺を内部の辺2kで、その逆辺を内部の辺2k + 1で表す
+    _to : Array I64,
+    // 内部の辺ごとの残余容量。k番目に足した辺の逆辺の残余容量は、その辺に流れている量に等しい
+    _cap : Array c,
 };
 
 // 最大フロー問題のグラフの辺の状態
@@ -67,7 +65,7 @@ namespace MaxFlowGraph {
     // - `s` : 開始頂点番号
     // - `t` : 終了頂点番号
     create : I64 -> I64 -> I64 -> MaxFlowGraph c;
-    create = |n, s, t| MaxFlowGraph { n : n, s : s, t : t, to : [], cap : [] };
+    create = |n, s, t| MaxFlowGraph { _n : n, _s : s, _t : t, _to : [], _cap : [] };
 
     // グラフに辺を追加する
     //
@@ -98,9 +96,10 @@ namespace MaxFlowGraph {
     // - `graph` : グラフ
     add_edge_id : [c : CapacityLike] I64 -> I64 -> c -> MaxFlowGraph c -> (MaxFlowGraph c, I64);
     add_edge_id = |from, to, cap, g| (
-        let id = g.@to.@size / 2;
-        let g = g.mod_to(|ts| ts.push_back(to).push_back(from));
-        let g = g.mod_cap(|cs| cs.push_back(cap).push_back(zero));
+        // 辺は足した順の番号（I64）で指す。ac-libraryのmf_graphのadd_edge、get_edge、change_edgeに合わせている
+        let id = g.@_to.@size / 2;
+        let g = g.mod__to(|ts| ts.push_back(to).push_back(from));
+        let g = g.mod__cap(|cs| cs.push_back(cap).push_back(zero));
         (g, id)
     );
 
@@ -112,7 +111,7 @@ namespace MaxFlowGraph {
     // - `edge_id` : `add_edge_id`で得た辺の番号
     // - `graph` : グラフ
     get_flow : [c : CapacityLike] I64 -> MaxFlowGraph c -> c;
-    get_flow = |i, g| g.@cap.@(2 * i + 1);
+    get_flow = |i, g| g.@_cap.@(2 * i + 1);
 
     // 辺の状態を取得する
     //
@@ -123,8 +122,8 @@ namespace MaxFlowGraph {
     // - `graph` : グラフ
     get_edge : [c : CapacityLike] I64 -> MaxFlowGraph c -> MaxFlowEdge c;
     get_edge = |i, g| (
-        let flow = g.@cap.@(2 * i + 1);
-        MaxFlowEdge { from : g.@to.@(2 * i + 1), to : g.@to.@(2 * i), cap : g.@cap.@(2 * i) + flow, flow : flow }
+        let flow = g.@_cap.@(2 * i + 1);
+        MaxFlowEdge { from : g.@_to.@(2 * i + 1), to : g.@_to.@(2 * i), cap : g.@_cap.@(2 * i) + flow, flow : flow }
     );
 
     // すべての辺の状態を、足した順に並べて取得する
@@ -134,7 +133,7 @@ namespace MaxFlowGraph {
     // # Parameters
     // - `graph` : グラフ
     get_edges : [c : CapacityLike] MaxFlowGraph c -> Array (MaxFlowEdge c);
-    get_edges = |g| range(0, g.@to.@size / 2).map(|i| g.get_edge(i)).to_array;
+    get_edges = |g| range(0, g.@_to.@size / 2).map(|i| g.get_edge(i)).to_array;
 
     // 辺の容量と流れている量を書き換える
     //
@@ -151,12 +150,12 @@ namespace MaxFlowGraph {
     // - `graph` : グラフ
     change_edge : [c : CapacityLike] I64 -> c -> c -> MaxFlowGraph c -> MaxFlowGraph c;
     change_edge = |i, new_cap, new_flow, g| (
-        g.mod_cap(|cs| cs.set(2 * i, new_cap + (-new_flow)).set(2 * i + 1, new_flow))
+        g.mod__cap(|cs| cs.set(2 * i, new_cap + (-new_flow)).set(2 * i + 1, new_flow))
     );
 
     // 開始地点から終了地点へ、流せるだけ流す
     //
-    // 残余グラフと、新たに流した量を返す。何度でも呼べて、2回目以降は前回の残余グラフから流す。
+    // 流した後のグラフと、新たに流した量を返す。何度でも呼べて、2回目以降はそれまでに流した状態から続けて流す。
     //
     // 制約：最大流量 < `Inf::inf`
     //
@@ -169,7 +168,7 @@ namespace MaxFlowGraph {
 
     // 開始地点から終了地点へ、流した量が上限に達するまで、流せるだけ流す
     //
-    // 残余グラフと、新たに流した量（上限以下）を返す。何度でも呼べて、2回目以降は前回の残余グラフから流す。
+    // 流した後のグラフと、新たに流した量（上限以下）を返す。何度でも呼べて、2回目以降はそれまでに流した状態から続けて流す。
     //
     // 計算量：O(n^2 m)。辺の容量がすべて1ならO((n + m) sqrt(m))
     //
@@ -178,10 +177,10 @@ namespace MaxFlowGraph {
     // - `graph` : グラフ
     maximize_flow_with_limit : [c : CapacityLike] c -> MaxFlowGraph c -> (MaxFlowGraph c, c);
     maximize_flow_with_limit = |flow_limit, g| (
-        let n = g.@n;
-        let s = g.@s;
-        let t = g.@t;
-        let (g, cap) = g[^cap].ixchg([]);
+        let n = g.@_n;
+        let s = g.@_s;
+        let t = g.@_t;
+        let (g, cap) = g[^_cap].ixchg([]);
         let res = g._make_residual(cap);
         let (res, flow) = loop((res, zero), |(res, flow)|
             if flow == flow_limit { break $ (res, flow) };
@@ -189,7 +188,7 @@ namespace MaxFlowGraph {
             if level.@(t) < 0 { break $ (res, flow) };
             continue $ res._augment_blocking_flow(level, s, t, flow_limit, flow)
         );
-        (g.set_cap(res._residual_capacities_by_edge_id(cap)), flow)
+        (g.set__cap(res._residual_capacities_by_edge_id(cap)), flow)
     );
 
     // 最小カットを取得する
@@ -203,7 +202,7 @@ namespace MaxFlowGraph {
     // - `graph` : グラフ
     get_min_cut : [c : CapacityLike] MaxFlowGraph c -> Array Bool;
     get_min_cut = |g| (
-        let level = g._make_residual(g.@cap)._bfs(g.@n, g.@s, -1);
+        let level = g._make_residual(g.@_cap)._bfs(g.@_n, g.@_s, -1);
         level.to_iter.map(|l| l >= 0).to_array
     );
 
@@ -212,10 +211,10 @@ namespace MaxFlowGraph {
     // # Parameters
     // - `cap` : 内部の辺の番号ごとの残余容量
     // - `graph` : グラフ
-    _make_residual : [c : CapacityLike] Array c -> MaxFlowGraph c -> ResidualGraph c;
+    _make_residual : [c : CapacityLike] Array c -> MaxFlowGraph c -> _ResidualGraph c;
     _make_residual = |cap, g| (
-        let n = g.@n;
-        let to = g.@to;
+        let n = g.@_n;
+        let to = g.@_to;
         let m2 = to.@size;
         // 内部の辺eの始点は、逆辺e ^ 1の行き先
         let out_degree = range(0, m2).fold(fill(n, 0), |e, deg| deg.mod(to.@(e.bit_xor(1)), |d| d + 1));
@@ -230,7 +229,7 @@ namespace MaxFlowGraph {
             let p = pos.@(e);
             (res_to.set(p, to.@(e)), res_rev.set(p, pos.@(e.bit_xor(1))), res_cap.set(p, cap.@(e)))
         );
-        ResidualGraph { start : start, pos : pos, to : res_to, rev : res_rev, cap : res_cap }
+        _ResidualGraph { start : start, pos : pos, to : res_to, rev : res_rev, cap : res_cap }
     );
 }
 
@@ -238,7 +237,7 @@ namespace MaxFlowGraph {
 //
 // 内部の辺を始点ごとにまとめて並べる（CSR形式）。頂点vから出る辺は、位置[start.@(v), start.@(v + 1))にある。
 // 同じ頂点から出る辺のデータが続けて並ぶので、頂点の辺をたどる読み出しが近い場所に集まる。
-type ResidualGraph c = struct {
+type _ResidualGraph c = struct {
     // 長さが頂点数 + 1の配列。頂点vから出る辺の位置は[start.@(v), start.@(v + 1))
     start : Array I64,
     // 内部の辺の番号ごとの位置
@@ -256,7 +255,7 @@ type ResidualGraph c = struct {
 // # Parameters
 // - `cap` : 書き戻す先の配列（内部の辺の番号ごと）
 // - `res` : 残余グラフ
-_residual_capacities_by_edge_id : Array c -> ResidualGraph c -> Array c;
+_residual_capacities_by_edge_id : Array c -> _ResidualGraph c -> Array c;
 _residual_capacities_by_edge_id = |cap, res| (
     let pos = res.@pos;
     let res_cap = res.@cap;
@@ -272,7 +271,7 @@ _residual_capacities_by_edge_id = |cap, res| (
 // - `s` : 開始地点
 // - `stop` : 距離が付いたら止める頂点
 // - `res` : 残余グラフ
-_bfs : [c : CapacityLike] I64 -> I64 -> I64 -> ResidualGraph c -> Array I64;
+_bfs : [c : CapacityLike] I64 -> I64 -> I64 -> _ResidualGraph c -> Array I64;
 _bfs = |n, s, stop, res| (
     let start = res.@start;
     let to = res.@to;
@@ -308,7 +307,7 @@ _bfs = |n, s, stop, res| (
 // - `flow_limit` : 流す量の上限
 // - `flow` : これまでに流した量
 // - `res` : 残余グラフ
-_augment_blocking_flow : [c : CapacityLike] Array I64 -> I64 -> I64 -> c -> c -> ResidualGraph c -> (ResidualGraph c, c);
+_augment_blocking_flow : [c : CapacityLike] Array I64 -> I64 -> I64 -> c -> c -> _ResidualGraph c -> (_ResidualGraph c, c);
 _augment_blocking_flow = |level, s, t, flow_limit, flow, res| (
     let start = res.@start;
     let to = res.@to;

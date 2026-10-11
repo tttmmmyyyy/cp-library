@@ -153,7 +153,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowGraph c -> (CPLib
 
 開始地点から終了地点へ、流せるだけ流す
 
-残余グラフと、新たに流した量を返す。何度でも呼べて、2回目以降は前回の残余グラフから流す。
+流した後のグラフと、新たに流した量を返す。何度でも呼べて、2回目以降はそれまでに流した状態から続けて流す。
 
 制約：最大流量 < `Inf::inf`
 
@@ -169,7 +169,7 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] c -> CPLib.MaxFlow::MaxFlowGraph c -> (
 
 開始地点から終了地点へ、流した量が上限に達するまで、流せるだけ流す
 
-残余グラフと、新たに流した量（上限以下）を返す。何度でも呼べて、2回目以降は前回の残余グラフから流す。
+流した後のグラフと、新たに流した量（上限以下）を返す。何度でも呼べて、2回目以降はそれまでに流した状態から続けて流す。
 
 計算量：O(n^2 m)。辺の容量がすべて1ならO((n + m) sqrt(m))
 
@@ -219,77 +219,6 @@ Defined as: `type MaxFlowGraph c = unbox struct { ...fields... }`
 最大フロー問題のグラフの型
 
 型パラメータ`c`は容量の型です。
-
-辺には足した順に0から番号（`I64`）を振る。ac-libraryの`mf_graph`と同じく、`get_edge`などはこの番号で辺を指す。内部では、k番目に足した辺を番号2kで、その逆辺を番号2k + 1で表す。
-
-##### field `n`
-
-Type: `Std::I64`
-
-頂点数
-
-##### field `s`
-
-Type: `Std::I64`
-
-開始地点
-
-##### field `t`
-
-Type: `Std::I64`
-
-終了地点
-
-##### field `to`
-
-Type: `Std::Array Std::I64`
-
-内部の辺ごとの行き先の頂点（長さは足した辺の数の2倍）
-
-##### field `cap`
-
-Type: `Std::Array c`
-
-内部の辺ごとの残余容量（長さは足した辺の数の2倍）。k番目に足した辺の逆辺の残余容量は、その辺に流れている量に等しい
-
-#### ResidualGraph
-
-Defined as: `type ResidualGraph c = unbox struct { ...fields... }`
-
-最大フローを求める間の残余グラフ
-
-内部の辺を始点ごとにまとめて並べる（CSR形式）。頂点vから出る辺は、位置[start.@(v), start.@(v + 1))にある。
-同じ頂点から出る辺のデータが続けて並ぶので、頂点の辺をたどる読み出しが近い場所に集まる。
-
-##### field `start`
-
-Type: `Std::Array Std::I64`
-
-長さが頂点数 + 1の配列。頂点vから出る辺の位置は[start.@(v), start.@(v + 1))
-
-##### field `pos`
-
-Type: `Std::Array Std::I64`
-
-内部の辺の番号ごとの位置
-
-##### field `to`
-
-Type: `Std::Array Std::I64`
-
-位置ごとの行き先の頂点
-
-##### field `rev`
-
-Type: `Std::Array Std::I64`
-
-位置ごとの、逆辺の位置
-
-##### field `cap`
-
-Type: `Std::Array c`
-
-位置ごとの残余容量
 
 ## Traits and aliases
 

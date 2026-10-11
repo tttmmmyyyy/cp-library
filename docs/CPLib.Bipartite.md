@@ -162,12 +162,6 @@ Type: `CPLib.Bipartite::BipartiteGraph`
 
 Type: `CPLib.MaxFlow::MaxFlowGraph Std::I64`
 
-##### field `edge_ids`
-
-Type: `Std::Array Std::I64`
-
-二部グラフの辺に対応する最大フローグラフの辺の番号
-
 ## Traits and aliases
 
 ## Trait implementations
