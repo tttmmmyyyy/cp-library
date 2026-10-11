@@ -76,8 +76,9 @@ test_flow_limit = (
     assert_eq(|_|"limit 3", f1, 3);;
     let (graph, f2) = graph.maximize_flow_with_limit(3);
     assert_eq(|_|"the rest", f2, 1);;
-    let (_, f3) = graph.maximize_flow;
+    let (graph, f3) = graph.maximize_flow;
     assert_eq(|_|"nothing left", f3, 0);;
+    assert_eq(|_|"min cut after flowing in parts", graph.get_min_cut, [true, false, false, false]);;
     pure()
 );
 
@@ -175,9 +176,10 @@ test_random = |rng| (
         assert(msg, cut.@(s) && !cut.@(t));;
         let cut_cap = es.to_iter.fold(0, |e, sum| if cut.@(e.@from) && !cut.@(e.@to) { sum + e.@cap } else { sum });
         assert_eq(msg, cut_cap, flow);;
-        // 2 回目は何も流れない
-        let (_, flow2) = graph.maximize_flow;
+        // 2 回目は何も流れず、最小カットも変わらない
+        let (graph, flow2) = graph.maximize_flow;
         assert_eq(msg, flow2, 0);;
+        assert_eq(msg, graph.get_min_cut, cut);;
         pure $ rng
     )
 );
