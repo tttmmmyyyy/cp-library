@@ -10,58 +10,16 @@ Defined in cp-library@0.15.0
 
 ```fix
 // 頂点0から頂点3への最大フロー
-let g = create(4, 0, 3) : MaxFlowGraph I64;
+let g = create(4) : MaxFlowGraph I64;
 let (g, e01) = g.add_edge_id(0, 1, 2);
 let g = g.add_edge(0, 2, 1).add_edge(1, 2, 1).add_edge(1, 3, 1).add_edge(2, 3, 2);
-let (g, flow) = g.maximize_flow;
+let (g, flow) = g.maximize_flow(0, 3);
 assert_eq(|_|"", flow, 3);;
 assert_eq(|_|"", g.get_flow(e01), 2);;
-assert_eq(|_|"", g.get_min_cut, [true, false, false, false])
+assert_eq(|_|"", g.get_min_cut(0), [true, false, false, false])
 ```
 
 ## Values
-
-### namespace CPLib.MaxFlow::Dinic
-
-#### bfs
-
-Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowGraph c -> CPLib.MaxFlow::MaxFlowGraph c`
-
-残余グラフ上でBFSしてレベルを更新する
-
-#### dfs
-
-Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> c -> CPLib.MaxFlow::MaxFlowGraph c -> (CPLib.MaxFlow::MaxFlowGraph c, c)`
-
-開始地点からの最短経路DAG（`level`から得られる）においてDFSして経路を一つ発見し、フロー・残余グラフを更新する。
-
-更新された残余グラフと、新たに流されたフローの量を返す。
-
-一度調べた辺を次の`dfs`で調べないよう、`iter`を更新する。
-
-##### Parameters
-
-- `v` : 現在の頂点
-- `f` : 流してよいフローの量
-- `graph` : グラフ
-
-#### reset_iter
-
-Type: `CPLib.MaxFlow::MaxFlowGraph c -> CPLib.MaxFlow::MaxFlowGraph c`
-
-`iter`をすべて0にリセットする。
-
-#### reset_level
-
-Type: `CPLib.MaxFlow::MaxFlowGraph c -> CPLib.MaxFlow::MaxFlowGraph c`
-
-`level`をすべて-1にリセットする。
-
-#### solve
-
-Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowGraph c -> (CPLib.MaxFlow::MaxFlowGraph c, c)`
-
-最大フローを求める
 
 ### namespace CPLib.MaxFlow::MaxFlowGraph
 
@@ -84,11 +42,11 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxF
 
 #### add_edge_id
 
-Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxFlow::MaxFlowGraph c -> (CPLib.MaxFlow::MaxFlowGraph c, CPLib.Graph::EdgeId)`
+Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxFlow::MaxFlowGraph c -> (CPLib.MaxFlow::MaxFlowGraph c, CPLib.MaxFlow::MaxFlowEdgeId)`
 
-グラフに辺を追加する（辺IDを返す）
+グラフに辺を追加する（辺の番号を返す）
 
-追加された辺の識別子を返す。
+辺の番号は、`add_edge`で足した辺も含めて、足した順に0から振られる。
 
 制約：0 <= from, to < n, cap >= 0
 
@@ -101,72 +59,174 @@ Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxF
 - `cap` : 辺の容量
 - `graph` : グラフ
 
-#### create
+#### change_edge
 
-Type: `Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MaxFlow::MaxFlowGraph c`
+Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowEdgeId -> c -> c -> CPLib.MaxFlow::MaxFlowGraph c -> CPLib.MaxFlow::MaxFlowGraph c`
 
-グラフを作成する
+辺の容量と流れている量を書き換える
 
-制約：0 <= s, t < n, s != t
+他の辺は書き換えないので、辺の両端の頂点で、流れ込む量と流れ出す量が等しくなくなることがある。
 
-計算量：O(n)
-
-##### Parameters
-
-- `n` : 頂点数
-- `s` : 開始頂点番号
-- `t` : 終了頂点番号
-
-#### get_flow
-
-Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.Graph::EdgeId -> CPLib.MaxFlow::MaxFlowGraph c -> c`
-
-ある辺に流れているフローを取得する
+制約：0 <= new_flow <= new_cap
 
 計算量：O(1)
 
 ##### Parameters
 
-- `eid` : `add_edge`で得た辺の識別子
+- `edge_id` : 辺の番号（0 <= edge_id < 足した辺の数）
+- `new_cap` : 新しい容量
+- `new_flow` : 新しい流量
+- `graph` : グラフ
+
+#### create
+
+Type: `Std::I64 -> CPLib.MaxFlow::MaxFlowGraph c`
+
+辺のないグラフを作成する
+
+計算量：O(1)
+
+##### Parameters
+
+- `n` : 頂点数
+
+#### get_edge
+
+Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowEdgeId -> CPLib.MaxFlow::MaxFlowGraph c -> CPLib.MaxFlow::MaxFlowEdge c`
+
+辺の状態を取得する
+
+計算量：O(1)
+
+##### Parameters
+
+- `edge_id` : 辺の番号（0 <= edge_id < 足した辺の数）
+- `graph` : グラフ
+
+#### get_edges
+
+Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowGraph c -> Std::Array (CPLib.MaxFlow::MaxFlowEdge c)`
+
+すべての辺の状態を、足した順に並べて取得する
+
+計算量：O(m)
+
+##### Parameters
+
+- `graph` : グラフ
+
+#### get_flow
+
+Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowEdgeId -> CPLib.MaxFlow::MaxFlowGraph c -> c`
+
+辺に流れている量を取得する
+
+計算量：O(1)
+
+##### Parameters
+
+- `edge_id` : 辺の番号（0 <= edge_id < 足した辺の数）
 - `graph` : グラフ
 
 #### get_min_cut
 
-Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowGraph c -> Std::Array Std::Bool`
+Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> CPLib.MaxFlow::MaxFlowGraph c -> Std::Array Std::Bool`
 
 最小カットを取得する
 
-先に`maximize_flow`を呼び出しておく必要がある。
+残余グラフの上で、頂点`s`から到達できる頂点を`true`、到達できない頂点を`false`とする配列を返す。
+`maximize_flow(s, t)`の後では、`true`の頂点の集合が、`s`と`t`を分ける最小カットの`s`の側になる。
+ただし、`s`と`t`以外のすべての頂点で、流れ込む量と流れ出す量が等しいとき（`change_edge`でこれを崩していないとき）に限る。
 
-`s`から到達可能な頂点を`true`、到達不可能な頂点を`false`とする配列を返す。
+制約：0 <= s < n
 
-注：最小カットにおいて除去される辺の容量の和は、それまでに`maximize_flow`が返したフローの量の和に等しい。
-
-計算量：O(n)
+計算量：O(n + m)
 
 ##### Parameters
 
+- `s` : 到達を調べる始点の頂点番号
 - `graph` : グラフ
 
 #### maximize_flow
 
-Type: `[c : CPLib.MaxFlow::CapacityLike] CPLib.MaxFlow::MaxFlowGraph c -> (CPLib.MaxFlow::MaxFlowGraph c, c)`
+Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> CPLib.MaxFlow::MaxFlowGraph c -> (CPLib.MaxFlow::MaxFlowGraph c, c)`
 
-最大フローを計算する
+頂点`s`から頂点`t`へ、流せるだけ流す
 
-残余グラフと流されたフローの量を返す。
+流した後のグラフと、新たに流した量を返す。何度でも呼べて、2回目以降はそれまでに流した状態から続けて流す。
+`s`と`t`以外の各頂点では、流れ込む量と流れ出す量の差を変えずに流す。
 
-制約：最大流量 < `Inf::inf`
+制約：0 <= s, t < n, s != t、流せる量 < `Inf::inf`
 
-計算量：O(n^2 m)。辺の容量がすべて1ならO((n + m) sqrt(m))
+計算量：O(n^2 m)。辺の容量がすべて1ならO((n + m) sqrt(m))。容量が整数なら、流した量をFとしてO(F (n + m))でもある
 
 ##### Parameters
 
+- `s` : 流し出す頂点の番号
+- `t` : 流し込む頂点の番号
+- `graph` : グラフ
+
+#### maximize_flow_with_limit
+
+Type: `[c : CPLib.MaxFlow::CapacityLike] Std::I64 -> Std::I64 -> c -> CPLib.MaxFlow::MaxFlowGraph c -> (CPLib.MaxFlow::MaxFlowGraph c, c)`
+
+頂点`s`から頂点`t`へ、流した量が上限に達するまで、流せるだけ流す
+
+流した後のグラフと、新たに流した量（上限以下）を返す。上限が0以下なら何も流さず0を返す。何度でも呼べて、2回目以降はそれまでに流した状態から続けて流す。
+`s`と`t`以外の各頂点では、流れ込む量と流れ出す量の差を変えずに流す。
+
+制約：0 <= s, t < n, s != t
+
+計算量：O(n^2 m)。辺の容量がすべて1ならO((n + m) sqrt(m))。容量が整数なら、流した量をFとしてO(F (n + m))でもある
+
+##### Parameters
+
+- `s` : 流し出す頂点の番号
+- `t` : 流し込む頂点の番号
+- `flow_limit` : 流す量の上限
 - `graph` : グラフ
 
 ## Types and aliases
 
 ### namespace CPLib.MaxFlow
+
+#### MaxFlowEdge
+
+Defined as: `type MaxFlowEdge c = unbox struct { ...fields... }`
+
+最大フロー問題のグラフの辺の状態
+
+##### field `from`
+
+Type: `Std::I64`
+
+始点の頂点番号
+
+##### field `to`
+
+Type: `Std::I64`
+
+終点の頂点番号
+
+##### field `cap`
+
+Type: `c`
+
+容量
+
+##### field `flow`
+
+Type: `c`
+
+流れている量
+
+#### MaxFlowEdgeId
+
+Defined as: `type MaxFlowEdgeId = Std::I64`
+
+最大フロー問題のグラフの辺の番号
+
+`add_edge`と`add_edge_id`で足した辺に、足した順に0から振られる。足した辺がm本なら、番号は0以上m未満である。
 
 #### MaxFlowGraph
 
@@ -175,42 +235,6 @@ Defined as: `type MaxFlowGraph c = unbox struct { ...fields... }`
 最大フロー問題のグラフの型
 
 型パラメータ`c`は容量の型です。
-
-##### field `graph`
-
-Type: `CPLib.Graph::Graph (c, Std::I64, c)`
-
-グラフ。`(現在の容量, 逆辺のインデックス, 初期容量)`
-
-##### field `s`
-
-Type: `Std::I64`
-
-開始地点
-
-##### field `t`
-
-Type: `Std::I64`
-
-終了地点
-
-##### field `level`
-
-Type: `Std::Array Std::I64`
-
-レベル。残余グラフ上での開始地点から任意の地点への距離。到達できない場合は-1。
-
-##### field `iter`
-
-Type: `Std::Array Std::I64`
-
-DFSにおいて次に調べる辺のインデックス
-
-##### field `queue`
-
-Type: `Std::Option (RingBuffer::RingBuffer Std::I64)`
-
-BFSで用いるキュー
 
 ## Traits and aliases
 
