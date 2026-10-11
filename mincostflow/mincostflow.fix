@@ -21,7 +21,7 @@ import Std::{
     loop, undefined, Array, Bool, I64,
     Array::{fill, mod, pop_back, push_back, set, to_iter, @, @size}, I64::bit_xor, Indexable::ixchg,
     Iterator::{fold, map, range, to_array}, LessThan::min, LoopState::{break, continue}, Option::as_some,
-    Tuple2::@0, I64::{maximum, minimum}
+    Tuple2::{@0, @1}, I64::{maximum, minimum}
 };
 
 // 最小費用流問題のグラフの型
@@ -286,16 +286,13 @@ namespace MinCostFlowGraph {
             let p = next.@(v);
             (pos.set(e, p), next.set(v, p + 1))
         );
-        let (res_to, res_rev, res_cap, res_cost) = range(0, m2).fold(
-            (fill(m2, 0), fill(m2, 0), fill(m2, 0), fill(m2, 0)), |e, (res_to, res_rev, res_cap, res_cost)|
+        let (arc, rev, res_cap) = range(0, m2).fold((fill(m2, (0, 0)), fill(m2, 0), fill(m2, 0)), |e, (arc, rev, res_cap)|
             let p = pos.@(e);
             let c = cost.@(e / 2);
-            (
-                res_to.set(p, to.@(e)), res_rev.set(p, pos.@(e.bit_xor(1))), res_cap.set(p, cap.@(e)),
-                res_cost.set(p, if e.bit_xor(1) > e { c } else { -c })
-            )
+            let c = if e.bit_xor(1) > e { c } else { -c };
+            (arc.set(p, (to.@(e), c)), rev.set(p, pos.@(e.bit_xor(1))), res_cap.set(p, cap.@(e)))
         );
-        _ResidualGraph { start : start, pos : pos, to : res_to, rev : res_rev, cap : res_cap, cost : res_cost }
+        _ResidualGraph { start : start, pos : pos, arc : arc, rev : rev, cap : res_cap }
     );
 }
 
@@ -307,14 +304,12 @@ type _ResidualGraph = struct {
     start : Array I64,
     // 内部の辺の番号ごとの位置
     pos : Array I64,
-    // 位置ごとの行き先の頂点
-    to : Array I64,
+    // 位置ごとの(行き先の頂点, コスト)。探索で一緒に読むので、1つの配列にまとめる
+    arc : Array (I64, I64),
     // 位置ごとの、逆辺の位置
     rev : Array I64,
     // 位置ごとの残余容量
     cap : Array I64,
-    // 位置ごとのコスト
-    cost : Array I64,
 };
 
 // 残余容量を内部の辺の番号の順に並べ直して返す
@@ -344,19 +339,18 @@ _residual_capacities_by_edge_id = |cap, res| (
 _initial_potential : I64 -> I64 -> I64 -> _ResidualGraph -> Array I64;
 _initial_potential = |n, s, t, res| (
     let start = res.@start;
-    let to = res.@to;
+    let arc = res.@arc;
     let cap = res.@cap;
-    let cost = res.@cost;
-    let m2 = to.@size;
-    if range(0, m2).fold(true, |p, ok| ok && !(cap.@(p) > 0 && cost.@(p) < 0)) { fill(n, 0) };
+    let m2 = arc.@size;
+    if range(0, m2).fold(true, |p, ok| ok && !(cap.@(p) > 0 && arc.@(p).@1 < 0)) { fill(n, 0) };
     // sからの最短路は辺をn - 1本以下しか通らないので、n - 1周で縮まなくなる。n周目にも縮む頂点があれば、負の閉路がある
     let dist = loop((0, fill(n, I64::maximum).set(s, 0)), |(round, dist)|
         let (dist, changed) = range(0, n).fold((dist, false), |v, (dist, changed)|
             if dist.@(v) == I64::maximum { (dist, changed) };
             range(start.@(v), start.@(v + 1)).fold((dist, changed), |p, (dist, changed)|
                 if !(cap.@(p) > 0) { (dist, changed) };
-                let w = to.@(p);
-                let d = dist.@(v) + cost.@(p);
+                let (w, c) = arc.@(p);
+                let d = dist.@(v) + c;
                 if !(d < dist.@(w)) { (dist, changed) };
                 (dist.set(w, d), true)
             )
@@ -383,9 +377,8 @@ _initial_potential = |n, s, t, res| (
 _dijkstra : I64 -> I64 -> I64 -> Array I64 -> _ResidualGraph -> (Array I64, Array I64);
 _dijkstra = |n, s, t, h, res| (
     let start = res.@start;
-    let to = res.@to;
+    let arc = res.@arc;
     let cap = res.@cap;
-    let cost = res.@cost;
     let dist = fill(n, I64::maximum).set(s, 0);
     let prev = fill(n, -1);
     let que = MinBinaryHeap::empty.push(NodeDistance::make(s, 0));
@@ -398,8 +391,8 @@ _dijkstra = |n, s, t, h, res| (
         let hv = h.@(v);
         continue $ range(start.@(v), start.@(v + 1)).fold((que, dist, prev), |p, (que, dist, prev)|
             if !(cap.@(p) > 0) { (que, dist, prev) };
-            let w = to.@(p);
-            let new_d = d + cost.@(p) + hv - h.@(w);
+            let (w, c) = arc.@(p);
+            let new_d = d + c + hv - h.@(w);
             if !(dist.@(w) > new_d) { (que, dist, prev) };
             (que.push(NodeDistance::make(w, new_d)), dist.set(w, new_d), prev.set(w, p))
         )
@@ -418,11 +411,11 @@ _dijkstra = |n, s, t, h, res| (
 // - `res` : 残余グラフ
 _augment_shortest_path : I64 -> I64 -> Array I64 -> I64 -> _ResidualGraph -> (_ResidualGraph, I64);
 _augment_shortest_path = |s, t, prev, flow_rest, res| (
-    let to = res.@to;
+    let arc = res.@arc;
     let rev = res.@rev;
     let (res, cap) = res[^cap].ixchg([]);
     // 辺の位置pの始点は、逆辺の行き先
-    let from = |p| to.@(rev.@(p));
+    let from = |p| arc.@(rev.@(p)).@0;
     let d = loop((t, flow_rest), |(v, d)|
         if v == s { break $ d };
         let p = prev.@(v);
