@@ -45,13 +45,13 @@
 
 値を返す関数の名前は、次の決まりで頭の動詞を選んでいます。`get_`で始まる関数は軽く、何度呼んでも構いません。
 
-- `get_X`：手間が、出力の大きさに比例する程度か、それ以下のもの。持っているものを取り出すか、写して返します。O(1)と、ならしO(α(n))倍の手間も含みます。
-  例：`get_edge`（O(1)）、`get_group_size`（ならしO(α(n))）、`get_edges`（O(m)、出力の大きさm）、`get_groups`（O(n α(n))、出力の大きさn）
-- `calc_X`：出力の大きさを超える手間をかけて計算するもの。log(n)倍もこちらに入ります。
-  例：`calc_gcd`、`calc_suffix_array`、`calc_sccs`（O(n + m)、出力の大きさn）、`calc_min_cut`（O(n + m)、出力の大きさn）
-- データ構造の中身を変えることが目的の関数（流す、足す、作る）は、その動作の動詞で始めます。
-  例：`maximize_flow`、`add_edge`、`create`
-- 真偽値を返す問いは`is_X`です。例：`is_prime`、`is_united`
+* `get_X`：軽い処理。計算量が、出力の大きさに比例する程度か、それ以下のもの。ただしα(n)は定数と同程度と扱います。
+   * 例：`get_edge`（O(1)）、`get_group_size`（ならしO(α(n))）、`get_edges`（O(m)、出力の大きさm）、`get_groups`（O(n α(n))、出力の大きさn）
+* `calc_X`：重い処理。計算量が、出力の大きさを超えるもの。
+   * 例：`calc_gcd`、`calc_suffix_array`、`calc_sccs`（O(n + m)、出力の大きさn）、`calc_min_cut`（O(n + m)、出力の大きさn）
+* データ構造の中身を変えることが目的の関数（流す、足す、作る）は、その動作の動詞で始めます。
+   * 例：`maximize_flow`、`add_edge`、`create`
+* 真偽値を返す問いは`is_X`です。例：`is_prime`、`is_united`
 
 ## 注意
 
