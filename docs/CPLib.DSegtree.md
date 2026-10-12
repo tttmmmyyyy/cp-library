@@ -51,6 +51,54 @@ Type: `Std::Array m -> m -> ((m, m) -> m) -> CPLib.DSegtree::DSegtree m`
 - `unit` : モノイドの単位元
 - `op` : モノイドの演算子
 
+#### calc_max_right
+
+Type: `Std::I64 -> (m -> Std::Bool) -> CPLib.DSegtree::DSegtree m -> Std::I64`
+
+`f(fold(l, r))`が真になる最大の`r`を、木の上の二分探索で求める
+
+制約：0 <= l <= n、`f(unit)`が真、`f`は単調（区間を右に伸ばして偽になったら、さらに伸ばしても真にならない）
+
+計算量：O(log n)。`f`の呼び出しもO(log n)回。
+
+##### Parameters
+
+- `l` : 区間の左端 (0-indexed)
+- `f` : 区間の畳み込みについての条件
+- `tree` : セグメント木
+
+##### Examples
+
+```fix
+let tree = build([1, 2, 3, 4], 0, |(x, y)| x + y);
+// 区間[0, 3)の和は6、区間[0, 4)の和は10
+assert_eq(|_|"", tree.calc_max_right(0, |s| s <= 6), 3)
+```
+
+#### calc_min_left
+
+Type: `Std::I64 -> (m -> Std::Bool) -> CPLib.DSegtree::DSegtree m -> Std::I64`
+
+`f(fold(l, r))`が真になる最小の`l`を、木の上の二分探索で求める
+
+制約：0 <= r <= n、`f(unit)`が真、`f`は単調（区間を左に伸ばして偽になったら、さらに伸ばしても真にならない）
+
+計算量：O(log n)。`f`の呼び出しもO(log n)回。
+
+##### Parameters
+
+- `r` : 区間の右端 (0-indexed, exclusive)
+- `f` : 区間の畳み込みについての条件
+- `tree` : セグメント木
+
+##### Examples
+
+```fix
+let tree = build([1, 2, 3, 4], 0, |(x, y)| x + y);
+// 区間[2, 4)の和は7、区間[1, 4)の和は9
+assert_eq(|_|"", tree.calc_min_left(4, |s| s <= 7), 2)
+```
+
 #### fold
 
 Type: `Std::I64 -> Std::I64 -> CPLib.DSegtree::DSegtree m -> m`
@@ -65,6 +113,18 @@ Type: `Std::I64 -> Std::I64 -> CPLib.DSegtree::DSegtree m -> m`
 
 - `l` : 区間の左端 (0-indexed)
 - `r` : 区間の右端 (0-indexed, exclusive)
+- `tree` : セグメント木
+
+#### fold_all
+
+Type: `CPLib.DSegtree::DSegtree m -> m`
+
+すべての要素の畳み込みを計算する
+
+計算量：O(log n)
+
+##### Parameters
+
 - `tree` : セグメント木
 
 #### init

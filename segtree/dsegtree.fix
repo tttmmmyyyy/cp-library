@@ -15,8 +15,8 @@
 module CPLib.DSegtree;
 
 import Std::{
-    loop, Array, I64, Array::{fill, set, @, @size}, Iterator::{fold, range, range_step}, 
-    LoopState::{break, continue}
+    loop, Array, Bool, I64, Array::{fill, set, @, @size}, I64::{shift_left, shift_right}, 
+    Iterator::{fold, range, range_step}, LoopState::{break, continue}
 };
 
 // この実装にあたっては、[maspyさんの記事](https://maspypy.com/segment-tree-%E3%81%AE%E3%81%8A%E5%8B%89%E5%BC%B71) を参考にしました。良質な解説をありがとうございます。
@@ -147,4 +147,123 @@ fold = |l, r, tree| (
         continue $ (l, r, acc_l, acc_r)
     );
     tree.@op $ (acc_l, acc_r)
+);
+
+// すべての要素の畳み込みを計算する
+//
+// 計算量：O(log n)
+//
+// # Parameters
+// - `tree` : セグメント木
+fold_all : DSegtree m -> m;
+fold_all = |tree| tree.fold(0, tree.@n);
+
+// `f(fold(l, r))`が真になる最大の`r`を、木の上の二分探索で求める
+//
+// 制約：0 <= l <= n、`f(unit)`が真、`f`は単調（区間を右に伸ばして偽になったら、さらに伸ばしても真にならない）
+//
+// 計算量：O(log n)。`f`の呼び出しもO(log n)回。
+//
+// # Parameters
+// - `l` : 区間の左端 (0-indexed)
+// - `f` : 区間の畳み込みについての条件
+// - `tree` : セグメント木
+//
+// # Examples
+// ```fix
+// let tree = build([1, 2, 3, 4], 0, |(x, y)| x + y);
+// // 区間[0, 3)の和は6、区間[0, 4)の和は10
+// assert_eq(|_|"", tree.calc_max_right(0, |s| s <= 6), 3)
+// ```
+calc_max_right : I64 -> (m -> Bool) -> DSegtree m -> I64;
+calc_max_right = |l, f, tree| (
+    let n = tree.@n;
+    let elems = tree.@elems;
+    let op = tree.@op;
+    // `fold(l, n)`が畳み込むノードを左から順に試し、`f`が偽になる最初のノードkと、kより左のノードの畳み込みaccを求める。
+    // 段hで`fold`が畳み込むノードは、lh = ceil((l + n) / 2^h)、rh = floor(2n / 2^h)として、lh < rhの段のうち、
+    // 左端の側ではlh（lhが奇数のとき）、右端の側ではrh - 1（rhが奇数のとき）である。
+    // これらを左から順に並べると、左端の側のノードが低い段から、続いて右端の側のノードが高い段から並ぶ。
+    // 見つからなければkは0とする。
+    let (k, height, acc) = loop((l + n, n * 2, 0, tree.@unit), |(lh, rh, h, acc)|
+        if lh >= rh { break $ (0, h, acc) };
+        if lh % 2 == 1 {
+            let next = op((acc, elems.@(lh)));
+            if !f(next) { break $ (lh, h, acc) };
+            continue $ ((lh + 1).shift_right(1), rh.shift_right(1), h + 1, next)
+        };
+        continue $ ((lh + 1).shift_right(1), rh.shift_right(1), h + 1, acc)
+    );
+    let (k, acc) = if k != 0 { (k, acc) } else {
+        loop((height - 1, acc), |(h, acc)|
+            if h < 0 { break $ (0, acc) };
+            let rh = (n * 2).shift_right(h);
+            if rh % 2 == 0 { continue $ (h - 1, acc) };
+            let next = op((acc, elems.@(rh - 1)));
+            if !f(next) { break $ (rh - 1, acc) };
+            continue $ (h - 1, next)
+        )
+    };
+    if k == 0 { n };
+    // kから葉へ降りる。左の子までの畳み込みがfを満たせば右の子へ、満たさなければ左の子へ進む。
+    loop((k, acc), |(k, acc)|
+        if k >= n { break $ k - n };
+        let next = op((acc, elems.@(k * 2)));
+        if f(next) { continue $ (k * 2 + 1, next) } else { continue $ (k * 2, acc) }
+    )
+);
+
+// `f(fold(l, r))`が真になる最小の`l`を、木の上の二分探索で求める
+//
+// 制約：0 <= r <= n、`f(unit)`が真、`f`は単調（区間を左に伸ばして偽になったら、さらに伸ばしても真にならない）
+//
+// 計算量：O(log n)。`f`の呼び出しもO(log n)回。
+//
+// # Parameters
+// - `r` : 区間の右端 (0-indexed, exclusive)
+// - `f` : 区間の畳み込みについての条件
+// - `tree` : セグメント木
+//
+// # Examples
+// ```fix
+// let tree = build([1, 2, 3, 4], 0, |(x, y)| x + y);
+// // 区間[2, 4)の和は7、区間[1, 4)の和は9
+// assert_eq(|_|"", tree.calc_min_left(4, |s| s <= 7), 2)
+// ```
+calc_min_left : I64 -> (m -> Bool) -> DSegtree m -> I64;
+calc_min_left = |r, f, tree| (
+    let n = tree.@n;
+    let elems = tree.@elems;
+    let op = tree.@op;
+    // `fold(0, r)`が畳み込むノードを右から順に試し、`f`が偽になる最初のノードkと、kより右のノードの畳み込みaccを求める。
+    // 段hで`fold`が畳み込むノードは、lh = ceil(n / 2^h)、rh = floor((r + n) / 2^h)として、lh < rhの段のうち、
+    // 左端の側ではlh（lhが奇数のとき）、右端の側ではrh - 1（rhが奇数のとき）である。
+    // これらを右から順に並べると、右端の側のノードが低い段から、続いて左端の側のノードが高い段から並ぶ。
+    // 見つからなければkは0とする。
+    let (k, height, acc) = loop((n, r + n, 0, tree.@unit), |(lh, rh, h, acc)|
+        if lh >= rh { break $ (0, h, acc) };
+        if rh % 2 == 1 {
+            let next = op((elems.@(rh - 1), acc));
+            if !f(next) { break $ (rh - 1, h, acc) };
+            continue $ ((lh + 1).shift_right(1), rh.shift_right(1), h + 1, next)
+        };
+        continue $ ((lh + 1).shift_right(1), rh.shift_right(1), h + 1, acc)
+    );
+    let (k, acc) = if k != 0 { (k, acc) } else {
+        loop((height - 1, acc), |(h, acc)|
+            if h < 0 { break $ (0, acc) };
+            let lh = (n + 1.shift_left(h) - 1).shift_right(h);
+            if lh % 2 == 0 { continue $ (h - 1, acc) };
+            let next = op((elems.@(lh), acc));
+            if !f(next) { break $ (lh, acc) };
+            continue $ (h - 1, next)
+        )
+    };
+    if k == 0 { 0 };
+    // kから葉へ降りる。右の子からの畳み込みがfを満たせば左の子へ、満たさなければ右の子へ進む。
+    loop((k, acc), |(k, acc)|
+        if k >= n { break $ k + 1 - n };
+        let next = op((elems.@(k * 2 + 1), acc));
+        if f(next) { continue $ (k * 2, next) } else { continue $ (k * 2 + 1, acc) }
+    )
 );

@@ -158,7 +158,7 @@ _recalc_above = |i, tree| (
 @ : I64 -> LDSegtree m a -> m;
 @ = |i, tree| (
     let j = i + tree.@n;
-    // 葉jとその祖先がまだ値に適用していない作用を、深い節点から順に合成する。浅い節点の作用ほど後から加わったものである。
+    // 葉jとその祖先がまだ値に適用していない作用を、深いノードから順に合成する。浅いノードの作用ほど後から加わったものである。
     let act_op = tree.@act_op;
     let lazy = tree.@lazy;
     let a = loop((j, tree.@act_unit), |(k, a)|

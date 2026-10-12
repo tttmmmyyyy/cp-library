@@ -9,6 +9,7 @@ Defined in cp-library@0.15.0
 先ずはwrapper型を作成し、`Monoid`を実装してください。
 あとは、`init`や`build`を使ってセグメント木を作成し、
 `@`で要素を取得、`set`で要素を更新、`fold`で区間の畳み込みを計算できます。
+`fold_all`は全体の畳み込みを、`calc_max_right`と`calc_min_left`は区間の畳み込みが条件を満たす端を計算します。
 ```fix
 import CPLib.Segtree;
 import CPLib.Trait;
@@ -66,6 +67,78 @@ Type: `[m : CPLib.Trait::Monoid] Std::Array m -> CPLib.Segtree::Segtree m`
 
 - `elems` : セグメント木の要素を格納する配列
 
+#### calc_max_right
+
+Type: `[m : CPLib.Trait::Monoid] Std::I64 -> (m -> Std::Bool) -> CPLib.Segtree::Segtree m -> Std::I64`
+
+`f(fold(l, r))`が真になる最大の`r`を、木の上の二分探索で求める
+
+制約：0 <= l <= n、`f(unit)`が真、`f`は単調（区間を右に伸ばして偽になったら、さらに伸ばしても真にならない）
+
+計算量：O(log n)。`f`の呼び出しもO(log n)回。
+
+##### Parameters
+
+- `l` : 区間の左端 (0-indexed)
+- `f` : 区間の畳み込みについての条件
+- `tree` : セグメント木
+
+##### Examples
+
+```fix
+import CPLib.Segtree;
+import CPLib.Trait;
+
+// 加法モノイド
+type Sum = struct { v : I64 };
+impl Sum : Monoid {
+    unit = Sum { v : 0 };
+    op = |lhs, rhs| Sum { v : lhs.@v + rhs.@v };
+}
+
+main : IO () = (
+    let tree = build([1, 2, 3, 4].map(|v| Sum { v }));
+    // 区間[0, 3)の和は6、区間[0, 4)の和は10
+    assert_eq(|_|"", tree.calc_max_right(0, |s| s.@v <= 6), 3)
+);
+```
+
+#### calc_min_left
+
+Type: `[m : CPLib.Trait::Monoid] Std::I64 -> (m -> Std::Bool) -> CPLib.Segtree::Segtree m -> Std::I64`
+
+`f(fold(l, r))`が真になる最小の`l`を、木の上の二分探索で求める
+
+制約：0 <= r <= n、`f(unit)`が真、`f`は単調（区間を左に伸ばして偽になったら、さらに伸ばしても真にならない）
+
+計算量：O(log n)。`f`の呼び出しもO(log n)回。
+
+##### Parameters
+
+- `r` : 区間の右端 (0-indexed, exclusive)
+- `f` : 区間の畳み込みについての条件
+- `tree` : セグメント木
+
+##### Examples
+
+```fix
+import CPLib.Segtree;
+import CPLib.Trait;
+
+// 加法モノイド
+type Sum = struct { v : I64 };
+impl Sum : Monoid {
+    unit = Sum { v : 0 };
+    op = |lhs, rhs| Sum { v : lhs.@v + rhs.@v };
+}
+
+main : IO () = (
+    let tree = build([1, 2, 3, 4].map(|v| Sum { v }));
+    // 区間[2, 4)の和は7、区間[1, 4)の和は9
+    assert_eq(|_|"", tree.calc_min_left(4, |s| s.@v <= 7), 2)
+);
+```
+
 #### fold
 
 Type: `[m : CPLib.Trait::Monoid] Std::I64 -> Std::I64 -> CPLib.Segtree::Segtree m -> m`
@@ -80,6 +153,18 @@ Type: `[m : CPLib.Trait::Monoid] Std::I64 -> Std::I64 -> CPLib.Segtree::Segtree 
 
 - `l` : 区間の左端 (0-indexed)
 - `r` : 区間の右端 (0-indexed, exclusive)
+- `tree` : セグメント木
+
+#### fold_all
+
+Type: `[m : CPLib.Trait::Monoid] CPLib.Segtree::Segtree m -> m`
+
+すべての要素の畳み込みを計算する
+
+計算量：O(log n)
+
+##### Parameters
+
 - `tree` : セグメント木
 
 #### init
