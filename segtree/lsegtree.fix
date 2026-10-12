@@ -65,12 +65,12 @@ import Std::{
 type LSegtree m a = struct {
     // 要素数
     n : I64,
-    // 節点の値の配列
+    // ノードの値の配列
     // 
-    // 1-indexedで運用する：長さは`2n`、第0インデックスは使用しない。節点`k`の子は`2k`と`2k+1`、要素`i`は葉`n+i`。
-    // 葉の値は要素の値である。内部節点`k`の値は`act(_lazy[k], op(_elems[2k], _elems[2k+1]))`に等しい。
+    // 1-indexedで運用する：長さは`2n`、第0インデックスは使用しない。ノード`k`の子は`2k`と`2k+1`、要素`i`は葉`n+i`。
+    // 葉の値は要素の値である。内部ノード`k`の値は`act(_lazy[k], op(_elems[2k], _elems[2k+1]))`に等しい。
     _elems : Array m,
-    // 内部節点の、子にまだ伝搬していない作用の配列
+    // 内部ノードの、子にまだ伝搬していない作用の配列
     // 
     // 1-indexedで運用する：長さは`n`、第0インデックスは使用しない。
     _lazy : Array a,
@@ -111,9 +111,9 @@ build = |elems| (
     LSegtree { _elems : tree, _lazy : lazy, n : n }
 );
 
-// 節点`k`に作用`a`を適用する
+// ノード`k`に作用`a`を適用する
 //
-// 節点の値に作用を適用し、内部節点なら子に伝搬する作用に`a`を合成する。
+// ノードの値に作用を適用し、内部ノードなら子に伝搬する作用に`a`を合成する。
 _apply_at : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> a -> LSegtree m a -> LSegtree m a;
 _apply_at = |k, a, tree| (
     let tree = tree.mod__elems(|elems| elems.set(k, act(a, elems.@(k))));
@@ -121,7 +121,7 @@ _apply_at = |k, a, tree| (
     tree.mod__lazy(|lazy| lazy.set(k, Monoid::op(lazy.@(k), a))) // 右作用
 );
 
-// 内部節点`k`の作用を子に伝搬する
+// 内部ノード`k`の作用を子に伝搬する
 _propagate_at : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> LSegtree m a -> LSegtree m a;
 _propagate_at = |k, tree| (
     let a = tree.@_lazy.@(k);
@@ -129,17 +129,17 @@ _propagate_at = |k, tree| (
     tree.mod__lazy(set(k, Monoid::unit))
 );
 
-// 節点`k`の祖先すべてで、根から順に作用を子に伝搬する
+// ノード`k`の祖先すべてで、根から順に作用を子に伝搬する
 _propagate_above : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> LSegtree m a -> LSegtree m a;
 _propagate_above = |k, tree| (
     let height = 63 - k.count_leading_zeros; // kの根からの深さ
     range_step(height, 0, -1).fold(tree, |h, tree|
-        let j = k.shift_right(h); // kからh個親の節点
+        let j = k.shift_right(h); // kからh個親のノード
         tree._propagate_at(j)
     )
 );
 
-// 節点`k`の祖先すべての値を、下から順に子の値から計算し直す
+// ノード`k`の祖先すべての値を、下から順に子の値から計算し直す
 // 
 // 祖先が子に伝搬していない作用を持たないときに呼ぶ。
 _recalc_above : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> LSegtree m a -> LSegtree m a;
@@ -164,7 +164,7 @@ _recalc_above = |k, tree| (
 @ : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> LSegtree m a -> m;
 @ = |i, tree| (
     let j = i + tree.@n;
-    // 葉jの祖先がまだ伝搬していない作用を、深い節点から順に合成する。浅い節点の作用ほど後から加わったものである。
+    // 葉jの祖先がまだ伝搬していない作用を、深いノードから順に合成する。浅いノードの作用ほど後から加わったものである。
     let lazy = tree.@_lazy;
     let a = loop((j.shift_right(1), Monoid::unit), |(k, a)|
         if k == 0 { break $ a };
@@ -209,7 +209,7 @@ fold = |l, r, tree| (
     let l = l + tree.@n;
     let r = r + tree.@n;
     // l0はlを、r0はrを、奇数になるまで2で割ったもの（r0はさらに1を引く）。
-    // 下の「区間積を計算」のセクションで値を読む節点の祖先は、l0とr0の祖先に含まれる。そこで作用を伝搬させておけばよい。
+    // 下の「区間積を計算」のセクションで値を読むノードの祖先は、l0とr0の祖先に含まれる。そこで作用を伝搬させておけばよい。
     let l0 = l.shift_right(l.count_trailing_zeros);
     let r0 = r.shift_right(r.count_trailing_zeros) - 1;
     let tree = tree._propagate_above(l0);
@@ -267,6 +267,6 @@ act_range = |l, r, a, tree| (
         continue $ (l.shift_right(1), r.shift_right(1), tree)
     );
 
-    // 作用を適用した節点の祖先は、l0とr0の祖先に含まれる。
+    // 作用を適用したノードの祖先は、l0とr0の祖先に含まれる。
     tree._recalc_above(l0)._recalc_above(r0)
 );
