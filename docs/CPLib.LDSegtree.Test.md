@@ -61,7 +61,7 @@ Type: `CPLib.LDSegtree.Test::ShiftAlphabet`
 
 #### act
 
-Type: `(Std::String, CPLib.LDSegtree.Test::ShiftAlphabet) -> Std::String`
+Type: `(CPLib.LDSegtree.Test::ShiftAlphabet, Std::String) -> Std::String`
 
 #### make
 

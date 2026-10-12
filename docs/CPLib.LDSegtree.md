@@ -9,10 +9,10 @@ Defined in cp-library@0.15.0
 
 制約・計算量の n は要素数です。計算量は`op`, `act_op`, `act`がO(1)で動くとしたものです。
 
-制約：作用は次を満たす（`x`, `y`は値、`a`, `b`は作用）
-- act(x, act_unit) = x
-- act(op(x, y), a) = op(act(x, a), act(y, a))
-- act(x, act_op(a, b)) = act(act(x, a), b)
+制約：作用は次を満たす（`a`, `b`は作用、`x`, `y`は値）
+- act(act_unit, x) = x
+- act(a, op(x, y)) = op(act(a, x), act(a, y))
+- act(act_op(a, b), x) = act(b, act(a, x))
 
 ## Examples
 
@@ -22,7 +22,7 @@ let tree = build(
     [1, 2, 3],
     minimum, |(x, y)| max(x, y), // 値モノイド：最大値
     0, |(a, b)| a + b,                // 作用モノイド：加法
-    |(x, a)| x + a                    // 作用：加算
+    |(a, x)| x + a                    // 作用：加算
 );
 let tree = tree.act_range(0, 2, 10); // [11, 12, 3]
 let (_, res) = tree.fold(1, 3);
@@ -52,7 +52,7 @@ Type: `Std::I64 -> Std::I64 -> a -> CPLib.LDSegtree::LDSegtree m a -> CPLib.LDSe
 
 #### build
 
-Type: `Std::Array m -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((m, a) -> m) -> CPLib.LDSegtree::LDSegtree m a`
+Type: `Std::Array m -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((a, m) -> m) -> CPLib.LDSegtree::LDSegtree m a`
 
 要素の配列からセグメント木を作成する
 
@@ -87,7 +87,7 @@ Type: `Std::I64 -> Std::I64 -> CPLib.LDSegtree::LDSegtree m a -> (CPLib.LDSegtre
 
 #### init
 
-Type: `Std::I64 -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((m, a) -> m) -> CPLib.LDSegtree::LDSegtree m a`
+Type: `Std::I64 -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((a, m) -> m) -> CPLib.LDSegtree::LDSegtree m a`
 
 すべての要素が単位元であるような遅延伝搬セグメント木を作成する
 
@@ -162,7 +162,7 @@ Type: `(a, a) -> a`
 
 ##### field `act`
 
-Type: `(m, a) -> m`
+Type: `(a, m) -> m`
 
 右作用
 
