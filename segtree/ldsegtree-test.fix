@@ -59,8 +59,8 @@ namespace ShiftAlphabet {
         make(e, f)
     );
 
-    act : (String, ShiftAlphabet) -> String;
-    act = |(s, a)| (
+    act : (ShiftAlphabet, String) -> String;
+    act = |(a, s)| (
         let bytes = s.get_bytes;
         let bytes = bytes.map(|x| 
             if x == '\0' { x }; // ヌル文字は変換しない
@@ -143,7 +143,7 @@ test_random = |is_build, n, ops, rng| (
             let (rng, b) = rng.generate_I64_nonneg;
             let a = ShiftAlphabet::make(a, b);
             let tree = tree.act_range(l, r, a);
-            let arr = range(l, r).fold(arr, |i, arr| arr.set(i, act $ (arr.@(i), a)));
+            let arr = range(l, r).fold(arr, |i, arr| arr.set(i, act $ (a, arr.@(i))));
             pure $ (tree, arr, rng)
         };
 
