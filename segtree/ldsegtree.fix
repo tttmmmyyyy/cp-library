@@ -146,6 +146,28 @@ _recalc_above = |i, tree| (
     tree.set_elems(elems)
 );
 
+// セグメント木の要素を取得する
+//
+// 制約：0 <= i < n
+//
+// 計算量：O(log n)
+//
+// # Parameters
+// - `i` : インデックス（0-indexed）
+// - `tree` : セグメント木
+@ : I64 -> LDSegtree m a -> m;
+@ = |i, tree| (
+    let j = i + tree.@n;
+    // 葉jとその祖先がまだ値に適用していない作用を、深い節点から順に合成する。浅い節点の作用ほど後から加わったものである。
+    let act_op = tree.@act_op;
+    let lazy = tree.@lazy;
+    let a = loop((j, tree.@act_unit), |(k, a)|
+        if k == 0 { break $ a };
+        continue $ (k.shift_right(1), act_op((a, lazy.@(k))))
+    );
+    tree.@act $ (a, tree.@elems.@(j))
+);
+
 // セグメント木の要素を設定する
 //
 // 制約：0 <= i < n

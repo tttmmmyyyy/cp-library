@@ -1,7 +1,7 @@
 module CPLib.LDSegtree.Test;
 
 import CPLib.Arithmetic::pmod;
-import CPLib.LDSegtree::{act_range, build, fold, init, set, LDSegtree};
+import CPLib.LDSegtree::{act_range, build, fold, init, set, @, LDSegtree};
 import Random::{generate_I64_nonneg, init_by_seed, Random};
 import Std::{
     Bool, I64, IO, String, ToString, Array::{fill, push_back, set, @}, 
@@ -146,6 +146,9 @@ test_random = |is_build, n, ops, rng| (
             let arr = range(l, r).fold(arr, |i, arr| arr.set(i, act $ (a, arr.@(i))));
             pure $ (tree, arr, rng)
         };
+
+        // すべての要素を@で読む
+        range(0, n).fold_m((), |i, _| assert_eq(|_|"ldsegtree at", tree.@(i), arr.@(i)));;
 
         // foldを実行
         let (rng, l) = rng.generate_I64_nonneg;

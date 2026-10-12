@@ -1,7 +1,5 @@
 // 遅延伝搬セグメント木（右作用）
 // 
-// ある要素の値を取得する関数`@`はないので、もし必要なら`fold(i, i+1)`を使うこと。
-//
 // 制約・計算量の n は要素数です。計算量は各モノイドの`op`と`act`がO(1)で動くとしたものです。
 //
 // 制約：作用は次を満たす（`a`, `b`は作用、`x`, `y`は値）
@@ -152,6 +150,27 @@ _recalc_above = |k, tree| (
         let tree = tree.mod__elems(set(p, elem));
         continue $ (p.shift_right(1), tree)
     )
+);
+
+// セグメント木の要素を取得する
+//
+// 制約：0 <= i < n
+//
+// 計算量：O(log n)
+//
+// # Parameters
+// - `i` : インデックス（0-indexed）
+// - `tree` : セグメント木
+@ : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> LSegtree m a -> m;
+@ = |i, tree| (
+    let j = i + tree.@n;
+    // 葉jの祖先がまだ伝搬していない作用を、深い節点から順に合成する。浅い節点の作用ほど後から加わったものである。
+    let lazy = tree.@_lazy;
+    let a = loop((j.shift_right(1), Monoid::unit), |(k, a)|
+        if k == 0 { break $ a };
+        continue $ (k.shift_right(1), Monoid::op(a, lazy.@(k)))
+    );
+    act(a, tree.@_elems.@(j))
 );
 
 // セグメント木の要素を設定する

@@ -4,8 +4,6 @@ Defined in cp-library@0.15.0
 
 遅延伝搬セグメント木（右作用）
 
-ある要素の値を取得する関数`@`はないので、もし必要なら`fold(i, i+1)`を使うこと。
-
 制約・計算量の n は要素数です。計算量は各モノイドの`op`と`act`がO(1)で動くとしたものです。
 
 制約：作用は次を満たす（`a`, `b`は作用、`x`, `y`は値）
@@ -58,6 +56,21 @@ main : IO () = (
 ## Values
 
 ### namespace CPLib.LSegtree
+
+#### @
+
+Type: `[a : CPLib.Trait::Action, a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoid, CPLib.Trait::Action::Set a = m] Std::I64 -> CPLib.LSegtree::LSegtree m a -> m`
+
+セグメント木の要素を取得する
+
+制約：0 <= i < n
+
+計算量：O(log n)
+
+##### Parameters
+
+- `i` : インデックス（0-indexed）
+- `tree` : セグメント木
 
 #### act_range
 

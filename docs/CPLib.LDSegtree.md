@@ -33,6 +33,21 @@ assert_eq(|_|"", res, 12)
 
 ### namespace CPLib.LDSegtree
 
+#### @
+
+Type: `Std::I64 -> CPLib.LDSegtree::LDSegtree m a -> m`
+
+セグメント木の要素を取得する
+
+制約：0 <= i < n
+
+計算量：O(log n)
+
+##### Parameters
+
+- `i` : インデックス（0-indexed）
+- `tree` : セグメント木
+
 #### act_range
 
 Type: `Std::I64 -> Std::I64 -> a -> CPLib.LDSegtree::LDSegtree m a -> CPLib.LDSegtree::LDSegtree m a`
