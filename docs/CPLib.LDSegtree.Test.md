@@ -30,7 +30,16 @@ Type: `Std::IO ()`
 
 #### test_random
 
-Type: `Std::Bool -> Random::Random -> Std::IO Random::Random`
+Type: `Std::Bool -> Std::I64 -> Std::I64 -> Random::Random -> Std::IO Random::Random`
+
+n要素のセグメント木に対してランダムな操作をops回行い、foldの結果を愚直な計算と比べる
+
+##### Parameters
+
+- `is_build` : セグメント木をbuildで構築するかどうか。そうでないときはinitで構築する
+- `n` : 要素数
+- `ops` : 操作の回数
+- `rng` : 乱数生成器
 
 #### test_speed
 

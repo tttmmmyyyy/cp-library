@@ -152,22 +152,6 @@ Type: `Std::I64`
 
 要素数
 
-##### field `elems`
-
-Type: `Std::Array m`
-
-値の配列
-
-1-indexedで運用する：長さは`2n`、第0インデックスは使用しない。
-
-##### field `lazy`
-
-Type: `Std::Array a`
-
-遅延されている作用の配列
-
-1-indexedで運用する：長さは`2n`、第0インデックスは使用しない。
-
 ## Traits and aliases
 
 ## Trait implementations

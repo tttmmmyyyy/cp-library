@@ -18,8 +18,12 @@ import Std::{
 test : IO ();
 test = (
     let rng = Random::init_by_seed(0_U64);
-    let rng = *test_random(false, rng);
-    let rng = *test_random(true, rng);
+    let rng = *test_random(false, 100, 1000, rng);
+    let rng = *test_random(true, 100, 1000, rng);
+    let rng = *range(1, 18).fold_m(rng, |n, rng|
+        let rng = *test_random(false, n, 200, rng);
+        test_random(true, n, 200, rng)
+    );
     test_empty;;
 
     test_speed;;
@@ -135,10 +139,15 @@ test_empty = (
     assert_eq(|_|"lsegtree empty", v, StrConcat::make(""))
 );
 
-test_random : Bool -> Random -> IO Random;
-test_random = |is_build, rng| (
-    // n要素のセグメント木に対してランダムな操作を行う
-    let n = 100;
+// n要素のセグメント木に対してランダムな操作をops回行い、foldの結果を愚直な計算と比べる
+//
+// # Parameters
+// - `is_build` : セグメント木をbuildで構築するかどうか。そうでないときはinitで構築する
+// - `n` : 要素数
+// - `ops` : 操作の回数
+// - `rng` : 乱数生成器
+test_random : Bool -> I64 -> I64 -> Random -> IO Random;
+test_random = |is_build, n, ops, rng| (
 
     let (tree, arr) = if !is_build {
         let arr = fill(n, StrConcat::make(""));
@@ -151,7 +160,7 @@ test_random = |is_build, rng| (
         (LSegtree::build(arr), arr)
     };
 
-    let (_1, _2, rng) = *range(0, 1000).fold_m((tree, arr, rng), |_, (tree, arr, rng)|
+    let (_1, _2, rng) = *range(0, ops).fold_m((tree, arr, rng), |_, (tree, arr, rng)|
         let (rng, dice) = rng.generate_I64_nonneg;
         let dice = dice % 2;
         let (tree, arr, rng) = *if dice == 0 {
