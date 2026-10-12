@@ -55,15 +55,9 @@ Type: `Std::Array m -> m -> ((m, m) -> m) -> CPLib.DSegtree::DSegtree m`
 
 Type: `Std::I64 -> (m -> Std::Bool) -> CPLib.DSegtree::DSegtree m -> Std::I64`
 
-左端を`l`に固定して、区間の畳み込みが`f`を満たす右端を、木の上の二分探索で求める
+`f(fold(l, r))`が真になる最大の`r`を、木の上の二分探索で求める
 
-次の2つを満たす`r`を返す。
-- `r == l`であるか、`f(fold(l, r))`が真
-- `r == n`であるか、`f(fold(l, r + 1))`が偽
-
-`f`が単調なら（区間を右に伸ばして偽になったら、さらに伸ばしても真にならないなら）、これは`f(fold(l, r))`が真になる最大の`r`である。
-
-制約：0 <= l <= n、`f(unit)`が真
+制約：0 <= l <= n、`f(unit)`が真、`f`は単調（区間を右に伸ばして偽になったら、さらに伸ばしても真にならない）
 
 計算量：O(log n)。`f`の呼び出しもO(log n)回。
 
@@ -73,19 +67,21 @@ Type: `Std::I64 -> (m -> Std::Bool) -> CPLib.DSegtree::DSegtree m -> Std::I64`
 - `f` : 区間の畳み込みについての条件
 - `tree` : セグメント木
 
+##### Examples
+
+```fix
+let tree = build([1, 2, 3, 4], 0, |(x, y)| x + y);
+// 区間[0, 3)の和は6、区間[0, 4)の和は10
+assert_eq(|_|"", tree.calc_max_right(0, |s| s <= 6), 3)
+```
+
 #### calc_min_left
 
 Type: `Std::I64 -> (m -> Std::Bool) -> CPLib.DSegtree::DSegtree m -> Std::I64`
 
-右端を`r`に固定して、区間の畳み込みが`f`を満たす左端を、木の上の二分探索で求める
+`f(fold(l, r))`が真になる最小の`l`を、木の上の二分探索で求める
 
-次の2つを満たす`l`を返す。
-- `l == r`であるか、`f(fold(l, r))`が真
-- `l == 0`であるか、`f(fold(l - 1, r))`が偽
-
-`f`が単調なら（区間を左に伸ばして偽になったら、さらに伸ばしても真にならないなら）、これは`f(fold(l, r))`が真になる最小の`l`である。
-
-制約：0 <= r <= n、`f(unit)`が真
+制約：0 <= r <= n、`f(unit)`が真、`f`は単調（区間を左に伸ばして偽になったら、さらに伸ばしても真にならない）
 
 計算量：O(log n)。`f`の呼び出しもO(log n)回。
 
@@ -94,6 +90,14 @@ Type: `Std::I64 -> (m -> Std::Bool) -> CPLib.DSegtree::DSegtree m -> Std::I64`
 - `r` : 区間の右端 (0-indexed, exclusive)
 - `f` : 区間の畳み込みについての条件
 - `tree` : セグメント木
+
+##### Examples
+
+```fix
+let tree = build([1, 2, 3, 4], 0, |(x, y)| x + y);
+// 区間[2, 4)の和は7、区間[1, 4)の和は9
+assert_eq(|_|"", tree.calc_min_left(4, |s| s <= 7), 2)
+```
 
 #### fold
 

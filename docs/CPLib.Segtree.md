@@ -71,15 +71,9 @@ Type: `[m : CPLib.Trait::Monoid] Std::Array m -> CPLib.Segtree::Segtree m`
 
 Type: `[m : CPLib.Trait::Monoid] Std::I64 -> (m -> Std::Bool) -> CPLib.Segtree::Segtree m -> Std::I64`
 
-左端を`l`に固定して、区間の畳み込みが`f`を満たす右端を、木の上の二分探索で求める
+`f(fold(l, r))`が真になる最大の`r`を、木の上の二分探索で求める
 
-次の2つを満たす`r`を返す。
-- `r == l`であるか、`f(fold(l, r))`が真
-- `r == n`であるか、`f(fold(l, r + 1))`が偽
-
-`f`が単調なら（区間を右に伸ばして偽になったら、さらに伸ばしても真にならないなら）、これは`f(fold(l, r))`が真になる最大の`r`である。
-
-制約：0 <= l <= n、`f(unit)`が真
+制約：0 <= l <= n、`f(unit)`が真、`f`は単調（区間を右に伸ばして偽になったら、さらに伸ばしても真にならない）
 
 計算量：O(log n)。`f`の呼び出しもO(log n)回。
 
@@ -89,19 +83,33 @@ Type: `[m : CPLib.Trait::Monoid] Std::I64 -> (m -> Std::Bool) -> CPLib.Segtree::
 - `f` : 区間の畳み込みについての条件
 - `tree` : セグメント木
 
+##### Examples
+
+```fix
+import CPLib.Segtree;
+import CPLib.Trait;
+
+// 加法モノイド
+type Sum = struct { v : I64 };
+impl Sum : Monoid {
+    unit = Sum { v : 0 };
+    op = |lhs, rhs| Sum { v : lhs.@v + rhs.@v };
+}
+
+main : IO () = (
+    let tree = build([1, 2, 3, 4].map(|v| Sum { v }));
+    // 区間[0, 3)の和は6、区間[0, 4)の和は10
+    assert_eq(|_|"", tree.calc_max_right(0, |s| s.@v <= 6), 3)
+);
+```
+
 #### calc_min_left
 
 Type: `[m : CPLib.Trait::Monoid] Std::I64 -> (m -> Std::Bool) -> CPLib.Segtree::Segtree m -> Std::I64`
 
-右端を`r`に固定して、区間の畳み込みが`f`を満たす左端を、木の上の二分探索で求める
+`f(fold(l, r))`が真になる最小の`l`を、木の上の二分探索で求める
 
-次の2つを満たす`l`を返す。
-- `l == r`であるか、`f(fold(l, r))`が真
-- `l == 0`であるか、`f(fold(l - 1, r))`が偽
-
-`f`が単調なら（区間を左に伸ばして偽になったら、さらに伸ばしても真にならないなら）、これは`f(fold(l, r))`が真になる最小の`l`である。
-
-制約：0 <= r <= n、`f(unit)`が真
+制約：0 <= r <= n、`f(unit)`が真、`f`は単調（区間を左に伸ばして偽になったら、さらに伸ばしても真にならない）
 
 計算量：O(log n)。`f`の呼び出しもO(log n)回。
 
@@ -110,6 +118,26 @@ Type: `[m : CPLib.Trait::Monoid] Std::I64 -> (m -> Std::Bool) -> CPLib.Segtree::
 - `r` : 区間の右端 (0-indexed, exclusive)
 - `f` : 区間の畳み込みについての条件
 - `tree` : セグメント木
+
+##### Examples
+
+```fix
+import CPLib.Segtree;
+import CPLib.Trait;
+
+// 加法モノイド
+type Sum = struct { v : I64 };
+impl Sum : Monoid {
+    unit = Sum { v : 0 };
+    op = |lhs, rhs| Sum { v : lhs.@v + rhs.@v };
+}
+
+main : IO () = (
+    let tree = build([1, 2, 3, 4].map(|v| Sum { v }));
+    // 区間[2, 4)の和は7、区間[1, 4)の和は9
+    assert_eq(|_|"", tree.calc_min_left(4, |s| s.@v <= 7), 2)
+);
+```
 
 #### fold
 

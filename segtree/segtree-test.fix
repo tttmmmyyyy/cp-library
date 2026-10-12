@@ -254,7 +254,7 @@ test_speed = (
 
 // fold_all、calc_max_right、calc_min_leftが、文書の条件を満たす値を返すことのテスト
 //
-// 要素数0から20の木で、すべての端について調べる。条件には、単調なもの（文字が昇順に並んでいる）と、単調でないもの（長さを3で割った余りが1でない）を使う。
+// 要素数0から20の木で、すべての端について調べる。条件には、文字が昇順に並んでいることと、長さが3以下であることを使う。
 test_search : Random -> IO Random;
 test_search = |rng| (
     range(0, 21).fold_m(rng, |n, rng|
@@ -265,7 +265,7 @@ test_search = |rng| (
         let tree = Segtree::build(arr);
         let naive = |(l, r)| range(l, r).fold(Monoid::unit, |i, acc| Monoid::op(acc, arr.@(i)));
         assert_eq(|_|"segtree fold_all", tree.fold_all, naive((0, n)));;
-        let conds = [|x| is_sorted(x.@v), |x| x.@v.@size % 3 != 1];
+        let conds = [|x| is_sorted(x.@v), |x| x.@v.@size <= 3];
         conds.to_iter.fold_m((), |f, _|
             range(0, n + 1).fold_m((), |e, _|
                 let r = tree.calc_max_right(e, f);
