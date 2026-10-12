@@ -51,6 +51,50 @@ Type: `Std::Array m -> m -> ((m, m) -> m) -> CPLib.DSegtree::DSegtree m`
 - `unit` : モノイドの単位元
 - `op` : モノイドの演算子
 
+#### calc_max_right
+
+Type: `Std::I64 -> (m -> Std::Bool) -> CPLib.DSegtree::DSegtree m -> Std::I64`
+
+左端を`l`に固定して、区間の畳み込みが`f`を満たす右端を、木の上の二分探索で求める
+
+次の2つを満たす`r`を返す。
+- `r == l`であるか、`f(fold(l, r))`が真
+- `r == n`であるか、`f(fold(l, r + 1))`が偽
+
+`f`が単調なら（区間を右に伸ばして偽になったら、さらに伸ばしても真にならないなら）、これは`f(fold(l, r))`が真になる最大の`r`である。
+
+制約：0 <= l <= n、`f(unit)`が真
+
+計算量：O(log n)。`f`の呼び出しもO(log n)回。
+
+##### Parameters
+
+- `l` : 区間の左端 (0-indexed)
+- `f` : 区間の畳み込みについての条件
+- `tree` : セグメント木
+
+#### calc_min_left
+
+Type: `Std::I64 -> (m -> Std::Bool) -> CPLib.DSegtree::DSegtree m -> Std::I64`
+
+右端を`r`に固定して、区間の畳み込みが`f`を満たす左端を、木の上の二分探索で求める
+
+次の2つを満たす`l`を返す。
+- `l == r`であるか、`f(fold(l, r))`が真
+- `l == 0`であるか、`f(fold(l - 1, r))`が偽
+
+`f`が単調なら（区間を左に伸ばして偽になったら、さらに伸ばしても真にならないなら）、これは`f(fold(l, r))`が真になる最小の`l`である。
+
+制約：0 <= r <= n、`f(unit)`が真
+
+計算量：O(log n)。`f`の呼び出しもO(log n)回。
+
+##### Parameters
+
+- `r` : 区間の右端 (0-indexed, exclusive)
+- `f` : 区間の畳み込みについての条件
+- `tree` : セグメント木
+
 #### fold
 
 Type: `Std::I64 -> Std::I64 -> CPLib.DSegtree::DSegtree m -> m`
@@ -65,6 +109,18 @@ Type: `Std::I64 -> Std::I64 -> CPLib.DSegtree::DSegtree m -> m`
 
 - `l` : 区間の左端 (0-indexed)
 - `r` : 区間の右端 (0-indexed, exclusive)
+- `tree` : セグメント木
+
+#### fold_all
+
+Type: `CPLib.DSegtree::DSegtree m -> m`
+
+すべての要素の畳み込みを計算する
+
+計算量：O(log n)
+
+##### Parameters
+
 - `tree` : セグメント木
 
 #### init

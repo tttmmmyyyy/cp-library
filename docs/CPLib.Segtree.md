@@ -9,6 +9,7 @@ Defined in cp-library@0.15.0
 先ずはwrapper型を作成し、`Monoid`を実装してください。
 あとは、`init`や`build`を使ってセグメント木を作成し、
 `@`で要素を取得、`set`で要素を更新、`fold`で区間の畳み込みを計算できます。
+`fold_all`は全体の畳み込みを、`calc_max_right`と`calc_min_left`は区間の畳み込みが条件を満たす端を計算します。
 ```fix
 import CPLib.Segtree;
 import CPLib.Trait;
@@ -66,6 +67,50 @@ Type: `[m : CPLib.Trait::Monoid] Std::Array m -> CPLib.Segtree::Segtree m`
 
 - `elems` : セグメント木の要素を格納する配列
 
+#### calc_max_right
+
+Type: `[m : CPLib.Trait::Monoid] Std::I64 -> (m -> Std::Bool) -> CPLib.Segtree::Segtree m -> Std::I64`
+
+左端を`l`に固定して、区間の畳み込みが`f`を満たす右端を、木の上の二分探索で求める
+
+次の2つを満たす`r`を返す。
+- `r == l`であるか、`f(fold(l, r))`が真
+- `r == n`であるか、`f(fold(l, r + 1))`が偽
+
+`f`が単調なら（区間を右に伸ばして偽になったら、さらに伸ばしても真にならないなら）、これは`f(fold(l, r))`が真になる最大の`r`である。
+
+制約：0 <= l <= n、`f(unit)`が真
+
+計算量：O(log n)。`f`の呼び出しもO(log n)回。
+
+##### Parameters
+
+- `l` : 区間の左端 (0-indexed)
+- `f` : 区間の畳み込みについての条件
+- `tree` : セグメント木
+
+#### calc_min_left
+
+Type: `[m : CPLib.Trait::Monoid] Std::I64 -> (m -> Std::Bool) -> CPLib.Segtree::Segtree m -> Std::I64`
+
+右端を`r`に固定して、区間の畳み込みが`f`を満たす左端を、木の上の二分探索で求める
+
+次の2つを満たす`l`を返す。
+- `l == r`であるか、`f(fold(l, r))`が真
+- `l == 0`であるか、`f(fold(l - 1, r))`が偽
+
+`f`が単調なら（区間を左に伸ばして偽になったら、さらに伸ばしても真にならないなら）、これは`f(fold(l, r))`が真になる最小の`l`である。
+
+制約：0 <= r <= n、`f(unit)`が真
+
+計算量：O(log n)。`f`の呼び出しもO(log n)回。
+
+##### Parameters
+
+- `r` : 区間の右端 (0-indexed, exclusive)
+- `f` : 区間の畳み込みについての条件
+- `tree` : セグメント木
+
 #### fold
 
 Type: `[m : CPLib.Trait::Monoid] Std::I64 -> Std::I64 -> CPLib.Segtree::Segtree m -> m`
@@ -80,6 +125,18 @@ Type: `[m : CPLib.Trait::Monoid] Std::I64 -> Std::I64 -> CPLib.Segtree::Segtree 
 
 - `l` : 区間の左端 (0-indexed)
 - `r` : 区間の右端 (0-indexed, exclusive)
+- `tree` : セグメント木
+
+#### fold_all
+
+Type: `[m : CPLib.Trait::Monoid] CPLib.Segtree::Segtree m -> m`
+
+すべての要素の畳み込みを計算する
+
+計算量：O(log n)
+
+##### Parameters
+
 - `tree` : セグメント木
 
 #### init

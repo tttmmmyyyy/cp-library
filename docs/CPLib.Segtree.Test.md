@@ -6,6 +6,12 @@ Defined in cp-library@0.15.0
 
 ### namespace CPLib.Segtree.Test
 
+#### is_sorted
+
+Type: `Std::String -> Std::Bool`
+
+文字列の文字が昇順に並んでいるか
+
 #### test
 
 Type: `Std::IO ()`
@@ -26,6 +32,14 @@ Type: `Std::Bool -> Random::Random -> Std::IO Random::Random`
 
 - `is_build` : セグメント木をbuildで構築するかどうか。そうでないときはinitで構築する
 - `rng` : 乱数生成器
+
+#### test_search
+
+Type: `Random::Random -> Std::IO Random::Random`
+
+fold_all、calc_max_right、calc_min_leftが、文書の条件を満たす値を返すことのテスト
+
+要素数0から20の木で、すべての端について調べる。条件には、単調なもの（文字が昇順に並んでいる）と、単調でないもの（長さを3で割った余りが1でない）を使う。
 
 #### test_set_leaves_index_zero
 
