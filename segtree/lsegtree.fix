@@ -53,7 +53,7 @@ module CPLib.LSegtree;
 
 import CPLib.Trait::{Action, Monoid, Action::{act, Set}, Monoid::{op, unit}};
 import Std::{
-    loop, Array, I64, Array::{fill, set, @, @size}, I64::{count_leading_zeros, count_trailing_zeros, shift_right}, 
+    loop, Array, Bool, I64, Array::{fill, set, @, @size}, I64::{count_leading_zeros, count_trailing_zeros, shift_left, shift_right}, 
     Iterator::{fold, range, range_step}, LoopState::{break, continue}
 };
 
@@ -152,6 +152,41 @@ _recalc_above = |k, tree| (
     )
 );
 
+// 葉`l`から葉`r`の手前までの畳み込みを、ノードの値から計算する
+//
+// 値を読むノードの祖先が、子に伝搬していない作用を持たないときに呼ぶ。
+_fold_nodes : [m : Monoid] I64 -> I64 -> LSegtree m a -> m;
+_fold_nodes = |l, r, tree| (
+    let elems = tree.@_elems;
+    let (acc_l, acc_r) = loop((l, r, Monoid::unit, Monoid::unit), |(l, r, acc_l, acc_r)|
+        if l >= r {
+            break $ (acc_l, acc_r)
+        };
+        let (l, acc_l) = if l % 2 == 0 { (l, acc_l) } else {
+            (l + 1, Monoid::op(acc_l, elems.@(l)))
+        };
+        let (r, acc_r) = if r % 2 == 0 { (r, acc_r) } else {
+            let r = r - 1;
+            (r, Monoid::op(elems.@(r), acc_r))
+        };
+        continue $ (l.shift_right(1), r.shift_right(1), acc_l, acc_r)
+    );
+    Monoid::op(acc_l, acc_r)
+);
+
+// 葉`j`の祖先がまだ伝搬していない作用を、段ごとに合成した配列を作る
+//
+// 第`h`要素は、`j`の祖先のうち`j`から`h`段より上にあるものの作用を、深いノードから順に合成したものである。
+// 浅いノードの作用ほど後から加わったものなので、`j`の`h`段上の祖先とその兄弟は、値にこの作用を適用すると最新の値になる。
+_pending_above : [a : Monoid] I64 -> LSegtree m a -> Array a;
+_pending_above = |j, tree| (
+    let lazy = tree.@_lazy;
+    let height = 63 - j.count_leading_zeros; // jの根からの深さ
+    range_step(height - 1, -1, -1).fold(fill(height + 1, Monoid::unit), |h, pending|
+        pending.set(h, Monoid::op(lazy.@(j.shift_right(h + 1)), pending.@(h + 1)))
+    )
+);
+
 // セグメント木の要素を取得する
 //
 // 制約：0 <= i < n
@@ -209,29 +244,12 @@ fold = |l, r, tree| (
     let l = l + tree.@n;
     let r = r + tree.@n;
     // l0はlを、r0はrを、奇数になるまで2で割ったもの（r0はさらに1を引く）。
-    // 下の「区間積を計算」のセクションで値を読むノードの祖先は、l0とr0の祖先に含まれる。そこで作用を伝搬させておけばよい。
+    // `_fold_nodes`が値を読むノードの祖先は、l0とr0の祖先に含まれる。そこで作用を伝搬させておけばよい。
     let l0 = l.shift_right(l.count_trailing_zeros);
     let r0 = r.shift_right(r.count_trailing_zeros) - 1;
     let tree = tree._propagate_above(l0);
     let tree = tree._propagate_above(r0);
-
-    // 区間積を計算
-    let elems = tree.@_elems;
-    let (acc_l, acc_r) = loop((l, r, Monoid::unit, Monoid::unit), |(l, r, acc_l, acc_r)|
-        if l >= r {
-            break $ (acc_l, acc_r)
-        };
-        let (l, acc_l) = if l % 2 == 0 { (l, acc_l) } else {
-            (l + 1, Monoid::op(acc_l, elems.@(l)))
-        };
-        let (r, acc_r) = if r % 2 == 0 { (r, acc_r) } else {
-            let r = r - 1;
-            (r, Monoid::op(elems.@(r), acc_r))
-        };
-        continue $ (l.shift_right(1), r.shift_right(1), acc_l, acc_r)
-    );
-
-    (tree, Monoid::op(acc_l, acc_r))
+    (tree, tree._fold_nodes(l, r))
 );
 
 // 半開区間[l, r)に右から作用を適用する
@@ -269,4 +287,204 @@ act_range = |l, r, a, tree| (
 
     // 作用を適用したノードの祖先は、l0とr0の祖先に含まれる。
     tree._recalc_above(l0)._recalc_above(r0)
+);
+
+
+// すべての要素の畳み込みを計算する
+//
+// 計算量：O(log n)
+//
+// # Parameters
+// - `tree` : セグメント木
+fold_all : [m : Monoid] LSegtree m a -> m;
+fold_all = |tree| (
+    // 値を読むノードの祖先は、要素の区間に対応しないノードなので、作用を持たない。
+    let n = tree.@n;
+    tree._fold_nodes(n, n * 2)
+);
+
+// `f(fold(l, r))`が真になる最大の`r`を、木の上の二分探索で求める
+//
+// 制約：0 <= l <= n、`f(unit)`が真、`f`は単調（区間を右に伸ばして偽になったら、さらに伸ばしても真にならない）
+//
+// 計算量：O(log n)。`f`の呼び出しもO(log n)回。
+//
+// # Parameters
+// - `l` : 区間の左端 (0-indexed)
+// - `f` : 区間の畳み込みについての条件
+// - `tree` : セグメント木
+//
+// # Examples
+// ```fix
+// # module DocTest;
+// # import CPLib.LSegtree;
+// # import CPLib.Trait;
+// # type I64Max = struct { v : I64 };
+// # namespace I64Max {
+// #     make : I64 -> I64Max = |v| I64Max { v };
+// # }
+// # impl I64Max : Monoid {
+// #     unit = make(minimum);
+// #     op = |lhs, rhs| make $ lhs.@v.max(rhs.@v);
+// # }
+// # type I64Add = struct { v : I64 };
+// # namespace I64Add {
+// #     make : I64 -> I64Add = |v| I64Add { v };
+// # }
+// # impl I64Add : Monoid {
+// #     unit = make(0);
+// #     op = |lhs, rhs| make $ lhs.@v + rhs.@v;
+// # }
+// # impl I64Add : Action {
+// #     type Set I64Add = I64Max;
+// #     act = |a, x| make(x.@v + a.@v);
+// # }
+// # main : IO () = (
+// // `I64Max`は最大値モノイド、`I64Add`はそれに加算で作用する加法モノイド（定義はモジュールの使用例と同じ）
+// let tree = build([1, 2, 5, 4].map(make)) : LSegtree I64Max I64Add;
+// let tree = tree.act_range(0, 2, make(2)); // [3, 4, 5, 4]
+// // 区間[0, 2)の最大値は4、区間[0, 3)の最大値は5
+// assert_eq(|_|"", tree.calc_max_right(0, |x| x.@v <= 4), 2)
+// # );
+// ```
+calc_max_right : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> (m -> Bool) -> LSegtree m a -> I64;
+calc_max_right = |l, f, tree| (
+    let n = tree.@n;
+    if l == n { n };
+    let l = l + n;
+    let r = n * 2;
+    let elems = tree.@_elems;
+    let lazy = tree.@_lazy;
+    let pending = tree._pending_above(l);
+
+    // `fold(l, n)`が畳み込むノードを左から順に試し、`f`が偽になる最初のノードkと、kより左のノードの畳み込みacc、
+    // kの祖先がまだ伝搬していない作用の合成aを求める。
+    // 段hで`fold`が畳み込むノードは、lh = ceil(l / 2^h)、rh = floor(r / 2^h)として、lh < rhの段のうち、
+    // 左端の側ではlh（lhが奇数のとき）、右端の側ではrh - 1（rhが奇数のとき）である。
+    // これらを左から順に並べると、左端の側のノードが低い段から、続いて右端の側のノードが高い段から並ぶ。
+    // 左端の側のノードlhは、葉lのh段上の祖先か、その兄弟である。どちらの祖先も、葉lの祖先のうちh段より上のものである。
+    // 右端の側のノードの祖先は、要素の区間に対応しないノードなので、作用を持たない。
+    // 見つからなければkは0とする。
+    let (k, height, acc, a) = loop((l, r, 0, Monoid::unit), |(lh, rh, h, acc)|
+        if lh >= rh { break $ (0, h, acc, Monoid::unit) };
+        if lh % 2 == 1 {
+            let a = pending.@(h);
+            let next = Monoid::op(acc, act(a, elems.@(lh)));
+            if !f(next) { break $ (lh, h, acc, a) };
+            continue $ ((lh + 1).shift_right(1), rh.shift_right(1), h + 1, next)
+        };
+        continue $ ((lh + 1).shift_right(1), rh.shift_right(1), h + 1, acc)
+    );
+    let (k, acc) = if k != 0 { (k, acc) } else {
+        loop((height - 1, acc), |(h, acc)|
+            if h < 0 { break $ (0, acc) };
+            let rh = r.shift_right(h);
+            if rh % 2 == 0 { continue $ (h - 1, acc) };
+            let next = Monoid::op(acc, elems.@(rh - 1));
+            if !f(next) { break $ (rh - 1, acc) };
+            continue $ (h - 1, next)
+        )
+    };
+    if k == 0 { n };
+    // kから葉へ降りる。左の子までの畳み込みがfを満たせば右の子へ、満たさなければ左の子へ進む。
+    // aは、降りた先のノードの祖先がまだ伝搬していない作用の合成である。
+    loop((k, acc, a), |(k, acc, a)|
+        if k >= n { break $ k - n };
+        let a = Monoid::op(lazy.@(k), a);
+        let next = Monoid::op(acc, act(a, elems.@(k * 2)));
+        if f(next) { continue $ (k * 2 + 1, next, a) } else { continue $ (k * 2, acc, a) }
+    )
+);
+
+// `f(fold(l, r))`が真になる最小の`l`を、木の上の二分探索で求める
+//
+// 制約：0 <= r <= n、`f(unit)`が真、`f`は単調（区間を左に伸ばして偽になったら、さらに伸ばしても真にならない）
+//
+// 計算量：O(log n)。`f`の呼び出しもO(log n)回。
+//
+// # Parameters
+// - `r` : 区間の右端 (0-indexed, exclusive)
+// - `f` : 区間の畳み込みについての条件
+// - `tree` : セグメント木
+//
+// # Examples
+// ```fix
+// # module DocTest;
+// # import CPLib.LSegtree;
+// # import CPLib.Trait;
+// # type I64Max = struct { v : I64 };
+// # namespace I64Max {
+// #     make : I64 -> I64Max = |v| I64Max { v };
+// # }
+// # impl I64Max : Monoid {
+// #     unit = make(minimum);
+// #     op = |lhs, rhs| make $ lhs.@v.max(rhs.@v);
+// # }
+// # type I64Add = struct { v : I64 };
+// # namespace I64Add {
+// #     make : I64 -> I64Add = |v| I64Add { v };
+// # }
+// # impl I64Add : Monoid {
+// #     unit = make(0);
+// #     op = |lhs, rhs| make $ lhs.@v + rhs.@v;
+// # }
+// # impl I64Add : Action {
+// #     type Set I64Add = I64Max;
+// #     act = |a, x| make(x.@v + a.@v);
+// # }
+// # main : IO () = (
+// // `I64Max`は最大値モノイド、`I64Add`はそれに加算で作用する加法モノイド（定義はモジュールの使用例と同じ）
+// let tree = build([1, 2, 5, 4].map(make)) : LSegtree I64Max I64Add;
+// let tree = tree.act_range(0, 2, make(2)); // [3, 4, 5, 4]
+// // 区間[3, 4)の最大値は4、区間[2, 4)の最大値は5
+// assert_eq(|_|"", tree.calc_min_left(4, |x| x.@v <= 4), 3)
+// # );
+// ```
+calc_min_left : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> (m -> Bool) -> LSegtree m a -> I64;
+calc_min_left = |r, f, tree| (
+    let n = tree.@n;
+    if r == 0 { 0 };
+    let l = n;
+    let r = r + n;
+    let elems = tree.@_elems;
+    let lazy = tree.@_lazy;
+    let pending = tree._pending_above(r - 1);
+
+    // `fold(0, r)`が畳み込むノードを右から順に試し、`f`が偽になる最初のノードkと、kより右のノードの畳み込みacc、
+    // kの祖先がまだ伝搬していない作用の合成aを求める。
+    // 段hで`fold`が畳み込むノードは、lh = ceil(l / 2^h)、rh = floor(r / 2^h)として、lh < rhの段のうち、
+    // 左端の側ではlh（lhが奇数のとき）、右端の側ではrh - 1（rhが奇数のとき）である。
+    // これらを右から順に並べると、右端の側のノードが低い段から、続いて左端の側のノードが高い段から並ぶ。
+    // 右端の側のノードrh - 1は、葉r - 1のh段上の祖先か、その兄弟である。どちらの祖先も、葉r - 1の祖先のうちh段より上のものである。
+    // 左端の側のノードの祖先は、要素の区間に対応しないノードなので、作用を持たない。
+    // 見つからなければkは0とする。
+    let (k, height, acc, a) = loop((l, r, 0, Monoid::unit), |(lh, rh, h, acc)|
+        if lh >= rh { break $ (0, h, acc, Monoid::unit) };
+        if rh % 2 == 1 {
+            let a = pending.@(h);
+            let next = Monoid::op(act(a, elems.@(rh - 1)), acc);
+            if !f(next) { break $ (rh - 1, h, acc, a) };
+            continue $ ((lh + 1).shift_right(1), rh.shift_right(1), h + 1, next)
+        };
+        continue $ ((lh + 1).shift_right(1), rh.shift_right(1), h + 1, acc)
+    );
+    let (k, acc) = if k != 0 { (k, acc) } else {
+        loop((height - 1, acc), |(h, acc)|
+            if h < 0 { break $ (0, acc) };
+            let lh = (l + 1.shift_left(h) - 1).shift_right(h);
+            if lh % 2 == 0 { continue $ (h - 1, acc) };
+            let next = Monoid::op(elems.@(lh), acc);
+            if !f(next) { break $ (lh, acc) };
+            continue $ (h - 1, next)
+        )
+    };
+    if k == 0 { 0 };
+    // kから葉へ降りる。右の子からの畳み込みがfを満たせば左の子へ、満たさなければ右の子へ進む。
+    // aは、降りた先のノードの祖先がまだ伝搬していない作用の合成である。
+    loop((k, acc, a), |(k, acc, a)|
+        if k >= n { break $ k + 1 - n };
+        let a = Monoid::op(lazy.@(k), a);
+        let next = Monoid::op(act(a, elems.@(k * 2 + 1)), acc);
+        if f(next) { continue $ (k * 2, next, a) } else { continue $ (k * 2 + 1, acc, a) }
+    )
 );

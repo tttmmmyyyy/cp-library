@@ -12,6 +12,12 @@ Type: `Random::Random -> (Random::Random, Std::String)`
 
 ランダムな数文字のアルファベット文字列を生成する
 
+#### is_sorted
+
+Type: `Std::String -> Std::Bool`
+
+文字列の文字が昇順に並んでいるか
+
 #### test
 
 Type: `Std::IO ()`
@@ -34,6 +40,24 @@ n要素のセグメント木に対してランダムな操作をops回行い、f
 - `n` : 要素数
 - `ops` : 操作の回数
 - `rng` : 乱数生成器
+
+#### test_search
+
+Type: `Random::Random -> Std::IO Random::Random`
+
+fold_all、calc_max_right、calc_min_leftが、文書の条件を満たす値を返すことのテスト
+
+要素数0から20の木にランダムな区間への作用を重ねていき、作用のたびに、すべての端について調べる。
+条件には、文字が昇順に並んでいることと、長さが3以下であることを使う。
+
+#### test_search_large
+
+Type: `Random::Random -> Std::IO Random::Random`
+
+大きい木で、calc_max_rightとcalc_min_leftが返す端を、条件から決まる端と比べるテスト
+
+条件は「畳み込みの長さがt以下で、端から先の全要素を連結した文字列の先頭（calc_min_leftでは、端より前の末尾）に一致する」とする。
+高い段のノードの値と、その祖先に残る作用が正しく使われることを確かめるためである。
 
 #### test_speed
 

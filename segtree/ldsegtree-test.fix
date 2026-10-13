@@ -1,13 +1,13 @@
 module CPLib.LDSegtree.Test;
 
 import CPLib.Arithmetic::pmod;
-import CPLib.LDSegtree::{act_range, build, fold, init, set, @, LDSegtree};
+import CPLib.LDSegtree::{act_range, build, calc_max_right, calc_min_left, fold, fold_all, init, set, @, LDSegtree};
 import Random::{generate_I64_nonneg, init_by_seed, Random};
 import Std::{
     Bool, I64, IO, String, ToString, Array::{fill, push_back, set, @}, 
     Debug::{assert_eq, consumed_time_while_lazy}, FromBytes::from_bytes, Functor::map, I64::minimum, IO::println, 
-    Iterator::{fold, fold_m, map, range, to_array}, LessThan::max, Monad::pure, Result::as_ok, 
-    String::{from_U8, get_bytes, populate}, ToI64::i64, ToString::to_string, 
+    Iterator::{fold, fold_m, map, range, to_array}, Array::{to_iter, @size}, LessThan::{max, min}, Monad::pure, Result::as_ok, 
+    String::{from_U8, get_bytes, get_sub, populate, @size}, ToI64::i64, ToString::to_string, 
     ToU8::u8
 };
 
@@ -24,6 +24,8 @@ test = (
         test_random(true, n, 200, rng)
     );
     test_empty;;
+    let rng = *test_search(rng);
+    let _ = *test_search_large(rng);
 
     test_speed;;
 
@@ -172,7 +174,7 @@ test_speed = (
     let n = 1e5;
     let rng = Random::init_by_seed(0_U64);
     let tree = LDSegtree::init(n, I64::minimum, |(lhs, rhs)| max(lhs, rhs), 0, |(lhs, rhs)| lhs + rhs, |(lhs, rhs)| lhs + rhs) : LDSegtree I64 I64;
-    let ((tree, rng, fold_sum), time) = consumed_time_while_lazy(|_| range(0, n).fold((tree, rng, 0), |_, (tree, rng, fold_sum)| (
+    let ((tree, rng, fold_sum, search_ok), time) = consumed_time_while_lazy(|_| range(0, n).fold((tree, rng, 0, true), |_, (tree, rng, fold_sum, search_ok)| (
         // set
         let (rng, i) = rng.generate_I64_nonneg;
         let (rng, v) = rng.generate_I64_nonneg;
@@ -199,10 +201,105 @@ test_speed = (
 
         let fold_sum = fold_sum.max(v);
 
-        (tree, rng, fold_sum)
+        // calc_max_right, calc_min_left（区間[k, l)の最大値を超える要素を探す。あるとしても区間の外側である）
+        let search_ok = search_ok && tree.calc_max_right(k, |x| x <= v) >= l && tree.calc_min_left(l, |x| x <= v) <= k;
+
+        (tree, rng, fold_sum, search_ok)
     )));
     assert_eq(|_|"test_speed", fold_sum, 18331863592552);;
+    assert_eq(|_|"test_speed search", search_ok, true);;
     println $ "[CPLib.LDSegtree.Test] LDSegtree({}): {}".populate([n.to_string, time.to_string]);;
 
     pure $ ()
+);
+
+// fold_all、calc_max_right、calc_min_leftが、文書の条件を満たす値を返すことのテスト
+//
+// 要素数0から20の木にランダムな区間への作用を重ねていき、作用のたびに、すべての端について調べる。
+// 条件には、文字が昇順に並んでいることと、長さが3以下であることを使う。
+test_search : Random -> IO Random;
+test_search = |rng| (
+    range(0, 21).fold_m(rng, |n, rng|
+        let (rng, arr) = range(0, n).fold((rng, []), |_, (rng, arr)|
+            let (rng, c) = rng.generate_I64_nonneg;
+            (rng, arr.push_back(String::from_U8('a' + (c % 4).u8)))
+        );
+        let tree = LDSegtree::build(arr, unit, op, a_unit, a_op, act);
+        let (_1, _2, rng) = *range(0, 10).fold_m((tree, arr, rng), |_, (tree, arr, rng)|
+            let (rng, l) = rng.generate_I64_nonneg;
+            let (rng, r) = rng.generate_I64_nonneg;
+            let l = l % (n + 1);
+            let r = l + r % (n - l + 1);
+            let (rng, a) = rng.generate_I64_nonneg;
+            let (rng, b) = rng.generate_I64_nonneg;
+            let a = ShiftAlphabet::make(a % 2 * 2 + 1, b % 3);
+            let tree = tree.act_range(l, r, a);
+            let arr = range(l, r).fold(arr, |i, arr| arr.set(i, act((a, arr.@(i)))));
+
+            let naive = |(l, r)| range(l, r).fold("", |i, acc| acc + arr.@(i));
+            assert_eq(|_|"ldsegtree fold_all", tree.fold_all, naive((0, n)));;
+            let conds = [|x| is_sorted(x), |x| x.@size <= 3];
+            conds.to_iter.fold_m((), |f, _|
+                range(0, n + 1).fold_m((), |e, _|
+                    let r = tree.calc_max_right(e, f);
+                    assert_eq(|_|"ldsegtree calc_max_right range", e <= r && r <= n, true);;
+                    assert_eq(|_|"ldsegtree calc_max_right true", r == e || f(naive((e, r))), true);;
+                    assert_eq(|_|"ldsegtree calc_max_right false", r == n || !f(naive((e, r + 1))), true);;
+                    let l = tree.calc_min_left(e, f);
+                    assert_eq(|_|"ldsegtree calc_min_left range", 0 <= l && l <= e, true);;
+                    assert_eq(|_|"ldsegtree calc_min_left true", l == e || f(naive((l, e))), true);;
+                    assert_eq(|_|"ldsegtree calc_min_left false", l == 0 || !f(naive((l - 1, e))), true)
+                )
+            );;
+            pure $ (tree, arr, rng)
+        );
+        pure $ rng
+    )
+);
+
+// 大きい木で、calc_max_rightとcalc_min_leftが返す端を、条件から決まる端と比べるテスト
+//
+// 条件は「畳み込みの長さがt以下で、端から先の全要素を連結した文字列の先頭（calc_min_leftでは、端より前の末尾）に一致する」とする。
+// 高い段のノードの値と、その祖先に残る作用が正しく使われることを確かめるためである。
+test_search_large : Random -> IO Random;
+test_search_large = |rng| (
+    [300, 513].to_iter.fold_m(rng, |n, rng|
+        let arr = range(0, n).map(|i| String::from_U8('a' + (i * 7 % 26).u8)).to_array;
+        let tree = LDSegtree::build(arr, unit, op, a_unit, a_op, act);
+        let (_1, _2, rng) = *range(0, 30).fold_m((tree, arr, rng), |_, (tree, arr, rng)|
+            let (rng, l) = rng.generate_I64_nonneg;
+            let (rng, r) = rng.generate_I64_nonneg;
+            let l = l % (n + 1);
+            let r = l + r % (n - l + 1);
+            let (rng, a) = rng.generate_I64_nonneg;
+            let (rng, b) = rng.generate_I64_nonneg;
+            let a = ShiftAlphabet::make(a, b);
+            let tree = tree.act_range(l, r, a);
+            let arr = range(l, r).fold(arr, |i, arr| arr.set(i, act((a, arr.@(i)))));
+
+            let whole = range(0, n).fold("", |i, acc| acc + arr.@(i));
+            let rng = *range(0, 20).fold_m(rng, |_, rng|
+                let (rng, e) = rng.generate_I64_nonneg;
+                let (rng, t) = rng.generate_I64_nonneg;
+                let e = e % (n + 1);
+                let t = t % (n + 1);
+                let after = whole.get_sub(e, n);
+                let r = tree.calc_max_right(e, |x| x.@size <= t && after.get_sub(0, x.@size) == x);
+                assert_eq(|_|"ldsegtree calc_max_right large", r, min(n, e + t));;
+                let before = whole.get_sub(0, e);
+                let l = tree.calc_min_left(e, |x| x.@size <= t && before.get_sub(e - x.@size, e) == x);
+                assert_eq(|_|"ldsegtree calc_min_left large", l, max(0, e - t));;
+                pure $ rng
+            );
+            pure $ (tree, arr, rng)
+        );
+        pure $ rng
+    )
+);
+
+// 文字列の文字が昇順に並んでいるか
+is_sorted : String -> Bool;
+is_sorted = |s| (
+    let bytes = s.get_bytes;
+    range(1, s.@size).fold(true, |i, sorted| sorted && bytes.@(i - 1) <= bytes.@(i))
 );
