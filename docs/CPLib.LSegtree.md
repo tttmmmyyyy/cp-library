@@ -101,6 +101,58 @@ Type: `[a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoid] Std::Array m -> CPLib.
 
 - `elems` : セグメント木の要素を格納する配列
 
+#### calc_max_right
+
+Type: `[a : CPLib.Trait::Action, a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoid, CPLib.Trait::Action::Set a = m] Std::I64 -> (m -> Std::Bool) -> CPLib.LSegtree::LSegtree m a -> Std::I64`
+
+`f(fold(l, r))`が真になる最大の`r`を、木の上の二分探索で求める
+
+制約：0 <= l <= n、`f(unit)`が真、`f`は単調（区間を右に伸ばして偽になったら、さらに伸ばしても真にならない）
+
+計算量：O(log n)。`f`の呼び出しもO(log n)回。
+
+##### Parameters
+
+- `l` : 区間の左端 (0-indexed)
+- `f` : 区間の畳み込みについての条件
+- `tree` : セグメント木
+
+##### Examples
+
+```fix
+// `I64Max`は最大値モノイド、`I64Add`はそれに加算で作用する加法モノイド（定義はモジュールの使用例と同じ）
+let tree = build([1, 2, 5, 4].map(make)) : LSegtree I64Max I64Add;
+let tree = tree.act_range(0, 2, make(2)); // [3, 4, 5, 4]
+// 区間[0, 2)の最大値は4、区間[0, 3)の最大値は5
+assert_eq(|_|"", tree.calc_max_right(0, |x| x.@v <= 4), 2)
+```
+
+#### calc_min_left
+
+Type: `[a : CPLib.Trait::Action, a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoid, CPLib.Trait::Action::Set a = m] Std::I64 -> (m -> Std::Bool) -> CPLib.LSegtree::LSegtree m a -> Std::I64`
+
+`f(fold(l, r))`が真になる最小の`l`を、木の上の二分探索で求める
+
+制約：0 <= r <= n、`f(unit)`が真、`f`は単調（区間を左に伸ばして偽になったら、さらに伸ばしても真にならない）
+
+計算量：O(log n)。`f`の呼び出しもO(log n)回。
+
+##### Parameters
+
+- `r` : 区間の右端 (0-indexed, exclusive)
+- `f` : 区間の畳み込みについての条件
+- `tree` : セグメント木
+
+##### Examples
+
+```fix
+// `I64Max`は最大値モノイド、`I64Add`はそれに加算で作用する加法モノイド（定義はモジュールの使用例と同じ）
+let tree = build([1, 2, 5, 4].map(make)) : LSegtree I64Max I64Add;
+let tree = tree.act_range(0, 2, make(2)); // [3, 4, 5, 4]
+// 区間[3, 4)の最大値は4、区間[2, 4)の最大値は5
+assert_eq(|_|"", tree.calc_min_left(4, |x| x.@v <= 4), 3)
+```
+
 #### fold
 
 Type: `[a : CPLib.Trait::Action, a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoid, CPLib.Trait::Action::Set a = m] Std::I64 -> Std::I64 -> CPLib.LSegtree::LSegtree m a -> (CPLib.LSegtree::LSegtree m a, m)`
@@ -117,6 +169,18 @@ Type: `[a : CPLib.Trait::Action, a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoi
 
 - `l` : 区間の左端 (0-indexed)
 - `r` : 区間の右端 (0-indexed, exclusive)
+- `tree` : セグメント木
+
+#### fold_all
+
+Type: `[m : CPLib.Trait::Monoid] CPLib.LSegtree::LSegtree m a -> m`
+
+すべての要素の畳み込みを計算する
+
+計算量：O(log n)
+
+##### Parameters
+
 - `tree` : セグメント木
 
 #### init
