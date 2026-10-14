@@ -27,6 +27,8 @@ test = (
     let rng = *check_lsegtree("RangeAssign Min", |x| Min { v : x }, |s| s.@v, |a, b| min(a, b), I64::maximum, gen_small, gen_assign : Random -> (Random, RangeAssign Min I64, I64 -> I64), rng);
     let rng = *check_lsegtree("RangeAssign Max", |x| Max { v : x }, |s| s.@v, |a, b| max(a, b), I64::minimum, gen_small, gen_assign : Random -> (Random, RangeAssign Max I64, I64 -> I64), rng);
     let rng = *check_lsegtree("RangeAssign WeightedSum", WeightedSum::make, |s| s.@v, |a, b| a + b, 0, gen_small, gen_assign : Random -> (Random, RangeAssign WeightedSum I64, I64 -> I64), rng);
+    let rng = *check_lsegtree("RangeAffine Min", |x| Min { v : x }, |s| s.@v, |a, b| min(a, b), I64::maximum, gen_small, gen_affine_nonneg : Random -> (Random, RangeAffine Min I64, I64 -> I64), rng);
+    let rng = *check_lsegtree("RangeAffine Max", |x| Max { v : x }, |s| s.@v, |a, b| max(a, b), I64::minimum, gen_small, gen_affine_nonneg : Random -> (Random, RangeAffine Max I64, I64 -> I64), rng);
     let rng = *check_lsegtree("RangeAffine WeightedSum", WeightedSum::make, |s| s.@v, |a, b| a + b, ZP::make(0) : Mint, gen_mint, gen_affine, rng);
 
     test_units;;
@@ -71,6 +73,18 @@ gen_affine : Random -> (Random, RangeAffine WeightedSum Mint, Mint -> Mint);
 gen_affine = |rng| (
     let (rng, a) = rng.gen_mint;
     let (rng, b) = rng.gen_mint;
+    (rng, RangeAffine { a, b }, |x| a * x + b)
+);
+
+// 係数が0以上のアフィン変換の作用と、それを1要素に行う関数
+//
+// 係数はほとんど1にし、値が溢れないようにする。
+gen_affine_nonneg : [f : * -> *] Random -> (Random, RangeAffine f I64, I64 -> I64);
+gen_affine_nonneg = |rng| (
+    let (rng, a) = rng.generate_I64_nonneg;
+    let a = [0, 1, 1, 1, 1, 1, 1, 2].@(a % 8);
+    let (rng, b) = rng.generate_I64_nonneg;
+    let b = b % 21 - 10;
     (rng, RangeAffine { a, b }, |x| a * x + b)
 );
 

@@ -14,7 +14,7 @@ Defined in cp-library@0.15.0
 | --- | --- | --- |
 | `RangeAdd` | 値に足す | 和に「足す値 * 重みの和」を足す |
 | `RangeAssign` | 値を置き換える | 和を「代入する値 * 重みの和」にする |
-| `RangeAffine` | なし | 和を「`a` * 和 + `b` * 重みの和」にする |
+| `RangeAffine` | 値を「`a` * 値 + `b`」にする（`a`は0以上） | 和を「`a` * 和 + `b` * 重みの和」にする |
 
 自分の型と名前がぶつかるときは、`Monoid::Max`のように名前空間を付けて書きます。
 
@@ -117,7 +117,11 @@ Defined as: `type [f : *->*] RangeAffine f a = unbox struct { ...fields... }`
 
 アフィン変換`x -> a * x + b`の作用
 
-`f`は作用を受けるモノイドの型コンストラクタ（`WeightedSum`）、`a`は要素の型です。
+`f`は作用を受けるモノイドの型コンストラクタ（`Min`、`Max`、`WeightedSum`）、`a`は要素の型です。
+
+`Min` / `Max`に作用させるときは、`a`を0以上にしてください。`a`が負だと大小が入れ替わり、区間の最小値・最大値が正しく求まりません。
+また`Min`の`inf`と`Max`の`neg_inf`にも掛けて足します。`init`で作った要素の値はこれらです。
+整数では、これらに掛けたり足したりすると溢れて値が回り込むことがあります。そうなることがある要素には、先に`set`か`build`で値を入れてください。
 
 ##### field `a`
 
@@ -193,6 +197,10 @@ Type: `a`
 ### impl `[a : Std::Add, a : Std::Mul] CPLib.Monoid::RangeAdd CPLib.Monoid::WeightedSum a : CPLib.Trait::Action`
 
 ### impl `[f : *->*, a : Std::Zero, a : Std::Add] CPLib.Monoid::RangeAdd f a : CPLib.Trait::Monoid`
+
+### impl `[a : Std::Add, a : Std::Mul] CPLib.Monoid::RangeAffine CPLib.Monoid::Max a : CPLib.Trait::Action`
+
+### impl `[a : Std::Add, a : Std::Mul] CPLib.Monoid::RangeAffine CPLib.Monoid::Min a : CPLib.Trait::Action`
 
 ### impl `[a : Std::Add, a : Std::Mul] CPLib.Monoid::RangeAffine CPLib.Monoid::WeightedSum a : CPLib.Trait::Action`
 

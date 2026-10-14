@@ -51,6 +51,14 @@ Type: `Random::Random -> (Random::Random, CPLib.Monoid::RangeAffine CPLib.Monoid
 
 アフィン変換の作用と、それを1要素に行う関数
 
+#### gen_affine_nonneg
+
+Type: `Random::Random -> (Random::Random, CPLib.Monoid::RangeAffine f Std::I64, Std::I64 -> Std::I64)`
+
+係数が0以上のアフィン変換の作用と、それを1要素に行う関数
+
+係数はほとんど1にし、値が溢れないようにする。
+
 #### gen_assign
 
 Type: `Random::Random -> (Random::Random, CPLib.Monoid::RangeAssign f Std::I64, Std::I64 -> Std::I64)`
