@@ -40,9 +40,13 @@ test_array : IO () = (
 // メモ化した再帰の計算量が、呼び出されるキーの数に比例することを確かめる
 //
 // メモリに値があっても本体を作る実装では、このテストは終わらないか、スタックが溢れて止まる。
+//
+// `fib` をキーの小さい順に呼ぶので、メモ化が働いていれば各呼び出しの再帰はメモリに当たって 1 段で止まる。
+// `fib(n)` を直接呼ぶと再帰が `n` 段になり、`-O basic` でビルドしたときに 8 MB のスタックが溢れる。
 test_speed : IO () = (
     let n = 1e5;
-    let (x, time) = consumed_time_while_lazy(|_| fib(n).run_with_array(n + 1));
+    let fib_upward = range(0, n + 1).fold_m(0_U64, |k, _| fib(k));
+    let (x, time) = consumed_time_while_lazy(|_| fib_upward.run_with_array(n + 1));
     assert_eq(|_|"test_speed", x, 2754320626097736315_U64);;
     println $ "[CPLib.Memoize.Test] fib({}): {}".populate([n.to_string, time.to_string]);;
     pure()
