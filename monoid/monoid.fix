@@ -97,8 +97,6 @@ impl [e : LessThan, e : NegInf] Max e : Monoid {
 //
 // 葉を`make_single`で作ると`w`は1になり、ノードの`w`はそのノードが受け持つ区間の長さになります。
 // 木は`make_single`で作った葉から`build`で作るか、`init`の後に`set`で葉を入れてください。`init`の要素は`w`が0で、作用を受けても変わりません。
-//
-// `w`に1以外を使うこともできます。要素`i`の葉を`WeightedSum { v : d * p, w : p }`（`d`は`i`桁目の数字、`p`は`10^(n-1-i)`）にすれば、`v`は数字の列を10進数として読んだ値になります。
 type WeightedSum e = struct {
     // 値と重みの積の和
     v : e,
