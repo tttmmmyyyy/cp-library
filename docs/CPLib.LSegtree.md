@@ -11,6 +11,9 @@ Defined in cp-library@0.15.0
 - act(a, op(x, y)) = op(act(a, x), act(a, y))
 - act(op(a, b), x) = act(b, act(a, x))
 
+和（`Sum`、`WeightedSum`）・最小値・最大値のモノイドと、区間加算・区間乗算・区間代入・アフィン変換の作用は`CPLib.Monoid`にあります。
+それ以外のモノイドと作用は、次の例のように型を作成し、`Monoid`と`Action`を実装してください。
+
 使用例
 ```fix
 import CPLib.LSegtree;

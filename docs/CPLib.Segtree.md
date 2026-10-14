@@ -6,7 +6,8 @@ Defined in cp-library@0.15.0
 
 使用方法：
 要素は`CPLib.Trait.Monoid`を実装している必要があります。
-先ずはwrapper型を作成し、`Monoid`を実装してください。
+和・積・最小値・最大値のモノイドは`CPLib.Monoid`にあります。
+それ以外のモノイドは、自分で型を作成し、`Monoid`を実装してください。
 あとは、`init`や`build`を使ってセグメント木を作成し、
 `@`で要素を取得、`set`で要素を更新、`fold`で区間の畳み込みを計算できます。
 `fold_all`は全体の畳み込みを、`calc_max_right`と`calc_min_left`は区間の畳み込みが条件を満たす端を計算します。

@@ -221,6 +221,8 @@ Type: `p -> Std::U32`
 
 ### impl `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::ZP p : Std::Neg`
 
+### impl `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::ZP p : Std::One`
+
 ### impl `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::ZP p : Std::Sub`
 
 ### impl `CPLib.ZP::ZP p : Std::ToString`
