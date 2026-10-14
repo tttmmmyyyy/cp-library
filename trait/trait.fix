@@ -1,8 +1,9 @@
 module CPLib.Trait;
 
 import Std::{
-    F32, F64, I16, I32, I64, I8, U16, U32, U64, U8, F32::infinity, F64::infinity, I16::maximum, 
-    I32::maximum, I64::maximum, I8::maximum, U16::maximum, U32::maximum, U64::maximum, U8::maximum
+    F32, F64, I16, I32, I64, I8, U16, U32, U64, U8, F32::infinity, F64::infinity, I16::{maximum, minimum}, 
+    I32::{maximum, minimum}, I64::{maximum, minimum}, I8::{maximum, minimum}, U16::maximum, U32::maximum, 
+    U64::maximum, U8::maximum
 };
 
 // モノイドのトレイト
@@ -69,4 +70,51 @@ impl F32 : Inf {
 
 impl F64 : Inf {
     inf = F64::infinity;
+}
+
+// 各型の負の無限大の値
+//
+// 符号つき整数では最小値、符号なし整数では0、浮動小数点数では負の無限大。
+trait a : NegInf {
+    neg_inf : a;
+}
+
+impl I8 : NegInf {
+    neg_inf = I8::minimum;
+}
+
+impl U8 : NegInf {
+    neg_inf = 0_U8;
+}
+
+impl I16 : NegInf {
+    neg_inf = I16::minimum;
+}
+
+impl U16 : NegInf {
+    neg_inf = 0_U16;
+}
+
+impl I32 : NegInf {
+    neg_inf = I32::minimum;
+}
+
+impl U32 : NegInf {
+    neg_inf = 0_U32;
+}
+
+impl I64 : NegInf {
+    neg_inf = I64::minimum;
+}
+
+impl U64 : NegInf {
+    neg_inf = 0_U64;
+}
+
+impl F32 : NegInf {
+    neg_inf = -F32::infinity;
+}
+
+impl F64 : NegInf {
+    neg_inf = -F64::infinity;
 }

@@ -1,0 +1,192 @@
+module CPLib.Monoid.Test;
+
+import CPLib.LSegtree;
+import CPLib.Monoid;
+import CPLib.Segtree;
+import CPLib.Trait::{Action, Monoid, Action::Set, Monoid::unit, NegInf::neg_inf};
+import CPLib.ZP::{make, power, P998244353, ZP};
+import Random::{generate_I64_nonneg, init_by_seed, Random};
+
+type Mint = ZP P998244353;
+
+test : IO ();
+test = (
+    let rng = Random::init_by_seed(0_U64);
+
+    // セグメント木で値のモノイドを使う
+    let rng = *check_segtree("Sum", |x| Sum { v : x }, |s| s.@v, |a, b| a + b, 0, gen_small, rng);
+    let rng = *check_segtree("Product", |x| Product { v : x }, |s| s.@v, |a, b| a * b, ZP::make(1) : Mint, gen_mint, rng);
+    let rng = *check_segtree("Min", |x| Min { v : x }, |s| s.@v, |a, b| min(a, b), I64::maximum, gen_small, rng);
+    let rng = *check_segtree("Max", |x| Monoid::Max { v : x }, |s| s.@v, |a, b| max(a, b), I64::minimum, gen_small, rng);
+    let rng = *check_segtree("WeightedSum", WeightedSum::make, |s| s.@v, |a, b| a + b, 0, gen_small, rng);
+
+    // 遅延伝搬セグメント木で作用を使う
+    let rng = *check_lsegtree("RangeAdd Min", |x| Min { v : x }, |s| s.@v, |a, b| min(a, b), I64::maximum, gen_small, gen_add : Random -> (Random, RangeAdd Min I64, I64 -> I64), rng);
+    let rng = *check_lsegtree("RangeAdd Max", |x| Max { v : x }, |s| s.@v, |a, b| max(a, b), I64::minimum, gen_small, gen_add : Random -> (Random, RangeAdd Max I64, I64 -> I64), rng);
+    let rng = *check_lsegtree("RangeAdd WeightedSum", WeightedSum::make, |s| s.@v, |a, b| a + b, 0, gen_small, gen_add : Random -> (Random, RangeAdd WeightedSum I64, I64 -> I64), rng);
+    let rng = *check_lsegtree("RangeAssign Min", |x| Min { v : x }, |s| s.@v, |a, b| min(a, b), I64::maximum, gen_small, gen_assign : Random -> (Random, RangeAssign Min I64, I64 -> I64), rng);
+    let rng = *check_lsegtree("RangeAssign Max", |x| Max { v : x }, |s| s.@v, |a, b| max(a, b), I64::minimum, gen_small, gen_assign : Random -> (Random, RangeAssign Max I64, I64 -> I64), rng);
+    let rng = *check_lsegtree("RangeAssign WeightedSum", WeightedSum::make, |s| s.@v, |a, b| a + b, 0, gen_small, gen_assign : Random -> (Random, RangeAssign WeightedSum I64, I64 -> I64), rng);
+    let rng = *check_lsegtree("RangeAffine WeightedSum", WeightedSum::make, |s| s.@v, |a, b| a + b, ZP::make(0) : Mint, gen_mint, gen_affine, rng);
+
+    test_units;;
+    test_replace_digits;;
+
+    pure()
+);
+
+// 0以上100未満の整数
+gen_small : Random -> (Random, I64);
+gen_small = |rng| (
+    let (rng, x) = rng.generate_I64_nonneg;
+    (rng, x % 100)
+);
+
+// 法998244353の剰余環のランダムな値
+gen_mint : Random -> (Random, Mint);
+gen_mint = |rng| (
+    let (rng, x) = rng.generate_I64_nonneg;
+    (rng, ZP::make(x))
+);
+
+// 区間加算の作用と、それを1要素に行う関数
+gen_add : [f : * -> *] Random -> (Random, RangeAdd f I64, I64 -> I64);
+gen_add = |rng| (
+    let (rng, a) = rng.generate_I64_nonneg;
+    let a = a % 21 - 10;
+    (rng, RangeAdd { v : a }, |x| x + a)
+);
+
+// 区間代入の作用と、それを1要素に行う関数。代入しない作用も混ぜる
+gen_assign : [f : * -> *] Random -> (Random, RangeAssign f I64, I64 -> I64);
+gen_assign = |rng| (
+    let (rng, a) = rng.generate_I64_nonneg;
+    if a % 5 == 0 { (rng, RangeAssign { v : none() }, |x| x) };
+    let a = a % 100;
+    (rng, RangeAssign::make(a), |_| a)
+);
+
+// アフィン変換の作用と、それを1要素に行う関数
+gen_affine : Random -> (Random, RangeAffine WeightedSum Mint, Mint -> Mint);
+gen_affine = |rng| (
+    let (rng, b) = rng.gen_mint;
+    let (rng, c) = rng.gen_mint;
+    (rng, RangeAffine { b, c }, |x| b * x + c)
+);
+
+// `Segtree`の`fold`と`fold_all`が、素朴な畳み込みと一致することを確かめる
+//
+// # Parameters
+// - `name` : 失敗したときに表示する名前
+// - `to_m` : 要素の値から葉を作る関数
+// - `from_m` : モノイドの値から要素の値を読む関数
+// - `naive_op` : 要素の値どうしの演算
+// - `naive_unit` : `naive_op`の単位元
+// - `gen` : 要素の値をランダムに作る関数
+// - `rng` : 乱数生成器
+check_segtree : [m : Monoid, e : Eq, e : ToString] String -> (e -> m) -> (m -> e) -> (e -> e -> e) -> e -> (Random -> (Random, e)) -> Random -> IO Random;
+check_segtree = |name, to_m, from_m, naive_op, naive_unit, gen, rng| (
+    [0, 1, 2, 3, 5, 8, 13, 100].to_iter.fold_m(rng, |n, rng|
+        let (rng, arr) = range(0, n).fold((rng, []), |_, (rng, arr)| let (rng, x) = gen(rng); (rng, arr.push_back(x)));
+        let tree = Segtree::build(arr.map(to_m));
+        let (_1, _2, rng) = *range(0, 100).fold_m((tree, arr, rng), |_, (tree, arr, rng)|
+            let (tree, arr, rng) = if n == 0 { (tree, arr, rng) } else {
+                let (rng, i) = rng.generate_I64_nonneg;
+                let i = i % n;
+                let (rng, x) = gen(rng);
+                (tree.set(i, to_m(x)), arr.set(i, x), rng)
+            };
+            let (rng, l) = rng.generate_I64_nonneg;
+            let (rng, r) = rng.generate_I64_nonneg;
+            let l = l % (n + 1);
+            let r = l + r % (n - l + 1);
+            let naive = range(l, r).fold(naive_unit, |i, acc| naive_op(acc, arr.@(i)));
+            assert_eq(|_|name + " fold", from_m(tree.fold(l, r)), naive);;
+            assert_eq(|_|name + " fold_all", from_m(tree.fold_all), arr.to_iter.fold(naive_unit, |x, acc| naive_op(acc, x)));;
+            pure $ (tree, arr, rng)
+        );
+        pure $ rng
+    )
+);
+
+// `LSegtree`の`fold`と`fold_all`が、要素ごとに作用を行った配列の素朴な畳み込みと一致することを確かめる
+//
+// # Parameters
+// - `name` : 失敗したときに表示する名前
+// - `to_m` : 要素の値から葉を作る関数
+// - `from_m` : モノイドの値から要素の値を読む関数
+// - `naive_op` : 要素の値どうしの演算
+// - `naive_unit` : `naive_op`の単位元
+// - `gen` : 要素の値をランダムに作る関数
+// - `gen_act` : 作用と、それを1要素に行う関数をランダムに作る関数
+// - `rng` : 乱数生成器
+check_lsegtree : [m : Monoid, a : Monoid, a : Action, Set a = m, e : Eq, e : ToString] String -> (e -> m) -> (m -> e) -> (e -> e -> e) -> e -> (Random -> (Random, e)) -> (Random -> (Random, a, e -> e)) -> Random -> IO Random;
+check_lsegtree = |name, to_m, from_m, naive_op, naive_unit, gen, gen_act, rng| (
+    [0, 1, 2, 3, 5, 8, 13, 100].to_iter.fold_m(rng, |n, rng|
+        let (rng, arr) = range(0, n).fold((rng, []), |_, (rng, arr)| let (rng, x) = gen(rng); (rng, arr.push_back(x)));
+        let tree = LSegtree::build(arr.map(to_m)) : LSegtree m a;
+        let (_1, _2, rng) = *range(0, 100).fold_m((tree, arr, rng), |_, (tree, arr, rng)|
+            let (rng, dice) = rng.generate_I64_nonneg;
+            let (tree, arr, rng) = if n == 0 { (tree, arr, rng) } else if dice % 4 == 0 {
+                let (rng, i) = rng.generate_I64_nonneg;
+                let i = i % n;
+                let (rng, x) = gen(rng);
+                (tree.set(i, to_m(x)), arr.set(i, x), rng)
+            } else {
+                let (rng, l) = rng.generate_I64_nonneg;
+                let (rng, r) = rng.generate_I64_nonneg;
+                let l = l % (n + 1);
+                let r = l + r % (n - l + 1);
+                let (rng, a, f) = gen_act(rng);
+                (tree.act_range(l, r, a), range(l, r).fold(arr, |i, arr| arr.mod(i, f)), rng)
+            };
+            let (rng, l) = rng.generate_I64_nonneg;
+            let (rng, r) = rng.generate_I64_nonneg;
+            let l = l % (n + 1);
+            let r = l + r % (n - l + 1);
+            let naive = range(l, r).fold(naive_unit, |i, acc| naive_op(acc, arr.@(i)));
+            assert_eq(|_|name + " fold_all", from_m(tree.fold_all), arr.to_iter.fold(naive_unit, |x, acc| naive_op(acc, x)));;
+            let (tree, res) = tree.fold(l, r);
+            assert_eq(|_|name + " fold", from_m(res), naive);;
+            pure $ (tree, arr, rng)
+        );
+        pure $ rng
+    )
+);
+
+// 各モノイドの単位元
+test_units : IO ();
+test_units = (
+    assert_eq(|_|"Sum unit", (Monoid::unit : Sum I64).@v, 0);;
+    assert_eq(|_|"Product unit", (Monoid::unit : Product (ZP P998244353)).@v, ZP::make(1));;
+    assert_eq(|_|"Min unit", (Monoid::unit : Min I64).@v, I64::maximum);;
+    assert_eq(|_|"Max unit", (Monoid::unit : Max I64).@v, I64::minimum);;
+    assert_eq(|_|"Max unit U64", (Monoid::unit : Max U64).@v, 0_U64);;
+    assert_eq(|_|"Max unit F64", (Monoid::unit : Max F64).@v, -F64::infinity);;
+    assert_eq(|_|"NegInf I8", neg_inf : I8, I8::minimum);;
+    assert_eq(|_|"NegInf U8", neg_inf : U8, 0_U8);;
+    assert_eq(|_|"NegInf I16", neg_inf : I16, I16::minimum);;
+    assert_eq(|_|"NegInf U16", neg_inf : U16, 0_U16);;
+    assert_eq(|_|"NegInf I32", neg_inf : I32, I32::minimum);;
+    assert_eq(|_|"NegInf U32", neg_inf : U32, 0_U32);;
+    assert_eq(|_|"NegInf I64", neg_inf : I64, I64::minimum);;
+    assert_eq(|_|"NegInf U64", neg_inf : U64, 0_U64);;
+    assert_eq(|_|"NegInf F32", neg_inf : F32, -F32::infinity);;
+    assert_eq(|_|"NegInf F64", neg_inf : F64, -F64::infinity);;
+    pure()
+);
+
+// ACL Beginner Contest E「Replace Digits」の入力例1：区間を数字で埋め、全体を10進数として読む
+test_replace_digits : IO ();
+test_replace_digits = (
+    let n = 8;
+    let leaves = range(0, n).map(|i| WeightedSum { v : ZP::make(0), weight : ZP::make(10).power(n - 1 - i) } : WeightedSum Mint).to_array;
+    let leaves = leaves.map(|leaf| leaf.set_v(leaf.@weight)); // すべての桁が1
+    let tree = LSegtree::build(leaves) : LSegtree (WeightedSum Mint) (RangeAssign WeightedSum Mint);
+    let queries = [(3, 6, 2, 11222211), (1, 4, 7, 77772211), (3, 8, 3, 77333333), (2, 2, 2, 72333333), (4, 5, 1, 72311333)];
+    queries.to_iter.fold_m(tree, |(l, r, d, expected), tree|
+        let tree = tree.act_range(l - 1, r, RangeAssign::make(ZP::make(d)));
+        assert_eq(|_|"Replace Digits", tree.fold_all.@v, ZP::make(expected));;
+        pure $ tree
+    ).forget
+);

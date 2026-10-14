@@ -12,6 +12,7 @@ import CPLib.LSegtree.Test::test;
 import CPLib.MaxFlow.Test::test;
 import CPLib.Memoize.Test::test;
 import CPLib.MinCostFlow.Test::test;
+import CPLib.Monoid.Test::test;
 import CPLib.Misc.Test::test;
 import CPLib.Segtree.Test::test;
 import CPLib.String.Test::test;
@@ -29,6 +30,7 @@ test = (
     CPLib.DSegtree.Test::test;;
     CPLib.LSegtree.Test::test;;
     CPLib.LDSegtree.Test::test;;
+    CPLib.Monoid.Test::test;;
     CPLib.UnionFind.Test::test;;
     CPLib.Graph.Test::test;;
     CPLib.Convolution.Test::test;;
