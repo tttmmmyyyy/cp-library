@@ -54,7 +54,7 @@ import Std::{
 
 // 和のモノイド
 //
-// `LSegtree`で区間に加算・代入・アフィン変換を作用させる和には`WeightedSum`を使います。
+// `LSegtree`で区間に加算・代入・アフィン変換を作用させる和には`WeightedSum`を使います（区間乗算は`Sum`にも作用します）。
 type Sum e = struct { v : e };
 
 impl [e : Zero, e : Add] Sum e : Monoid {

@@ -183,7 +183,7 @@ Defined as: `type Sum e = unbox struct { ...fields... }`
 
 和のモノイド
 
-`LSegtree`で区間に加算・代入・アフィン変換を作用させる和には`WeightedSum`を使います。
+`LSegtree`で区間に加算・代入・アフィン変換を作用させる和には`WeightedSum`を使います（区間乗算は`Sum`にも作用します）。
 
 ##### field `v`
 
