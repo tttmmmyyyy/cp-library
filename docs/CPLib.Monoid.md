@@ -11,7 +11,7 @@ Defined in cp-library@0.15.0
 モノイドは`Sum e`、`Product e`、`Min e`、`Max e`、`WeightedSum e`です。
 `e`は`I64`や`F64`などの要素の型で、それぞれのモノイドが必要とする演算のトレイト（`Add`、`Mul`、`LessThan`など）と単位元のトレイト（`Zero`、`One`、`Inf`、`NegInf`など）を実装している必要があります。
 モノイドの値はフィールド`v`に入れます（`WeightedSum`は`v`と`w`の2つ）。
-たとえば`Max I64`の値は`Max { v : 3 }`で作り、`x.@v`で読みます。
+たとえば`Max I64`の値は`Max { v : 3 }`で作り、`x.@v`で取り出します。
 
 `WeightedSum e`は`e`型の値2つ（フィールド`v`と`w`）の組で、`op((v1, w1), (v2, w2)) = (v1 + v2, w1 + w2)`と定義されています。
 典型的には、`LSegtree`で和のモノイドを扱うときに使います。
