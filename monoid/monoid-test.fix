@@ -18,22 +18,22 @@ test = (
     let rng = *check_segtree("Product", |x| Product { v : x }, |s| s.@v, |a, b| a * b, ZP::make(1) : Mint, gen_mint, rng);
     let rng = *check_segtree("Min", |x| Min { v : x }, |s| s.@v, |a, b| min(a, b), I64::maximum, gen_small, rng);
     let rng = *check_segtree("Max", |x| Monoid::Max { v : x }, |s| s.@v, |a, b| max(a, b), I64::minimum, gen_small, rng);
-    let rng = *check_segtree("WeightedSum", WeightedSum::make, |s| s.@v, |a, b| a + b, 0, gen_small, rng);
+    let rng = *check_segtree("WeightedSum", WeightedSum::make_single, |s| s.@v, |a, b| a + b, 0, gen_small, rng);
 
     // 遅延伝搬セグメント木で作用を使う
     let rng = *check_lsegtree("RangeAdd Min", |x| Min { v : x }, |s| s.@v, |a, b| min(a, b), I64::maximum, gen_small, gen_add : Random -> (Random, RangeAdd Min I64, I64 -> I64), rng);
     let rng = *check_lsegtree("RangeAdd Max", |x| Max { v : x }, |s| s.@v, |a, b| max(a, b), I64::minimum, gen_small, gen_add : Random -> (Random, RangeAdd Max I64, I64 -> I64), rng);
-    let rng = *check_lsegtree("RangeAdd WeightedSum", WeightedSum::make, |s| s.@v, |a, b| a + b, 0, gen_small, gen_add : Random -> (Random, RangeAdd WeightedSum I64, I64 -> I64), rng);
+    let rng = *check_lsegtree("RangeAdd WeightedSum", WeightedSum::make_single, |s| s.@v, |a, b| a + b, 0, gen_small, gen_add : Random -> (Random, RangeAdd WeightedSum I64, I64 -> I64), rng);
     let rng = *check_lsegtree("RangeAssign Min", |x| Min { v : x }, |s| s.@v, |a, b| min(a, b), I64::maximum, gen_small, gen_assign : Random -> (Random, RangeAssign Min I64, I64 -> I64), rng);
     let rng = *check_lsegtree("RangeAssign Max", |x| Max { v : x }, |s| s.@v, |a, b| max(a, b), I64::minimum, gen_small, gen_assign : Random -> (Random, RangeAssign Max I64, I64 -> I64), rng);
-    let rng = *check_lsegtree("RangeAssign WeightedSum", WeightedSum::make, |s| s.@v, |a, b| a + b, 0, gen_small, gen_assign : Random -> (Random, RangeAssign WeightedSum I64, I64 -> I64), rng);
+    let rng = *check_lsegtree("RangeAssign WeightedSum", WeightedSum::make_single, |s| s.@v, |a, b| a + b, 0, gen_small, gen_assign : Random -> (Random, RangeAssign WeightedSum I64, I64 -> I64), rng);
     let rng = *check_lsegtree("RangeAffine Min", |x| Min { v : x }, |s| s.@v, |a, b| min(a, b), I64::maximum, gen_small, gen_affine_nonneg : Random -> (Random, RangeAffine Min I64, I64 -> I64), rng);
     let rng = *check_lsegtree("RangeAffine Max", |x| Max { v : x }, |s| s.@v, |a, b| max(a, b), I64::minimum, gen_small, gen_affine_nonneg : Random -> (Random, RangeAffine Max I64, I64 -> I64), rng);
     let rng = *check_lsegtree("RangeMul Sum", |x| Sum { v : x }, |s| s.@v, |a, b| a + b, 0, gen_small, gen_mul_nonneg : Random -> (Random, RangeMul Sum I64, I64 -> I64), rng);
     let rng = *check_lsegtree("RangeMul Min", |x| Min { v : x }, |s| s.@v, |a, b| min(a, b), I64::maximum, gen_small, gen_mul_nonneg : Random -> (Random, RangeMul Min I64, I64 -> I64), rng);
     let rng = *check_lsegtree("RangeMul Max", |x| Max { v : x }, |s| s.@v, |a, b| max(a, b), I64::minimum, gen_small, gen_mul_nonneg : Random -> (Random, RangeMul Max I64, I64 -> I64), rng);
-    let rng = *check_lsegtree("RangeMul WeightedSum", WeightedSum::make, |s| s.@v, |a, b| a + b, 0, gen_small, gen_mul_nonneg : Random -> (Random, RangeMul WeightedSum I64, I64 -> I64), rng);
-    let rng = *check_lsegtree("RangeAffine WeightedSum", WeightedSum::make, |s| s.@v, |a, b| a + b, ZP::make(0) : Mint, gen_mint, gen_affine, rng);
+    let rng = *check_lsegtree("RangeMul WeightedSum", WeightedSum::make_single, |s| s.@v, |a, b| a + b, 0, gen_small, gen_mul_nonneg : Random -> (Random, RangeMul WeightedSum I64, I64 -> I64), rng);
+    let rng = *check_lsegtree("RangeAffine WeightedSum", WeightedSum::make_single, |s| s.@v, |a, b| a + b, ZP::make(0) : Mint, gen_mint, gen_affine, rng);
 
     test_units;;
     test_init_weighted_sum;;
@@ -211,7 +211,7 @@ test_units = (
 test_init_weighted_sum : IO ();
 test_init_weighted_sum = (
     let tree = LSegtree::init(3) : LSegtree (WeightedSum I64) (RangeAdd WeightedSum I64);
-    let tree = tree.set(1, WeightedSum::make(10));
+    let tree = tree.set(1, WeightedSum::make_single(10));
     let tree = tree.act_range(0, 3, RangeAdd { a : 7 });
     assert_eq(|_|"init WeightedSum add", (tree.fold_all.@v, tree.fold_all.@w), (17, 1));;
     pure()
