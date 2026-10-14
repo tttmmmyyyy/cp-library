@@ -4,31 +4,46 @@ Defined in cp-library@0.15.0
 
 セグメント木でよく使うモノイドと作用を提供するモジュール。
 
-値のモノイドは`Sum`、`Product`、`Min`、`Max`、`WeightedSum`、作用は`RangeAdd`、`RangeAssign`、`RangeAffine`です。
-値はフィールド`v`に入れ、`Max { v }`で作り`x.@v`で読みます。
+`CPLib.Segtree`と`CPLib.LSegtree`は、モノイドの型（`Monoid`トレイトを実装した型）と作用の型（`Action`トレイトを実装した型）を要求します。
+自作の型に`Monoid`トレイトや`Action`トレイトを実装して使うこともできます（書き方の例は`CPLib.Segtree`と`CPLib.LSegtree`のモジュールの説明にあります）。
+このモジュールは、競技プログラミングでよく使うモノイドと作用の型を用意し、`Monoid`トレイトと`Action`トレイトを実装しています。
 
-作用の型は、作用を受けるモノイドの型コンストラクタを最初の型引数に取ります。たとえば`Max I64`への区間加算は`RangeAdd Max I64`です。
-用意している組み合わせは次の通りです。
+モノイドは`Sum e`、`Product e`、`Min e`、`Max e`、`WeightedSum e`です。
+`e`は`I64`や`F64`などの要素の型で、それぞれのモノイドが必要とする演算のトレイト（`Add`、`Mul`、`LessThan`など）と単位元のトレイト（`Zero`、`One`、`Inf`、`NegInf`など）を実装している必要があります。
+モノイドの値はフィールド`v`に入れます（`WeightedSum`は`v`と`w`の2つ）。
+たとえば`Max I64`の値は`Max { v : 3 }`で作り、`x.@v`で読みます。
 
-| 作用 | `Min` / `Max` | `WeightedSum` |
-| --- | --- | --- |
-| `RangeAdd` | 値に足す | 和に「足す値 * 重みの和」を足す |
-| `RangeAssign` | 値を置き換える | 和を「代入する値 * 重みの和」にする |
-| `RangeAffine` | 値を「`a` * 値 + `b`」にする（`a`は0以上） | 和を「`a` * 和 + `b` * 重みの和」にする |
+`WeightedSum e`は`e`型の値2つ（フィールド`v`と`w`）の組で、`op((v1, w1), (v2, w2)) = (v1 + v2, w1 + w2)`と定義されています。
+典型的には、`LSegtree`で和のモノイドを扱うときに使います。
+このとき`w`はノードが受け持つ区間の長さ（葉では1）を表し、区間への作用を計算するのに使われます。
 
-自分の型と名前がぶつかるときは、`Monoid::Max`のように名前空間を付けて書きます。
+作用は`RangeAdd m e`、`RangeMul m e`、`RangeAssign m e`、`RangeAffine m e`です。
+`m`は作用を受けるモノイドの型コンストラクタ（`Max e`ではなく`Max`）で、`e`はモノイドの要素の型です。
 
-ここにないモノイドと作用は、型を作成して`CPLib.Trait`の`Monoid`と`Action`を実装すれば使えます。
-書き方は`CPLib.Segtree`と`CPLib.LSegtree`のモジュールの説明の例にあります。
+利用できるモノイドと作用の組み合わせと、作用の内容は次のとおりです。
+
+| 作用 | `Sum { v }` | `Min / Max { v }` | `WeightedSum { v, w }` |
+| --- | --- | --- | --- |
+| `RangeAdd { a }` | なし | `v + a` | `(v + w a, w)` |
+| `RangeMul { a }` | `a v` | `a v`（`a >= 0`） | `(a v, w)` |
+| `RangeAssign { a }` | なし | `a` | `(w a, w)` |
+| `RangeAffine { a, b }` | なし | `a v + b`（`a >= 0`） | `(a v + b w, w)` |
+
+表のセルは、作用を受けた後の値です（`WeightedSum`は`(v, w)`の組）。
+`RangeAssign`のフィールド`a`は`Option e`で、`some(c)`なら`c`を代入し、`none()`なら何もしません。
+
+これらのモノイドや作用でセグメント木を作るときは、次のように型注釈でモノイドと作用を指定します。
 
 ```fix
 import CPLib.LSegtree;
 import CPLib.Monoid;
-// 区間への加算と、区間の最大値の取得ができるセグメント木
-let tree = build([1, 2, 3].map(|v| Monoid::Max { v })) : LSegtree (Monoid::Max I64) (RangeAdd Monoid::Max I64);
-let tree = tree.act_range(0, 2, RangeAdd { v : 10 }); // [11, 12, 3]
-let (_, res) = tree.fold(1, 3);
-assert_eq(|_|"", res.@v, 12)
+import CPLib.Segtree;
+let segtree = Segtree::build([1, 2, 3].map(|v| Max { v })) : Segtree (Max I64);
+let lsegtree = LSegtree::build([1, 2, 3].map(|v| Max { v })) : LSegtree (Max I64) (RangeAdd Max I64);
+let lsegtree = lsegtree.act_range(0, 2, RangeAdd { a : 10 }); // [11, 12, 3]
+let (_, res) = lsegtree.fold(1, 3);
+assert_eq(|_|"", res.@v, 12);;
+assert_eq(|_|"", segtree.fold(0, 2).@v, 2)
 ```
 
 ## Values
@@ -37,19 +52,19 @@ assert_eq(|_|"", res.@v, 12)
 
 #### make
 
-Type: `a -> CPLib.Monoid::RangeAssign f a`
+Type: `e -> CPLib.Monoid::RangeAssign m e`
 
-値`v`を代入する作用を作る
+値`c`を代入する作用を作る
 
 ##### Parameters
 
-- `v` : 代入する値
+- `c` : 代入する値
 
 ### namespace CPLib.Monoid::WeightedSum
 
 #### make
 
-Type: `[a : Std::One] a -> CPLib.Monoid::WeightedSum a`
+Type: `[e : Std::One] e -> CPLib.Monoid::WeightedSum e`
 
 重みが1の葉を作る
 
@@ -63,7 +78,7 @@ Type: `[a : Std::One] a -> CPLib.Monoid::WeightedSum a`
 
 #### Max
 
-Defined as: `type Max a = unbox struct { ...fields... }`
+Defined as: `type Max e = unbox struct { ...fields... }`
 
 最大値のモノイド
 
@@ -71,11 +86,11 @@ Defined as: `type Max a = unbox struct { ...fields... }`
 
 ##### field `v`
 
-Type: `a`
+Type: `e`
 
 #### Min
 
-Defined as: `type Min a = unbox struct { ...fields... }`
+Defined as: `type Min e = unbox struct { ...fields... }`
 
 最小値のモノイド
 
@@ -83,41 +98,41 @@ Defined as: `type Min a = unbox struct { ...fields... }`
 
 ##### field `v`
 
-Type: `a`
+Type: `e`
 
 #### Product
 
-Defined as: `type Product a = unbox struct { ...fields... }`
+Defined as: `type Product e = unbox struct { ...fields... }`
 
 積のモノイド
 
 ##### field `v`
 
-Type: `a`
+Type: `e`
 
 #### RangeAdd
 
-Defined as: `type [f : *->*] RangeAdd f a = unbox struct { ...fields... }`
+Defined as: `type [m : *->*] RangeAdd m e = unbox struct { ...fields... }`
 
 区間加算の作用
 
-`f`は作用を受けるモノイドの型コンストラクタ（`Min`、`Max`、`WeightedSum`）、`a`は要素の型です。
+型引数`m`は作用を受けるモノイドの型コンストラクタ（`Min`、`Max`、`WeightedSum`）、型引数`e`は要素の型です。
 
 区間加算は`Min`の`inf`と`Max`の`neg_inf`にも足します。`init`で作った要素の値はこれらです。
 整数では、`Min`の`inf`に正の値を足すと、`Max`の`neg_inf`に負の値を足すと、溢れて値が回り込みます。
 そう足すことがある要素には、先に`set`か`build`で値を入れてください。
 
-##### field `v`
+##### field `a`
 
-Type: `a`
+Type: `e`
 
 #### RangeAffine
 
-Defined as: `type [f : *->*] RangeAffine f a = unbox struct { ...fields... }`
+Defined as: `type [m : *->*] RangeAffine m e = unbox struct { ...fields... }`
 
 アフィン変換`x -> a * x + b`の作用
 
-型引数`f`は作用を受けるモノイドの型コンストラクタ（`Min`、`Max`、`WeightedSum`）、型引数`a`は要素の型です。
+型引数`m`は作用を受けるモノイドの型コンストラクタ（`Min`、`Max`、`WeightedSum`）、型引数`e`は要素の型です。
 
 `Min` / `Max`に作用させるときは、フィールド`a`を0以上にしてください。負だと大小が入れ替わり、区間の最小値・最大値が正しく求まりません。
 また`Min`の`inf`と`Max`の`neg_inf`にも掛けて足します。`init`で作った要素の値はこれらです。
@@ -126,58 +141,74 @@ Defined as: `type [f : *->*] RangeAffine f a = unbox struct { ...fields... }`
 
 ##### field `a`
 
-Type: `a`
+Type: `e`
 
 ##### field `b`
 
-Type: `a`
+Type: `e`
 
 #### RangeAssign
 
-Defined as: `type [f : *->*] RangeAssign f a = unbox struct { ...fields... }`
+Defined as: `type [m : *->*] RangeAssign m e = unbox struct { ...fields... }`
 
 区間代入の作用
 
-`f`は作用を受けるモノイドの型コンストラクタ（`Min`、`Max`、`WeightedSum`）、`a`は要素の型です。
-`v`が`none()`のときは何もしません。
+型引数`m`は作用を受けるモノイドの型コンストラクタ（`Min`、`Max`、`WeightedSum`）、型引数`e`は要素の型です。
+フィールド`a`が`some(c)`のときは`c`を代入し、`none()`のときは何もしません。`RangeAssign::make(c)`は`RangeAssign { a : some(c) }`を作ります。
 
-##### field `v`
+##### field `a`
 
-Type: `Std::Option a`
+Type: `Std::Option e`
+
+#### RangeMul
+
+Defined as: `type [m : *->*] RangeMul m e = unbox struct { ...fields... }`
+
+区間乗算の作用
+
+型引数`m`は作用を受けるモノイドの型コンストラクタ（`Sum`、`Min`、`Max`、`WeightedSum`）、型引数`e`は要素の型です。
+
+`Min` / `Max`に作用させるときは、フィールド`a`を0以上にしてください。負だと大小が入れ替わり、区間の最小値・最大値が正しく求まりません。
+また`Min`の`inf`と`Max`の`neg_inf`にも掛けます。`init`で作った要素の値はこれらです。
+整数では、これらに掛けると溢れて値が回り込むことがあります。浮動小数では、フィールド`a`が0のとき、`inf`や`-inf`との積がNaNになります。
+そうなることがある要素には、先に`set`か`build`で値を入れてください。
+
+##### field `a`
+
+Type: `e`
 
 #### Sum
 
-Defined as: `type Sum a = unbox struct { ...fields... }`
+Defined as: `type Sum e = unbox struct { ...fields... }`
 
 和のモノイド
 
-区間に作用させる和には`WeightedSum`を使います。
+`LSegtree`で区間に加算・代入・アフィン変換を作用させる和には`WeightedSum`を使います。
 
 ##### field `v`
 
-Type: `a`
+Type: `e`
 
 #### WeightedSum
 
-Defined as: `type WeightedSum a = unbox struct { ...fields... }`
+Defined as: `type WeightedSum e = unbox struct { ...fields... }`
 
 重みつきの和のモノイド
 
-区間に作用させる`RangeAdd`、`RangeAssign`、`RangeAffine`は、和の変化を求めるのに重みの和を使います。
-葉を`make`で作ると重みは1になり、`weight`は区間の要素数になります。
-木は`make`で作った葉から`build`で作るか、`init`の後に`set`で葉を入れてください。`init`の要素は重みが0で、作用を受けても変わりません。
+葉を`make`で作ると`w`は1になり、ノードの`w`はそのノードが受け持つ区間の長さになります。
+木は`make`で作った葉から`build`で作るか、`init`の後に`set`で葉を入れてください。`init`の要素は`w`が0で、作用を受けても変わりません。
 
-重みに1以外を使うこともできます。要素`i`の葉を`WeightedSum { v : d * w, weight : w }`（`d`は`i`桁目の数字、`w`は`10^(n-1-i)`）にすれば、`v`は数字の列を10進数として読んだ値になります。
+`w`に1以外を使うこともできます。要素`i`の葉を`WeightedSum { v : d * p, w : p }`（`d`は`i`桁目の数字、`p`は`10^(n-1-i)`）にすれば、`v`は数字の列を10進数として読んだ値になります。
 
 ##### field `v`
 
-Type: `a`
+Type: `e`
 
 値と重みの積の和
 
-##### field `weight`
+##### field `w`
 
-Type: `a`
+Type: `e`
 
 重みの和
 
@@ -185,36 +216,46 @@ Type: `a`
 
 ## Trait implementations
 
-### impl `[a : Std::LessThan, a : CPLib.Trait::NegInf] CPLib.Monoid::Max a : CPLib.Trait::Monoid`
+### impl `[e : Std::LessThan, e : CPLib.Trait::NegInf] CPLib.Monoid::Max e : CPLib.Trait::Monoid`
 
-### impl `[a : Std::LessThan, a : CPLib.Trait::Inf] CPLib.Monoid::Min a : CPLib.Trait::Monoid`
+### impl `[e : Std::LessThan, e : CPLib.Trait::Inf] CPLib.Monoid::Min e : CPLib.Trait::Monoid`
 
-### impl `[a : Std::One, a : Std::Mul] CPLib.Monoid::Product a : CPLib.Trait::Monoid`
+### impl `[e : Std::One, e : Std::Mul] CPLib.Monoid::Product e : CPLib.Trait::Monoid`
 
-### impl `[a : Std::Add] CPLib.Monoid::RangeAdd CPLib.Monoid::Max a : CPLib.Trait::Action`
+### impl `[e : Std::Add] CPLib.Monoid::RangeAdd CPLib.Monoid::Max e : CPLib.Trait::Action`
 
-### impl `[a : Std::Add] CPLib.Monoid::RangeAdd CPLib.Monoid::Min a : CPLib.Trait::Action`
+### impl `[e : Std::Add] CPLib.Monoid::RangeAdd CPLib.Monoid::Min e : CPLib.Trait::Action`
 
-### impl `[a : Std::Add, a : Std::Mul] CPLib.Monoid::RangeAdd CPLib.Monoid::WeightedSum a : CPLib.Trait::Action`
+### impl `[e : Std::Add, e : Std::Mul] CPLib.Monoid::RangeAdd CPLib.Monoid::WeightedSum e : CPLib.Trait::Action`
 
-### impl `[f : *->*, a : Std::Zero, a : Std::Add] CPLib.Monoid::RangeAdd f a : CPLib.Trait::Monoid`
+### impl `[m : *->*, e : Std::Zero, e : Std::Add] CPLib.Monoid::RangeAdd m e : CPLib.Trait::Monoid`
 
-### impl `[a : Std::Add, a : Std::Mul] CPLib.Monoid::RangeAffine CPLib.Monoid::Max a : CPLib.Trait::Action`
+### impl `[e : Std::Add, e : Std::Mul] CPLib.Monoid::RangeAffine CPLib.Monoid::Max e : CPLib.Trait::Action`
 
-### impl `[a : Std::Add, a : Std::Mul] CPLib.Monoid::RangeAffine CPLib.Monoid::Min a : CPLib.Trait::Action`
+### impl `[e : Std::Add, e : Std::Mul] CPLib.Monoid::RangeAffine CPLib.Monoid::Min e : CPLib.Trait::Action`
 
-### impl `[a : Std::Add, a : Std::Mul] CPLib.Monoid::RangeAffine CPLib.Monoid::WeightedSum a : CPLib.Trait::Action`
+### impl `[e : Std::Add, e : Std::Mul] CPLib.Monoid::RangeAffine CPLib.Monoid::WeightedSum e : CPLib.Trait::Action`
 
-### impl `[f : *->*, a : Std::Zero, a : Std::One, a : Std::Add, a : Std::Mul] CPLib.Monoid::RangeAffine f a : CPLib.Trait::Monoid`
+### impl `[m : *->*, e : Std::Zero, e : Std::One, e : Std::Add, e : Std::Mul] CPLib.Monoid::RangeAffine m e : CPLib.Trait::Monoid`
 
-### impl `CPLib.Monoid::RangeAssign CPLib.Monoid::Max a : CPLib.Trait::Action`
+### impl `CPLib.Monoid::RangeAssign CPLib.Monoid::Max e : CPLib.Trait::Action`
 
-### impl `CPLib.Monoid::RangeAssign CPLib.Monoid::Min a : CPLib.Trait::Action`
+### impl `CPLib.Monoid::RangeAssign CPLib.Monoid::Min e : CPLib.Trait::Action`
 
-### impl `[a : Std::Mul] CPLib.Monoid::RangeAssign CPLib.Monoid::WeightedSum a : CPLib.Trait::Action`
+### impl `[e : Std::Mul] CPLib.Monoid::RangeAssign CPLib.Monoid::WeightedSum e : CPLib.Trait::Action`
 
-### impl `[f : *->*] CPLib.Monoid::RangeAssign f a : CPLib.Trait::Monoid`
+### impl `[m : *->*] CPLib.Monoid::RangeAssign m e : CPLib.Trait::Monoid`
 
-### impl `[a : Std::Zero, a : Std::Add] CPLib.Monoid::Sum a : CPLib.Trait::Monoid`
+### impl `[e : Std::Mul] CPLib.Monoid::RangeMul CPLib.Monoid::Max e : CPLib.Trait::Action`
 
-### impl `[a : Std::Zero, a : Std::Add] CPLib.Monoid::WeightedSum a : CPLib.Trait::Monoid`
+### impl `[e : Std::Mul] CPLib.Monoid::RangeMul CPLib.Monoid::Min e : CPLib.Trait::Action`
+
+### impl `[e : Std::Mul] CPLib.Monoid::RangeMul CPLib.Monoid::Sum e : CPLib.Trait::Action`
+
+### impl `[e : Std::Mul] CPLib.Monoid::RangeMul CPLib.Monoid::WeightedSum e : CPLib.Trait::Action`
+
+### impl `[m : *->*, e : Std::One, e : Std::Mul] CPLib.Monoid::RangeMul m e : CPLib.Trait::Monoid`
+
+### impl `[e : Std::Zero, e : Std::Add] CPLib.Monoid::Sum e : CPLib.Trait::Monoid`
+
+### impl `[e : Std::Zero, e : Std::Add] CPLib.Monoid::WeightedSum e : CPLib.Trait::Monoid`

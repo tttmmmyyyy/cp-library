@@ -41,7 +41,7 @@ Type: `[e : Std::Eq, e : Std::ToString, m : CPLib.Trait::Monoid] Std::String -> 
 
 #### gen_add
 
-Type: `Random::Random -> (Random::Random, CPLib.Monoid::RangeAdd f Std::I64, Std::I64 -> Std::I64)`
+Type: `Random::Random -> (Random::Random, CPLib.Monoid::RangeAdd m Std::I64, Std::I64 -> Std::I64)`
 
 区間加算の作用と、それを1要素に行う関数
 
@@ -53,7 +53,7 @@ Type: `Random::Random -> (Random::Random, CPLib.Monoid::RangeAffine CPLib.Monoid
 
 #### gen_affine_nonneg
 
-Type: `Random::Random -> (Random::Random, CPLib.Monoid::RangeAffine f Std::I64, Std::I64 -> Std::I64)`
+Type: `Random::Random -> (Random::Random, CPLib.Monoid::RangeAffine m Std::I64, Std::I64 -> Std::I64)`
 
 係数が0以上のアフィン変換の作用と、それを1要素に行う関数
 
@@ -61,7 +61,7 @@ Type: `Random::Random -> (Random::Random, CPLib.Monoid::RangeAffine f Std::I64, 
 
 #### gen_assign
 
-Type: `Random::Random -> (Random::Random, CPLib.Monoid::RangeAssign f Std::I64, Std::I64 -> Std::I64)`
+Type: `Random::Random -> (Random::Random, CPLib.Monoid::RangeAssign m Std::I64, Std::I64 -> Std::I64)`
 
 区間代入の作用と、それを1要素に行う関数。代入しない作用も混ぜる
 
@@ -70,6 +70,14 @@ Type: `Random::Random -> (Random::Random, CPLib.Monoid::RangeAssign f Std::I64, 
 Type: `Random::Random -> (Random::Random, CPLib.Monoid.Test::Mint)`
 
 法998244353の剰余環のランダムな値
+
+#### gen_mul_nonneg
+
+Type: `Random::Random -> (Random::Random, CPLib.Monoid::RangeMul m Std::I64, Std::I64 -> Std::I64)`
+
+0以上の数を掛ける作用と、それを1要素に行う関数
+
+掛ける数はほとんど1にし、値が溢れないようにする。
 
 #### gen_small
 

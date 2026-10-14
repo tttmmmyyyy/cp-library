@@ -29,6 +29,10 @@ test = (
     let rng = *check_lsegtree("RangeAssign WeightedSum", WeightedSum::make, |s| s.@v, |a, b| a + b, 0, gen_small, gen_assign : Random -> (Random, RangeAssign WeightedSum I64, I64 -> I64), rng);
     let rng = *check_lsegtree("RangeAffine Min", |x| Min { v : x }, |s| s.@v, |a, b| min(a, b), I64::maximum, gen_small, gen_affine_nonneg : Random -> (Random, RangeAffine Min I64, I64 -> I64), rng);
     let rng = *check_lsegtree("RangeAffine Max", |x| Max { v : x }, |s| s.@v, |a, b| max(a, b), I64::minimum, gen_small, gen_affine_nonneg : Random -> (Random, RangeAffine Max I64, I64 -> I64), rng);
+    let rng = *check_lsegtree("RangeMul Sum", |x| Sum { v : x }, |s| s.@v, |a, b| a + b, 0, gen_small, gen_mul_nonneg : Random -> (Random, RangeMul Sum I64, I64 -> I64), rng);
+    let rng = *check_lsegtree("RangeMul Min", |x| Min { v : x }, |s| s.@v, |a, b| min(a, b), I64::maximum, gen_small, gen_mul_nonneg : Random -> (Random, RangeMul Min I64, I64 -> I64), rng);
+    let rng = *check_lsegtree("RangeMul Max", |x| Max { v : x }, |s| s.@v, |a, b| max(a, b), I64::minimum, gen_small, gen_mul_nonneg : Random -> (Random, RangeMul Max I64, I64 -> I64), rng);
+    let rng = *check_lsegtree("RangeMul WeightedSum", WeightedSum::make, |s| s.@v, |a, b| a + b, 0, gen_small, gen_mul_nonneg : Random -> (Random, RangeMul WeightedSum I64, I64 -> I64), rng);
     let rng = *check_lsegtree("RangeAffine WeightedSum", WeightedSum::make, |s| s.@v, |a, b| a + b, ZP::make(0) : Mint, gen_mint, gen_affine, rng);
 
     test_units;;
@@ -53,18 +57,18 @@ gen_mint = |rng| (
 );
 
 // 区間加算の作用と、それを1要素に行う関数
-gen_add : [f : * -> *] Random -> (Random, RangeAdd f I64, I64 -> I64);
+gen_add : [m : * -> *] Random -> (Random, RangeAdd m I64, I64 -> I64);
 gen_add = |rng| (
     let (rng, a) = rng.generate_I64_nonneg;
     let a = a % 21 - 10;
-    (rng, RangeAdd { v : a }, |x| x + a)
+    (rng, RangeAdd { a }, |x| x + a)
 );
 
 // 区間代入の作用と、それを1要素に行う関数。代入しない作用も混ぜる
-gen_assign : [f : * -> *] Random -> (Random, RangeAssign f I64, I64 -> I64);
+gen_assign : [m : * -> *] Random -> (Random, RangeAssign m I64, I64 -> I64);
 gen_assign = |rng| (
     let (rng, a) = rng.generate_I64_nonneg;
-    if a % 5 == 0 { (rng, RangeAssign { v : none() }, |x| x) };
+    if a % 5 == 0 { (rng, RangeAssign { a : none() }, |x| x) };
     let a = a % 100;
     (rng, RangeAssign::make(a), |_| a)
 );
@@ -77,10 +81,20 @@ gen_affine = |rng| (
     (rng, RangeAffine { a, b }, |x| a * x + b)
 );
 
+// 0以上の数を掛ける作用と、それを1要素に行う関数
+//
+// 掛ける数はほとんど1にし、値が溢れないようにする。
+gen_mul_nonneg : [m : * -> *] Random -> (Random, RangeMul m I64, I64 -> I64);
+gen_mul_nonneg = |rng| (
+    let (rng, a) = rng.generate_I64_nonneg;
+    let a = [0, 1, 1, 1, 1, 1, 1, 2].@(a % 8);
+    (rng, RangeMul { a }, |x| a * x)
+);
+
 // 係数が0以上のアフィン変換の作用と、それを1要素に行う関数
 //
 // 係数はほとんど1にし、値が溢れないようにする。
-gen_affine_nonneg : [f : * -> *] Random -> (Random, RangeAffine f I64, I64 -> I64);
+gen_affine_nonneg : [m : * -> *] Random -> (Random, RangeAffine m I64, I64 -> I64);
 gen_affine_nonneg = |rng| (
     let (rng, a) = rng.generate_I64_nonneg;
     let a = [0, 1, 1, 1, 1, 1, 1, 2].@(a % 8);
@@ -179,7 +193,7 @@ test_units = (
     assert_eq(|_|"Max unit U64", (Monoid::unit : Max U64).@v, 0_U64);;
     assert_eq(|_|"Max unit F64", (Monoid::unit : Max F64).@v, -F64::infinity);;
     let ws = Monoid::unit : WeightedSum I64;
-    assert_eq(|_|"WeightedSum unit", (ws.@v, ws.@weight), (0, 0));;
+    assert_eq(|_|"WeightedSum unit", (ws.@v, ws.@w), (0, 0));;
     assert_eq(|_|"NegInf I8", neg_inf : I8, I8::minimum);;
     assert_eq(|_|"NegInf U8", neg_inf : U8, 0_U8);;
     assert_eq(|_|"NegInf I16", neg_inf : I16, I16::minimum);;
@@ -198,8 +212,8 @@ test_init_weighted_sum : IO ();
 test_init_weighted_sum = (
     let tree = LSegtree::init(3) : LSegtree (WeightedSum I64) (RangeAdd WeightedSum I64);
     let tree = tree.set(1, WeightedSum::make(10));
-    let tree = tree.act_range(0, 3, RangeAdd { v : 7 });
-    assert_eq(|_|"init WeightedSum add", (tree.fold_all.@v, tree.fold_all.@weight), (17, 1));;
+    let tree = tree.act_range(0, 3, RangeAdd { a : 7 });
+    assert_eq(|_|"init WeightedSum add", (tree.fold_all.@v, tree.fold_all.@w), (17, 1));;
     pure()
 );
 
@@ -207,8 +221,8 @@ test_init_weighted_sum = (
 test_replace_digits : IO ();
 test_replace_digits = (
     let n = 8;
-    let leaves = range(0, n).map(|i| WeightedSum { v : ZP::make(0), weight : ZP::make(10).power(n - 1 - i) } : WeightedSum Mint).to_array;
-    let leaves = leaves.map(|leaf| leaf.set_v(leaf.@weight)); // すべての桁が1
+    let leaves = range(0, n).map(|i| WeightedSum { v : ZP::make(0), w : ZP::make(10).power(n - 1 - i) } : WeightedSum Mint).to_array;
+    let leaves = leaves.map(|leaf| leaf.set_v(leaf.@w)); // すべての桁が1
     let tree = LSegtree::build(leaves) : LSegtree (WeightedSum Mint) (RangeAssign WeightedSum Mint);
     let queries = [(3, 6, 2, 11222211), (1, 4, 7, 77772211), (3, 8, 3, 77333333), (2, 2, 2, 72333333), (4, 5, 1, 72311333)];
     queries.to_iter.fold_m(tree, |(l, r, d, expected), tree|
