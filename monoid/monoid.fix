@@ -28,6 +28,9 @@
 // 表のセルは、作用を受けた後の値です（`WeightedSum`は`(v, w)`の組）。
 // `RangeAssign`のフィールド`a`は`Option e`で、`some(c)`なら`c`を代入し、`none()`なら何もしません。
 //
+// モノイドや作用の計算には、オーバーフローを防ぐ仕組みはありません。
+// 特に、`Min` / `Max`を使うセグメント木を`init`で作ると、すべての要素が`inf`（`Max`では`neg_inf`）で初期化されます。この状態では、作用によって整数はオーバーフローしやすく、浮動小数は0を掛けるとNaNになることに注意してください。
+//
 // これらのモノイドや作用でセグメント木を作るときは、次のように型注釈でモノイドと作用を指定します。
 //
 // ```fix
@@ -120,10 +123,6 @@ impl [e : Zero, e : Add] WeightedSum e : Monoid {
 // 区間加算の作用
 //
 // 型引数`m`は作用を受けるモノイドの型コンストラクタ（`Min`、`Max`、`WeightedSum`）、型引数`e`は要素の型です。
-//
-// 区間加算は`Min`の`inf`と`Max`の`neg_inf`にも足します。`init`で作った要素の値はこれらです。
-// 整数では、`Min`の`inf`に正の値を足すと、`Max`の`neg_inf`に負の値を足すと、溢れて値が回り込みます。
-// そう足すことがある要素には、先に`set`か`build`で値を入れてください。
 type [m : * -> *] RangeAdd m e = struct { a : e };
 
 impl [m : * -> *, e : Zero, e : Add] RangeAdd m e : Monoid {
@@ -151,9 +150,6 @@ impl [e : Add, e : Mul] RangeAdd WeightedSum e : Action {
 // 型引数`m`は作用を受けるモノイドの型コンストラクタ（`Sum`、`Min`、`Max`、`WeightedSum`）、型引数`e`は要素の型です。
 //
 // `Min` / `Max`に作用させるときは、フィールド`a`を0以上にしてください。負だと大小が入れ替わり、区間の最小値・最大値が正しく求まりません。
-// また`Min`の`inf`と`Max`の`neg_inf`にも掛けます。`init`で作った要素の値はこれらです。
-// 整数では、これらに掛けると溢れて値が回り込むことがあります。浮動小数では、フィールド`a`が0のとき、`inf`や`-inf`との積がNaNになります。
-// そうなることがある要素には、先に`set`か`build`で値を入れてください。
 type [m : * -> *] RangeMul m e = struct { a : e };
 
 impl [m : * -> *, e : One, e : Mul] RangeMul m e : Monoid {
@@ -221,9 +217,6 @@ impl [e : Mul] RangeAssign WeightedSum e : Action {
 // 型引数`m`は作用を受けるモノイドの型コンストラクタ（`Min`、`Max`、`WeightedSum`）、型引数`e`は要素の型です。
 //
 // `Min` / `Max`に作用させるときは、フィールド`a`を0以上にしてください。負だと大小が入れ替わり、区間の最小値・最大値が正しく求まりません。
-// また`Min`の`inf`と`Max`の`neg_inf`にも掛けて足します。`init`で作った要素の値はこれらです。
-// 整数では、これらに掛けたり足したりすると溢れて値が回り込むことがあります。浮動小数では、フィールド`a`が0のとき、`inf`や`-inf`との積がNaNになります。
-// そうなることがある要素には、先に`set`か`build`で値を入れてください。
 type [m : * -> *] RangeAffine m e = struct { a : e, b : e };
 
 impl [m : * -> *, e : Zero, e : One, e : Add, e : Mul] RangeAffine m e : Monoid {
