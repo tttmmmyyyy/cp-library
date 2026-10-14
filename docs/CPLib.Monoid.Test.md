@@ -81,6 +81,12 @@ Type: `Random::Random -> (Random::Random, Std::I64)`
 
 Type: `Std::IO ()`
 
+#### test_init_weighted_sum
+
+Type: `Std::IO ()`
+
+`init`で作った`WeightedSum`の要素は重みが0で、作用を受けても変わらない
+
 #### test_replace_digits
 
 Type: `Std::IO ()`

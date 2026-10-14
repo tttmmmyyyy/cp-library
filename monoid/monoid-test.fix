@@ -32,6 +32,7 @@ test = (
     let rng = *check_lsegtree("RangeAffine WeightedSum", WeightedSum::make, |s| s.@v, |a, b| a + b, ZP::make(0) : Mint, gen_mint, gen_affine, rng);
 
     test_units;;
+    test_init_weighted_sum;;
     test_replace_digits;;
 
     pure()
@@ -177,6 +178,8 @@ test_units = (
     assert_eq(|_|"Max unit", (Monoid::unit : Max I64).@v, I64::minimum);;
     assert_eq(|_|"Max unit U64", (Monoid::unit : Max U64).@v, 0_U64);;
     assert_eq(|_|"Max unit F64", (Monoid::unit : Max F64).@v, -F64::infinity);;
+    let ws = Monoid::unit : WeightedSum I64;
+    assert_eq(|_|"WeightedSum unit", (ws.@v, ws.@weight), (0, 0));;
     assert_eq(|_|"NegInf I8", neg_inf : I8, I8::minimum);;
     assert_eq(|_|"NegInf U8", neg_inf : U8, 0_U8);;
     assert_eq(|_|"NegInf I16", neg_inf : I16, I16::minimum);;
@@ -187,6 +190,16 @@ test_units = (
     assert_eq(|_|"NegInf U64", neg_inf : U64, 0_U64);;
     assert_eq(|_|"NegInf F32", neg_inf : F32, -F32::infinity);;
     assert_eq(|_|"NegInf F64", neg_inf : F64, -F64::infinity);;
+    pure()
+);
+
+// `init`で作った`WeightedSum`の要素は重みが0で、作用を受けても変わらない
+test_init_weighted_sum : IO ();
+test_init_weighted_sum = (
+    let tree = LSegtree::init(3) : LSegtree (WeightedSum I64) (RangeAdd WeightedSum I64);
+    let tree = tree.set(1, WeightedSum::make(10));
+    let tree = tree.act_range(0, 3, RangeAdd { v : 7 });
+    assert_eq(|_|"init WeightedSum add", (tree.fold_all.@v, tree.fold_all.@weight), (17, 1));;
     pure()
 );
 
