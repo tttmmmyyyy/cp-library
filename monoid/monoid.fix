@@ -149,7 +149,7 @@ impl [e : Add, e : Mul] RangeAdd WeightedSum e : Action {
 //
 // 型引数`m`は作用を受けるモノイドの型コンストラクタ（`Sum`、`Min`、`Max`、`WeightedSum`）、型引数`e`は要素の型です。
 //
-// `Min` / `Max`に作用させるときは、フィールド`a`を0以上にしてください。負だと大小が入れ替わり、区間の最小値・最大値が正しく求まりません。
+// `Min` / `Max`に作用させるときは、フィールド`a`を0以上にしてください。負だと作用の定義を満たしません。
 type [m : * -> *] RangeMul m e = struct { a : e };
 
 impl [m : * -> *, e : One, e : Mul] RangeMul m e : Monoid {
@@ -216,7 +216,7 @@ impl [e : Mul] RangeAssign WeightedSum e : Action {
 //
 // 型引数`m`は作用を受けるモノイドの型コンストラクタ（`Min`、`Max`、`WeightedSum`）、型引数`e`は要素の型です。
 //
-// `Min` / `Max`に作用させるときは、フィールド`a`を0以上にしてください。負だと大小が入れ替わり、区間の最小値・最大値が正しく求まりません。
+// `Min` / `Max`に作用させるときは、フィールド`a`を0以上にしてください。負だと作用の定義を満たしません。
 type [m : * -> *] RangeAffine m e = struct { a : e, b : e };
 
 impl [m : * -> *, e : Zero, e : One, e : Add, e : Mul] RangeAffine m e : Monoid {
