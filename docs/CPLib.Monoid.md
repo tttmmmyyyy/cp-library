@@ -103,8 +103,9 @@ Defined as: `type [f : *->*] RangeAdd f a = unbox struct { ...fields... }`
 
 `f`は作用を受けるモノイドの型コンストラクタ（`Min`、`Max`、`WeightedSum`）、`a`は要素の型です。
 
-区間加算は`Min`の`inf`と`Max`の`neg_inf`にも足します。
-`init`で作った要素の値はこれらなので、区間加算をする要素には先に`set`か`build`で値を入れてください。
+区間加算は`Min`の`inf`と`Max`の`neg_inf`にも足します。`init`で作った要素の値はこれらです。
+整数では、`Min`の`inf`に正の値を足すと、`Max`の`neg_inf`に負の値を足すと、溢れて値が回り込みます。
+そう足すことがある要素には、先に`set`か`build`で値を入れてください。
 
 ##### field `v`
 
