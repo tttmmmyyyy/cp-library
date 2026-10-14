@@ -69,9 +69,9 @@ gen_assign = |rng| (
 // アフィン変換の作用と、それを1要素に行う関数
 gen_affine : Random -> (Random, RangeAffine WeightedSum Mint, Mint -> Mint);
 gen_affine = |rng| (
+    let (rng, a) = rng.gen_mint;
     let (rng, b) = rng.gen_mint;
-    let (rng, c) = rng.gen_mint;
-    (rng, RangeAffine { b, c }, |x| b * x + c)
+    (rng, RangeAffine { a, b }, |x| a * x + b)
 );
 
 // `Segtree`の`fold`と`fold_all`が、素朴な畳み込みと一致することを確かめる

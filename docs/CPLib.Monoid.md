@@ -14,9 +14,12 @@ Defined in cp-library@0.15.0
 | --- | --- | --- |
 | `RangeAdd` | 値に足す | 和に「足す値 * 重みの和」を足す |
 | `RangeAssign` | 値を置き換える | 和を「代入する値 * 重みの和」にする |
-| `RangeAffine` | なし | 和を「`b` * 和 + `c` * 重みの和」にする |
+| `RangeAffine` | なし | 和を「`a` * 和 + `b` * 重みの和」にする |
 
 自分の型と名前がぶつかるときは、`Monoid::Max`のように名前空間を付けて書きます。
+
+ここにないモノイドと作用は、型を作成して`CPLib.Trait`の`Monoid`と`Action`を実装すれば使えます。
+書き方は`CPLib.Segtree`と`CPLib.LSegtree`のモジュールの説明の例にあります。
 
 ```fix
 import CPLib.LSegtree;
@@ -111,15 +114,15 @@ Type: `a`
 
 Defined as: `type [f : *->*] RangeAffine f a = unbox struct { ...fields... }`
 
-アフィン変換`x -> b * x + c`の作用
+アフィン変換`x -> a * x + b`の作用
 
 `f`は作用を受けるモノイドの型コンストラクタ（`WeightedSum`）、`a`は要素の型です。
 
-##### field `b`
+##### field `a`
 
 Type: `a`
 
-##### field `c`
+##### field `b`
 
 Type: `a`
 

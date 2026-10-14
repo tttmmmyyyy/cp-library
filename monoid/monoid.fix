@@ -10,9 +10,12 @@
 // | --- | --- | --- |
 // | `RangeAdd` | 値に足す | 和に「足す値 * 重みの和」を足す |
 // | `RangeAssign` | 値を置き換える | 和を「代入する値 * 重みの和」にする |
-// | `RangeAffine` | なし | 和を「`b` * 和 + `c` * 重みの和」にする |
+// | `RangeAffine` | なし | 和を「`a` * 和 + `b` * 重みの和」にする |
 //
 // 自分の型と名前がぶつかるときは、`Monoid::Max`のように名前空間を付けて書きます。
+//
+// ここにないモノイドと作用は、型を作成して`CPLib.Trait`の`Monoid`と`Action`を実装すれば使えます。
+// 書き方は`CPLib.Segtree`と`CPLib.LSegtree`のモジュールの説明の例にあります。
 //
 // ```fix
 // # module DocTest;
@@ -163,17 +166,17 @@ impl [a : Mul] RangeAssign WeightedSum a : Action {
     act = |a, x| match a.@v { some(v) => WeightedSum { v : v * x.@weight, weight : x.@weight }, none(_) => x };
 }
 
-// アフィン変換`x -> b * x + c`の作用
+// アフィン変換`x -> a * x + b`の作用
 //
 // `f`は作用を受けるモノイドの型コンストラクタ（`WeightedSum`）、`a`は要素の型です。
-type [f : * -> *] RangeAffine f a = struct { b : a, c : a };
+type [f : * -> *] RangeAffine f a = struct { a : a, b : a };
 
 impl [f : * -> *, a : Zero, a : One, a : Add, a : Mul] RangeAffine f a : Monoid {
-    unit = RangeAffine { b : one, c : zero };
-    op = |x, y| RangeAffine { b : x.@b * y.@b, c : x.@c * y.@b + y.@c };
+    unit = RangeAffine { a : one, b : zero };
+    op = |x, y| RangeAffine { a : x.@a * y.@a, b : x.@b * y.@a + y.@b };
 }
 
 impl [a : Add, a : Mul] RangeAffine WeightedSum a : Action {
     type Set (RangeAffine WeightedSum a) = WeightedSum a;
-    act = |a, x| WeightedSum { v : a.@b * x.@v + a.@c * x.@weight, weight : x.@weight };
+    act = |t, x| WeightedSum { v : t.@a * x.@v + t.@b * x.@weight, weight : x.@weight };
 }
