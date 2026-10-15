@@ -56,6 +56,18 @@ Type: `Std::I64 -> CPLib.Segtree::Segtree m -> m`
 - `i` : インデックス（0-indexed）
 - `tree` : セグメント木
 
+#### @size
+
+Type: `CPLib.Segtree::Segtree m -> Std::I64`
+
+セグメント木の要素数を取得する
+
+計算量：O(1)
+
+##### Parameters
+
+- `tree` : セグメント木
+
 #### build
 
 Type: `[m : CPLib.Trait::Monoid] Std::Array m -> CPLib.Segtree::Segtree m`
@@ -205,20 +217,6 @@ Type: `[m : CPLib.Trait::Monoid] Std::I64 -> m -> CPLib.Segtree::Segtree m -> CP
 Defined as: `type Segtree m = unbox struct { ...fields... }`
 
 セグメント木
-
-##### field `n`
-
-Type: `Std::I64`
-
-要素数
-
-##### field `elems`
-
-Type: `Std::Array m`
-
-内部配列
-
-1-indexedで運用する：長さは`2n`、第0インデックスは使用しない。
 
 ## Traits and aliases
 

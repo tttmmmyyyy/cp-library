@@ -75,6 +75,18 @@ Type: `[a : CPLib.Trait::Action, a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoi
 - `i` : インデックス（0-indexed）
 - `tree` : セグメント木
 
+#### @size
+
+Type: `CPLib.LSegtree::LSegtree m a -> Std::I64`
+
+セグメント木の要素数を取得する
+
+計算量：O(1)
+
+##### Parameters
+
+- `tree` : セグメント木
+
 #### act_range
 
 Type: `[a : CPLib.Trait::Action, a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoid, CPLib.Trait::Action::Set a = m] Std::I64 -> Std::I64 -> a -> CPLib.LSegtree::LSegtree m a -> CPLib.LSegtree::LSegtree m a`
@@ -225,12 +237,6 @@ Defined as: `type LSegtree m a = unbox struct { ...fields... }`
 遅延伝搬セグメント木の型。
 
 パラメータ`m`は「値」となるモノイドの型、`a`は「右作用」するモノイドの型。
-
-##### field `n`
-
-Type: `Std::I64`
-
-要素数
 
 ## Traits and aliases
 

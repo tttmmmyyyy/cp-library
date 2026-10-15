@@ -154,12 +154,6 @@ Type: `Std::I64 -> c -> CPLib.Graph::Edge c`
 
 辺を作成する
 
-### namespace CPLib.Graph::NodeDistance
-
-#### make
-
-Type: `Std::I64 -> c -> CPLib.Graph::NodeDistance c`
-
 ## Types and aliases
 
 ### namespace CPLib.Graph
@@ -214,22 +208,6 @@ Type: `Std::Array (Std::Array (CPLib.Graph::Edge c))`
 
 `edges.@(s)` は頂点`s`から出る辺のリストです。
 
-#### NodeDistance
-
-Defined as: `type NodeDistance c = unbox struct { ...fields... }`
-
-ノードとその距離を表す型（ダイクストラ法などで使用）
-
-##### field `node`
-
-Type: `Std::I64`
-
-##### field `dist`
-
-Type: `c`
-
 ## Traits and aliases
 
 ## Trait implementations
-
-### impl `[c : Std::LessThan] CPLib.Graph::NodeDistance c : Std::LessThan`

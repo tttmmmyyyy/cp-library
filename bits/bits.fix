@@ -177,17 +177,17 @@ bit_clear : [a : Bits, a : Eq] I64 -> a -> a = |i, x| x.and(one.shl(i).not);
 // - `x` : 対象のビット列
 bit_flip : [a : Bits, a : Eq] I64 -> a -> a = |i, x| x.xor(one.shl(i));
 
-type BitCombinationIterator = struct { sub : I64, end : I64 };
+type BitCombinationIterator = struct { _sub : I64, _end : I64 };
 
 impl BitCombinationIterator : Iterator {
     type Item BitCombinationIterator = I64;
-    advance = |BitCombinationIterator { sub : sub, end : end }| (
-        if sub == 0 { some $ (BitCombinationIterator { sub: -1, end: -1 }, 0) }; // 次でnone
+    advance = |BitCombinationIterator { _sub : sub, _end : end }| (
+        if sub == 0 { some $ (BitCombinationIterator { _sub: -1, _end: -1 }, 0) }; // 次でnone
         if sub >= end { none() };
         let x = sub.bit_and(-sub);
         let y = sub + x;
         let next = (sub.bit_and(y.bit_not) / x).shift_right(1).bit_or(y);
-        some $ (BitCombinationIterator { sub: next, end: end }, sub)
+        some $ (BitCombinationIterator { _sub: next, _end: end }, sub)
     );
 }
 
@@ -204,21 +204,21 @@ impl BitCombinationIterator : Iterator {
 // assert_eq(|_|"", bit_combinations(3, 2).to_array, [0b011, 0b101, 0b110])
 // ```
 bit_combinations : I64 -> I64 -> BitCombinationIterator = |n, m| (
-    if m < 0 || n < m { BitCombinationIterator { sub : -1, end : -1 } };
+    if m < 0 || n < m { BitCombinationIterator { _sub : -1, _end : -1 } };
     BitCombinationIterator {
-        sub : 1.shift_left(m) - 1,
-        end : 1.shift_left(n)
+        _sub : 1.shift_left(m) - 1,
+        _end : 1.shift_left(n)
     }
 );
 
-type BitSubsetIterator = struct { sub : I64, set : I64 };
+type BitSubsetIterator = struct { _sub : I64, _set : I64 };
 
 impl BitSubsetIterator : Iterator {
     type Item BitSubsetIterator = I64;
-    advance = |BitSubsetIterator { sub : sub, set : set }| (
+    advance = |BitSubsetIterator { _sub : sub, _set : set }| (
         if set < 0 { none() };
         let next = (sub - 1).bit_and(set);
-        some $ (BitSubsetIterator { sub: next, set: if sub == 0 { -1 } else { set } }, sub)
+        some $ (BitSubsetIterator { _sub: next, _set: if sub == 0 { -1 } else { set } }, sub)
     );
 }
 
@@ -236,5 +236,5 @@ impl BitSubsetIterator : Iterator {
 // assert_eq(|_|"", bit_subsets(0b101).to_array, [0b101, 0b100, 0b001, 0b000])
 // ```
 bit_subsets : I64 -> BitSubsetIterator = (
-    |set| BitSubsetIterator { sub : set, set : set }
+    |set| BitSubsetIterator { _sub : set, _set : set }
 );

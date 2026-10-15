@@ -74,18 +74,6 @@ Defined as: `type TwoSat = unbox struct { ...fields... }`
 
 2-SAT問題の型
 
-##### field `n`
-
-Type: `Std::I64`
-
-変数の数
-
-##### field `graph`
-
-Type: `CPLib.Graph::Graph ()`
-
-グラフ
-
 ## Traits and aliases
 
 ## Trait implementations

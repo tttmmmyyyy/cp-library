@@ -48,6 +48,18 @@ Type: `Std::I64 -> CPLib.LDSegtree::LDSegtree m a -> m`
 - `i` : インデックス（0-indexed）
 - `tree` : セグメント木
 
+#### @size
+
+Type: `CPLib.LDSegtree::LDSegtree m a -> Std::I64`
+
+セグメント木の要素数を取得する
+
+計算量：O(1)
+
+##### Parameters
+
+- `tree` : セグメント木
+
 #### act_range
 
 Type: `Std::I64 -> Std::I64 -> a -> CPLib.LDSegtree::LDSegtree m a -> CPLib.LDSegtree::LDSegtree m a`
@@ -208,58 +220,6 @@ Defined as: `type LDSegtree m a = unbox struct { ...fields... }`
 遅延伝搬セグメント木の型。
 
 パラメータ`m`は「値」となるモノイドの型、`a`は「右作用」するモノイドの型。
-
-##### field `n`
-
-Type: `Std::I64`
-
-要素数
-
-##### field `unit`
-
-Type: `m`
-
-値モノイドの単位元
-
-##### field `op`
-
-Type: `(m, m) -> m`
-
-値モノイドの演算子
-
-##### field `act_unit`
-
-Type: `a`
-
-作用モノイドの単位元
-
-##### field `act_op`
-
-Type: `(a, a) -> a`
-
-作用モノイドの演算子
-
-##### field `act`
-
-Type: `(a, m) -> m`
-
-右作用
-
-##### field `elems`
-
-Type: `Std::Array m`
-
-値の配列
-
-1-indexedで運用する：長さは`2n`、第0インデックスは使用しない。
-
-##### field `lazy`
-
-Type: `Std::Array a`
-
-遅延されている作用の配列
-
-1-indexedで運用する：長さは`2n`、第0インデックスは使用しない。
 
 ## Traits and aliases
 

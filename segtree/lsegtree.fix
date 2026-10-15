@@ -67,7 +67,7 @@ import Std::{
 // パラメータ`m`は「値」となるモノイドの型、`a`は「右作用」するモノイドの型。
 type LSegtree m a = struct {
     // 要素数
-    n : I64,
+    _n : I64,
     // ノードの値の配列
     // 
     // 1-indexedで運用する：長さは`2n`、第0インデックスは使用しない。ノード`k`の子は`2k`と`2k+1`、要素`i`は葉`n+i`。
@@ -89,7 +89,7 @@ init : [m : Monoid, a : Monoid] I64 -> LSegtree m a;
 init = |n| (
     let elems = fill(n * 2, Monoid::unit);
     let lazy = fill(n, Monoid::unit);
-    LSegtree { _elems : elems, _lazy : lazy, n : n }
+    LSegtree { _elems : elems, _lazy : lazy, _n : n }
 );
 
 // 要素の配列からセグメント木を作成する
@@ -111,7 +111,7 @@ build = |elems| (
         let right = tree.@(i * 2 + 1);
         tree.set(i, Monoid::op(left, right))
     );
-    LSegtree { _elems : tree, _lazy : lazy, n : n }
+    LSegtree { _elems : tree, _lazy : lazy, _n : n }
 );
 
 // ノード`k`に作用`a`を適用する
@@ -120,7 +120,7 @@ build = |elems| (
 _apply_at : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> a -> LSegtree m a -> LSegtree m a;
 _apply_at = |k, a, tree| (
     let tree = tree.mod__elems(|elems| elems.set(k, act(a, elems.@(k))));
-    if k >= tree.@n { tree };
+    if k >= tree.@_n { tree };
     tree.mod__lazy(|lazy| lazy.set(k, Monoid::op(lazy.@(k), a))) // 右作用
 );
 
@@ -190,6 +190,15 @@ _pending_above = |j, tree| (
     )
 );
 
+// セグメント木の要素数を取得する
+//
+// 計算量：O(1)
+//
+// # Parameters
+// - `tree` : セグメント木
+@size : LSegtree m a -> I64;
+@size = |tree| tree.@_n;
+
 // セグメント木の要素を取得する
 //
 // 制約：0 <= i < n
@@ -201,7 +210,7 @@ _pending_above = |j, tree| (
 // - `tree` : セグメント木
 @ : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> LSegtree m a -> m;
 @ = |i, tree| (
-    let j = i + tree.@n;
+    let j = i + tree.@_n;
     // 葉jの祖先がまだ伝搬していない作用を、深いノードから順に合成する。浅いノードの作用ほど後から加わったものである。
     let lazy = tree.@_lazy;
     let a = loop((j.shift_right(1), Monoid::unit), |(k, a)|
@@ -223,7 +232,7 @@ _pending_above = |j, tree| (
 // - `tree` : セグメント木
 set : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> m -> LSegtree m a -> LSegtree m a;
 set = |i, value, tree| (
-    let i = i + tree.@n;
+    let i = i + tree.@_n;
     let tree = tree._propagate_above(i);
     let tree = tree.mod__elems(set(i, value));
     tree._recalc_above(i)
@@ -244,8 +253,8 @@ set = |i, value, tree| (
 fold : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> I64 -> LSegtree m a -> (LSegtree m a, m);
 fold = |l, r, tree| (
     if l == r { (tree, Monoid::unit) };
-    let l = l + tree.@n;
-    let r = r + tree.@n;
+    let l = l + tree.@_n;
+    let r = r + tree.@_n;
     // l0はlを、r0はrを、奇数になるまで2で割ったもの（r0はさらに1を引く）。
     // `_fold_nodes`が値を読むノードの祖先は、l0とr0の祖先に含まれる。そこで作用を伝搬させておけばよい。
     let l0 = l.shift_right(l.count_trailing_zeros);
@@ -269,8 +278,8 @@ fold = |l, r, tree| (
 act_range : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> I64 -> a -> LSegtree m a -> LSegtree m a;
 act_range = |l, r, a, tree| (
     if l == r { tree };
-    let l = l + tree.@n;
-    let r = r + tree.@n;
+    let l = l + tree.@_n;
+    let r = r + tree.@_n;
     let l0 = l.shift_right(l.count_trailing_zeros);
     let r0 = r.shift_right(r.count_trailing_zeros) - 1;
     let tree = tree._propagate_above(l0);
@@ -302,7 +311,7 @@ act_range = |l, r, a, tree| (
 fold_all : [m : Monoid] LSegtree m a -> m;
 fold_all = |tree| (
     // 値を読むノードの祖先は、要素の区間に対応しないノードなので、作用を持たない。
-    let n = tree.@n;
+    let n = tree.@_n;
     tree._fold_nodes(n, n * 2)
 );
 
@@ -352,7 +361,7 @@ fold_all = |tree| (
 // ```
 calc_max_right : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> (m -> Bool) -> LSegtree m a -> I64;
 calc_max_right = |l, f, tree| (
-    let n = tree.@n;
+    let n = tree.@_n;
     if l == n { n };
     let l = l + n;
     let r = n * 2;
@@ -445,7 +454,7 @@ calc_max_right = |l, f, tree| (
 // ```
 calc_min_left : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> (m -> Bool) -> LSegtree m a -> I64;
 calc_min_left = |r, f, tree| (
-    let n = tree.@n;
+    let n = tree.@_n;
     if r == 0 { 0 };
     let l = n;
     let r = r + n;
