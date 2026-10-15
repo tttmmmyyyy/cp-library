@@ -4,14 +4,14 @@ import BoolArray::BoolArray::@;
 import CPLib.Arithmetic::{
     add_mod, calc_gcd, create_prime_list, create_prime_table, euler_tortient, euler_tortient_table, 
     ext_gcd, factorize, factorize_flat, factorize_via_lp_table, inv_mod, is_prime, isqrt, 
-    lift_crt, linear_sieve, mul_mod, pmod, pow_mod, pythagorean_triples, sub_mod, _calc_primitive_root, 
+    lift_crt, linear_sieve, mul_mod, pmod, pow_mod, power, pythagorean_triples, sub_mod, _calc_primitive_root, 
     _inv_gcd
 };
 import Random::{generate_I64_nonneg, generate_U64, init_by_seed};
 import Std::{
-    loop, IO, U64, Array::{sort, to_iter, @, @size}, 
+    loop, F64, IO, U64, Array::{sort, to_iter, @, @size}, 
     Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, I32::maximum, 
-    I64::{maximum, minimum, shift_left}, IO::println, Iterator::{collect_m, filter, fold_m, map, range}, 
+    I64::{maximum, minimum, shift_left}, IO::println, Iterator::{collect_m, filter, fold, fold_m, map, range}, 
     LessThan::max, LoopState::{break, continue}, Monad::pure, String::populate, ToI64::i64, 
     ToString::to_string, ToU32::u32, ToU64::u64, U32::{maximum, shift_left}, U64::{maximum, shift_left}
 };
@@ -27,6 +27,7 @@ test = (
     test_gcd;;
     test_ext_gcd;;
     test_pow_mod;;
+    test_power;;
     test_inv_mod;;
     test_prime_table;;
     test_prime_list;;
@@ -180,6 +181,19 @@ test_ext_gcd = (
     assert_eq(|_|"ext_gcd 11a", d, 1);;
     assert_eq(|_|"ext_gcd 11b", (x, y), (-1, 0));;
 
+    pure()
+);
+
+// `power`が、底を指数の回数だけ掛けた値に等しいことのテスト
+test_power : IO ();
+test_power = (
+    range(-5, 6).fold_m((), |x, _|
+        range(0, 20).fold_m((), |e, _|
+            let expected = range(0, e).fold(1, |_, acc| acc * x);
+            assert_eq(|_|"power " + x.to_string + "^" + e.to_string, x.power(e), expected)
+        )
+    );;
+    assert_eq(|_|"power F64", 2.0.power(10), 1024.0);;
     pure()
 );
 

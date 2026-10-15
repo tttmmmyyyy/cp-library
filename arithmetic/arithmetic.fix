@@ -3,9 +3,9 @@ module CPLib.Arithmetic;
 import BoolArray::{BoolArray, BoolArray::{fill_true, get_size, make, set, @}};
 import Std::{
     loop, undefined, Array, Bool, I128, I64, U128, U32, U64, U8, U128::shift_right, Add::add, 
-    Array::{empty, fill, push_back, set, to_iter, @, @size}, I128::abs, I64::abs, Indexable::{iget, imod}, 
+    Array::{empty, fill, push_back, set, to_iter, @, @size}, I128::abs, I64::{abs, bit_and, shift_right}, Indexable::{iget, imod}, 
     Iterator::{check_all, filter_map, fold, get_first, loop_iter, loop_iter_s, range, range_step}, 
-    LoopState::{break, continue, is_break, is_continue}, Option::{as_some, none, some}, ToI128::i128, ToI64::i64, 
+    LoopState::{break, continue, is_break, is_continue}, Multiplicative, One::one, Option::{as_some, none, some}, ToI128::i128, ToI64::i64, 
     ToU128::u128, ToU32::u32, ToU64::u64, ToU8::u8, Tuple2::{act_0, act_1}, U64::{bit_and, shift_right}
 };
 
@@ -197,6 +197,36 @@ pow_mod_u = |e, m, x| (
         if e == 0_U64 { break $ pow };
         let pow = if e.bit_and(1_U64) == 1_U64 { _mul_mod_u(m, pow, x) } else { pow };
         continue $ (e.shift_right(1_U64), pow, _mul_mod_u(m, x, x))
+    )
+);
+
+// `x`の`e`乗を、繰り返し二乗法で計算します。
+//
+// `*`と`one`を持つ型（`Multiplicative`を実装した型）なら何にでも使えます。たとえば`I64`、`F64`、`ZP p`や、自分で作った行列の型です。
+// `*`は結合的で、`one`はその単位元でなければなりません。
+//
+// 制約：e >= 0
+//
+// 計算量：`*`をO(log e)回
+//
+// # Parameters
+// - `e`: 指数
+// - `x`: 底
+//
+// # Examples
+// ```fix
+// assert_eq(|_|"", 3.power(4), 81)
+// ```
+power : [a : Multiplicative] I64 -> a -> a;
+power = |e, x| (
+    if e < 0 { undefined("[power] the exponent is negative.") };
+    if e == 0 { one };
+    // 最上位のビットを処理したら、xをそれ以上二乗せずに終える（使わない二乗が溢れないように）
+    loop((e, one, x), |(e, pow, x)|
+        let pow = if e.bit_and(1) == 1 { pow * x } else { pow };
+        let e = e.shift_right(1);
+        if e == 0 { break $ pow };
+        continue $ (e, pow, x * x)
     )
 );
 
