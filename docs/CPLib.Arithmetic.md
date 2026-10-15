@@ -427,6 +427,30 @@ Type: `Std::U64 -> Std::U64 -> Std::U64 -> Std::U64`
 - `m`: 法
 - `x`: 底
 
+#### power
+
+Type: `[a : Std::Multiplicative] Std::I64 -> a -> a`
+
+`x`の`e`乗を、繰り返し二乗法で計算します。
+
+`*`と`one`を持つ型（`Multiplicative`を実装した型）なら何にでも使えます。たとえば`I64`、`F64`、`ZP p`や、自分で作った行列の型です。
+`*`は結合的で、`one`はその単位元でなければなりません。
+
+制約：e >= 0
+
+計算量：`*`をO(log e)回
+
+##### Parameters
+
+- `e`: 指数
+- `x`: 底
+
+##### Examples
+
+```fix
+assert_eq(|_|"", 3.power(4), 81)
+```
+
 #### pythagorean_triples
 
 Type: `Std::I64 -> Std::Array (Std::I64, Std::I64, Std::I64)`

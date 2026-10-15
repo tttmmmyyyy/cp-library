@@ -1,10 +1,11 @@
 module CPLib.Monoid.Test;
 
+import CPLib.Arithmetic::power;
 import CPLib.LSegtree;
 import CPLib.Monoid;
 import CPLib.Segtree;
 import CPLib.Trait::{Action, Monoid, Action::Set, Monoid::unit, NegInf::neg_inf};
-import CPLib.ZP::{make, power, P998244353, ZP};
+import CPLib.ZP::{make, P998244353, ZP};
 import Random::{generate_I64_nonneg, init_by_seed, Random};
 
 type Mint = ZP P998244353;

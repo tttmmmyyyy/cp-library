@@ -1,17 +1,18 @@
 // 素数`p`を法とする整数の環の型`ZP p`を与えるモジュール。
 //
-// 素数`p`は静的でなければならない（コンパイル時に決まる必要がある）。
+// 法`p`は静的でなければなりません（コンパイル時に決まる必要があります）。
 // 
-// 制約：pは素数, p < 2^31
+// 制約：p < 2^31。`inv`、`/`、`fft`、`primitive_root`は、pが素数であることを要します。それ以外は、pが素数でなくても動きます。
+// 法が実行時に動的に変わる場合は、`CPLib.Arithmetic`の`add_mod`・`sub_mod`・`mul_mod`・`pow_mod`・`inv_mod`を使ってください。
 // 
-// 素数`p`は型パラメータとして与える。例として、p = 17 としたい場合、
+// 法`p`は型パラメータとして与えます。例として、p = 17 としたい場合は、
 // 
-// - 空の型（フィールドを持たないunboxedな型）`P17`を作成：`type P17 = unbox struct {}`.
-// - `P17 : PrimeProvider`を実装する。この際`PrimeProvider::value`関数で17を返すようにする：`value = |_| 17_U32;`
+// - 空の型（フィールドを持たないunboxedな型）`P17`を作ります：`type P17 = unbox struct {}`
+// - `P17 : PrimeProvider`を実装し、`PrimeProvider::value`関数で17を返すようにします：`value = |_| 17_U32;`
 //
-// すると`ZP P17`が環"Z/(17)"を表す型となる。
+// すると`ZP P17`が環"Z/(17)"を表す型になります。
 //
-// 幾つかの有名な素数nに対する PrimeProvider `Pn` はこのモジュールに定義されている。
+// いくつかの有名な素数nに対する`PrimeProvider`の型`Pn`は、このモジュールに定義されています。
 // 
 // 使用例：
 // ```fix
@@ -33,7 +34,7 @@
 // ```
 module CPLib.ZP;
 
-import CPLib.Arithmetic::calc_primitive_root;
+import CPLib.Arithmetic::{calc_primitive_root, power};
 import Std::{
     loop, undefined, Add, Array, Div, Eq, I64, Mul, Neg, One, Sub, ToString, U32, U64, Zero, 
     Array::{
@@ -114,44 +115,6 @@ make = |x| (
     ZP { value : x.u32, prime : pp }
 );
 
-// x^e mod p を計算する。
-// 
-// xが0かつeが負のときはプログラムを終了する。
-// 
-// 計算量：O(log p)
-//
-// # Parameters
-// - `e` : `I64`型の指数
-// - `x` : `ZP p`型の数
-power : [p : PrimeProvider] I64 -> ZP p -> ZP p;
-power = |e, x| (
-    if x.@value == 0_U32 {
-        if e < 0 { undefined("[ZP::power] divide by zero!") }
-        else if e == 0 { ZP::make(1) }
-        else { x }
-    };
-    let p = x.@prime.value;
-    let p1 = p.i64 - 1;
-    let e = e % p1;
-    let e = if e < 0 { e + p1 } else { e };
-    x._power_unsigned(e.u64)
-);
-
-// x^e mod p を計算する（eが非負整数のとき）
-// 
-// # Parameters
-// - `e` : `U64`型の指数
-// - `x` : `ZP p`型の数
-_power_unsigned : [p : PrimeProvider] U64 -> ZP p -> ZP p;
-_power_unsigned = |e, x| (
-    loop((e, ZP::make(1), x), |(e, pow, x)|
-        if e == 0_U64 { break $ pow };
-        let pow = if e.bit_and(1_U64) == 1_U64 { pow * x } else { pow };
-        continue $ (e.shift_right(1_U64), pow, x * x)
-    )
-);
-
-
 // `ZP p`の逆元を求める。
 // 
 // 0を与えた場合はプログラムを終了する。
@@ -164,7 +127,7 @@ inv : [p : PrimeProvider] ZP p -> ZP p;
 inv = |x| (
     let p = x.@prime.value;
     if x.@value == 0_U32 { undefined("[ZP::inv] divide by zero!") };
-    x.power(p.i64 - 2)
+    x.power(p.i64 - 2) // フェルマーの小定理
 );
 
 // 法pの原始根を一つ得る
@@ -288,7 +251,7 @@ fft = |dir, x| (
     let two_k = pm1.bit_and(-pm1);
     if two_k < n { undefined("[fft_zp] p - 1 is not enough for the size of x.") };
     let d = pm1 / n;
-    let w = ZP::primitive_root._power_unsigned(d.u64);
+    let w = ZP::primitive_root.power(d);
     let w = match dir { forward() => w, inverse() => w.inv };
 
     // 以下で配列x（長さn）とtw（長さn）を読み書きする添字は、ループの範囲から0以上n未満に収まる。
