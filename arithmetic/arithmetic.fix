@@ -193,11 +193,33 @@ pow_mod = |e, m, x| (
 // - `x`: 底
 pow_mod_u : U64 -> U64 -> U64 -> U64;
 pow_mod_u = |e, m, x| (
-    loop((e, 1_U64 % m, x), |(e, pow, x)|
+    if m == 1_U64 { 0_U64 };
+    if m < 4294967296_U64 {
+        let im = 18446744073709551615_U64 / m + 1_U64; // ceil(2^64 / m)
+        loop((e, 1_U64, x % m), |(e, pow, x)|
+            if e == 0_U64 { break $ pow };
+            let pow = if e.bit_and(1_U64) == 1_U64 { _mul_mod_barrett(m, im, pow, x) } else { pow };
+            continue $ (e.shift_right(1_U64), pow, _mul_mod_barrett(m, im, x, x))
+        )
+    };
+    loop((e, 1_U64, x), |(e, pow, x)|
         if e == 0_U64 { break $ pow };
         let pow = if e.bit_and(1_U64) == 1_U64 { _mul_mod_u(m, pow, x) } else { pow };
         continue $ (e.shift_right(1_U64), pow, _mul_mod_u(m, x, x))
     )
+);
+
+// `x * y`を`m`で割った余りを、割り算を使わずに返す（Barrett reduction）
+//
+// `im = ceil(2^64 / m)`とすると、`q = floor(x * y * im / 2^64)`は`floor(x * y / m)`か、それより1大きい値になる。
+// `x * y - q * m`が負になったときは`m`を足す。
+//
+// 制約：2 <= m < 2^32, im = ceil(2^64 / m), 0 <= x, y < m
+_mul_mod_barrett : U64 -> U64 -> U64 -> U64 -> U64;
+_mul_mod_barrett = |m, im, x, y| (
+    let z = x * y;
+    let qm = (z.u128 * im.u128).shift_right(64_U128).u64 * m;
+    if z < qm { z + m - qm } else { z - qm }
 );
 
 // `x`の`e`乗を、繰り返し二乗法で計算します。
