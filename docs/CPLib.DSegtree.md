@@ -37,6 +37,18 @@ Type: `Std::I64 -> CPLib.DSegtree::DSegtree m -> m`
 - `i` : インデックス（0-indexed）
 - `tree` : セグメント木
 
+#### @size
+
+Type: `CPLib.DSegtree::DSegtree m -> Std::I64`
+
+セグメント木の要素数を取得する
+
+計算量：O(1)
+
+##### Parameters
+
+- `tree` : セグメント木
+
 #### build
 
 Type: `Std::Array m -> m -> ((m, m) -> m) -> CPLib.DSegtree::DSegtree m`
@@ -166,32 +178,6 @@ Type: `Std::I64 -> m -> CPLib.DSegtree::DSegtree m -> CPLib.DSegtree::DSegtree m
 Defined as: `type DSegtree m = unbox struct { ...fields... }`
 
 セグメント木
-
-##### field `n`
-
-Type: `Std::I64`
-
-要素数
-
-##### field `unit`
-
-Type: `m`
-
-ユニット
-
-##### field `op`
-
-Type: `(m, m) -> m`
-
-演算子
-
-##### field `elems`
-
-Type: `Std::Array m`
-
-内部配列
-
-1-indexedで運用する：長さは`2n`、第0インデックスは使用しない。
 
 ## Traits and aliases
 

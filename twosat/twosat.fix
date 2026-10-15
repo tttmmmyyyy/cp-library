@@ -19,9 +19,9 @@ import Std::{
 // 2-SAT問題の型
 type TwoSat = struct {
     // 変数の数
-    n : I64,
+    _n : I64,
     // グラフ
-    graph : Graph (),
+    _graph : Graph (),
 };
 
 // 2-SAT問題を作る
@@ -31,7 +31,7 @@ type TwoSat = struct {
 // # Parameters
 // - `n` : 変数の数
 create : I64 -> TwoSat;
-create = |n| TwoSat { n : n, graph : Graph::create(n * 2) };
+create = |n| TwoSat { _n : n, _graph : Graph::create(n * 2) };
 
 // 節 (a = f) or (b = g) を追加する
 //
@@ -47,10 +47,10 @@ create = |n| TwoSat { n : n, graph : Graph::create(n * 2) };
 // - `sat` : 2-SAT問題
 add_clause : I64 -> Bool -> I64 -> Bool -> TwoSat -> TwoSat;
 add_clause = |a, f, b, g, sat| (
-    let n = sat.@n;
+    let n = sat.@_n;
     let a = if !f { a._not(n) } else { a };
     let b = if !g { b._not(n) } else { b };
-    sat.mod_graph(|graph|
+    sat.mod__graph(|graph|
         graph.add_edge(a._not(n), b, ()).add_edge(b._not(n), a, ())
     )
 );
@@ -66,8 +66,8 @@ add_clause = |a, f, b, g, sat| (
 // - `sat` : 2-SAT問題
 solve : TwoSat -> Option (Array Bool);
 solve = |sat| (
-    let n = sat.@n;
-    let sccs = sat.@graph.calc_sccs;
+    let n = sat.@_n;
+    let sccs = sat.@_graph.calc_sccs;
     // 各リテラルのSCCグループインデックスを取得
     let scc_idx = fill(2 * n, 0);
     let scc_idx = range(0, sccs.@size).fold(scc_idx, |i, scc_idx|

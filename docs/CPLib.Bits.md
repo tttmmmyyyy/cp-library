@@ -182,25 +182,9 @@ Trait member of `CPLib.Bits::Bits`
 
 Defined as: `type BitCombinationIterator = unbox struct { ...fields... }`
 
-##### field `sub`
-
-Type: `Std::I64`
-
-##### field `end`
-
-Type: `Std::I64`
-
 #### BitSubsetIterator
 
 Defined as: `type BitSubsetIterator = unbox struct { ...fields... }`
-
-##### field `sub`
-
-Type: `Std::I64`
-
-##### field `set`
-
-Type: `Std::I64`
 
 ## Traits and aliases
 

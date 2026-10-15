@@ -16,7 +16,7 @@
 module CPLib.MinCostFlow;
 
 import BinaryHeap::{BinaryHeap::{get_size, get_top, pop, push}, MinBinaryHeap::empty};
-import CPLib.Graph::{NodeDistance, NodeDistance::make};
+import CPLib.Graph::{_NodeDistance, _NodeDistance::make};
 import Std::{
     loop, undefined, Array, Bool, I64,
     Array::{fill, mod, pop_back, push_back, set, to_iter, @, @size}, I64::bit_xor, Indexable::ixchg,
@@ -375,10 +375,10 @@ _dijkstra = |n, s, t, h, res| (
     let cap = res.@cap;
     let dist = fill(n, I64::maximum).set(s, 0);
     let prev = fill(n, -1);
-    let que = MinBinaryHeap::empty.push(NodeDistance::make(s, 0));
+    let que = MinBinaryHeap::empty.push(_NodeDistance::make(s, 0));
     loop((que, dist, prev), |(que, dist, prev)|
         if que.get_size == 0 { break $ (dist, prev) };
-        let NodeDistance { node : v, dist : d } = que.get_top.as_some;
+        let _NodeDistance { node : v, dist : d } = que.get_top.as_some;
         let que = que.pop;
         if dist.@(v) < d { continue $ (que, dist, prev) };
         if v == t { break $ (dist, prev) };
@@ -388,7 +388,7 @@ _dijkstra = |n, s, t, h, res| (
             let (w, c) = arc.@(p);
             let new_d = d + c + hv - h.@(w);
             if !(dist.@(w) > new_d) { (que, dist, prev) };
-            (que.push(NodeDistance::make(w, new_d)), dist.set(w, new_d), prev.set(w, p))
+            (que.push(_NodeDistance::make(w, new_d)), dist.set(w, new_d), prev.set(w, p))
         )
     )
 );

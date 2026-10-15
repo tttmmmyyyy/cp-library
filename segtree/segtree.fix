@@ -46,11 +46,11 @@ import Std::{
 // セグメント木
 type Segtree m = struct {
     // 要素数
-    n : I64,
+    _n : I64,
     // 内部配列
     // 
     // 1-indexedで運用する：長さは`2n`、第0インデックスは使用しない。
-    elems : Array m,
+    _elems : Array m,
 };
 
 // すべての要素が単位元であるようなセグメント木を作成する
@@ -62,7 +62,7 @@ type Segtree m = struct {
 init : [m : Monoid] I64 -> Segtree m;
 init = |n| (
     let elems = fill(n * 2, Monoid::unit);
-    Segtree { elems : elems, n : n }
+    Segtree { _elems : elems, _n : n }
 );
 
 // 要素の配列からセグメント木を作成する
@@ -83,8 +83,17 @@ build = |elems| (
         let right = tree.@(i * 2 + 1);
         tree.set(i, Monoid::op(left, right))
     );
-    Segtree { elems : tree, n : n }
+    Segtree { _elems : tree, _n : n }
 );
+
+// セグメント木の要素数を取得する
+//
+// 計算量：O(1)
+//
+// # Parameters
+// - `tree` : セグメント木
+@size : Segtree m -> I64;
+@size = |tree| tree.@_n;
 
 // セグメント木の要素を取得する
 // 
@@ -97,8 +106,8 @@ build = |elems| (
 // - `tree` : セグメント木
 @ : I64 -> Segtree m -> m;
 @ = |i, tree| (
-    let n = tree.@n;
-    tree.@elems.@(n + i)
+    let n = tree.@_n;
+    tree.@_elems.@(n + i)
 );
 
 // 要素を設定する
@@ -113,16 +122,16 @@ build = |elems| (
 // - `tree` : セグメント木
 set : [m : Monoid] I64 -> m -> Segtree m -> Segtree m;
 set = |i, value, tree| (
-    let n = tree.@n;
+    let n = tree.@_n;
     let i = i + n;
-    let tree = tree.mod_elems(set(i, value));
+    let tree = tree.mod__elems(set(i, value));
     // `i`の祖先ノードを下から順にすべて更新
     loop((i / 2, tree), |(p, tree)|
         if p == 0 { break $ tree }; // 根（添字1）を更新したら終了
-        let left = tree.@elems.@(p * 2);
-        let right = tree.@elems.@(p * 2 + 1);
+        let left = tree.@_elems.@(p * 2);
+        let right = tree.@_elems.@(p * 2 + 1);
         let value = Monoid::op(left, right);
-        let tree = tree.mod_elems(set(p, value));
+        let tree = tree.mod__elems(set(p, value));
         continue $ (p / 2, tree)
     )
 );
@@ -139,7 +148,7 @@ set = |i, value, tree| (
 // - `tree` : セグメント木
 fold : [m : Monoid] I64 -> I64 -> Segtree m -> m;
 fold = |l, r, tree| (
-    let n = tree.@n;
+    let n = tree.@_n;
     let l = l + n;
     let r = r + n;
     let (acc_l, acc_r) = loop((l, r, Monoid::unit, Monoid::unit), |(l, r, acc_l, acc_r)|
@@ -147,13 +156,13 @@ fold = |l, r, tree| (
             break $ (acc_l, acc_r)
         };
         let (l, acc_l) = if l % 2 == 0 { (l, acc_l) } else {
-            let acc_l = Monoid::op(acc_l, tree.@elems.@(l));
+            let acc_l = Monoid::op(acc_l, tree.@_elems.@(l));
             let l = l + 1;
             (l, acc_l)
         };
         let (r, acc_r) = if r % 2 == 0 { (r, acc_r) } else {
             let r = r - 1;
-            let acc_r = Monoid::op(tree.@elems.@(r), acc_r);
+            let acc_r = Monoid::op(tree.@_elems.@(r), acc_r);
             (r, acc_r)
         };
         let l = l / 2;
@@ -170,7 +179,7 @@ fold = |l, r, tree| (
 // # Parameters
 // - `tree` : セグメント木
 fold_all : [m : Monoid] Segtree m -> m;
-fold_all = |tree| tree.fold(0, tree.@n);
+fold_all = |tree| tree.fold(0, tree.@_n);
 
 // `f(fold(l, r))`が真になる最大の`r`を、木の上の二分探索で求める
 //
@@ -204,8 +213,8 @@ fold_all = |tree| tree.fold(0, tree.@n);
 // ```
 calc_max_right : [m : Monoid] I64 -> (m -> Bool) -> Segtree m -> I64;
 calc_max_right = |l, f, tree| (
-    let n = tree.@n;
-    let elems = tree.@elems;
+    let n = tree.@_n;
+    let elems = tree.@_elems;
     // `fold(l, n)`が畳み込むノードを左から順に試し、`f`が偽になる最初のノードkと、kより左のノードの畳み込みaccを求める。
     // 段hで`fold`が畳み込むノードは、lh = ceil((l + n) / 2^h)、rh = floor(2n / 2^h)として、lh < rhの段のうち、
     // 左端の側ではlh（lhが奇数のとき）、右端の側ではrh - 1（rhが奇数のとき）である。
@@ -271,8 +280,8 @@ calc_max_right = |l, f, tree| (
 // ```
 calc_min_left : [m : Monoid] I64 -> (m -> Bool) -> Segtree m -> I64;
 calc_min_left = |r, f, tree| (
-    let n = tree.@n;
-    let elems = tree.@elems;
+    let n = tree.@_n;
+    let elems = tree.@_elems;
     // `fold(0, r)`が畳み込むノードを右から順に試し、`f`が偽になる最初のノードkと、kより右のノードの畳み込みaccを求める。
     // 段hで`fold`が畳み込むノードは、lh = ceil(n / 2^h)、rh = floor((r + n) / 2^h)として、lh < rhの段のうち、
     // 左端の側ではlh（lhが奇数のとき）、右端の側ではrh - 1（rhが奇数のとき）である。

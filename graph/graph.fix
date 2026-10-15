@@ -117,17 +117,17 @@ get_edge : EdgeId -> Graph c -> Edge c;
 get_edge = |eid, graph| graph.@edges.@(eid.@from).@(eid.@idx);
 
 // ノードとその距離を表す型（ダイクストラ法などで使用）
-type NodeDistance c = struct {
+type _NodeDistance c = struct {
     node : I64,
     dist : c
 };
 
-namespace NodeDistance {
-    make : I64 -> c -> NodeDistance c;
-    make = |node, dist| NodeDistance { node: node, dist: dist };
+namespace _NodeDistance {
+    make : I64 -> c -> _NodeDistance c;
+    make = |node, dist| _NodeDistance { node: node, dist: dist };
 }
 
-impl [c : LessThan] NodeDistance c : LessThan {
+impl [c : LessThan] _NodeDistance c : LessThan {
     less_than = |x, y| x.@dist < y.@dist;
 }
 
@@ -152,7 +152,7 @@ dijkstra = |start, graph| (
     let dists = dists.set(start, zero);
 
     // The binary heap to store the nodes to visit.
-    let visit_list = MinBinaryHeap::empty.push(NodeDistance::make(start, zero));
+    let visit_list = MinBinaryHeap::empty.push(_NodeDistance::make(start, zero));
 
     // The main loop.
     loop((dists, visit_list), |(dists, visit_list)| (
@@ -160,7 +160,7 @@ dijkstra = |start, graph| (
         if visit_list.get_size == 0 { break $ dists };
 
         // Get the node with the smallest distance.
-        let NodeDistance { node : node, dist : dist } = visit_list.get_top.as_some;
+        let _NodeDistance { node : node, dist : dist } = visit_list.get_top.as_some;
         let visit_list = visit_list.pop;
         if dists.@(node) < dist {
             // The node is already visited.
@@ -177,7 +177,7 @@ dijkstra = |start, graph| (
 
             // Update the distance to the node.
             let dists = dists.set(to, new_dist);
-            let visit_list = visit_list.push(NodeDistance::make(to, new_dist));
+            let visit_list = visit_list.push(_NodeDistance::make(to, new_dist));
 
             (dists, visit_list)
         )

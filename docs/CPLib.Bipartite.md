@@ -20,6 +20,44 @@ assert_eq(|_|"", flow.get_max_matching, [true, false, true])
 
 ### namespace CPLib.Bipartite::BipartiteGraph
 
+#### @edges
+
+Type: `CPLib.Bipartite::BipartiteGraph -> Std::Array (Std::I64, Std::I64)`
+
+辺の配列を取得する
+
+第`i`要素は、`i`番目に追加した辺の（左側の頂点番号, 右側の頂点番号）です。
+
+計算量：O(1)
+
+##### Parameters
+
+- `graph` : 二部グラフ
+
+#### @left_size
+
+Type: `CPLib.Bipartite::BipartiteGraph -> Std::I64`
+
+左側の頂点数を取得する
+
+計算量：O(1)
+
+##### Parameters
+
+- `graph` : 二部グラフ
+
+#### @right_size
+
+Type: `CPLib.Bipartite::BipartiteGraph -> Std::I64`
+
+右側の頂点数を取得する
+
+計算量：O(1)
+
+##### Parameters
+
+- `graph` : 二部グラフ
+
 #### add_edge
 
 Type: `Std::I64 -> Std::I64 -> CPLib.Bipartite::BipartiteGraph -> CPLib.Bipartite::BipartiteGraph`
@@ -160,31 +198,11 @@ Defined as: `type BipartiteGraph = unbox struct { ...fields... }`
 
 二部グラフの型
 
-##### field `left_size`
-
-Type: `Std::I64`
-
-##### field `right_size`
-
-Type: `Std::I64`
-
-##### field `edges`
-
-Type: `Std::Array (Std::I64, Std::I64)`
-
 #### BipartiteGraphFlow
 
 Defined as: `type BipartiteGraphFlow = unbox struct { ...fields... }`
 
 二部グラフに対する最大フロー問題のグラフ
-
-##### field `graph`
-
-Type: `CPLib.Bipartite::BipartiteGraph`
-
-##### field `max_flow`
-
-Type: `CPLib.MaxFlow::MaxFlowGraph`
 
 ## Traits and aliases
 

@@ -24,15 +24,15 @@ import Std::{
 // セグメント木
 type DSegtree m = struct {
     // 要素数
-    n : I64,
+    _n : I64,
     // ユニット
-    unit : m,
+    _unit : m,
     // 演算子
-    op : (m, m) -> m,
+    _op : (m, m) -> m,
     // 内部配列
     // 
     // 1-indexedで運用する：長さは`2n`、第0インデックスは使用しない。
-    elems : Array m,
+    _elems : Array m,
 };
 
 // すべての要素が単位元であるようなセグメント木を作成する
@@ -46,7 +46,7 @@ type DSegtree m = struct {
 init : I64 -> m -> ((m, m) -> m) -> DSegtree m;
 init = |n, unit, op| (
     let elems = fill(n * 2, unit);
-    DSegtree { elems : elems, n : n, unit : unit, op : op }
+    DSegtree { _elems : elems, _n : n, _unit : unit, _op : op }
 );
 
 // 要素の配列からセグメント木を作成する
@@ -69,8 +69,17 @@ build = |elems, unit, op| (
         let right = tree.@(i * 2 + 1);
         tree.set(i, op((left, right)))
     );
-    DSegtree { elems : tree, n : n, unit : unit, op : op }
+    DSegtree { _elems : tree, _n : n, _unit : unit, _op : op }
 );
+
+// セグメント木の要素数を取得する
+//
+// 計算量：O(1)
+//
+// # Parameters
+// - `tree` : セグメント木
+@size : DSegtree m -> I64;
+@size = |tree| tree.@_n;
 
 // セグメント木の要素を取得する
 //
@@ -83,8 +92,8 @@ build = |elems, unit, op| (
 // - `tree` : セグメント木
 @ : I64 -> DSegtree m -> m;
 @ = |i, tree| (
-    let n = tree.@n;
-    tree.@elems.@(n + i)
+    let n = tree.@_n;
+    tree.@_elems.@(n + i)
 );
 
 // 要素を設定する
@@ -99,16 +108,16 @@ build = |elems, unit, op| (
 // - `tree` : セグメント木
 set : I64 -> m -> DSegtree m -> DSegtree m;
 set = |i, value, tree| (
-    let n = tree.@n;
+    let n = tree.@_n;
     let i = i + n;
-    let tree = tree.mod_elems(set(i, value));
+    let tree = tree.mod__elems(set(i, value));
     // `i`の祖先ノードを下から順にすべて更新
     loop((i / 2, tree), |(p, tree)|
         if p == 0 { break $ tree }; // 根（添字1）を更新したら終了
-        let left = tree.@elems.@(p * 2);
-        let right = tree.@elems.@(p * 2 + 1);
-        let value = tree.@op $ (left, right);
-        let tree = tree.mod_elems(set(p, value));
+        let left = tree.@_elems.@(p * 2);
+        let right = tree.@_elems.@(p * 2 + 1);
+        let value = tree.@_op $ (left, right);
+        let tree = tree.mod__elems(set(p, value));
         continue $ (p / 2, tree)
     )
 );
@@ -125,28 +134,28 @@ set = |i, value, tree| (
 // - `tree` : セグメント木
 fold : I64 -> I64 -> DSegtree m -> m;
 fold = |l, r, tree| (
-    let n = tree.@n;
+    let n = tree.@_n;
     let l = l + n;
     let r = r + n;
-    let (acc_l, acc_r) = loop((l, r, tree.@unit, tree.@unit), |(l, r, acc_l, acc_r)|
+    let (acc_l, acc_r) = loop((l, r, tree.@_unit, tree.@_unit), |(l, r, acc_l, acc_r)|
         if l >= r {
             break $ (acc_l, acc_r)
         };
         let (l, acc_l) = if l % 2 == 0 { (l, acc_l) } else {
-            let acc_l = tree.@op $ (acc_l, tree.@elems.@(l));
+            let acc_l = tree.@_op $ (acc_l, tree.@_elems.@(l));
             let l = l + 1;
             (l, acc_l)
         };
         let (r, acc_r) = if r % 2 == 0 { (r, acc_r) } else {
             let r = r - 1;
-            let acc_r = tree.@op $ (tree.@elems.@(r), acc_r);
+            let acc_r = tree.@_op $ (tree.@_elems.@(r), acc_r);
             (r, acc_r)
         };
         let l = l / 2;
         let r = r / 2;
         continue $ (l, r, acc_l, acc_r)
     );
-    tree.@op $ (acc_l, acc_r)
+    tree.@_op $ (acc_l, acc_r)
 );
 
 // すべての要素の畳み込みを計算する
@@ -156,7 +165,7 @@ fold = |l, r, tree| (
 // # Parameters
 // - `tree` : セグメント木
 fold_all : DSegtree m -> m;
-fold_all = |tree| tree.fold(0, tree.@n);
+fold_all = |tree| tree.fold(0, tree.@_n);
 
 // `f(fold(l, r))`が真になる最大の`r`を、木の上の二分探索で求める
 //
@@ -177,15 +186,15 @@ fold_all = |tree| tree.fold(0, tree.@n);
 // ```
 calc_max_right : I64 -> (m -> Bool) -> DSegtree m -> I64;
 calc_max_right = |l, f, tree| (
-    let n = tree.@n;
-    let elems = tree.@elems;
-    let op = tree.@op;
+    let n = tree.@_n;
+    let elems = tree.@_elems;
+    let op = tree.@_op;
     // `fold(l, n)`が畳み込むノードを左から順に試し、`f`が偽になる最初のノードkと、kより左のノードの畳み込みaccを求める。
     // 段hで`fold`が畳み込むノードは、lh = ceil((l + n) / 2^h)、rh = floor(2n / 2^h)として、lh < rhの段のうち、
     // 左端の側ではlh（lhが奇数のとき）、右端の側ではrh - 1（rhが奇数のとき）である。
     // これらを左から順に並べると、左端の側のノードが低い段から、続いて右端の側のノードが高い段から並ぶ。
     // 見つからなければkは0とする。
-    let (k, height, acc) = loop((l + n, n * 2, 0, tree.@unit), |(lh, rh, h, acc)|
+    let (k, height, acc) = loop((l + n, n * 2, 0, tree.@_unit), |(lh, rh, h, acc)|
         if lh >= rh { break $ (0, h, acc) };
         if lh % 2 == 1 {
             let next = op((acc, elems.@(lh)));
@@ -232,15 +241,15 @@ calc_max_right = |l, f, tree| (
 // ```
 calc_min_left : I64 -> (m -> Bool) -> DSegtree m -> I64;
 calc_min_left = |r, f, tree| (
-    let n = tree.@n;
-    let elems = tree.@elems;
-    let op = tree.@op;
+    let n = tree.@_n;
+    let elems = tree.@_elems;
+    let op = tree.@_op;
     // `fold(0, r)`が畳み込むノードを右から順に試し、`f`が偽になる最初のノードkと、kより右のノードの畳み込みaccを求める。
     // 段hで`fold`が畳み込むノードは、lh = ceil(n / 2^h)、rh = floor((r + n) / 2^h)として、lh < rhの段のうち、
     // 左端の側ではlh（lhが奇数のとき）、右端の側ではrh - 1（rhが奇数のとき）である。
     // これらを右から順に並べると、右端の側のノードが低い段から、続いて左端の側のノードが高い段から並ぶ。
     // 見つからなければkは0とする。
-    let (k, height, acc) = loop((n, r + n, 0, tree.@unit), |(lh, rh, h, acc)|
+    let (k, height, acc) = loop((n, r + n, 0, tree.@_unit), |(lh, rh, h, acc)|
         if lh >= rh { break $ (0, h, acc) };
         if rh % 2 == 1 {
             let next = op((elems.@(rh - 1), acc));
