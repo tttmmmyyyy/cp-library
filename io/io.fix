@@ -80,7 +80,7 @@ _parse : [a : FromString] String -> String -> a;
 _parse = |type_name, s| (
     match s.from_string {
         ok(x) => x,
-        err(_) => undefined("CPLib.IO: cannot parse \"" + s + "\" as " + type_name)
+        err(_) => undefined("[CPLib.IO] cannot parse \"" + s + "\" as " + type_name)
     }
 );
 

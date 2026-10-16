@@ -73,7 +73,7 @@ convolve_i64 = |a, b| (
     let n = a.@size;
     let m = b.@size;
     if n == 0 || m == 0 { [] };
-    if n + m - 1 > 1.shift_left(24) { undefined("[convolve_i64] n + m - 1 > 2^24") };
+    if n + m - 1 > 1.shift_left(24) { undefined("[CPLib.Convolution::convolve_i64] the result is longer than 2^24") };
 
     let __M1 = 754974721_U64; // 2^24
     let __M2 = 167772161_U64; // 2^25

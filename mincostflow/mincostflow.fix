@@ -107,8 +107,8 @@ namespace MinCostFlowGraph {
     add_edge_id : I64 -> I64 -> I64 -> I64 -> MinCostFlowGraph -> (MinCostFlowGraph, MinCostFlowEdgeId);
     add_edge_id = |from, to, cap, cost, g| (
         let n = g.@_n;
-        if !(0 <= from && from < n && 0 <= to && to < n) { undefined("CPLib.MinCostFlow: add_edge got a vertex out of range") };
-        if cap < 0 { undefined("CPLib.MinCostFlow: add_edge got a negative capacity") };
+        if !(0 <= from && from < n && 0 <= to && to < n) { undefined("[CPLib.MinCostFlow::MinCostFlowGraph::add_edge_id] got a vertex out of range") };
+        if cap < 0 { undefined("[CPLib.MinCostFlow::MinCostFlowGraph::add_edge_id] got a negative capacity") };
         // 辺は足した順の番号（MinCostFlowEdgeId、つまりI64）で指す。ac-libraryのmcf_graphのadd_edge、get_edgeに合わせている
         let id = g.@_cost.@size;
         let g = g.mod__to(|ts| ts.push_back(to).push_back(from));
@@ -228,7 +228,7 @@ namespace MinCostFlowGraph {
     // - `graph` : グラフ
     maximize_flow_min_cost_slope_with_limit : I64 -> I64 -> I64 -> MinCostFlowGraph -> (MinCostFlowGraph, Array (I64, I64));
     maximize_flow_min_cost_slope_with_limit = |s, t, flow_limit, g| (
-        if s == t { undefined("CPLib.MinCostFlow: s and t must differ") };
+        if s == t { undefined("[CPLib.MinCostFlow::MinCostFlowGraph::maximize_flow_min_cost_slope_with_limit] s and t must differ") };
         if !(0 < flow_limit) { (g, [(0, 0)]) };
         let n = g.@_n;
         let (g, cap) = g[^_cap].ixchg([]);
@@ -335,7 +335,7 @@ _initial_potential = |n, s, t, res| (
     // 負の閉路がなければ、sからの最短距離は-(n - 1) * (残余容量のある辺のコストの絶対値の最大)以上で、途中の値もそれを下回らない。
     // 下回ったら負の閉路がある。値が溢れる前に、ここで止める
     let lower = -(n - 1) * range(0, m2).fold(0, |p, c| if cap.@(p) > 0 { max(c, abs(arc.@(p).@1)) } else { c });
-    let negative_cycle = "CPLib.MinCostFlow: a cycle of negative cost is reachable from s";
+    let negative_cycle = "[CPLib.MinCostFlow::MinCostFlowGraph::maximize_flow_min_cost_slope_with_limit] a cycle of negative cost is reachable from s";
     // sからの最短路は辺をn - 1本以下しか通らないので、n - 1周で縮まなくなる。n周目にも縮む頂点があれば、負の閉路がある
     let dist = loop((0, fill(n, I64::maximum).set(s, 0)), |(round, dist)|
         let (dist, changed) = range(0, n).fold((dist, false), |v, (dist, changed)|
