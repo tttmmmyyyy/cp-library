@@ -72,7 +72,7 @@ namespace GraphBuilder {
         let m = from.@size;
         // 始点ごとに辺の数を数え、累積和を取る
         let start = from.to_iter.fold(fill(n + 1, 0), |v, start|
-            if !(0 <= v && v < n) { undefined("CPLib.Graph::GraphBuilder::build found an edge whose vertex is out of range") };
+            if !(0 <= v && v < n) { undefined("[CPLib.Graph::GraphBuilder::build] found an edge whose vertex is out of range") };
             start.mod(v + 1, |d| d + 1)
         );
         let start = range(0, n).fold(start, |v, start| start.set(v + 1, start.@(v) + start.@(v + 1)));
@@ -85,7 +85,7 @@ namespace GraphBuilder {
         let edges = builder.@_edges;
         Graph { _start : start, _edges : from_map(m, |p|
             let e = edges.@(perm.@(p));
-            if !(0 <= e.@to && e.@to < n) { undefined("CPLib.Graph::GraphBuilder::build found an edge whose vertex is out of range") };
+            if !(0 <= e.@to && e.@to < n) { undefined("[CPLib.Graph::GraphBuilder::build] found an edge whose vertex is out of range") };
             e
         ) }
     );
