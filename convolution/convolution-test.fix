@@ -1,7 +1,7 @@
 module CPLib.Convolution.Test;
 
 import CPLib.Convolution::{convolve_i64, convolve_zp};
-import CPLib.ZP::{make, P998244353, PrimeProvider, ZP};
+import CPLib.ZP::{make, P1000000007, P998244353, PrimeProvider, ZP};
 import Std::{
     Array, IO, Array::{@, @size}, Debug::{assert_eq, consumed_time_while_lazy}, 
     I64::{maximum, minimum, shift_left}, IO::println, Iterator::{fold, map, range, to_array}, 
@@ -42,6 +42,11 @@ test_zp = (
     let y = [ZP::make(1)];
     let z = convolve_zp(x, y);
     assert_eq(|_|"[test_zp] case 7", z, x);;
+
+    // p = 1000000007, p - 1を割る2のべき乗は2までなので、結果の長さ2まで
+    let x = [ZP::make(3)] : Array (ZP P1000000007);
+    let y = [ZP::make(4), ZP::make(5)];
+    assert_eq(|_|"[test_zp] case 7.1", convolve_zp(x, y), [ZP::make(12), ZP::make(15)]);;
 
     // p = 998244353, 基本
     let x = [ZP::make(1), ZP::make(2), ZP::make(3)] : Array (ZP P998244353);

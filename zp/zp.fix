@@ -38,10 +38,11 @@ import CPLib.Arithmetic::{calc_primitive_root, power};
 import Std::{
     loop, undefined, Add, Array, Div, Eq, I64, Mul, Neg, One, Sub, ToString, U32, U64, Zero, 
     Array::{
-        fill, push_back, reserve, @, @size, unsafe_get_bounds_unchecked,
+        fill, push_back, reserve, set, @, @size, unsafe_get_bounds_unchecked,
         unsafe_set_bounds_unchecked, unsafe_swap_bounds_unchecked
     }, 
-    Functor::map, I64::{bit_and, bit_xor, shift_left, shift_right}, Iterator::{fold, range, range_step}, 
+    Functor::map, I64::{bit_and, bit_not, bit_xor, count_trailing_zeros, shift_left, shift_right}, 
+    Iterator::{fold, range}, One::one, 
     LoopState::{break, continue}, ToI64::i64, ToString::to_string, ToU32::u32, ToU64::u64, 
     U64::{bit_and, bit_or, shift_right}
 };
@@ -245,65 +246,221 @@ fft = |dir, x| (
     let x = range(n, pot).fold(x, |i, x| x.push_back(ZP::make(0)));
     let n = pot;
 
-    // p - 1 = 2^k * c (c: 奇数) と分解し、2^k >= n であることを確認し、1のn乗根wを計算する
-    let p = x.@(0).@prime.value.i64;
-    let pm1 = p - 1;
-    let two_k = pm1.bit_and(-pm1);
-    if two_k < n { undefined("[CPLib.ZP::fft] the size of `x` exceeds the largest power of two dividing p - 1") };
-    let d = pm1 / n;
-    let w = ZP::primitive_root.power(d);
-    let w = match dir { forward() => w, inverse() => w.inv };
+    // p - 1 = 2^k * c (c: 奇数) と分解し、2^k >= n であることを確認する
+    let pm1 = x.@(0).@prime.value.i64 - 1;
+    if pm1.bit_and(-pm1) < n { undefined("[CPLib.ZP::fft] the size of `x` exceeds the largest power of two dividing p - 1") };
 
-    // 以下で配列x（長さn）とtw（長さn）を読み書きする添字は、ループの範囲から0以上n未満に収まる。
-    // 利用者の入力によらないので、境界検査を外した関数を使う
+    match dir {
+        forward() => x._butterfly._bit_reverse,
+        inverse() => (
+            let ni = ZP::make(n).inv;
+            x._bit_reverse._butterfly_inv.map(|v| v * ni)
+        )
+    }
+);
 
-    // bit-reversal permutation
+// 配列の要素を、添字のビットを反転した位置へ並べ替える
+//
+// 配列の長さは2のべき乗であること。
+_bit_reverse : Array a -> Array a;
+_bit_reverse = |x| (
+    let n = x.@size;
+    // 以下で読み書きする添字は、ループの範囲から0以上n未満に収まる
     let (_, x) = range(1, n).fold((0, x), |i, (j, x)|
         // iをビット反転したものをjに設定
         // ループによりiが1増えているので、jには「上位ビット側から1を加える」
-        let bit = n.shift_right(1); 
+        let bit = n.shift_right(1);
         let j = loop((bit, j), |(bit, j)|
             if j.bit_and(bit) == 0 { break $ j.bit_xor(bit) };
             let j = j.bit_xor(bit);
             let bit = bit.shift_right(1);
             continue $ (bit, j)
         );
-        
         let x = if i < j { x.unsafe_swap_bounds_unchecked(i, j) } else { x };
         (j, x)
     );
+    x
+);
 
-    // 回転因子の表：hが2のべきで0 <= j < hのとき、tw.@(h + j) = (1の2h乗根)^j
-    let tw = fill(n, ZP::make(0));
-    let tw = loop((n / 2, tw, w), |(h, tw, wh)|
-        // whは1の2h乗根
-        if h == 0 { break $ tw };
-        let (tw, _) = range(0, h).fold((tw, ZP::make(1)), |j, (tw, t)|
-            (tw.unsafe_set_bounds_unchecked(h + j, t), t * wh)
-        );
-        continue $ (h / 2, tw, wh * wh)
+// `_butterfly`と`_butterfly_inv`が使う、1のべき乗根の表
+//
+// rank2はp - 1を割る最大の2のべき乗の指数、root(i)は1の原始2^i乗根（0 <= i <= rank2）で、root(i + 1)^2 = root(i)を満たす。
+type _FFTInfo p = struct {
+    // root.@(i) = root(i)
+    root : Array (ZP p),
+    // iroot.@(i)はroot.@(i)の逆元
+    iroot : Array (ZP p),
+    // 0 <= i <= rank2 - 2のとき、rate2.@(i) = root(i + 2) * (root(2) * root(3) * ... * root(i + 1))^(-1)
+    rate2 : Array (ZP p),
+    // irate2.@(i)はrate2.@(i)の逆元
+    irate2 : Array (ZP p),
+    // 0 <= i <= rank2 - 3のとき、rate3.@(i) = root(i + 3) * (root(3) * root(4) * ... * root(i + 2))^(-1)
+    rate3 : Array (ZP p),
+    // irate3.@(i)はrate3.@(i)の逆元
+    irate3 : Array (ZP p)
+};
+
+// 法pの1のべき乗根の表
+//
+// 計算量：O(log p)。pがこのモジュールに定義されている素数でなければ、原始根を求めるのにO(sqrt(p))。pごとに1度だけ計算される
+_fft_info : [p : PrimeProvider] _FFTInfo p;
+_fft_info = (
+    let g = ZP::primitive_root;
+    let pm1 = g.@prime.value.i64 - 1;
+    let rank2 = pm1.count_trailing_zeros;
+    let r = g.power(pm1.shift_right(rank2));
+    let root = fill(rank2 + 1, r);
+    let iroot = fill(rank2 + 1, r.inv);
+    let (root, iroot) = range(0, rank2).fold((root, iroot), |k, (root, iroot)|
+        let i = rank2 - 1 - k;
+        (root.set(i, root.@(i + 1) * root.@(i + 1)), iroot.set(i, iroot.@(i + 1) * iroot.@(i + 1)))
     );
-
-    // 長さ2hのブロックごとにバタフライ演算をする
-    let x = loop((1, x), |(h, x)|
-        if h >= n { break $ x };
-        let x = range_step(0, n, 2 * h).fold(x, |i, x|
-            range(0, h).fold(x, |j, x|
-                let u = x.unsafe_get_bounds_unchecked(i+j);
-                let v = x.unsafe_get_bounds_unchecked(i+j+h) * tw.unsafe_get_bounds_unchecked(h+j);
-                let x = x.unsafe_set_bounds_unchecked(i+j, u + v);
-                x.unsafe_set_bounds_unchecked(i+j+h, u - v)
+    // d段目の表：rate.@(i) = root(i + d) * (root(d) * ... * root(i + d - 1))^(-1)
+    let make_rates = |d| (
+        let (rate, irate, _, _) = range(0, rank2 - d + 1).fold(([], [], one, one), |i, (rate, irate, prod, iprod)|
+            (
+                rate.push_back(root.@(i + d) * prod),
+                irate.push_back(iroot.@(i + d) * iprod),
+                prod * iroot.@(i + d),
+                iprod * root.@(i + d)
             )
         );
-        continue $ (2 * h, x)
+        (rate, irate)
     );
+    let (rate2, irate2) = make_rates(2);
+    let (rate3, irate3) = make_rates(3);
+    _FFTInfo { root : root, iroot : iroot, rate2 : rate2, irate2 : irate2, rate3 : rate3, irate3 : irate3 }
+);
 
-    // 逆変換の場合は、nで割る
-    match dir {
-        forward() => x,
-        inverse() => (
-            let ni = ZP::make(n).inv;
-            x.map(|v| v * ni)
-        )
-    }
+// 数論変換を行い、結果を添字のビットを反転した順に並べて返す
+//
+// 配列の長さnは2のべき乗で、p - 1を割ること。
+// w = root(log n)として、返る配列の位置rev(k)には、多項式a(0) + a(1) t + ... + a(n - 1) t^(n - 1)にt = w^kを代入した値が入る。
+// rev(k)は、kをlog nビットで書いてビットの順を逆にした数である。
+// 実装はac-libraryのbutterflyに従う。基数4の段を使い、log nが奇数のときだけ基数2の段を1つ入れる。
+_butterfly : [p : PrimeProvider] Array (ZP p) -> Array (ZP p);
+_butterfly = |a : Array (ZP p)| (
+    let n = a.@size;
+    let h = n.count_trailing_zeros;
+    let info = _fft_info : _FFTInfo p;
+    // ループの中で大域値のフィールドを読むと遅いので、先に取り出しておく
+    let (rate2, rate3) = (info.@rate2, info.@rate3);
+    let pp = PrimeProvider::create : p;
+    let p = pp.value.u64;
+    // 以下で配列aを読み書きする添字は、ループの範囲から0以上n未満に収まる
+    let load = |i, a| a.unsafe_get_bounds_unchecked(i).@value.u64;
+    let store = |i, v, a| a.unsafe_set_bounds_unchecked(i, ZP { value : (v % p).u32, prime : pp });
+    // lenは、済ませた段の数
+    loop((0, a), |(len, a)|
+        if len >= h { break $ a };
+        if h - len == 1 {
+            // 基数2の段
+            let q = 1.shift_left(h - len - 1);
+            let blocks = 1.shift_left(len);
+            let (a, _) = range(0, blocks).fold((a, one), |s, (a, rot)|
+                let offset = s.shift_left(h - len);
+                let a = range(offset, offset + q).fold(a, |i, a|
+                    let l = a.unsafe_get_bounds_unchecked(i);
+                    let r = a.unsafe_get_bounds_unchecked(i + q) * rot;
+                    a.unsafe_set_bounds_unchecked(i, l + r).unsafe_set_bounds_unchecked(i + q, l - r)
+                );
+                let rot = if s + 1 != blocks { rot * rate2.@(s.bit_not.count_trailing_zeros) } else { rot };
+                (a, rot)
+            );
+            continue $ (len + 1, a)
+        };
+        // 基数4の段。積をpで割らずにp^2未満の値のまま足し引きし、書き込むときにpで割る。
+        // 書き込む値はどれも4p^2未満で、p < 2^31なのでU64に収まる。
+        // この段はh - len >= 2のときだけ走り、h <= rank2なのでroot.@(2)がある
+        let mod2 = p * p;
+        let imag = info.@root.@(2).@value.u64;
+        let q = 1.shift_left(h - len - 2);
+        let blocks = 1.shift_left(len);
+        let (a, _) = range(0, blocks).fold((a, one), |s, (a, rot)|
+            let rot2 = rot * rot;
+            let rot3 = rot2 * rot;
+            let (r1, r2, r3) = (rot.@value.u64, rot2.@value.u64, rot3.@value.u64);
+            let offset = s.shift_left(h - len);
+            let a = range(offset, offset + q).fold(a, |i, a|
+                let a0 = load(i, a);
+                let a1 = load(i + q, a) * r1;
+                let a2 = load(i + 2 * q, a) * r2;
+                let a3 = load(i + 3 * q, a) * r3;
+                let a1na3imag = (a1 + mod2 - a3) % p * imag;
+                let na2 = mod2 - a2;
+                let a = store(i, a0 + a2 + a1 + a3, a);
+                let a = store(i + q, a0 + a2 + (2_U64 * mod2 - (a1 + a3)), a);
+                let a = store(i + 2 * q, a0 + na2 + a1na3imag, a);
+                store(i + 3 * q, a0 + na2 + (mod2 - a1na3imag), a)
+            );
+            let rot = if s + 1 != blocks { rot * rate3.@(s.bit_not.count_trailing_zeros) } else { rot };
+            (a, rot)
+        );
+        continue $ (len + 2, a)
+    )
+);
+
+// `_butterfly`の逆変換をn倍したものを行う
+//
+// 配列の長さnは2のべき乗で、p - 1を割ること。`_butterfly`の結果を与えると、元の配列の各要素をn倍したものが返る。
+// 実装はac-libraryのbutterfly_invに従う。
+_butterfly_inv : [p : PrimeProvider] Array (ZP p) -> Array (ZP p);
+_butterfly_inv = |a : Array (ZP p)| (
+    let n = a.@size;
+    let h = n.count_trailing_zeros;
+    let info = _fft_info : _FFTInfo p;
+    // ループの中で大域値のフィールドを読むと遅いので、先に取り出しておく
+    let (irate2, irate3) = (info.@irate2, info.@irate3);
+    let pp = PrimeProvider::create : p;
+    let p = pp.value.u64;
+    // 以下で配列aを読み書きする添字は、ループの範囲から0以上n未満に収まる
+    let load = |i, a| a.unsafe_get_bounds_unchecked(i).@value.u64;
+    let store = |i, v, a| a.unsafe_set_bounds_unchecked(i, ZP { value : (v % p).u32, prime : pp });
+    // lenは、まだ戻していない段の数
+    loop((h, a), |(len, a)|
+        if len == 0 { break $ a };
+        if len == 1 {
+            // 基数2の段
+            let q = 1.shift_left(h - len);
+            let blocks = 1.shift_left(len - 1);
+            let (a, _) = range(0, blocks).fold((a, one), |s, (a, irot)|
+                let offset = s.shift_left(h - len + 1);
+                let ir = irot.@value.u64;
+                let a = range(offset, offset + q).fold(a, |i, a|
+                    let l = load(i, a);
+                    let r = load(i + q, a);
+                    let a = store(i, l + r, a);
+                    store(i + q, (l + p - r) * ir, a)
+                );
+                let irot = if s + 1 != blocks { irot * irate2.@(s.bit_not.count_trailing_zeros) } else { irot };
+                (a, irot)
+            );
+            continue $ (len - 1, a)
+        };
+        // 基数4の段。掛ける前の値はどれも4p未満で、積は4p^2未満なので、p < 2^31ならU64に収まる。
+        // この段はlen >= 2のときだけ走り、len <= h <= rank2なのでiroot.@(2)がある
+        let iimag = info.@iroot.@(2).@value.u64;
+        let q = 1.shift_left(h - len);
+        let blocks = 1.shift_left(len - 2);
+        let (a, _) = range(0, blocks).fold((a, one), |s, (a, irot)|
+            let irot2 = irot * irot;
+            let irot3 = irot2 * irot;
+            let (r1, r2, r3) = (irot.@value.u64, irot2.@value.u64, irot3.@value.u64);
+            let offset = s.shift_left(h - len + 2);
+            let a = range(offset, offset + q).fold(a, |i, a|
+                let a0 = load(i, a);
+                let a1 = load(i + q, a);
+                let a2 = load(i + 2 * q, a);
+                let a3 = load(i + 3 * q, a);
+                let a2na3iimag = (p + a2 - a3) * iimag % p;
+                let a = store(i, a0 + a1 + a2 + a3, a);
+                let a = store(i + q, (a0 + (p - a1) + a2na3iimag) * r1, a);
+                let a = store(i + 2 * q, (a0 + a1 + (p - a2) + (p - a3)) * r2, a);
+                store(i + 3 * q, (a0 + (p - a1) + (p - a2na3iimag)) * r3, a)
+            );
+            let irot = if s + 1 != blocks { irot * irate3.@(s.bit_not.count_trailing_zeros) } else { irot };
+            (a, irot)
+        );
+        continue $ (len - 2, a)
+    )
 );

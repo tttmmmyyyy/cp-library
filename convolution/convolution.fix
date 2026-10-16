@@ -2,13 +2,13 @@ module CPLib.Convolution;
 
 import CPLib.Arithmetic::{pmod, _inv_gcd};
 import CPLib.ZP::{
-    fft, make, P167772161, P469762049, P754974721, PrimeProvider, ZP, _calc_next_pot, 
-    FFTDirection::{forward, inverse}, ZP::@value
+    inv, make, P167772161, P469762049, P754974721, PrimeProvider, ZP, _butterfly, _butterfly_inv, 
+    _calc_next_pot, PrimeProvider::value, ZP::{@prime, @value}
 };
 import Std::{
     undefined, Array, I64, 
     Array::{fill, push_back, reserve, truncate, @, @size, unsafe_set_bounds_unchecked}, 
-    Functor::map, I64::shift_left, Iterator::{fold, range}, ToI64::i64, ToU64::u64, Tuple2::@1
+    Functor::map, I64::{bit_and, shift_left}, Iterator::{fold, range}, ToI64::i64, ToU64::u64, Tuple2::@1
 };
 
 // 2つの配列の畳み込みを計算する
@@ -38,22 +38,24 @@ convolve_zp = |x, y| (
     // xとyの長さを同じ2のべき乗にする
     let n = x.@size + y.@size - 1;
     let pot = _calc_next_pot(n.u64).i64;
+    let pm1 = x.@(0).@prime.value.i64 - 1;
+    if pm1.bit_and(-pm1) < pot { undefined("[CPLib.Convolution::convolve_zp] the result is longer than the largest power of two dividing p - 1") };
     let x = x.reserve(pot);
     let x = range(x.@size, pot).fold(x, |i, x| x.push_back(ZP::make(0)));
     let y = y.reserve(pot);
     let y = range(y.@size, pot).fold(y, |i, y| y.push_back(ZP::make(0)));
 
-    let x = x.ZP::fft(forward());
-    let y = y.ZP::fft(forward());
+    // 変換した値はビット反転した順に並ぶが、要素ごとに掛けて逆変換するので、並べ替えずに使える
+    let x = x._butterfly;
+    let y = y._butterfly;
 
     // xとyの各要素を掛け合わせる。xとyの長さはpotなので、添字iは範囲内にある
     let x = range(0, pot).fold(x, |i, x| x.unsafe_set_bounds_unchecked(i, x.@(i) * y.@(i)));
 
-    // 逆変換を行う
-    let x = x.ZP::fft(inverse());
-
-    // サイズを元に戻す
-    x.truncate(n)
+    // 逆変換するとpot倍された結果が返るので、potで割る
+    let x = x._butterfly_inv.truncate(n);
+    let iz = ZP::make(pot).inv;
+    x.map(|v| v * iz)
 );
 
 // 2つの整数配列の畳み込みを計算する
