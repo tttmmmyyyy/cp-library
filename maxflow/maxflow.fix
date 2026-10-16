@@ -90,8 +90,8 @@ namespace MaxFlowGraph {
     add_edge_id : I64 -> I64 -> I64 -> MaxFlowGraph -> (MaxFlowGraph, MaxFlowEdgeId);
     add_edge_id = |from, to, cap, g| (
         let n = g.@_n;
-        if !(0 <= from && from < n && 0 <= to && to < n) { undefined("CPLib.MaxFlow: add_edge got a vertex out of range") };
-        if cap < 0 { undefined("CPLib.MaxFlow: add_edge got a negative capacity") };
+        if !(0 <= from && from < n && 0 <= to && to < n) { undefined("[CPLib.MaxFlow::MaxFlowGraph::add_edge_id] got a vertex out of range") };
+        if cap < 0 { undefined("[CPLib.MaxFlow::MaxFlowGraph::add_edge_id] got a negative capacity") };
         // 辺は足した順の番号（MaxFlowEdgeId、つまりI64）で指す。ac-libraryのmf_graphのadd_edge、get_edge、change_edgeに合わせている
         let id = g.@_to.@size / 2;
         let g = g.mod__to(|ts| ts.push_back(to).push_back(from));
@@ -181,7 +181,7 @@ namespace MaxFlowGraph {
     // - `graph` : グラフ
     maximize_flow_with_limit : I64 -> I64 -> I64 -> MaxFlowGraph -> (MaxFlowGraph, I64);
     maximize_flow_with_limit = |s, t, flow_limit, g| (
-        if s == t { undefined("CPLib.MaxFlow: s and t must differ") };
+        if s == t { undefined("[CPLib.MaxFlow::MaxFlowGraph::maximize_flow_with_limit] s and t must differ") };
         let n = g.@_n;
         let (g, cap) = g[^_cap].ixchg([]);
         let res = g._make_residual(cap);

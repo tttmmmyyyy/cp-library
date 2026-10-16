@@ -63,8 +63,8 @@ namespace BipartiteGraph {
     // - `graph` : 二部グラフ
     add_edge : I64 -> I64 -> BipartiteGraph -> BipartiteGraph;
     add_edge = |left, right, graph| (
-        if !(0 <= left && left < graph.@_left_size) { undefined("Left vertex index out of bounds") };
-        if !(0 <= right && right < graph.@_right_size) { undefined("Right vertex index out of bounds") };
+        if !(0 <= left && left < graph.@_left_size) { undefined("[CPLib.Bipartite::BipartiteGraph::add_edge] got a left vertex out of range") };
+        if !(0 <= right && right < graph.@_right_size) { undefined("[CPLib.Bipartite::BipartiteGraph::add_edge] got a right vertex out of range") };
         graph.mod__edges(push_back((left, right)))
     );
 
