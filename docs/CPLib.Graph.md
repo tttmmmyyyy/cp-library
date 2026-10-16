@@ -4,13 +4,15 @@ Defined in cp-library@0.15.0
 
 グラフの表現と基本的なアルゴリズム
 
+グラフは、`GraphBuilder`に辺を足していき、`build`で`Graph`にしてから使います。
+
 制約・計算量の n は頂点数、m は辺数を表します。
 
 ## Examples
 
 ```fix
 // 辺のデータをコストとして、ダイクストラ法で最短距離を求める
-let g = create(3).add_edge(0, 1, 5).add_edge(1, 2, 2).add_edge(0, 2, 10);
+let g = GraphBuilder::create(3).add_edge(0, 1, 5).add_edge(1, 2, 2).add_edge(0, 2, 10).build;
 assert_eq(|_|"", g.dijkstra(0), [0, 5, 7])
 ```
 
@@ -28,40 +30,6 @@ Type: `CPLib.Graph::Graph c -> Std::I64`
 
 ##### Parameters
 
-- `graph` : グラフ
-
-#### add_edge
-
-Type: `Std::I64 -> Std::I64 -> c -> CPLib.Graph::Graph c -> CPLib.Graph::Graph c`
-
-グラフに辺を追加する
-
-制約：0 <= from, to < n
-
-計算量：ならしO(1)
-
-##### Parameters
-
-- `from` : 始点の頂点番号
-- `to` : 終点の頂点番号
-- `data` : 辺のデータ
-- `graph` : グラフ
-
-#### add_edge_id
-
-Type: `Std::I64 -> Std::I64 -> c -> CPLib.Graph::Graph c -> (CPLib.Graph::Graph c, CPLib.Graph::EdgeId)`
-
-グラフに辺を追加する（辺IDを返す）
-
-制約：0 <= from, to < n
-
-計算量：ならしO(1)
-
-##### Parameters
-
-- `from` : 始点の頂点番号
-- `to` : 終点の頂点番号
-- `data` : 辺のデータ
 - `graph` : グラフ
 
 #### bellman_ford
@@ -96,18 +64,6 @@ Type: `CPLib.Graph::Graph c -> Std::Array (Std::Array Std::I64)`
 
 - `g` : グラフ
 
-#### create
-
-Type: `Std::I64 -> CPLib.Graph::Graph c`
-
-辺のないグラフを作成する
-
-計算量：O(n)
-
-##### Parameters
-
-- `n` : 頂点数
-
 #### dijkstra
 
 Type: `[c : CPLib.Trait::Inf, c : Std::Additive, c : Std::LessThan] Std::I64 -> CPLib.Graph::Graph c -> Std::Array c`
@@ -125,17 +81,19 @@ Type: `[c : CPLib.Trait::Inf, c : Std::Additive, c : Std::LessThan] Std::I64 -> 
 - `start` : 開始ノードの番号
 - `graph` : グラフ
 
-#### get_edge
+#### get_out_degree
 
-Type: `CPLib.Graph::EdgeId -> CPLib.Graph::Graph c -> CPLib.Graph::Edge c`
+Type: `Std::I64 -> CPLib.Graph::Graph c -> Std::I64`
 
-辺を取得する
+頂点`v`から出る辺の本数を取得する
+
+制約：0 <= v < n
 
 計算量：O(1)
 
 ##### Parameters
 
-- `edge_id` : 辺の識別子
+- `v` : 始点の頂点番号
 - `graph` : グラフ
 
 #### get_size
@@ -146,6 +104,21 @@ Type: `CPLib.Graph::Graph c -> Std::I64`
 
 `@size`の別名（非推奨）
 
+#### to_iter_edges
+
+Type: `[?it : Std::Iterator, Std::Iterator::Item ?it = CPLib.Graph::Edge c] Std::I64 -> CPLib.Graph::Graph c -> ?it`
+
+頂点`v`から出る辺を、足した順に返すイテレータを作る
+
+制約：0 <= v < n
+
+計算量：O(1)
+
+##### Parameters
+
+- `v` : 始点の頂点番号
+- `graph` : グラフ
+
 ### namespace CPLib.Graph::Edge
 
 #### make
@@ -153,6 +126,49 @@ Type: `CPLib.Graph::Graph c -> Std::I64`
 Type: `Std::I64 -> c -> CPLib.Graph::Edge c`
 
 辺を作成する
+
+### namespace CPLib.Graph::GraphBuilder
+
+#### add_edge
+
+Type: `Std::I64 -> Std::I64 -> c -> CPLib.Graph::GraphBuilder c -> CPLib.Graph::GraphBuilder c`
+
+グラフに辺を追加する
+
+制約：0 <= from, to < n
+
+計算量：ならしO(1)
+
+##### Parameters
+
+- `from` : 始点の頂点番号
+- `to` : 終点の頂点番号
+- `data` : 辺のデータ
+- `builder` : 辺を足していく途中のグラフ
+
+#### build
+
+Type: `CPLib.Graph::GraphBuilder c -> CPLib.Graph::Graph c`
+
+辺を足し終えたグラフを作る
+
+計算量：O(n + m)
+
+##### Parameters
+
+- `builder` : 辺を足していく途中のグラフ
+
+#### create
+
+Type: `Std::I64 -> CPLib.Graph::GraphBuilder c`
+
+頂点数が`n`で辺のない`GraphBuilder`を作成する
+
+計算量：O(1)
+
+##### Parameters
+
+- `n` : 頂点数
 
 ## Types and aliases
 
@@ -176,37 +192,21 @@ Type: `c`
 
 辺のデータ
 
-#### EdgeId
-
-Defined as: `type EdgeId = unbox struct { ...fields... }`
-
-辺の識別子の型
-
-##### field `from`
-
-Type: `Std::I64`
-
-始点インデックス
-
-##### field `idx`
-
-Type: `Std::I64`
-
-辺インデックス
-
 #### Graph
 
 Defined as: `type Graph c = unbox struct { ...fields... }`
 
-グラフの隣接リストによる表現
+辺を足し終えたグラフ
 
-型パラメータ`c`は辺に付随するデータの型です（例：ダイクストラ法に使うときはコスト）。不要な場合はユニット型`()`や自分で作ったempty typeなどを指定するとメモリの節約になります。
+`GraphBuilder::build`で作ります。型パラメータ`c`は辺に付随するデータの型です。
 
-##### field `edges`
+#### GraphBuilder
 
-Type: `Std::Array (Std::Array (CPLib.Graph::Edge c))`
+Defined as: `type GraphBuilder c = unbox struct { ...fields... }`
 
-`edges.@(s)` は頂点`s`から出る辺のリストです。
+辺を足していく途中のグラフ
+
+型パラメータ`c`は辺に付随するデータの型です（例：ダイクストラ法に使うときはコスト）。不要な場合はユニット型`()`を指定するとメモリの節約になります。
 
 ## Traits and aliases
 

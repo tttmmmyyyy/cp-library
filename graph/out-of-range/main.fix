@@ -1,0 +1,14 @@
+// 標準入力で選んだ辺を足して`build`する。0：始点が範囲外、1：終点が範囲外、2：範囲内
+module Main;
+
+import CPLib.Graph::{GraphBuilder, @size, GraphBuilder::{add_edge, build, create}};
+import CPLib.IO::read_i;
+import Std::{IO, IO::println, ToString::to_string};
+
+main : IO ();
+main = (
+    let case = *read_i;
+    let (from, to) = if case == 0 { (2, 0) } else if case == 1 { (0, -1) } else { (0, 1) };
+    let g = GraphBuilder::create(2).add_edge(from, to, ()).build;
+    println(g.@size.to_string)
+);

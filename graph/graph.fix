@@ -1,11 +1,13 @@
 // グラフの表現と基本的なアルゴリズム
 //
+// グラフは、`GraphBuilder`に辺を足していき、`build`で`Graph`にしてから使います。
+//
 // 制約・計算量の n は頂点数、m は辺数を表します。
 //
 // # Examples
 // ```fix
 // // 辺のデータをコストとして、ダイクストラ法で最短距離を求める
-// let g = create(3).add_edge(0, 1, 5).add_edge(1, 2, 2).add_edge(0, 2, 10);
+// let g = GraphBuilder::create(3).add_edge(0, 1, 5).add_edge(1, 2, 2).add_edge(0, 2, 10).build;
 // assert_eq(|_|"", g.dijkstra(0), [0, 5, 7])
 // ```
 module CPLib.Graph;
@@ -13,18 +15,90 @@ module CPLib.Graph;
 import BinaryHeap::{BinaryHeap::{get_size, get_top, pop, push}, MinBinaryHeap::empty};
 import CPLib.Trait::{Inf, Inf::inf};
 import Std::{
-    loop, Additive, Array, Eq, I64, LessThan, 
-    Array::{fill, mod, pop_back, push_back, reverse, set, to_iter, @, @size}, 
-    Iterator::{fold, range}, LessThan::min, LoopState::{break, continue}, Option::as_some, Tuple2::@0, 
+    loop, undefined, Additive, Array, Eq, I64, Iterator, LessThan, Iterator::Item, 
+    Array::{fill, from_map, mod, pop_back, push_back, reverse, set, to_iter, @, @size}, 
+    Iterator::{fold, map, range}, LessThan::min, LoopState::{break, continue}, Option::as_some, Tuple2::@0, 
     Zero::zero
 };
 
-// グラフの隣接リストによる表現
-// 
-// 型パラメータ`c`は辺に付随するデータの型です（例：ダイクストラ法に使うときはコスト）。不要な場合はユニット型`()`や自分で作ったempty typeなどを指定するとメモリの節約になります。
+// 辺を足していく途中のグラフ
+//
+// 型パラメータ`c`は辺に付随するデータの型です（例：ダイクストラ法に使うときはコスト）。不要な場合はユニット型`()`を指定するとメモリの節約になります。
+type GraphBuilder c = struct {
+    // 頂点数
+    _n : I64,
+    // 辺ごとの始点。足した順に並ぶ
+    _from : Array I64,
+    // 辺ごとの終点とデータ。足した順に並ぶ
+    _edges : Array (Edge c)
+};
+
+namespace GraphBuilder {
+    // 頂点数が`n`で辺のない`GraphBuilder`を作成する
+    // 
+    // 計算量：O(1)
+    //
+    // # Parameters
+    // - `n` : 頂点数
+    create : I64 -> GraphBuilder c;
+    create = |n| GraphBuilder { _n : n, _from : [], _edges : [] };
+
+    // グラフに辺を追加する
+    // 
+    // 制約：0 <= from, to < n
+    //
+    // 計算量：ならしO(1)
+    //
+    // # Parameters
+    // - `from` : 始点の頂点番号
+    // - `to` : 終点の頂点番号
+    // - `data` : 辺のデータ
+    // - `builder` : 辺を足していく途中のグラフ
+    add_edge : I64 -> I64 -> c -> GraphBuilder c -> GraphBuilder c;
+    add_edge = |from, to, data, builder| (
+        builder.mod__from(push_back(from)).mod__edges(push_back(Edge::make(to, data)))
+    );
+
+    // 辺を足し終えたグラフを作る
+    //
+    // 計算量：O(n + m)
+    //
+    // # Parameters
+    // - `builder` : 辺を足していく途中のグラフ
+    build : GraphBuilder c -> Graph c;
+    build = |builder| (
+        let n = builder.@_n;
+        let from = builder.@_from;
+        let m = from.@size;
+        // 始点ごとに辺の数を数え、累積和を取る
+        let start = from.to_iter.fold(fill(n + 1, 0), |v, start|
+            if !(0 <= v && v < n) { undefined("[CPLib.Graph::GraphBuilder::build] found an edge whose vertex is out of range") };
+            start.mod(v + 1, |d| d + 1)
+        );
+        let start = range(0, n).fold(start, |v, start| start.set(v + 1, start.@(v) + start.@(v + 1)));
+        // 辺を足した順に見て、始点の区間に並べる。perm.@(p)は位置pに置く辺の、足した順の番号。nextは各頂点の区間で次に置く位置
+        let (perm, _) = range(0, m).fold((fill(m, 0), start), |i, (perm, next)|
+            let v = from.@(i);
+            let p = next.@(v);
+            (perm.set(p, i), next.set(v, p + 1))
+        );
+        let edges = builder.@_edges;
+        Graph { _start : start, _edges : from_map(m, |p|
+            let e = edges.@(perm.@(p));
+            if !(0 <= e.@to && e.@to < n) { undefined("[CPLib.Graph::GraphBuilder::build] found an edge whose vertex is out of range") };
+            e
+        ) }
+    );
+}
+
+// 辺を足し終えたグラフ
+//
+// `GraphBuilder::build`で作ります。型パラメータ`c`は辺に付随するデータの型です。
 type Graph c = struct {
-    // `edges.@(s)` は頂点`s`から出る辺のリストです。
-    edges : Array (Array (Edge c))
+    // 長さが頂点数 + 1の配列。頂点vから出る辺の位置は[_start.@(v), _start.@(v + 1))
+    _start : Array I64,
+    // 辺を始点の順に並べた配列。同じ始点の辺は足した順に並ぶ
+    _edges : Array (Edge c)
 };
 
 // グラフの辺を表す型（始点番号はなし）
@@ -35,30 +109,11 @@ type Edge c = struct {
     data : c
 };
 
-// 辺の識別子の型
-type EdgeId = unbox struct { 
-    // 始点インデックス
-    from : I64, 
-    // 辺インデックス
-    idx : I64
-};
-
 namespace Edge {
     // 辺を作成する
     make : I64 -> c -> Edge c;
     make = |to, data| Edge { to : to, data : data };
 }
-
-// 辺のないグラフを作成する
-// 
-// 計算量：O(n)
-//
-// # Parameters
-// - `n` : 頂点数
-create : I64 -> Graph c;
-create = |n| (
-    Graph { edges : fill(n, []) }
-);
 
 // グラフの頂点数を取得する
 //
@@ -67,54 +122,38 @@ create = |n| (
 // # Parameters
 // - `graph` : グラフ
 @size : Graph c -> I64;
-@size = |g| g.@edges.@size;
+@size = |g| g.@_start.@size - 1;
 
 // `@size`の別名（非推奨）
 get_size : Graph c -> I64 = @size;
 DEPRECATED[get_size, "Use `CPLib.Graph::@size` instead."];
 
-// グラフに辺を追加する
-// 
-// 制約：0 <= from, to < n
+// 頂点`v`から出る辺の本数を取得する
 //
-// 計算量：ならしO(1)
+// 制約：0 <= v < n
 //
-// # Parameters
-// - `from` : 始点の頂点番号
-// - `to` : 終点の頂点番号
-// - `data` : 辺のデータ
-// - `graph` : グラフ
-add_edge : I64 -> I64 -> c -> Graph c -> Graph c;
-add_edge = |from, to, data, graph| (
-    graph.mod_edges(mod(from, push_back(Edge::make(to, data))))
-);
-
-// グラフに辺を追加する（辺IDを返す）
-// 
-// 制約：0 <= from, to < n
-//
-// 計算量：ならしO(1)
-//
-// # Parameters
-// - `from` : 始点の頂点番号
-// - `to` : 終点の頂点番号
-// - `data` : 辺のデータ
-// - `graph` : グラフ
-add_edge_id : I64 -> I64 -> c -> Graph c -> (Graph c, EdgeId);
-add_edge_id = |from, to, data, graph| (
-    let graph = graph.add_edge(from, to, data);
-    (graph, EdgeId { from: from, idx: graph.@edges.@(from).@size - 1 })
-);
-
-// 辺を取得する
-// 
 // 計算量：O(1)
 //
 // # Parameters
-// - `edge_id` : 辺の識別子
+// - `v` : 始点の頂点番号
 // - `graph` : グラフ
-get_edge : EdgeId -> Graph c -> Edge c;
-get_edge = |eid, graph| graph.@edges.@(eid.@from).@(eid.@idx);
+get_out_degree : I64 -> Graph c -> I64;
+get_out_degree = |v, graph| graph.@_start.@(v + 1) - graph.@_start.@(v);
+
+// 頂点`v`から出る辺を、足した順に返すイテレータを作る
+//
+// 制約：0 <= v < n
+//
+// 計算量：O(1)
+//
+// # Parameters
+// - `v` : 始点の頂点番号
+// - `graph` : グラフ
+to_iter_edges : [?it : Iterator, Item ?it = Edge c] I64 -> Graph c -> ?it;
+to_iter_edges = |v, graph| (
+    let edges = graph.@_edges;
+    range(graph.@_start.@(v), graph.@_start.@(v + 1)).map(|p| edges.@(p))
+);
 
 // ノードとその距離を表す型（ダイクストラ法などで使用）
 type _NodeDistance c = struct {
@@ -169,8 +208,7 @@ dijkstra = |start, graph| (
         // `dists.@(node) == dist` holds.
 
         // See all the neighbors of the node.
-        let edges = graph.@edges.@(node);
-        continue $ edges.to_iter.fold((dists, visit_list), |Edge { to : to, data : cost}, (dists, visit_list)|
+        continue $ graph.to_iter_edges(node).fold((dists, visit_list), |Edge { to : to, data : cost }, (dists, visit_list)|
             // If the path using the current edge is not better than the previous one, skip.
             let new_dist = dist + cost;
             if !(new_dist < dists.@(to)) { (dists, visit_list) };
@@ -202,14 +240,12 @@ bellman_ford = |start, graph| (
     let d = d.set(start, zero);
     loop(d, |d|
         let (d, update) = range(0, n).fold((d, false), |i, (d, update)|
-            let edges = graph.@edges.@(i);
-            edges.to_iter.fold((d, update), |Edge { to : to, data : cost}, (d, update)|
-                let dist = d.@(i);
-                if dist == inf { (d, update) }; // 到達できないノード
-                let new_dist = d.@(i) + cost;
+            let dist = d.@(i);
+            if dist == inf { (d, update) }; // 到達できないノード
+            graph.to_iter_edges(i).fold((d, update), |Edge { to : to, data : cost }, (d, update)|
+                let new_dist = dist + cost;
                 if !(new_dist < d.@(to)) { (d, update) };
-                let d = d.set(to, new_dist);
-                (d, true)
+                (d.set(to, new_dist), true)
             )
         );
         if !update { break $ d };
@@ -239,7 +275,7 @@ calc_sccs = |g| (
 
 // `root`から深さ優先探索をし、確定した強連結成分を`sccs`の末尾に加える
 //
-// 再帰の代わりに、(頂点, 次に調べる辺の添字)を積む配列`stack`をスタックとして使う。`stack`は空で渡し、空で返る。
+// 再帰の代わりに、(頂点, 次に調べる辺の`_edges`での位置)を積む配列`stack`をスタックとして使う。`stack`は空で渡し、空で返る。
 // 呼び出しごとに確保し直さないよう、呼び出し側が使い回す。
 //
 // # Parameters
@@ -255,18 +291,19 @@ _scc_dfs : Graph c -> I64 -> I64 -> Array (I64, I64) -> Array I64 -> Array I64 -
     -> (I64, Array (I64, I64), Array I64, Array I64, Array I64, Array (Array I64));
 _scc_dfs = |g, root, cnt, stack, ord, low, path, sccs| (
     let n = g.@size;
-    let init = (cnt + 1, stack.push_back((root, 0)), ord.set(root, cnt), low.set(root, cnt), path.push_back(root), sccs);
+    let start = g.@_start;
+    let edges = g.@_edges;
+    let init = (cnt + 1, stack.push_back((root, start.@(root))), ord.set(root, cnt), low.set(root, cnt), path.push_back(root), sccs);
     loop(init, |(cnt, stack, ord, low, path, sccs)|
         if stack.@size == 0 { break $ (cnt, stack, ord, low, path, sccs) };
         let top = stack.@size - 1;
         let (v, k) = stack.@(top);
-        let edges = g.@edges.@(v);
-        if k < edges.@size {
+        if k < start.@(v + 1) {
             let stack = stack.set(top, (v, k + 1));
             let to = edges.@(k).@to;
             let o = ord.@(to);
             if o == -1 {
-                continue $ (cnt + 1, stack.push_back((to, 0)), ord.set(to, cnt), low.set(to, cnt), path.push_back(to), sccs)
+                continue $ (cnt + 1, stack.push_back((to, start.@(to))), ord.set(to, cnt), low.set(to, cnt), path.push_back(to), sccs)
             };
             // 成分が確定した頂点の`ord`は頂点数nで、まだ確定していない頂点の`ord`より大きいので、`low`は変わらない
             continue $ (cnt, stack, ord, low.set(v, min(low.@(v), o)), path, sccs)
