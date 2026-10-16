@@ -4,8 +4,8 @@ import CPLib.Graph::{add_edge, calc_sccs, create, dijkstra, Graph};
 import CPLib.Trait::Inf::inf;
 import Random::{generate_I64_nonneg, init_by_seed};
 import Std::{
-    IO, Array::{sort_by, @, @size}, Debug::{assert_eq, consumed_time_while_lazy}, Functor::map, 
-    IO::println, Iterator::{fold, range}, Monad::pure, String::populate, ToString::to_string
+    IO, Array::{fill, set, sort_by, to_iter, @, @size}, Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, 
+    IO::println, Iterator::{fold, fold_m, range}, Monad::pure, String::populate, ToString::to_string
 };
 
 test : IO ();
@@ -15,6 +15,42 @@ test = (
     test_scc_self_loop;;
     test_scc_multiple_edges;;
     test_scc_long_path;;
+    test_scc_random;;
+    pure()
+);
+
+// 乱数で作った小さいグラフで、到達可能性から求めた強連結成分と比べる
+test_scc_random : IO ();
+test_scc_random = (
+    let rng = Random::init_by_seed(0_U64);
+    range(0, 300).fold_m(rng, |_, rng|
+        let (rng, n) = rng.generate_I64_nonneg;
+        let n = n % 12 + 1;
+        let (rng, m) = rng.generate_I64_nonneg;
+        let m = m % (3 * n);
+        let (g, reach, rng) = range(0, m).fold((Graph::create(n) : Graph (), fill(n * n, false), rng), |_, (g, reach, rng)|
+            let (rng, u) = rng.generate_I64_nonneg;
+            let (rng, v) = rng.generate_I64_nonneg;
+            let u = u % n; let v = v % n;
+            (g.add_edge(u, v, ()), reach.set(u * n + v, true), rng)
+        );
+        // reach.@(u * n + v)は、uからvに到達できるか（Warshall-Floyd）
+        let reach = range(0, n).fold(reach, |v, reach| reach.set(v * n + v, true));
+        let reach = range(0, n).fold(reach, |k, reach| range(0, n).fold(reach, |i, reach| range(0, n).fold(reach, |j, reach|
+            if reach.@(i * n + k) && reach.@(k * n + j) { reach.set(i * n + j, true) } else { reach }
+        )));
+        let sccs = g.calc_sccs;
+        // comp.@(v)は、vを含む成分の添字
+        let comp = range(0, sccs.@size).fold(fill(n, -1), |c, comp| sccs.@(c).to_iter.fold(comp, |v, comp| comp.set(v, c)));
+        assert_eq(|_|"test_scc_random: partition", sccs.to_iter.fold(0, |scc, s| s + scc.@size), n);;
+        range(0, n).fold_m((), |u, _| range(0, n).fold_m((), |v, _|
+            let same = reach.@(u * n + v) && reach.@(v * n + u);
+            assert_eq(|_|"test_scc_random: same component", comp.@(u) == comp.@(v), same);;
+            // 別の成分に到達できるなら、その成分は後に現れる
+            assert(|_|"test_scc_random: topological order", !reach.@(u * n + v) || comp.@(u) <= comp.@(v))
+        ));;
+        rng.pure
+    ).forget;;
     pure()
 );
 
