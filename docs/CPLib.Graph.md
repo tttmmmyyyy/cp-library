@@ -81,6 +81,21 @@ Type: `[c : CPLib.Trait::Inf, c : Std::Additive, c : Std::LessThan] Std::I64 -> 
 - `start` : 開始ノードの番号
 - `graph` : グラフ
 
+#### get_out_degree
+
+Type: `Std::I64 -> CPLib.Graph::Graph c -> Std::I64`
+
+頂点`v`から出る辺の本数を取得する
+
+制約：0 <= v < n
+
+計算量：O(1)
+
+##### Parameters
+
+- `v` : 始点の頂点番号
+- `graph` : グラフ
+
 #### get_size
 
 **Deprecated**: Use `CPLib.Graph::@size` instead.

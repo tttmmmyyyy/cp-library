@@ -1,6 +1,6 @@
 module CPLib.Graph.Test;
 
-import CPLib.Graph::{bellman_ford, calc_sccs, dijkstra, to_iter_edges, @size, Edge, GraphBuilder, GraphBuilder::{add_edge, build, create}};
+import CPLib.Graph::{bellman_ford, calc_sccs, dijkstra, get_out_degree, to_iter_edges, @size, Edge, GraphBuilder, GraphBuilder::{add_edge, build, create}};
 import CPLib.Trait::Inf::inf;
 import EZS::{cd, run_o, run_wi_oec, Context::default};
 import Random::{generate_I64_nonneg, init_by_seed};
@@ -39,7 +39,7 @@ test_build_out_of_range = (
     ezs.cd("../..")
 );
 
-// 頂点ごとに、その頂点から出る辺だけを、足した順に返す
+// 頂点ごとに、その頂点から出る辺だけを、足した順に返す。出次数はその本数になる
 test_to_iter_edges : IO ();
 test_to_iter_edges = (
     let g = GraphBuilder::create(5)
@@ -52,6 +52,7 @@ test_to_iter_edges = (
     assert_eq(|_|"test_to_iter_edges 2", edges_of(2), [(0, 1), (3, 5)]);;
     assert_eq(|_|"test_to_iter_edges 3", edges_of(3), [(2, 3)]);;
     assert_eq(|_|"test_to_iter_edges 4", edges_of(4), []);;
+    assert_eq(|_|"test_to_iter_edges degree", range(0, 5).map(|v| g.get_out_degree(v)).to_array, [3, 0, 2, 1, 0]);;
     pure()
 );
 

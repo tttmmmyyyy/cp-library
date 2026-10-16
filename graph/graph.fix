@@ -128,6 +128,18 @@ namespace Edge {
 get_size : Graph c -> I64 = @size;
 DEPRECATED[get_size, "Use `CPLib.Graph::@size` instead."];
 
+// 頂点`v`から出る辺の本数を取得する
+//
+// 制約：0 <= v < n
+//
+// 計算量：O(1)
+//
+// # Parameters
+// - `v` : 始点の頂点番号
+// - `graph` : グラフ
+get_out_degree : I64 -> Graph c -> I64;
+get_out_degree = |v, graph| graph.@_start.@(v + 1) - graph.@_start.@(v);
+
 // 頂点`v`から出る辺を、足した順に返すイテレータを作る
 //
 // 制約：0 <= v < n
