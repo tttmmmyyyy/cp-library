@@ -2,10 +2,11 @@ module CPLib.Graph.Test;
 
 import CPLib.Graph::{bellman_ford, calc_sccs, dijkstra, to_iter_edges, @size, Edge, GraphBuilder, GraphBuilder::{add_edge, build, create}};
 import CPLib.Trait::Inf::inf;
+import EZS::{cd, run_o, run_wi_oec, Context::default};
 import Random::{generate_I64_nonneg, init_by_seed};
 import Std::{
     IO, Array::{fill, push_back, set, sort_by, to_iter, @, @size}, Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, 
-    IO::println, Iterator::{fold, fold_m, map, range, to_array}, LessThan::min, Monad::pure, String::populate, ToString::to_string
+    IO::println, Iterator::{fold, fold_m, map, range, to_array}, LessThan::min, Monad::pure, Option::is_some, String::{find, populate}, ToString::to_string
 };
 
 test : IO ();
@@ -18,7 +19,24 @@ test = (
     test_scc_multiple_edges;;
     test_scc_long_path;;
     test_scc_random;;
+    test_build_out_of_range;;
     pure()
+);
+
+// 範囲外の頂点を持つ辺があると、`build`が理由を書いて止まる
+test_build_out_of_range : IO ();
+test_build_out_of_range = (
+    let ezs = EZS::Context::default;
+    ezs.cd("graph/out-of-range");;
+    ezs.run_o(["fix", "deps", "update"]);;
+    range(0, 2).fold_m((), |case, _|
+        let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands", "--check-integer-operations"], case.to_string);
+        assert_eq(|_|"out of range " + case.to_string + ": " + err, code != 0_U8 && err.find("build found an edge whose vertex is out of range", 0).is_some, true)
+    );;
+    let (out, _, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands", "--check-integer-operations"], "2");
+    assert_eq(|_|"in range: " + out, code == 0_U8 && out.find("2", 0).is_some, true);;
+    // 後のテストのために、作業ディレクトリをライブラリのルートに戻す
+    ezs.cd("../..")
 );
 
 // 頂点ごとに、その頂点から出る辺だけを、足した順に返す

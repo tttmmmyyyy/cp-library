@@ -56,8 +56,6 @@ namespace GraphBuilder {
     // - `builder` : 辺を足していく途中のグラフ
     add_edge : I64 -> I64 -> c -> GraphBuilder c -> GraphBuilder c;
     add_edge = |from, to, data, builder| (
-        let n = builder.@_n;
-        if !(0 <= from && from < n && 0 <= to && to < n) { undefined("CPLib.Graph: add_edge got a vertex out of range") };
         builder.mod__from(push_back(from)).mod__edges(push_back(Edge::make(to, data)))
     );
 
@@ -73,7 +71,10 @@ namespace GraphBuilder {
         let from = builder.@_from;
         let m = from.@size;
         // 始点ごとに辺の数を数え、累積和を取る
-        let start = from.to_iter.fold(fill(n + 1, 0), |v, start| start.mod(v + 1, |d| d + 1));
+        let start = from.to_iter.fold(fill(n + 1, 0), |v, start|
+            if !(0 <= v && v < n) { undefined("CPLib.Graph: build found an edge whose vertex is out of range") };
+            start.mod(v + 1, |d| d + 1)
+        );
         let start = range(0, n).fold(start, |v, start| start.set(v + 1, start.@(v) + start.@(v + 1)));
         // 辺を足した順に見て、始点の区間に並べる。perm.@(p)は位置pに置く辺の、足した順の番号。nextは各頂点の区間で次に置く位置
         let (perm, _) = range(0, m).fold((fill(m, 0), start), |i, (perm, next)|
@@ -82,7 +83,11 @@ namespace GraphBuilder {
             (perm.set(p, i), next.set(v, p + 1))
         );
         let edges = builder.@_edges;
-        Graph { _start : start, _edges : from_map(m, |p| edges.@(perm.@(p))) }
+        Graph { _start : start, _edges : from_map(m, |p|
+            let e = edges.@(perm.@(p));
+            if !(0 <= e.@to && e.@to < n) { undefined("CPLib.Graph: build found an edge whose vertex is out of range") };
+            e
+        ) }
     );
 }
 
