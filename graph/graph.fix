@@ -247,7 +247,7 @@ calc_sccs = |g| (
 // - `root` : 探索を始める頂点
 // - `cnt` : これまでに訪れた頂点の数
 // - `stack` : 探索に使う空の配列
-// - `ord` : 頂点を訪れた順番。訪れていない頂点は-1、強連結成分が確定した頂点はn
+// - `ord` : 頂点を訪れた順番。訪れていない頂点は-1、強連結成分が確定した頂点は頂点数n
 // - `low` : 頂点から、探索木の辺を下り、そのあと他の辺を1本たどって行ける、成分が確定していない頂点の`ord`の最小値
 // - `path` : 訪れたが強連結成分が確定していない頂点を、訪れた順に並べた配列
 // - `sccs` : 確定した強連結成分の配列
@@ -268,7 +268,7 @@ _scc_dfs = |g, root, cnt, stack, ord, low, path, sccs| (
             if o == -1 {
                 continue $ (cnt + 1, stack.push_back((to, 0)), ord.set(to, cnt), low.set(to, cnt), path.push_back(to), sccs)
             };
-            // 成分が確定した頂点の`ord`はnなので、`low`を変えない
+            // 成分が確定した頂点の`ord`は頂点数nで、まだ確定していない頂点の`ord`より大きいので、`low`は変わらない
             continue $ (cnt, stack, ord, low.set(v, min(low.@(v), o)), path, sccs)
         };
         // vから出る辺をすべて調べた。親の`low`に反映する
