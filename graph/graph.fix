@@ -13,9 +13,9 @@ module CPLib.Graph;
 import BinaryHeap::{BinaryHeap::{get_size, get_top, pop, push}, MinBinaryHeap::empty};
 import CPLib.Trait::{Inf, Inf::inf};
 import Std::{
-    loop, Additive, Array, Bool, Eq, I64, LessThan, 
-    Array::{empty, fill, mod, pop_back, push_back, set, to_iter, @, @size}, 
-    Iterator::{fold, loop_iter, range, range_step}, LoopState::{break, continue}, Option::as_some, 
+    loop, Additive, Array, Eq, I64, LessThan, 
+    Array::{fill, mod, pop_back, push_back, reverse, set, to_iter, @, @size}, 
+    Iterator::{fold, range}, LessThan::min, LoopState::{break, continue}, Option::as_some, Tuple2::@0, 
     Zero::zero
 };
 
@@ -228,95 +228,66 @@ bellman_ford = |start, graph| (
 // - `g` : グラフ
 calc_sccs : Graph c -> Array (Array I64);
 calc_sccs = |g| (
+    // Tarjanの方法。強連結成分は、トポロジカル順の逆に確定する
     let n = g.@size;
-
-    // 深さ優先探索をして、探索を終えた順に頂点を並べる
-    let visited = fill(n, false);
-    let (_, visited, finished) = range(0, n).fold(([], visited, empty(n)), |root, (stack, visited, finished)|
-        if visited.@(root) { (stack, visited, finished) };
-        _scc_dfs_postorder(g, root, stack, visited, finished)
+    let (_, _, _, _, _, sccs) = range(0, n).fold((0, [], fill(n, -1), fill(n, 0), [], []), |root, (cnt, stack, ord, low, path, sccs)|
+        if ord.@(root) != -1 { (cnt, stack, ord, low, path, sccs) };
+        _scc_dfs(g, root, cnt, stack, ord, low, path, sccs)
     );
-
-    // 辺の向きを逆にしたグラフをCSR形式の2つの配列で作る。
-    // - rlist：頂点0に入る辺の始点、頂点1に入る辺の始点、…を、この順に詰めて並べた配列（長さは辺の数）
-    // - rstart：長さn + 1の配列。頂点vに入る辺の始点は、rlistの[rstart.@(v), rstart.@(v + 1))にある
-
-    // in_degree.@(v)は、頂点vに入る辺の数
-    let in_degree = range(0, n).fold(fill(n, 0), |from, in_degree|
-        g.@edges.@(from).to_iter.fold(in_degree, |Edge { to : to, data : _ }, in_degree| in_degree.mod(to, |d| d + 1))
-    );
-    // rstart.@(v)は、頂点0からv - 1までに入る辺の数の合計
-    let rstart = range(0, n).fold(fill(n + 1, 0), |v, rstart| rstart.set(v + 1, rstart.@(v) + in_degree.@(v)));
-    // 元のグラフの辺を順に見て、行き先の頂点の区間に始点を書く。posは各頂点の区間で次に書く位置
-    let (rlist, _) = range(0, n).fold((fill(rstart.@(n), 0), rstart), |from, (rlist, pos)|
-        g.@edges.@(from).to_iter.fold((rlist, pos), |Edge { to : to, data : _ }, (rlist, pos)|
-            let p = pos.@(to);
-            (rlist.set(p, from), pos.set(to, p + 1))
-        )
-    );
-
-    // 逆向きのグラフを、探索を終えた順の逆に深さ優先探索する。1回の探索で訪れる頂点が1つの強連結成分になる
-    let visited = fill(n, false);
-    let (_, _, sccs) = range_step(n - 1, -1, -1).fold(([], visited, []), |i, (stack, visited, sccs)|
-        let root = finished.@(i);
-        if visited.@(root) { (stack, visited, sccs) };
-        let (stack, visited, scc) = _scc_dfs_preorder(rstart, rlist, root, stack, visited);
-        (stack, visited, sccs.push_back(scc))
-    );
-    sccs
+    sccs.reverse
 );
 
-// `root`から深さ優先探索をし、探索を終えた順に頂点を`finished`の末尾に加える
+// `root`から深さ優先探索をし、確定した強連結成分を`sccs`の末尾に加える
 //
 // 再帰の代わりに、(頂点, 次に調べる辺の添字)を積む配列`stack`をスタックとして使う。`stack`は空で渡し、空で返る。
 // 呼び出しごとに確保し直さないよう、呼び出し側が使い回す。
 //
 // # Parameters
-// - `graph` : グラフ
+// - `g` : グラフ
 // - `root` : 探索を始める頂点
+// - `cnt` : これまでに訪れた頂点の数
 // - `stack` : 探索に使う空の配列
-// - `visited` : 訪れた頂点の印
-// - `finished` : 探索を終えた頂点の列
-_scc_dfs_postorder : Graph c -> I64 -> Array (I64, I64) -> Array Bool -> Array I64 -> (Array (I64, I64), Array Bool, Array I64);
-_scc_dfs_postorder = |g, root, stack, visited, finished| (
-    let visited = visited.set(root, true);
-    loop((stack.push_back((root, 0)), visited, finished), |(stack, visited, finished)|
-        if stack.@size == 0 { break $ (stack, visited, finished) };
+// - `ord` : 頂点を訪れた順番。訪れていない頂点は-1、強連結成分が確定した頂点はn
+// - `low` : 頂点から、探索木の辺を下り、そのあと他の辺を1本たどって行ける、成分が確定していない頂点の`ord`の最小値
+// - `path` : 訪れたが強連結成分が確定していない頂点を、訪れた順に並べた配列
+// - `sccs` : 確定した強連結成分の配列
+_scc_dfs : Graph c -> I64 -> I64 -> Array (I64, I64) -> Array I64 -> Array I64 -> Array I64 -> Array (Array I64)
+    -> (I64, Array (I64, I64), Array I64, Array I64, Array I64, Array (Array I64));
+_scc_dfs = |g, root, cnt, stack, ord, low, path, sccs| (
+    let n = g.@size;
+    let init = (cnt + 1, stack.push_back((root, 0)), ord.set(root, cnt), low.set(root, cnt), path.push_back(root), sccs);
+    loop(init, |(cnt, stack, ord, low, path, sccs)|
+        if stack.@size == 0 { break $ (cnt, stack, ord, low, path, sccs) };
         let top = stack.@size - 1;
         let (v, k) = stack.@(top);
         let edges = g.@edges.@(v);
-        if k == edges.@size {
-            continue $ (stack.pop_back, visited, finished.push_back(v))
+        if k < edges.@size {
+            let stack = stack.set(top, (v, k + 1));
+            let to = edges.@(k).@to;
+            let o = ord.@(to);
+            if o == -1 {
+                continue $ (cnt + 1, stack.push_back((to, 0)), ord.set(to, cnt), low.set(to, cnt), path.push_back(to), sccs)
+            };
+            // 成分が確定した頂点の`ord`はnなので、`low`を変えない
+            continue $ (cnt, stack, ord, low.set(v, min(low.@(v), o)), path, sccs)
         };
-        let stack = stack.set(top, (v, k + 1));
-        let to = edges.@(k).@to;
-        if visited.@(to) { continue $ (stack, visited, finished) };
-        continue $ (stack.push_back((to, 0)), visited.set(to, true), finished)
-    )
-);
-
-// CSR形式のグラフを`root`から深さ優先探索し、訪れた頂点を訪れた順に並べて返す
-//
-// 再帰の代わりに、(頂点, 次に調べる辺の添字)を積む配列`stack`をスタックとして使う。`stack`は空で渡し、空で返る。
-// 呼び出しごとに確保し直さないよう、呼び出し側が使い回す。
-//
-// # Parameters
-// - `start` : 長さが頂点数 + 1の配列。頂点vから出る辺の行き先は、`list`の[start.@(v), start.@(v + 1))にある
-// - `list` : 頂点0から出る辺の行き先、頂点1から出る辺の行き先、…を、この順に詰めて並べた配列
-// - `root` : 探索を始める頂点
-// - `stack` : 探索に使う空の配列
-// - `visited` : 訪れた頂点の印
-_scc_dfs_preorder : Array I64 -> Array I64 -> I64 -> Array (I64, I64) -> Array Bool -> (Array (I64, I64), Array Bool, Array I64);
-_scc_dfs_preorder = |start, list, root, stack, visited| (
-    let visited = visited.set(root, true);
-    loop((stack.push_back((root, start.@(root))), visited, [root]), |(stack, visited, order)|
-        if stack.@size == 0 { break $ (stack, visited, order) };
-        let top = stack.@size - 1;
-        let (v, k) = stack.@(top);
-        if k == start.@(v + 1) { continue $ (stack.pop_back, visited, order) };
-        let stack = stack.set(top, (v, k + 1));
-        let to = list.@(k);
-        if visited.@(to) { continue $ (stack, visited, order) };
-        continue $ (stack.push_back((to, start.@(to))), visited.set(to, true), order.push_back(to))
+        // vから出る辺をすべて調べた。親の`low`に反映する
+        let stack = stack.pop_back;
+        let low_v = low.@(v);
+        let low = if stack.@size == 0 { low } else {
+            let parent = stack.@(stack.@size - 1).@0;
+            low.set(parent, min(low.@(parent), low_v))
+        };
+        if low_v != ord.@(v) { continue $ (cnt, stack, ord, low, path, sccs) };
+        // vから先に訪れた、成分が確定していない頂点が、vを含む強連結成分になる
+        let (ord, path, scc) = loop((ord, path, []), |(ord, path, scc)|
+            let u = path.@(path.@size - 1);
+            let ord = ord.set(u, n);
+            let path = path.pop_back;
+            let scc = scc.push_back(u);
+            if u == v { break $ (ord, path, scc) };
+            continue $ (ord, path, scc)
+        );
+        continue $ (cnt, stack, ord, low, path, sccs.push_back(scc))
     )
 );
