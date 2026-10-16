@@ -1,21 +1,75 @@
 module CPLib.Graph.Test;
 
-import CPLib.Graph::{add_edge, calc_sccs, create, dijkstra, Graph};
+import CPLib.Graph::{bellman_ford, calc_sccs, dijkstra, to_iter_edges, @size, Edge, GraphBuilder, GraphBuilder::{add_edge, build, create}};
 import CPLib.Trait::Inf::inf;
 import Random::{generate_I64_nonneg, init_by_seed};
 import Std::{
-    IO, Array::{fill, set, sort_by, to_iter, @, @size}, Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, 
-    IO::println, Iterator::{fold, fold_m, range}, Monad::pure, String::populate, ToString::to_string
+    IO, Array::{fill, push_back, set, sort_by, to_iter, @, @size}, Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, 
+    IO::println, Iterator::{fold, fold_m, map, range, to_array}, LessThan::min, Monad::pure, String::populate, ToString::to_string
 };
 
 test : IO ();
 test = (
+    test_to_iter_edges;;
     test_dijkstra;;
+    test_bellman_ford_random;;
     test_scc;;
     test_scc_self_loop;;
     test_scc_multiple_edges;;
     test_scc_long_path;;
     test_scc_random;;
+    pure()
+);
+
+// 頂点ごとに、その頂点から出る辺だけを、足した順に返す
+test_to_iter_edges : IO ();
+test_to_iter_edges = (
+    let g = GraphBuilder::create(5)
+        .add_edge(2, 0, 1).add_edge(0, 1, 2).add_edge(3, 2, 3).add_edge(0, 3, 4).add_edge(2, 3, 5).add_edge(0, 1, 6)
+        .build;
+    assert_eq(|_|"test_to_iter_edges size", g.@size, 5);;
+    let edges_of = |v| g.to_iter_edges(v).map(|Edge { to, data }| (to, data)).to_array;
+    assert_eq(|_|"test_to_iter_edges 0", edges_of(0), [(1, 2), (3, 4), (1, 6)]);;
+    assert_eq(|_|"test_to_iter_edges 1", edges_of(1), []);;
+    assert_eq(|_|"test_to_iter_edges 2", edges_of(2), [(0, 1), (3, 5)]);;
+    assert_eq(|_|"test_to_iter_edges 3", edges_of(3), [(2, 3)]);;
+    assert_eq(|_|"test_to_iter_edges 4", edges_of(4), []);;
+    pure()
+);
+
+// 負の辺を含む小さいグラフで、Warshall-Floydで求めた距離と比べる
+test_bellman_ford_random : IO ();
+test_bellman_ford_random = (
+    let rng = Random::init_by_seed(1_U64);
+    range(0, 300).fold_m(rng, |_, rng|
+        let (rng, n) = rng.generate_I64_nonneg;
+        let n = n % 8 + 1;
+        let (rng, m) = rng.generate_I64_nonneg;
+        let m = m % (3 * n);
+        // 頂点のポテンシャルpで重みをずらし、負の閉路のない負の辺を作る
+        let (p, rng) = range(0, n).fold(([], rng), |_, (p, rng)|
+            let (rng, x) = rng.generate_I64_nonneg;
+            (p.push_back(x % 20), rng)
+        );
+        // dist.@(u * n + v)は、uからvへの辺の重みの最小値（辺がなければinf）
+        let (g, dist, rng) = range(0, m).fold((GraphBuilder::create(n), fill(n * n, inf), rng), |_, (g, dist, rng)|
+            let (rng, u) = rng.generate_I64_nonneg;
+            let (rng, v) = rng.generate_I64_nonneg;
+            let (rng, c) = rng.generate_I64_nonneg;
+            let u = u % n; let v = v % n;
+            let c = c % 10 + p.@(u) - p.@(v);
+            (g.add_edge(u, v, c), dist.set(u * n + v, min(dist.@(u * n + v), c)), rng)
+        );
+        let dist = range(0, n).fold(dist, |v, dist| dist.set(v * n + v, min(dist.@(v * n + v), 0)));
+        let dist = range(0, n).fold(dist, |k, dist| range(0, n).fold(dist, |i, dist| range(0, n).fold(dist, |j, dist|
+            if dist.@(i * n + k) == inf || dist.@(k * n + j) == inf { dist };
+            dist.set(i * n + j, min(dist.@(i * n + j), dist.@(i * n + k) + dist.@(k * n + j)))
+        )));
+        let (rng, start) = rng.generate_I64_nonneg;
+        let start = start % n;
+        assert_eq(|_|"test_bellman_ford_random", g.build.bellman_ford(start), range(0, n).map(|v| dist.@(start * n + v)).to_array);;
+        rng.pure
+    ).forget;;
     pure()
 );
 
@@ -28,7 +82,7 @@ test_scc_random = (
         let n = n % 12 + 1;
         let (rng, m) = rng.generate_I64_nonneg;
         let m = m % (3 * n);
-        let (g, reach, rng) = range(0, m).fold((Graph::create(n) : Graph (), fill(n * n, false), rng), |_, (g, reach, rng)|
+        let (g, reach, rng) = range(0, m).fold((GraphBuilder::create(n) : GraphBuilder (), fill(n * n, false), rng), |_, (g, reach, rng)|
             let (rng, u) = rng.generate_I64_nonneg;
             let (rng, v) = rng.generate_I64_nonneg;
             let u = u % n; let v = v % n;
@@ -39,7 +93,7 @@ test_scc_random = (
         let reach = range(0, n).fold(reach, |k, reach| range(0, n).fold(reach, |i, reach| range(0, n).fold(reach, |j, reach|
             if reach.@(i * n + k) && reach.@(k * n + j) { reach.set(i * n + j, true) } else { reach }
         )));
-        let sccs = g.calc_sccs;
+        let sccs = g.build.calc_sccs;
         // comp.@(v)は、vを含む成分の添字
         let comp = range(0, sccs.@size).fold(fill(n, -1), |c, comp| sccs.@(c).to_iter.fold(comp, |v, comp| comp.set(v, c)));
         assert_eq(|_|"test_scc_random: partition", sccs.to_iter.fold(0, |scc, s| s + scc.@size), n);;
@@ -58,8 +112,8 @@ test_scc_random = (
 test_scc_long_path : IO ();
 test_scc_long_path = (
     let n = 200000;
-    let g = range(0, n - 1).fold(Graph::create(n) : Graph (), |i, g| g.add_edge(i, i + 1, ()));
-    let sccs = g.calc_sccs;
+    let g = range(0, n - 1).fold(GraphBuilder::create(n) : GraphBuilder (), |i, g| g.add_edge(i, i + 1, ()));
+    let sccs = g.build.calc_sccs;
     assert_eq(|_|"test_scc_long_path size", sccs.@size, n);;
     assert_eq(|_|"test_scc_long_path first", sccs.@(0), [0]);;
     assert_eq(|_|"test_scc_long_path last", sccs.@(n - 1), [n - 1]);;
@@ -75,7 +129,7 @@ test_dijkstra = (
 
 test_dijkstra_basic : IO ();
 test_dijkstra_basic = (
-    let graph = Graph::create(6);
+    let graph = GraphBuilder::create(6);
     let graph = graph.add_edge(0, 1, 10);
     let graph = graph.add_edge(0, 2, 3);
     let graph = graph.add_edge(1, 3, 2);
@@ -83,7 +137,7 @@ test_dijkstra_basic = (
     let graph = graph.add_edge(2, 3, 8);
     let graph = graph.add_edge(2, 4, 2);
     let graph = graph.add_edge(3, 4, 5);
-    let dist = graph.dijkstra(0);
+    let dist = graph.build.dijkstra(0);
     assert_eq(|_|"", dist, [0, 7, 3, 9, 5, Inf::inf])
 );
 
@@ -91,7 +145,7 @@ test_dijkstra_speed : IO ();
 test_dijkstra_speed = (
     let n = 1e5;
     let rng = Random::init_by_seed(0_U64);
-    let graph = Graph::create(n);
+    let graph = GraphBuilder::create(n);
     let (graph, rng) = range(0, n).fold((graph, rng), |i, (graph, rng)|
         let (rng, j) = rng.generate_I64_nonneg;
         let j = j % n;
@@ -107,7 +161,7 @@ test_dijkstra_speed = (
 
         (graph, rng)
     );
-    let (dist, time) = consumed_time_while_lazy(|_| graph.dijkstra(0));
+    let (dist, time) = consumed_time_while_lazy(|_| graph.build.dijkstra(0));
     assert_eq(|_|"test_dijkstra_speed", dist.@(1), 391);;
     println $ "[CPLib.Graph.Test] dijkstra({}): {}".populate([n.to_string, time.to_string]);;
     pure()
@@ -134,7 +188,7 @@ test_scc_basic = (
     // {8} -> {9}
     // 
 
-    let graph = Graph::create(13);
+    let graph = GraphBuilder::create(13);
 
     // {10, 11, 12}
     let graph = graph.add_edge(11, 10, ());
@@ -174,7 +228,7 @@ test_scc_basic = (
     // {8} -> {9}
     let graph = graph.add_edge(8, 9, ());
 
-    let sccs = graph.calc_sccs;
+    let sccs = graph.build.calc_sccs;
     // 順序は保証されないのでソートして比較
     let sccs = sccs.map(|scc| scc.sort_by(|(lhs, rhs)| lhs < rhs));
 
@@ -186,33 +240,33 @@ test_scc_basic = (
 
 test_scc_empty : IO ();
 test_scc_empty = (
-    let graph = Graph::create(0) : Graph ();
-    let sccs = graph.calc_sccs;
+    let graph = GraphBuilder::create(0) : GraphBuilder ();
+    let sccs = graph.build.calc_sccs;
     assert_eq(|_|"test_scc_empty", sccs, []);;
     pure()
 );
 
 test_scc_self_loop : IO ();
 test_scc_self_loop = (
-    let graph = Graph::create(3);
+    let graph = GraphBuilder::create(3);
     let graph = graph.add_edge(0, 0, ());
     let graph = graph.add_edge(1, 1, ());
     let graph = graph.add_edge(2, 2, ());
     let graph = graph.add_edge(0, 1, ());
     let graph = graph.add_edge(1, 2, ());
-    let sccs = graph.calc_sccs;
+    let sccs = graph.build.calc_sccs;
     assert_eq(|_|"test_scc_self_loop", sccs, [[0], [1], [2]]);;
     pure()
 );
 
 test_scc_multiple_edges : IO ();
 test_scc_multiple_edges = (
-    let graph = Graph::create(3);
+    let graph = GraphBuilder::create(3);
     let graph = graph.add_edge(0, 1, ());
     let graph = graph.add_edge(0, 1, ()); // 重複
     let graph = graph.add_edge(1, 2, ());
     let graph = graph.add_edge(2, 0, ());
-    let sccs = graph.calc_sccs;
+    let sccs = graph.build.calc_sccs;
     let sccs = sccs.map(|scc| scc.sort_by(|(lhs, rhs)| lhs < rhs)); // 順序は保証されないのでソートして比較
     assert_eq(|_|"test_scc_multiple_edges", sccs, [[0, 1, 2]]);;
     pure()
@@ -223,7 +277,7 @@ test_scc_speed = (
     // n個の頂点を持つグラフをランダムに生成
     let n = 1e5;
     let rng = Random::init_by_seed(0_U64);
-    let graph = Graph::create(n) : Graph ();
+    let graph = GraphBuilder::create(n) : GraphBuilder ();
     let (graph, rng) = range(0, n).fold((graph, rng), |i, (graph, rng)|
         let (rng, i) = rng.generate_I64_nonneg;
         let i = i % n;
@@ -232,7 +286,7 @@ test_scc_speed = (
         (graph.add_edge(i, j, ()), rng)
     );
     // 強連結成分を計算
-    let (sccs, time) = consumed_time_while_lazy(|_| graph.calc_sccs);
+    let (sccs, time) = consumed_time_while_lazy(|_| graph.build.calc_sccs);
     assert_eq(|_|"test_scc_speed", sccs.@size, 99999);;
     println("[CPLib.Graph.Test] calc_sccs({}): {}".populate([n.to_string, time.to_string]));;
     pure()

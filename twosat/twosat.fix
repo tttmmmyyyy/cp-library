@@ -10,7 +10,7 @@
 // ```
 module CPLib.TwoSat;
 
-import CPLib.Graph::{add_edge, calc_sccs, create, Graph};
+import CPLib.Graph::{calc_sccs, GraphBuilder, GraphBuilder::{add_edge, build, create}};
 import Std::{
     Array, Bool, I64, Option, Array::{fill, set, to_iter, @, @size}, 
     Iterator::{fold, loop_iter_s, range}, LoopState::{break, continue}, Option::{none, some}
@@ -21,7 +21,7 @@ type TwoSat = struct {
     // 変数の数
     _n : I64,
     // グラフ
-    _graph : Graph (),
+    _graph : GraphBuilder (),
 };
 
 // 2-SAT問題を作る
@@ -31,7 +31,7 @@ type TwoSat = struct {
 // # Parameters
 // - `n` : 変数の数
 create : I64 -> TwoSat;
-create = |n| TwoSat { _n : n, _graph : Graph::create(n * 2) };
+create = |n| TwoSat { _n : n, _graph : GraphBuilder::create(n * 2) };
 
 // 節 (a = f) or (b = g) を追加する
 //
@@ -67,7 +67,7 @@ add_clause = |a, f, b, g, sat| (
 solve : TwoSat -> Option (Array Bool);
 solve = |sat| (
     let n = sat.@_n;
-    let sccs = sat.@_graph.calc_sccs;
+    let sccs = sat.@_graph.build.calc_sccs;
     // 各リテラルのSCCグループインデックスを取得
     let scc_idx = fill(2 * n, 0);
     let scc_idx = range(0, sccs.@size).fold(scc_idx, |i, scc_idx|
