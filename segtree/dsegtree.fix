@@ -22,10 +22,7 @@ import Std::{
 // この実装にあたっては、[maspyさんの記事](https://maspypy.com/segment-tree-%E3%81%AE%E3%81%8A%E5%8B%89%E5%BC%B71) を参考にしました。良質な解説をありがとうございます。
 
 // セグメント木
-//
-// 演算を使う関数は、先頭で木をすべてのフィールドを名指すパターンで分解し、フィールドを個別の値として扱う。
-// こう書くと、コンパイラが木をフィールドごとの引数に分けるので、演算のクロージャが特殊化され、直接呼び出される。
-type DSegtree m = unbox struct {
+type DSegtree m = struct {
     // 要素数
     _n : I64,
     // ユニット
@@ -111,17 +108,18 @@ build = |elems, unit, op| (
 // - `tree` : セグメント木
 set : I64 -> m -> DSegtree m -> DSegtree m;
 set = |i, value, tree| (
-    let DSegtree { _n : n, _unit : unit, _op : op, _elems : elems } = tree;
+    let n = tree.@_n;
     let i = i + n;
-    let elems = elems.set(i, value);
+    let tree = tree.mod__elems(set(i, value));
     // `i`の祖先ノードを下から順にすべて更新
-    let elems = loop((i / 2, elems), |(p, elems)|
-        if p == 0 { break $ elems }; // 根（添字1）を更新したら終了
-        let left = elems.@(p * 2);
-        let right = elems.@(p * 2 + 1);
-        continue $ (p / 2, elems.set(p, op((left, right))))
-    );
-    DSegtree { _n : n, _unit : unit, _op : op, _elems : elems }
+    loop((i / 2, tree), |(p, tree)|
+        if p == 0 { break $ tree }; // 根（添字1）を更新したら終了
+        let left = tree.@_elems.@(p * 2);
+        let right = tree.@_elems.@(p * 2 + 1);
+        let value = tree.@_op $ (left, right);
+        let tree = tree.mod__elems(set(p, value));
+        continue $ (p / 2, tree)
+    )
 );
 
 // 半開区間[l, r)にある要素の畳み込みを計算する
@@ -136,28 +134,28 @@ set = |i, value, tree| (
 // - `tree` : セグメント木
 fold : I64 -> I64 -> DSegtree m -> m;
 fold = |l, r, tree| (
-    let DSegtree { _n : n, _unit : unit, _op : op, _elems : elems } = tree;
+    let n = tree.@_n;
     let l = l + n;
     let r = r + n;
-    let (acc_l, acc_r) = loop((l, r, unit, unit), |(l, r, acc_l, acc_r)|
+    let (acc_l, acc_r) = loop((l, r, tree.@_unit, tree.@_unit), |(l, r, acc_l, acc_r)|
         if l >= r {
             break $ (acc_l, acc_r)
         };
         let (l, acc_l) = if l % 2 == 0 { (l, acc_l) } else {
-            let acc_l = op((acc_l, elems.@(l)));
+            let acc_l = tree.@_op $ (acc_l, tree.@_elems.@(l));
             let l = l + 1;
             (l, acc_l)
         };
         let (r, acc_r) = if r % 2 == 0 { (r, acc_r) } else {
             let r = r - 1;
-            let acc_r = op((elems.@(r), acc_r));
+            let acc_r = tree.@_op $ (tree.@_elems.@(r), acc_r);
             (r, acc_r)
         };
         let l = l / 2;
         let r = r / 2;
         continue $ (l, r, acc_l, acc_r)
     );
-    op((acc_l, acc_r))
+    tree.@_op $ (acc_l, acc_r)
 );
 
 // すべての要素の畳み込みを計算する
@@ -188,13 +186,15 @@ fold_all = |tree| tree.fold(0, tree.@_n);
 // ```
 calc_max_right : I64 -> (m -> Bool) -> DSegtree m -> I64;
 calc_max_right = |l, f, tree| (
-    let DSegtree { _n : n, _unit : unit, _op : op, _elems : elems } = tree;
+    let n = tree.@_n;
+    let elems = tree.@_elems;
+    let op = tree.@_op;
     // `fold(l, n)`が畳み込むノードを左から順に試し、`f`が偽になる最初のノードkと、kより左のノードの畳み込みaccを求める。
     // 段hで`fold`が畳み込むノードは、lh = ceil((l + n) / 2^h)、rh = floor(2n / 2^h)として、lh < rhの段のうち、
     // 左端の側ではlh（lhが奇数のとき）、右端の側ではrh - 1（rhが奇数のとき）である。
     // これらを左から順に並べると、左端の側のノードが低い段から、続いて右端の側のノードが高い段から並ぶ。
     // 見つからなければkは0とする。
-    let (k, height, acc) = loop((l + n, n * 2, 0, unit), |(lh, rh, h, acc)|
+    let (k, height, acc) = loop((l + n, n * 2, 0, tree.@_unit), |(lh, rh, h, acc)|
         if lh >= rh { break $ (0, h, acc) };
         if lh % 2 == 1 {
             let next = op((acc, elems.@(lh)));
@@ -241,13 +241,15 @@ calc_max_right = |l, f, tree| (
 // ```
 calc_min_left : I64 -> (m -> Bool) -> DSegtree m -> I64;
 calc_min_left = |r, f, tree| (
-    let DSegtree { _n : n, _unit : unit, _op : op, _elems : elems } = tree;
+    let n = tree.@_n;
+    let elems = tree.@_elems;
+    let op = tree.@_op;
     // `fold(0, r)`が畳み込むノードを右から順に試し、`f`が偽になる最初のノードkと、kより右のノードの畳み込みaccを求める。
     // 段hで`fold`が畳み込むノードは、lh = ceil(n / 2^h)、rh = floor((r + n) / 2^h)として、lh < rhの段のうち、
     // 左端の側ではlh（lhが奇数のとき）、右端の側ではrh - 1（rhが奇数のとき）である。
     // これらを右から順に並べると、右端の側のノードが低い段から、続いて左端の側のノードが高い段から並ぶ。
     // 見つからなければkは0とする。
-    let (k, height, acc) = loop((n, r + n, 0, unit), |(lh, rh, h, acc)|
+    let (k, height, acc) = loop((n, r + n, 0, tree.@_unit), |(lh, rh, h, acc)|
         if lh >= rh { break $ (0, h, acc) };
         if rh % 2 == 1 {
             let next = op((elems.@(rh - 1), acc));
