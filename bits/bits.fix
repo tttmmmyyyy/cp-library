@@ -2,7 +2,7 @@
 module CPLib.Bits;
 
 import Std::{
-    Bool, Eq, I16, I32, I64, I8, Iterator, String, U16, U32, U64, U8, Array::{fill, set}, 
+    undefined, Bool, Eq, I16, I32, I64, I8, Iterator, String, U16, U32, U64, U8, Array::{fill, set}, 
     FromBytes::from_bytes, I16::{bit_and, bit_not, bit_or, bit_xor, count_ones, shift_left, shift_right}, 
     I32::{bit_and, bit_not, bit_or, bit_xor, count_ones, shift_left, shift_right}, 
     I64::{bit_and, bit_not, bit_or, bit_xor, count_ones, shift_left, shift_right}, 
@@ -204,6 +204,7 @@ impl BitCombinationIterator : Iterator {
 // assert_eq(|_|"", bit_combinations(3, 2).to_array, [0b011, 0b101, 0b110])
 // ```
 bit_combinations : I64 -> I64 -> BitCombinationIterator = |n, m| (
+    if !(0 <= n && n <= 62) { undefined("[CPLib.Bits::bit_combinations] `n` is out of [0, 62]") };
     if m < 0 || n < m { BitCombinationIterator { _sub : -1, _end : -1 } };
     BitCombinationIterator {
         _sub : 1.shift_left(m) - 1,

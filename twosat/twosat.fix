@@ -12,7 +12,7 @@ module CPLib.TwoSat;
 
 import CPLib.Graph::{_calc_scc_ids, GraphBuilder, GraphBuilder::{add_edge, build, create}};
 import Std::{
-    Array, Bool, I64, Option, Array::{fill, set, @}, 
+    undefined, Array, Bool, I64, Option, Array::{fill, set, @}, 
     Iterator::{loop_iter_s, range}, LoopState::{break, continue}, Option::{none, some}
 };
 
@@ -48,6 +48,7 @@ create = |n| TwoSat { _n : n, _graph : GraphBuilder::create(n * 2) };
 add_clause : I64 -> Bool -> I64 -> Bool -> TwoSat -> TwoSat;
 add_clause = |a, f, b, g, sat| (
     let n = sat.@_n;
+    if !(0 <= a && a < n && 0 <= b && b < n) { undefined("[CPLib.TwoSat::add_clause] `a` or `b` is out of [0, n)") };
     let a = if !f { a._not(n) } else { a };
     let b = if !g { b._not(n) } else { b };
     sat.mod__graph(|graph|

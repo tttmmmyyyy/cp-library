@@ -1,0 +1,13 @@
+// 標準入力で選んだビット数でbit_combinationsを呼び、列挙した個数を書く。0：63、1：-1、2：62（範囲内）
+module Main;
+
+import CPLib.Bits::bit_combinations;
+import CPLib.IO::read_i;
+import Std::{IO, Array::@size, IO::println, Iterator::to_array, ToString::to_string};
+
+main : IO ();
+main = (
+    let case = *read_i;
+    let n = if case == 0 { 63 } else if case == 1 { -1 } else { 62 };
+    println(bit_combinations(n, 1).to_array.@size.to_string)
+);

@@ -4,6 +4,7 @@ import CPLib.String::{calc_lcp_array, calc_lcp_array_any, calc_suffix_array, cal
 import EZS::{cd, run_o, run_wi_oec, Context::default};
 import Random::{generate_U64, init_by_seed};
 import Std::{
+    Array, I64,
     loop, IO, Array::{empty, fill, pop_back, push_back, sort_by, @, @size}, Debug::{assert, assert_eq, consumed_time_while_lazy}, 
     FromBytes::from_bytes, Functor::{forget, map}, IO::println, Iterator::{fold, fold_m, map, range, to_array}, LoopState::{break, continue}, 
     Monad::pure, Option::is_some, Result::as_ok, String::{find, get_bytes, populate}, ToI32::i32, ToI64::i64, ToString::to_string, 
@@ -13,7 +14,7 @@ import Std::{
 // https://atcoder.jp/contests/language-test-202505/submissions/68577484
 
 test : IO ();
-test = test_sa;; test_sa_upper_too_large;; test_lcp;; test_sa_lcp_random;; test_z;; test_z_random;; test_z_speed;
+test = test_sa;; test_sa_upper_too_large;; test_lcp;; test_lcp_empty;; test_sa_lcp_random;; test_z;; test_z_random;; test_z_speed;
 
 // 上限が2^31以上だと、`calc_suffix_array_i64_upper`が理由を書いて止まる
 test_sa_upper_too_large : IO ();
@@ -128,4 +129,12 @@ test_z_speed = (
     let (z, time) = consumed_time_while_lazy(|_| s.calc_z_array_any);
     assert_eq(|_|"test_z_speed", z.@(n - 1), 1);;
     println("[CPLib.String.Test] calc_z_array_any({}): {}".populate([n.to_string, time.to_string]))
+);
+
+// 空の文字列と空の配列のLCP arrayは空
+test_lcp_empty : IO ();
+test_lcp_empty = (
+    assert_eq(|_|"test_lcp_empty: string", calc_lcp_array(calc_suffix_array(""), ""), []);;
+    assert_eq(|_|"test_lcp_empty: array", calc_lcp_array_any([], [] : Array I64), []);;
+    pure()
 );

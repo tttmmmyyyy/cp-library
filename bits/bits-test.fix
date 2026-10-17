@@ -4,9 +4,10 @@ import CPLib.Bits::{
     bit_check, bit_clear, bit_combinations, bit_flip, bit_set, bit_subsets, to_string_bits, 
     Bits::popcount
 };
+import EZS::{cd, run_o, run_wi_oec, Context::default};
 import Std::{
-    IO, Array::@size, Debug::assert_eq, Functor::map, I64::shift_left, Iterator::to_array, Monad::pure, 
-    ToString::to_string
+    IO, Array::{@, @size}, Debug::assert_eq, Functor::map, I64::shift_left, Iterator::{fold_m, range, to_array}, Monad::pure, 
+    Option::is_some, String::find, ToString::to_string
 };
 
 test : IO () = (
@@ -16,6 +17,7 @@ test : IO () = (
     test_popcount;;
     test_to_string_bits;;
     test_small_types_popcount;;
+    test_bit_combinations_out_of_range;;
     pure()
 );
 
@@ -209,4 +211,20 @@ test_small_types_popcount : IO () = (
     assert_eq(|_|"popcount U8 max", 255_U8.popcount, 8);;
 
     pure()
+);
+
+// ビット数が[0, 62]の外だと、`bit_combinations`が理由を書いて止まる
+test_bit_combinations_out_of_range : IO ();
+test_bit_combinations_out_of_range = (
+    let ezs = EZS::Context::default;
+    ezs.cd("bits/out-of-range");;
+    ezs.run_o(["fix", "deps", "update"]);;
+    range(0, 2).fold_m((), |case, _|
+        let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], case.to_string);
+        assert_eq(|_|"out of range " + case.to_string + ": " + err, code != 0_U8 && err.find("[CPLib.Bits::bit_combinations] `n` is out of [0, 62]", 0).is_some, true)
+    );;
+    let (out, _, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], "2");
+    assert_eq(|_|"in range: " + out, code == 0_U8 && out.find("62", 0).is_some, true);;
+    // 後のテストのために、作業ディレクトリをライブラリのルートに戻す
+    ezs.cd("../..")
 );

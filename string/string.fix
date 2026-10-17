@@ -78,12 +78,12 @@ calc_suffix_array_i64_upper = |upper, s| (
 
 // 文字列のLCP arrayを計算する
 // 
-// 制約：saはsのsuffix array, 文字列が空でない、文字列のバイト数 < 2^31
+// 制約：saはsのsuffix array, 文字列のバイト数 < 2^31
 //
 // 計算量：O(n)、n = 文字列のバイト数
 //
 // # Returns
-// 長さ`s.get_size - 1`の配列`lcp`で、`lcp.@(i)`は`s[sa.@(i)..)`と`s[sa.@(i+1)..)`の最長共通接頭辞の長さを表す。
+// 長さ`max(n - 1, 0)`の配列`lcp`で、`lcp.@(i)`は`s[sa.@(i)..)`と`s[sa.@(i+1)..)`の最長共通接頭辞の長さを表す。
 //
 // # Parameters
 // - `sa` : 対象の文字列のsuffix array
@@ -101,12 +101,12 @@ calc_lcp_array = |sa, s| s.get_bytes.pop_back.calc_lcp_array_any(sa);
 
 // 配列のLCP arrayを計算する
 //
-// 制約：saはsのsuffix array, 1 <= |s| < 2^31
+// 制約：saはsのsuffix array, |s| < 2^31
 //
 // 計算量：O(n)、n = |s|
 //
 // # Returns
-// 長さ`s.get_size - 1`の配列`lcp`で、`lcp.@(i)`は`s[sa.@(i)..)`と`s[sa.@(i+1)..)`の最長共通接頭辞の長さを表す。
+// 長さ`max(n - 1, 0)`の配列`lcp`で、`lcp.@(i)`は`s[sa.@(i)..)`と`s[sa.@(i+1)..)`の最長共通接頭辞の長さを表す。
 //
 // # Parameters
 // - `sa` : 対象の配列のsuffix array
@@ -115,6 +115,7 @@ calc_lcp_array_any : [a : Eq] Array I64 -> Array a -> Array I64;
 calc_lcp_array_any = |sa, s| (
     let n = s.@size;
     if n > I32::maximum.i64 { _too_long("calc_lcp_array_any") };
+    if n == 0 { [] };
     let sa = sa.map(i32);
     let rnk = fill(n, 0_I32);
     let rnk = range(0, n).fold(rnk, |i, rnk| rnk.set(sa.@(i).i64, i.i32));

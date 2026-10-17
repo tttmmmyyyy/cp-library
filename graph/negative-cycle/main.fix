@@ -1,0 +1,16 @@
+// 標準入力で選んだグラフの、頂点0からの距離をベルマンフォード法で求める。0：負の閉路に到達できる、1：負の閉路があるが到達できない、2：負の辺があるが負の閉路はない
+module Main;
+
+import CPLib.Graph::{bellman_ford, GraphBuilder::{add_edge, build, create}};
+import CPLib.IO::read_i;
+import Std::{IO, IO::println, ToString::to_string};
+
+main : IO ();
+main = (
+    let case = *read_i;
+    let builder = GraphBuilder::create(3).add_edge(0, 1, 2);
+    let builder = if case == 0 { builder.add_edge(1, 2, 1).add_edge(2, 1, -2) }
+        else if case == 1 { builder.add_edge(2, 2, -1) }
+        else { builder.add_edge(0, 2, 5).add_edge(1, 2, -4) };
+    println(builder.build.bellman_ford(0).to_string)
+);

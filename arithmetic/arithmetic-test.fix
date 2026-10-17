@@ -8,11 +8,12 @@ import CPLib.Arithmetic::{
     _inv_gcd
 };
 import Random::{generate_I64_nonneg, generate_U64, init_by_seed};
+import EZS::{cd, run_o, run_wi_oec, Context::default};
 import Std::{
     loop, F64, IO, U64, Array::{sort, to_iter, @, @size}, 
     Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, I32::maximum, 
     I64::{maximum, minimum, shift_left}, IO::println, Iterator::{collect_m, filter, fold, fold_m, map, range}, 
-    LessThan::max, LoopState::{break, continue}, Monad::pure, String::populate, ToI64::i64, 
+    LessThan::max, LoopState::{break, continue}, Monad::pure, Option::is_some, String::{find, populate}, ToI64::i64, 
     ToString::to_string, ToU128::u128, ToU32::u32, ToU64::u64, U32::{maximum, shift_left}, U64::{maximum, shift_left}
 };
 
@@ -43,6 +44,7 @@ test = (
     test_crt;;
     test_calc_primitive_root;;
     test_pythagorean_triples;;
+    test_out_of_range;;
 
     pure()
 );
@@ -564,4 +566,25 @@ test_linear_sieve = (
     assert_eq(|_|"case ps 7", ps.@(7), 19_U32);;
 
     pure()
+);
+
+// 制約を満たさない引数を渡すと、`pow_mod`（負の指数）と`lift_crt`（長さの違う配列、1未満の法）が理由を書いて止まる
+test_out_of_range : IO ();
+test_out_of_range = (
+    let ezs = EZS::Context::default;
+    ezs.cd("arithmetic/out-of-range");;
+    ezs.run_o(["fix", "deps", "update"]);;
+    let messages = [
+        "[CPLib.Arithmetic::pow_mod] `e` is negative",
+        "[CPLib.Arithmetic::lift_crt] `rs` and `ms` have different sizes",
+        "[CPLib.Arithmetic::lift_crt] `ms` has an element less than 1"
+    ];
+    range(0, 3).fold_m((), |case, _|
+        let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], case.to_string);
+        assert_eq(|_|"case " + case.to_string + ": " + err, code != 0_U8 && err.find(messages.@(case), 0).is_some, true)
+    );;
+    let (out, _, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], "3");
+    assert_eq(|_|"in range: " + out, code == 0_U8 && out.find("(2, (8, 15))", 0).is_some, true);;
+    // 後のテストのために、作業ディレクトリをライブラリのルートに戻す
+    ezs.cd("../..")
 );

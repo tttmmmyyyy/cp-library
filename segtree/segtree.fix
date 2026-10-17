@@ -37,7 +37,7 @@ module CPLib.Segtree;
 
 import CPLib.Trait::{Monoid, Monoid::{op, unit}};
 import Std::{
-    loop, Array, Bool, I64, Array::{fill, set, @, @size}, I64::{shift_left, shift_right}, 
+    loop, undefined, Array, Bool, I64, Array::{fill, set, @, @size}, I64::{shift_left, shift_right}, 
     Iterator::{fold, range, range_step}, LoopState::{break, continue}
 };
 
@@ -106,6 +106,7 @@ build = |elems| (
 // - `tree` : セグメント木
 @ : I64 -> Segtree m -> m;
 @ = |i, tree| (
+    if !(0 <= i && i < tree.@_n) { undefined("[CPLib.Segtree::@] `i` is out of [0, n)") };
     let n = tree.@_n;
     tree.@_elems.@(n + i)
 );
@@ -122,6 +123,7 @@ build = |elems| (
 // - `tree` : セグメント木
 set : [m : Monoid] I64 -> m -> Segtree m -> Segtree m;
 set = |i, value, tree| (
+    if !(0 <= i && i < tree.@_n) { undefined("[CPLib.Segtree::set] `i` is out of [0, n)") };
     let n = tree.@_n;
     let i = i + n;
     let tree = tree.mod__elems(set(i, value));
@@ -148,6 +150,7 @@ set = |i, value, tree| (
 // - `tree` : セグメント木
 fold : [m : Monoid] I64 -> I64 -> Segtree m -> m;
 fold = |l, r, tree| (
+    if !(0 <= l && l <= r && r <= tree.@_n) { undefined("[CPLib.Segtree::fold] `l` and `r` do not satisfy 0 <= l <= r <= n") };
     let n = tree.@_n;
     let l = l + n;
     let r = r + n;
@@ -213,6 +216,7 @@ fold_all = |tree| tree.fold(0, tree.@_n);
 // ```
 calc_max_right : [m : Monoid] I64 -> (m -> Bool) -> Segtree m -> I64;
 calc_max_right = |l, f, tree| (
+    if !(0 <= l && l <= tree.@_n) { undefined("[CPLib.Segtree::calc_max_right] `l` is out of [0, n]") };
     let n = tree.@_n;
     let elems = tree.@_elems;
     // `fold(l, n)`が畳み込むノードを左から順に試し、`f`が偽になる最初のノードkと、kより左のノードの畳み込みaccを求める。
@@ -280,6 +284,7 @@ calc_max_right = |l, f, tree| (
 // ```
 calc_min_left : [m : Monoid] I64 -> (m -> Bool) -> Segtree m -> I64;
 calc_min_left = |r, f, tree| (
+    if !(0 <= r && r <= tree.@_n) { undefined("[CPLib.Segtree::calc_min_left] `r` is out of [0, n]") };
     let n = tree.@_n;
     let elems = tree.@_elems;
     // `fold(0, r)`が畳み込むノードを右から順に試し、`f`が偽になる最初のノードkと、kより右のノードの畳み込みaccを求める。

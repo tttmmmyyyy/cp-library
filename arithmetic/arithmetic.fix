@@ -175,6 +175,7 @@ _ext_gcd = |a, b| (
 // ```
 pow_mod : I64 -> I64 -> I64 -> I64;
 pow_mod = |e, m, x| (
+    if e < 0 { undefined("[CPLib.Arithmetic::pow_mod] `e` is negative") };
     let e = e.u64;
     let m = m.abs;
     let x = x.pmod(m).u64;
@@ -620,12 +621,12 @@ _inv_gcd = |a, b| (
 // ```
 lift_crt : Array I64 -> Array I64 -> (I64, I64);
 lift_crt = |r, m| (
-    // if r.get_size != m.get_size { undefined("[CPLib.Arithmetic::lift_crt] `rs` and `ms` must have the same size") };
+    if r.@size != m.@size { undefined("[CPLib.Arithmetic::lift_crt] `rs` and `ms` have different sizes") };
     let n = r.@size;
     let r0 = 0; let m0 = 1;
 
     range(0, n).loop_iter((r0, m0), |i, (r0, m0)|
-        // if m.@(i) <= 0 { undefined("[CPLib.Arithmetic::lift_crt] `ms.@(i)` must be positive") };
+        if m.@(i) <= 0 { undefined("[CPLib.Arithmetic::lift_crt] `ms` has an element less than 1") };
         let r1 = r.@(i).pmod(m.@(i));
         let m1 = m.@(i);
         let (r0, r1, m0, m1) = if m0 < m1 {

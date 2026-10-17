@@ -26,7 +26,7 @@
 module CPLib.LDSegtree;
 
 import Std::{
-    loop, Array, Bool, I64, Array::{fill, set, @, @size}, I64::{count_leading_zeros, count_trailing_zeros, shift_left, shift_right}, 
+    loop, undefined, Array, Bool, I64, Array::{fill, set, @, @size}, I64::{count_leading_zeros, count_trailing_zeros, shift_left, shift_right}, 
     Iterator::{fold, range, range_step}, LoopState::{break, continue}
 };
 
@@ -196,6 +196,7 @@ _recalc_above = |i, op, act, elems, lazy| (
 // - `tree` : セグメント木
 @ : I64 -> LDSegtree m a -> m;
 @ = |i, tree| (
+    if !(0 <= i && i < tree.@_n) { undefined("[CPLib.LDSegtree::@] `i` is out of [0, n)") };
     let LDSegtree { _n : n, _act_unit : act_unit, _act_op : act_op, _act : act, _elems : elems, _lazy : lazy, _ } = tree;
     let j = i + n;
     // 葉jとその祖先がまだ値に適用していない作用を、深いノードから順に合成する。浅いノードの作用ほど後から加わったものである。
@@ -218,6 +219,7 @@ _recalc_above = |i, op, act, elems, lazy| (
 // - `tree` : セグメント木
 set : I64 -> m -> LDSegtree m a -> LDSegtree m a;
 set = |i, value, tree| (
+    if !(0 <= i && i < tree.@_n) { undefined("[CPLib.LDSegtree::set] `i` is out of [0, n)") };
     let LDSegtree { _n : n, _unit : unit, _op : op, _act_unit : act_unit, _act_op : act_op, _act : act, _elems : elems, _lazy : lazy } = tree;
     let i = i + n;
     // iの祖先ノードで作用伝搬を実行しておく（iの直上の「周辺」に遅延作用を散らすのが目的）
@@ -244,6 +246,7 @@ set = |i, value, tree| (
 // - `tree` : セグメント木
 fold : I64 -> I64 -> LDSegtree m a -> (LDSegtree m a, m);
 fold = |l, r, tree| (
+    if !(0 <= l && l <= r && r <= tree.@_n) { undefined("[CPLib.LDSegtree::fold] `l` and `r` do not satisfy 0 <= l <= r <= n") };
     if l == r { (tree, tree.@_unit) };
     let LDSegtree { _n : n, _unit : unit, _op : op, _act_unit : act_unit, _act_op : act_op, _act : act, _elems : elems, _lazy : lazy } = tree;
     let l = l + n;
@@ -271,6 +274,7 @@ fold = |l, r, tree| (
 // - `tree` : セグメント木
 act_range : I64 -> I64 -> a -> LDSegtree m a -> LDSegtree m a;
 act_range = |l, r, a, tree| (
+    if !(0 <= l && l <= r && r <= tree.@_n) { undefined("[CPLib.LDSegtree::act_range] `l` and `r` do not satisfy 0 <= l <= r <= n") };
     if l == r { tree };
     let LDSegtree { _n : n, _unit : unit, _op : op, _act_unit : act_unit, _act_op : act_op, _act : act, _elems : elems, _lazy : lazy } = tree;
     let l = l + n;
@@ -331,6 +335,7 @@ fold_all = |tree| (
 // ```
 calc_max_right : I64 -> (m -> Bool) -> LDSegtree m a -> I64;
 calc_max_right = |l, f, tree| (
+    if !(0 <= l && l <= tree.@_n) { undefined("[CPLib.LDSegtree::calc_max_right] `l` is out of [0, n]") };
     let LDSegtree { _n : n, _unit : unit, _op : op, _act_unit : act_unit, _act_op : act_op, _act : act, _elems : elems, _lazy : lazy } = tree;
     if l == n { n };
     let l = l + n;
@@ -398,6 +403,7 @@ calc_max_right = |l, f, tree| (
 // ```
 calc_min_left : I64 -> (m -> Bool) -> LDSegtree m a -> I64;
 calc_min_left = |r, f, tree| (
+    if !(0 <= r && r <= tree.@_n) { undefined("[CPLib.LDSegtree::calc_min_left] `r` is out of [0, n]") };
     let LDSegtree { _n : n, _unit : unit, _op : op, _act_unit : act_unit, _act_op : act_op, _act : act, _elems : elems, _lazy : lazy } = tree;
     if r == 0 { 0 };
     let l = n;
