@@ -299,13 +299,17 @@ _bfs = |n, s, stop, res| (
     )
 );
 
-// `level`が1ずつ増える辺だけをたどって、開始地点`s`から終了地点`t`へ流せなくなるまで流す（ブロッキングフロー）
+// 終了地点`t`から`level`が小さくなる向きに逆にたどって道を探し、開始地点`s`から`t`へ流せなくなるまで流す（ブロッキングフロー）
 //
 // 更新した残余グラフと、これまでに流した量を返す。流した量が`flow_limit`に達したら、そこで止める。
 //
-// 再帰の代わりに、`s`から今いる頂点までの道を、通った辺の位置の列`path`として持つ。
-// 今いる頂点から先へ進める辺があれば進み、`t`に着いたら道に沿って流す。進める辺が尽きた頂点は、
-// 同じ段で二度と調べないよう`level`を-1にし、道を1本戻る。
+// `level`は`s`からのBFSで付けたので、段の始めには、`s`以外で`level`の付いた頂点はどれも、`level`が1小さい頂点から残余容量のある辺を受けている。
+// そのため`t`から逆にたどるときの行き止まりは、この段で流して辺が飽和したことからだけ生じる。ac-libraryのmf_graphと同じ向きである。
+//
+// 再帰の代わりに、`t`から今いる頂点までの道を、通った辺の位置の列`path`として持つ。
+// `path`の各辺は、道の`t`の側の頂点から`level`が1小さい頂点へ向かう辺で、流れはその逆辺の向きに流れる。
+// 今いる頂点から`level`が1小さい頂点へ、逆辺に残余容量のある辺があれば進み、`s`に着いたら道に沿って流す。
+// 進める辺が尽きた頂点は、同じ段で再び入らないよう`level`を-1にし、道を1本戻る。
 //
 // # Parameters
 // - `level` : 開始地点からの距離
@@ -320,31 +324,29 @@ _augment_blocking_flow = |level, s, t, flow_limit, flow, res| (
     let to = res.@to;
     let rev = res.@rev;
     let (res, cap) = res[^cap].ixchg([]);
-    let level_t = level.@(t);
     // iter.@(v)は、頂点vから出る辺のうち次に調べるものの位置
     let iter = start;
-    let (cap, flow) = loop((s, empty(level_t), cap, flow, level, iter), |(v, path, cap, flow, level, iter)|
+    let (cap, flow) = loop((t, empty(level.@(t)), cap, flow, level, iter), |(v, path, cap, flow, level, iter)|
         if !(flow < flow_limit) { break $ (cap, flow) };
-        if v == t {
-            // 道に沿って、残余容量の最小値（と残りの上限）だけ流す
-            let d = path.to_iter.fold(flow_limit - flow, |k, d| min(d, cap.@(k)));
-            let cap = path.to_iter.fold(cap, |k, cap| cap.mod(k, |x| x - d).mod(rev.@(k), |x| x + d));
-            // 残余容量が0になった最初の辺の手前まで戻る。上限に達して流したときは、0になった辺が無いことがある
-            let i = loop(0, |i| if i == path.@size || cap.@(path.@(i)) == 0 { break $ i } else { continue $ i + 1 });
-            let v = if i == 0 { s } else { to.@(path.@(i - 1)) };
+        if v == s {
+            // 道に沿って、逆辺の残余容量の最小値（と残りの上限）だけ流す
+            let d = path.to_iter.fold(flow_limit - flow, |k, d| min(d, cap.@(rev.@(k))));
+            let cap = path.to_iter.fold(cap, |k, cap| cap.mod(k, |x| x + d).mod(rev.@(k), |x| x - d));
+            // 逆辺の残余容量が0になった、tに最も近い辺の手前まで戻る。上限に達して流したときは、0になった辺が無いことがある
+            let i = loop(0, |i| if i == path.@size || cap.@(rev.@(path.@(i))) == 0 { break $ i } else { continue $ i + 1 });
+            let v = if i == 0 { t } else { to.@(path.@(i - 1)) };
             continue $ (v, path.truncate(i), cap, flow + d, level, iter)
         };
         let k = iter.@(v);
         if k == start.@(v + 1) {
             // vから先へ進める辺が尽きた
-            if v == s { break $ (cap, flow) };
+            if v == t { break $ (cap, flow) };
             let level = level.set(v, -1);
             let u = to.@(rev.@(path.@(path.@size - 1)));
             continue $ (u, path.pop_back, cap, flow, level, iter.set(u, iter.@(u) + 1))
         };
         let w = to.@(k);
-        // 残余容量があり、距離が1増え、tより遠くない頂点へ進む
-        if cap.@(k) > 0 && level.@(w) == level.@(v) + 1 && (level.@(w) < level_t || w == t) {
+        if level.@(w) == level.@(v) - 1 && cap.@(rev.@(k)) > 0 {
             continue $ (w, path.push_back(k), cap, flow, level, iter)
         };
         continue $ (v, path, cap, flow, level, iter.set(v, k + 1))
