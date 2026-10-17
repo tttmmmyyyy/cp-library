@@ -1,10 +1,12 @@
 module CPLib.UnionFind.Test;
 
 import CPLib.UnionFind::{create, get_leader, get_group_size, get_groups, is_united, unite};
+import EZS::{cd, run_o, run_wi_oec, Context::default};
 import Random::{generate_I64_nonneg, init_by_seed, Random};
 import Std::{
     Array, I64, IO, Array::{fill, mod, push_back, set, sort_by, @, @size}, Debug::{assert_eq, consumed_time_while_lazy}, 
-    Functor::map, IO::println, Iterator::{fold, fold_m, range}, Monad::pure, String::populate, ToString::to_string, Tuple2::@1
+    Functor::map, IO::println, Iterator::{fold, fold_m, range}, Monad::pure, Option::is_some, String::{find, populate}, ToString::to_string, 
+    Tuple2::@1
 };
 
 // https://atcoder.jp/contests/language-test-202505/submissions/68392520
@@ -13,6 +15,7 @@ test : IO ();
 test = (
     test_zero;;
     test_by_hand;;
+    test_create_too_large;;
     let _ = *test_random(Random::init_by_seed(0_U64));
     test_speed;;
     pure()
@@ -26,6 +29,20 @@ test_zero = (
     assert_eq(|_|"", grps.@size, 0);;
 
     pure()
+);
+
+// 大きさが2^31以上だと、`create`が理由を書いて止まる
+test_create_too_large : IO ();
+test_create_too_large = (
+    let ezs = EZS::Context::default;
+    ezs.cd("unionfind/too-large");;
+    ezs.run_o(["fix", "deps", "update"]);;
+    let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], "0");
+    assert_eq(|_|"too large: " + err, code != 0_U8 && err.find("[CPLib.UnionFind::create] got a size of 2^31 or more", 0).is_some, true);;
+    let (out, _, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], "1");
+    assert_eq(|_|"small: " + out, code == 0_U8 && out.find("1", 0).is_some, true);;
+    // 後のテストのために、作業ディレクトリをライブラリのルートに戻す
+    ezs.cd("../..")
 );
 
 test_by_hand : IO ();
