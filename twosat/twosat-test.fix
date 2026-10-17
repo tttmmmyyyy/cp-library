@@ -1,7 +1,11 @@
 module CPLib.TwoSat.Test;
 
 import CPLib.TwoSat::{add_clause, create, solve};
-import Std::{IO, Array::@, Debug::{assert, assert_eq}, Iterator::{fold, range}, Monad::pure, Option::{as_some, is_none, is_some}};
+import Random::{generate_I64_nonneg, init_by_seed};
+import Std::{
+    Array, Bool, I64, IO, Array::{push_back, to_iter, @}, Debug::{assert, assert_eq}, Functor::forget, I64::{bit_and, shift_left, shift_right},
+    Iterator::{fold, fold_m, range}, Monad::pure, Option::{as_some, is_none, is_some}
+};
 
 // https://atcoder.jp/contests/language-test-202505/submissions/68186286
 
@@ -9,6 +13,7 @@ test : IO ();
 test = (
     test_basic;;
     test_long_chain;;
+    test_random;;
     pure()
 );
 
@@ -48,4 +53,36 @@ test_basic = (
     let sol = problem.solve;
     assert(|_|"[2sat test_basic]", sol.is_none);;
     pure()
+);
+
+// 小さな乱択の問題で、充足可能かを全割り当ての総当たりと比べ、返った割り当てがすべての節を満たすことを確かめる
+test_random : IO ();
+test_random = (
+    let rng = Random::init_by_seed(0_U64);
+    range(0, 2000).fold_m(rng, |_, rng|
+        let (rng, n) = rng.generate_I64_nonneg;
+        let n = n % 6 + 1;
+        let (rng, m) = rng.generate_I64_nonneg;
+        let m = m % (3 * n + 1);
+        // 節 (a = f) or (b = g) を (a, f, b, g) で表す
+        let (clauses, rng) = range(0, m).fold(([], rng), |_, (clauses, rng)|
+            let (rng, a) = rng.generate_I64_nonneg;
+            let (rng, f) = rng.generate_I64_nonneg;
+            let (rng, b) = rng.generate_I64_nonneg;
+            let (rng, g) = rng.generate_I64_nonneg;
+            (clauses.push_back((a % n, f % 2 == 1, b % n, g % 2 == 1)), rng)
+        );
+        let sat = clauses.to_iter.fold(TwoSat::create(n), |(a, f, b, g), sat| sat.add_clause(a, f, b, g));
+        // 割り当てxが節をすべて満たすか
+        let satisfies = |x : I64 -> Bool| clauses.to_iter.fold(true, |(a, f, b, g), ok| ok && (x(a) == f || x(b) == g));
+        // ビット列sで、変数iにsのiビット目を割り当てる
+        let brute = range(0, 1.shift_left(n)).fold(false, |s, found| found || satisfies(|i| s.shift_right(i).bit_and(1) == 1));
+        let ans = sat.solve;
+        assert_eq(|_|"test_random satisfiable", ans.is_some, brute);;
+        if ans.is_some {
+            let ans = ans.as_some;
+            assert(|_|"test_random assignment", satisfies(|i| ans.@(i)))
+        } else { pure() };;
+        rng.pure
+    ).forget
 );

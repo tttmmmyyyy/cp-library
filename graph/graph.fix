@@ -16,8 +16,8 @@ import BinaryHeap::{BinaryHeap::{get_size, get_top, pop, push}, MinBinaryHeap::e
 import CPLib.Trait::{Inf, Inf::inf};
 import Std::{
     loop, undefined, Additive, Array, Eq, I64, Iterator, LessThan, Iterator::Item, 
-    Array::{fill, from_map, mod, pop_back, push_back, reverse, set, to_iter, @, @size}, 
-    Iterator::{fold, map, range}, LessThan::min, LoopState::{break, continue}, Option::as_some, Tuple2::@0, 
+    Array::{empty, fill, from_map, mod, pop_back, push_back, set, to_iter, @, @size}, 
+    Functor::map, Iterator::{fold, map, range}, LessThan::min, LoopState::{break, continue}, Option::as_some, Tuple2::@0, 
     Zero::zero
 };
 
@@ -264,16 +264,34 @@ bellman_ford = |start, graph| (
 // - `g` : グラフ
 calc_sccs : Graph c -> Array (Array I64);
 calc_sccs = |g| (
-    // Tarjanの方法。強連結成分は、トポロジカル順の逆に確定する
-    let n = g.@size;
-    let (_, _, _, _, _, sccs) = range(0, n).fold((0, [], fill(n, -1), fill(n, 0), [], []), |root, (cnt, stack, ord, low, path, sccs)|
-        if ord.@(root) != -1 { (cnt, stack, ord, low, path, sccs) };
-        _scc_dfs(g, root, cnt, stack, ord, low, path, sccs)
-    );
-    sccs.reverse
+    let (num, ids) = g._calc_scc_ids;
+    let sizes = ids.to_iter.fold(fill(num, 0), |id, sizes| sizes.mod(id, |c| c + 1));
+    let sccs = sizes.map(|size| empty(size));
+    range(0, g.@size).fold(sccs, |v, sccs| sccs.mod(ids.@(v), push_back(v)))
 );
 
-// `root`から深さ優先探索をし、確定した強連結成分を`sccs`の末尾に加える
+// 頂点ごとに、その頂点を含む強連結成分の番号を求める
+//
+// 戻り値は、強連結成分の数`num`と、長さが頂点数の配列`ids`の組。
+// 番号は0以上`num`未満で、トポロジカル順に振られる：uとvが異なる強連結成分に属するとき、uからvに到達できるなら、`ids.@(u) < ids.@(v)`。
+//
+// 計算量：O(n + m)
+//
+// # Parameters
+// - `g` : グラフ
+_calc_scc_ids : Graph c -> (I64, Array I64);
+_calc_scc_ids = |g| (
+    // Tarjanの方法。強連結成分は、トポロジカル順の逆に確定する
+    let n = g.@size;
+    let (_, num, _, _, _, _, ids) = range(0, n).fold((0, 0, [], fill(n, -1), fill(n, 0), [], fill(n, 0)), |root, (cnt, num, stack, ord, low, path, ids)|
+        if ord.@(root) != -1 { (cnt, num, stack, ord, low, path, ids) };
+        _scc_dfs(g, root, cnt, num, stack, ord, low, path, ids)
+    );
+    // 確定した順の番号を、トポロジカル順の番号に直す
+    (num, ids.map(|id| num - 1 - id))
+);
+
+// `root`から深さ優先探索をし、確定した強連結成分に、確定した順の番号を振る
 //
 // 再帰の代わりに、(頂点, 次に調べる辺の`_edges`での位置)を積む配列`stack`をスタックとして使う。`stack`は空で渡し、空で返る。
 // 呼び出しごとに確保し直さないよう、呼び出し側が使い回す。
@@ -282,20 +300,21 @@ calc_sccs = |g| (
 // - `g` : グラフ
 // - `root` : 探索を始める頂点
 // - `cnt` : これまでに訪れた頂点の数
+// - `num` : これまでに確定した強連結成分の数
 // - `stack` : 探索に使う空の配列
 // - `ord` : 頂点を訪れた順番。訪れていない頂点は-1、強連結成分が確定した頂点は頂点数n
 // - `low` : 頂点から、探索木の辺を下り、そのあと他の辺を1本たどって行ける、成分が確定していない頂点の`ord`の最小値
 // - `path` : 訪れたが強連結成分が確定していない頂点を、訪れた順に並べた配列
-// - `sccs` : 確定した強連結成分の配列
-_scc_dfs : Graph c -> I64 -> I64 -> Array (I64, I64) -> Array I64 -> Array I64 -> Array I64 -> Array (Array I64)
-    -> (I64, Array (I64, I64), Array I64, Array I64, Array I64, Array (Array I64));
-_scc_dfs = |g, root, cnt, stack, ord, low, path, sccs| (
+// - `ids` : 強連結成分が確定した頂点の、確定した順の成分の番号
+_scc_dfs : Graph c -> I64 -> I64 -> I64 -> Array (I64, I64) -> Array I64 -> Array I64 -> Array I64 -> Array I64
+    -> (I64, I64, Array (I64, I64), Array I64, Array I64, Array I64, Array I64);
+_scc_dfs = |g, root, cnt, num, stack, ord, low, path, ids| (
     let n = g.@size;
     let start = g.@_start;
     let edges = g.@_edges;
-    let init = (cnt + 1, stack.push_back((root, start.@(root))), ord.set(root, cnt), low.set(root, cnt), path.push_back(root), sccs);
-    loop(init, |(cnt, stack, ord, low, path, sccs)|
-        if stack.@size == 0 { break $ (cnt, stack, ord, low, path, sccs) };
+    let init = (cnt + 1, num, stack.push_back((root, start.@(root))), ord.set(root, cnt), low.set(root, cnt), path.push_back(root), ids);
+    loop(init, |(cnt, num, stack, ord, low, path, ids)|
+        if stack.@size == 0 { break $ (cnt, num, stack, ord, low, path, ids) };
         let top = stack.@size - 1;
         let (v, k) = stack.@(top);
         if k < start.@(v + 1) {
@@ -303,10 +322,10 @@ _scc_dfs = |g, root, cnt, stack, ord, low, path, sccs| (
             let to = edges.@(k).@to;
             let o = ord.@(to);
             if o == -1 {
-                continue $ (cnt + 1, stack.push_back((to, start.@(to))), ord.set(to, cnt), low.set(to, cnt), path.push_back(to), sccs)
+                continue $ (cnt + 1, num, stack.push_back((to, start.@(to))), ord.set(to, cnt), low.set(to, cnt), path.push_back(to), ids)
             };
             // 成分が確定した頂点の`ord`は頂点数nで、まだ確定していない頂点の`ord`より大きいので、`low`は変わらない
-            continue $ (cnt, stack, ord, low.set(v, min(low.@(v), o)), path, sccs)
+            continue $ (cnt, num, stack, ord, low.set(v, min(low.@(v), o)), path, ids)
         };
         // vから出る辺をすべて調べた。親の`low`に反映する
         let stack = stack.pop_back;
@@ -315,16 +334,16 @@ _scc_dfs = |g, root, cnt, stack, ord, low, path, sccs| (
             let parent = stack.@(stack.@size - 1).@0;
             low.set(parent, min(low.@(parent), low_v))
         };
-        if low_v != ord.@(v) { continue $ (cnt, stack, ord, low, path, sccs) };
+        if low_v != ord.@(v) { continue $ (cnt, num, stack, ord, low, path, ids) };
         // vから先に訪れた、成分が確定していない頂点が、vを含む強連結成分になる
-        let (ord, path, scc) = loop((ord, path, []), |(ord, path, scc)|
+        let (ord, path, ids) = loop((ord, path, ids), |(ord, path, ids)|
             let u = path.@(path.@size - 1);
             let ord = ord.set(u, n);
             let path = path.pop_back;
-            let scc = scc.push_back(u);
-            if u == v { break $ (ord, path, scc) };
-            continue $ (ord, path, scc)
+            let ids = ids.set(u, num);
+            if u == v { break $ (ord, path, ids) };
+            continue $ (ord, path, ids)
         );
-        continue $ (cnt, stack, ord, low, path, sccs.push_back(scc))
+        continue $ (cnt, num + 1, stack, ord, low, path, ids)
     )
 );
