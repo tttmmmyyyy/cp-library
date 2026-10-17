@@ -10,10 +10,10 @@
 // ```
 module CPLib.TwoSat;
 
-import CPLib.Graph::{calc_sccs, GraphBuilder, GraphBuilder::{add_edge, build, create}};
+import CPLib.Graph::{_calc_scc_ids, GraphBuilder, GraphBuilder::{add_edge, build, create}};
 import Std::{
-    Array, Bool, I64, Option, Array::{fill, set, to_iter, @, @size}, 
-    Iterator::{fold, loop_iter_s, range}, LoopState::{break, continue}, Option::{none, some}
+    Array, Bool, I64, Option, Array::{fill, set, @}, 
+    Iterator::{loop_iter_s, range}, LoopState::{break, continue}, Option::{none, some}
 };
 
 // 2-SAT問題の型
@@ -67,24 +67,19 @@ add_clause = |a, f, b, g, sat| (
 solve : TwoSat -> Option (Array Bool);
 solve = |sat| (
     let n = sat.@_n;
-    let sccs = sat.@_graph.build.calc_sccs;
-    // 各リテラルのSCCグループインデックスを取得
-    let scc_idx = fill(2 * n, 0);
-    let scc_idx = range(0, sccs.@size).fold(scc_idx, |i, scc_idx|
-        let scc = sccs.@(i);
-        scc.to_iter.fold(scc_idx, |v, scc_idx| scc_idx.set(v, i))
-    );
+    // リテラルごとの強連結成分の番号。番号はトポロジカル順
+    let (_, ids) = sat.@_graph.build._calc_scc_ids;
     // 答えを構成する
     let sol = fill(n, false);
     match range(0, n).loop_iter_s(sol, |i, sol|
         let a = i;
         let b = a._not(n);
-        if scc_idx.@(a) == scc_idx.@(b) {
+        if ids.@(a) == ids.@(b) {
             // 充足不能
             break $ none()
         };
-        // aが属するSCCのインデックスが大きい方をtrueとする
-        continue $ sol.set(i, scc_idx.@(a) > scc_idx.@(b))
+        // 肯定のリテラルの番号が否定のリテラルの番号より大きければ、変数を真にする
+        continue $ sol.set(i, ids.@(a) > ids.@(b))
     ) {
         break(sol) => sol,
         continue(sol) => some(sol)
