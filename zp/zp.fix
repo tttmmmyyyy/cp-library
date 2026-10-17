@@ -343,6 +343,7 @@ _butterfly = |a : Array (ZP p)| (
     let n = a.@size;
     let h = n.count_trailing_zeros;
     let info = _fft_info : _FFTInfo p;
+    let (rate2, rate3) = (info.@rate2, info.@rate3);
     let pp = PrimeProvider::create : p;
     let p = pp.value.u64;
     // 以下で配列aを読み書きする添字は、ループの範囲から0以上n未満に収まる
@@ -362,7 +363,7 @@ _butterfly = |a : Array (ZP p)| (
                     let r = a.unsafe_get_bounds_unchecked(i + q) * rot;
                     a.unsafe_set_bounds_unchecked(i, l + r).unsafe_set_bounds_unchecked(i + q, l - r)
                 );
-                let rot = if s + 1 != blocks { rot * info.@rate2.@(s.bit_not.count_trailing_zeros) } else { rot };
+                let rot = if s + 1 != blocks { rot * rate2.@(s.bit_not.count_trailing_zeros) } else { rot };
                 (a, rot)
             );
             continue $ (len + 1, a)
@@ -391,7 +392,7 @@ _butterfly = |a : Array (ZP p)| (
                 let a = store(i + 2 * q, a0 + na2 + a1na3imag, a);
                 store(i + 3 * q, a0 + na2 + (mod2 - a1na3imag), a)
             );
-            let rot = if s + 1 != blocks { rot * info.@rate3.@(s.bit_not.count_trailing_zeros) } else { rot };
+            let rot = if s + 1 != blocks { rot * rate3.@(s.bit_not.count_trailing_zeros) } else { rot };
             (a, rot)
         );
         continue $ (len + 2, a)
@@ -407,6 +408,7 @@ _butterfly_inv = |a : Array (ZP p)| (
     let n = a.@size;
     let h = n.count_trailing_zeros;
     let info = _fft_info : _FFTInfo p;
+    let (irate2, irate3) = (info.@irate2, info.@irate3);
     let pp = PrimeProvider::create : p;
     let p = pp.value.u64;
     // 以下で配列aを読み書きする添字は、ループの範囲から0以上n未満に収まる
@@ -428,7 +430,7 @@ _butterfly_inv = |a : Array (ZP p)| (
                     let a = store(i, l + r, a);
                     store(i + q, (l + p - r) * ir, a)
                 );
-                let irot = if s + 1 != blocks { irot * info.@irate2.@(s.bit_not.count_trailing_zeros) } else { irot };
+                let irot = if s + 1 != blocks { irot * irate2.@(s.bit_not.count_trailing_zeros) } else { irot };
                 (a, irot)
             );
             continue $ (len - 1, a)
@@ -454,7 +456,7 @@ _butterfly_inv = |a : Array (ZP p)| (
                 let a = store(i + 2 * q, (a0 + a1 + (p - a2) + (p - a3)) * r2, a);
                 store(i + 3 * q, (a0 + (p - a1) + (p - a2na3iimag)) * r3, a)
             );
-            let irot = if s + 1 != blocks { irot * info.@irate3.@(s.bit_not.count_trailing_zeros) } else { irot };
+            let irot = if s + 1 != blocks { irot * irate3.@(s.bit_not.count_trailing_zeros) } else { irot };
             (a, irot)
         );
         continue $ (len - 2, a)
