@@ -1,0 +1,13 @@
+// 標準入力で選んだ上限で`calc_suffix_array_i64_upper`を呼ぶ。0：2^31（大きすぎる）、1：1
+module Main;
+
+import CPLib.IO::read_i;
+import CPLib.String::calc_suffix_array_i64_upper;
+import Std::{IO, I64, IO::println, ToString::to_string};
+
+main : IO ();
+main = (
+    let case = *read_i;
+    let upper = if case == 0 { 2147483648 } else { 1 };
+    println(calc_suffix_array_i64_upper(upper, [1, 0]).to_string)
+);
