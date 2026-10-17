@@ -23,7 +23,7 @@ import Std::{
 calc_suffix_array : String -> Array I64;
 calc_suffix_array = |s| (
     let bytes = s.get_bytes.pop_back;
-    eval _check_length("calc_suffix_array", bytes.@size);
+    if bytes.@size > I32::maximum.i64 { _too_long("calc_suffix_array") };
     bytes.map(i32)._sa_is(255).map(i64)
 );
 
@@ -43,7 +43,7 @@ calc_suffix_array = |s| (
 calc_suffix_array_i64 : Array I64 -> Array I64;
 calc_suffix_array_i64 = |s| (
     let n = s.@size;
-    eval _check_length("calc_suffix_array_i64", n);
+    if n > I32::maximum.i64 { _too_long("calc_suffix_array_i64") };
     let idx = range(0, n).to_array;
     let idx = idx.sort_by(|(l, r)| s.@(l) < s.@(r));
     let s2 = fill(n, 0_I32);
@@ -71,7 +71,7 @@ calc_suffix_array_i64 = |s| (
 // - `s` : 対象の配列
 calc_suffix_array_i64_upper : I64 -> Array I64 -> Array I64;
 calc_suffix_array_i64_upper = |upper, s| (
-    eval _check_length("calc_suffix_array_i64_upper", s.@size);
+    if s.@size > I32::maximum.i64 { _too_long("calc_suffix_array_i64_upper") };
     if upper > I32::maximum.i64 { undefined("[CPLib.String::calc_suffix_array_i64_upper] got an upper bound of 2^31 or more") };
     s.map(i32)._sa_is(upper).map(i64)
 );
@@ -114,7 +114,7 @@ calc_lcp_array = |sa, s| s.get_bytes.pop_back.calc_lcp_array_any(sa);
 calc_lcp_array_any : [a : Eq] Array I64 -> Array a -> Array I64;
 calc_lcp_array_any = |sa, s| (
     let n = s.@size;
-    eval _check_length("calc_lcp_array_any", n);
+    if n > I32::maximum.i64 { _too_long("calc_lcp_array_any") };
     let sa = sa.map(i32);
     let rnk = fill(n, 0_I32);
     let rnk = range(0, n).fold(rnk, |i, rnk| rnk.set(sa.@(i).i64, i.i32));
@@ -134,18 +134,14 @@ calc_lcp_array_any = |sa, s| (
     ).@0.map(i64)
 );
 
-// 長さ`n`の配列を4バイトの添字で扱えることを確かめる。扱えなければ、関数名`name`を書いて止める
+// 長さが2^31以上の配列を受けたことを、関数名`name`を書いて伝え、止める
 //
-// suffix arrayとLCP arrayは、作業用の配列の要素を4バイトで持つ。`I64`で持つより作業用の配列がL3キャッシュに収まりやすく、長さ10^6の文字列で1.5倍ほど速い。
+// suffix arrayとLCP arrayは、作業用の配列の要素を4バイトで持つので、長さが2^31未満でなければならない。`I64`で持つより作業用の配列がL3キャッシュに収まりやすく、長さ10^6の文字列で1.5倍ほど速い。
 //
 // # Parameters
 // - `name` : 呼び出し元の関数名
-// - `n` : 配列の長さ
-_check_length : String -> I64 -> ();
-_check_length = |name, n| (
-    if n > I32::maximum.i64 { undefined("[CPLib.String::" + name + "] got an array of length 2^31 or more") };
-    ()
-);
+_too_long : String -> a;
+_too_long = |name| undefined("[CPLib.String::" + name + "] got an array of length 2^31 or more");
 
 // 文字列のZ-arrayを計算する
 // 
