@@ -13,27 +13,32 @@
 module CPLib.UnionFind;
 
 import Std::{
-    loop, Array, Bool, I64, Array::{fill, mod, push_back, set, @, @size}, Iterator::{fold, range}, 
-    LoopState::{break, continue}
+    loop, undefined, Array, Bool, I32, I64, Array::{fill, mod, push_back, set, @, @size}, Iterator::{fold, range}, 
+    I32::maximum, LoopState::{break, continue}, ToI32::i32, ToI64::i64
 };
 
 type UnionFind = struct {
     // 要素xが根なら-(xの属するグループの大きさ)、そうでなければxの親
-    _parent_or_size : Array I64,
+    //
+    // 4バイトの要素で持つのは、配列をキャッシュに収めやすくするため。2*10^6要素で8MBになり、`I64`の16MBと違ってL3キャッシュに収まる機械が多い。
+    _parent_or_size : Array I32,
 };
 
 // UnionFind木を作成する
 // 
 // `0`から`size - 1`までの`size`個の要素を持つUnionFind木を作成する
 // 
-// 制約：size >= 0
+// 制約：0 <= size < 2^31
 //
 // 計算量：O(size)
 //
 // # Parameters
 // - `size` : UnionFind木のサイズ
 create : I64 -> UnionFind;
-create = |size| UnionFind { _parent_or_size : fill(size, -1) };
+create = |size| (
+    if size > I32::maximum.i64 { undefined("[CPLib.UnionFind::create] got a size of 2^31 or more") };
+    UnionFind { _parent_or_size : fill(size, -1_I32) }
+);
 
 // 指定された要素の属するグループの代表元を取得する
 // 
@@ -64,11 +69,11 @@ DEPRECATED[find_parent, "Use `CPLib.UnionFind::get_leader` instead."];
 // - `uf` : UnionFind木
 _find_root : I64 -> UnionFind -> (UnionFind, I64);
 _find_root = |x, uf| (
-    let r = loop(x, |v| let p = uf.@_parent_or_size.@(v); if p < 0 { break $ v } else { continue $ p });
+    let r = loop(x, |v| let p = uf.@_parent_or_size.@(v).i64; if p < 0 { break $ v } else { continue $ p });
     let uf = loop((x, uf), |(v, uf)|
-        let p = uf.@_parent_or_size.@(v);
+        let p = uf.@_parent_or_size.@(v).i64;
         if p < 0 || p == r { break $ uf };
-        continue $ (p, uf.mod__parent_or_size(set(v, r)))
+        continue $ (p, uf.mod__parent_or_size(set(v, r.i32)))
     );
     (uf, r)
 );
@@ -93,7 +98,7 @@ unite = |x, y, uf| (
     let ps = uf.@_parent_or_size;
     let (rx, ry) = if ps.@(rx) <= ps.@(ry) { (rx, ry) } else { (ry, rx) };
     let sz = ps.@(rx) + ps.@(ry);
-    uf.mod__parent_or_size(|ps| ps.set(rx, sz).set(ry, rx))
+    uf.mod__parent_or_size(|ps| ps.set(rx, sz).set(ry, rx.i32))
 );
 
 // 2つの要素が同じグループに属しているかどうかを判定する
@@ -129,7 +134,7 @@ is_united = |x, y, uf| (
 get_group_size : I64 -> UnionFind -> (UnionFind, I64);
 get_group_size = |x, uf| (
     let (uf, r) = _find_root(x, uf);
-    (uf, -uf.@_parent_or_size.@(r))
+    (uf, -uf.@_parent_or_size.@(r).i64)
 );
 
 // グループの配列を取得する
