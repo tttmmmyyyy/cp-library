@@ -60,22 +60,22 @@ get_leader = |x, uf| (
 find_parent : I64 -> UnionFind -> (UnionFind, I64) = get_leader;
 DEPRECATED[find_parent, "Use `CPLib.UnionFind::get_leader` instead."];
 
-// 要素`x`の根を求め、通った要素の親を根に書き換える
+// 要素`x`の根を求め、通った要素の親を付け替えて木を低くする
 //
-// 根までたどって根を求めてから、もう一度たどって親を書き換える。親がすでに根の要素には書き込まない。
+// 根までたどりながら、たどった要素の親を祖父に付け替える（path halving）。根を一度たどるだけで済み、大きさによる併合と組み合わせて計算量はならしO(α(size))。
 //
 // # Parameters
 // - `x` : 対象となる要素
 // - `uf` : UnionFind木
 _find_root : I64 -> UnionFind -> (UnionFind, I64);
 _find_root = |x, uf| (
-    let r = loop(x, |v| let p = uf.@_parent_or_size.@(v).i64; if p < 0 { break $ v } else { continue $ p });
-    let uf = loop((x, uf), |(v, uf)|
+    loop((x, uf), |(v, uf)|
         let p = uf.@_parent_or_size.@(v).i64;
-        if p < 0 || p == r { break $ uf };
-        continue $ (p, uf.mod__parent_or_size(set(v, r.i32)))
-    );
-    (uf, r)
+        if p < 0 { break $ (uf, v) };
+        let g = uf.@_parent_or_size.@(p).i64;
+        if g < 0 { break $ (uf, p) };
+        continue $ (g, uf.mod__parent_or_size(set(v, g.i32)))
+    )
 );
 
 // 2つの要素を同じグループにする
