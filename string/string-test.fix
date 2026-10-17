@@ -1,17 +1,33 @@
 module CPLib.String.Test;
 
-import CPLib.String::{calc_lcp_array, calc_suffix_array, calc_suffix_array_i64, calc_z_array, calc_z_array_any, _sa_doubling};
+import CPLib.String::{calc_lcp_array, calc_lcp_array_any, calc_suffix_array, calc_suffix_array_i64, calc_z_array, calc_z_array_any, _sa_doubling};
+import EZS::{cd, run_o, run_wi_oec, Context::default};
 import Random::{generate_U64, init_by_seed};
 import Std::{
-    loop, IO, Array::{empty, fill, pop_back, push_back, @, @size}, Debug::{assert_eq, consumed_time_while_lazy}, 
+    loop, IO, Array::{empty, fill, pop_back, push_back, sort_by, @, @size}, Debug::{assert, assert_eq, consumed_time_while_lazy}, 
     FromBytes::from_bytes, Functor::{forget, map}, IO::println, Iterator::{fold, fold_m, map, range, to_array}, LoopState::{break, continue}, 
-    Monad::pure, Result::as_ok, String::{get_bytes, populate}, ToI64::i64, ToString::to_string, ToU8::u8
+    Monad::pure, Option::is_some, Result::as_ok, String::{find, get_bytes, populate}, ToI32::i32, ToI64::i64, ToString::to_string, 
+    ToU8::u8
 };
 
 // https://atcoder.jp/contests/language-test-202505/submissions/68577484
 
 test : IO ();
-test = test_sa;; test_lcp;; test_z;; test_z_random;; test_z_speed;
+test = test_sa;; test_sa_upper_too_large;; test_lcp;; test_sa_lcp_random;; test_z;; test_z_random;; test_z_speed;
+
+// 上限が2^31以上だと、`calc_suffix_array_i64_upper`が理由を書いて止まる
+test_sa_upper_too_large : IO ();
+test_sa_upper_too_large = (
+    let ezs = EZS::Context::default;
+    ezs.cd("string/upper-too-large");;
+    ezs.run_o(["fix", "deps", "update"]);;
+    let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], "0");
+    assert_eq(|_|"too large: " + err, code != 0_U8 && err.find("[CPLib.String::calc_suffix_array_i64_upper] got an upper bound of 2^31 or more", 0).is_some, true);;
+    let (out, _, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], "1");
+    assert_eq(|_|"small: " + out, code == 0_U8 && out.find("[1, 0]", 0).is_some, true);;
+    // 後のテストのために、作業ディレクトリをライブラリのルートに戻す
+    ezs.cd("../..")
+);
 
 test_sa : IO ();
 test_sa = (
@@ -33,7 +49,7 @@ test_sa = (
         let s = s.push_back('\0');
         let s = s.from_bytes.as_ok;
         let sa0 = s.calc_suffix_array;
-        let sa1 = s.get_bytes.map(i64).pop_back._sa_doubling;
+        let sa1 = s.get_bytes.map(i32).pop_back._sa_doubling.map(i64);
         assert_eq(|_|"test_sa", sa0, sa1);;
         rng.pure
     );;
@@ -58,6 +74,34 @@ test_z = (
     pure()
 );
 // ランダムな短い配列で、Z-arrayを素朴な計算と比べる
+// 乱数の短い配列で、suffix arrayの隣り合う接尾辞が辞書順に並ぶことと、LCP arrayが隣り合う接尾辞の共通接頭辞の長さであることを、素朴に比べて確かめる。
+// 長さを100までとるので、SA-IS法（長さ40以上）とダブリング法（40未満）の両方を通る
+test_sa_lcp_random : IO ();
+test_sa_lcp_random = (
+    let rng = Random::init_by_seed(1_U64);
+    range(0, 300).fold_m(rng, |_, rng|
+        let (rng, n) = rng.generate_U64;
+        let n = (n % 100_U64).i64 + 1;
+        let (s, rng) = range(0, n).fold(([], rng), |_, (s, rng)|
+            let (rng, c) = rng.generate_U64;
+            (s.push_back((c % 3_U64).i64 * 1000 - 7), rng)
+        );
+        // `s[i..)`と`s[j..)`の共通接頭辞の長さ
+        let common = |i, j| loop(0, |k| if i + k < n && j + k < n && s.@(i + k) == s.@(j + k) { continue $ k + 1 } else { break $ k });
+        let sa = s.calc_suffix_array_i64;
+        assert_eq(|_|"test_sa_lcp_random: permutation", sa.sort_by(|(x, y)| x < y), range(0, n).to_array);;
+        range(0, n - 1).fold_m((), |i, _|
+            let (x, y) = (sa.@(i), sa.@(i + 1));
+            let k = common(x, y);
+            // `s[x..)`が`s[y..)`の真の接頭辞であるか、最初に異なる要素が小さい
+            assert(|_|"test_sa_lcp_random: order", x + k == n || (y + k < n && s.@(x + k) < s.@(y + k)))
+        );;
+        let naive = range(0, n - 1).map(|i| common(sa.@(i), sa.@(i + 1))).to_array;
+        assert_eq(|_|"test_sa_lcp_random: lcp", s.calc_lcp_array_any(sa), naive);;
+        pure $ rng
+    ).forget
+);
+
 test_z_random : IO ();
 test_z_random = (
     let rng = Random::init_by_seed(0_U64);

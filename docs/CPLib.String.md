@@ -12,7 +12,7 @@ Type: `Std::Array Std::I64 -> Std::String -> Std::Array Std::I64`
 
 文字列のLCP arrayを計算する
 
-制約：saはsのsuffix array, 文字列が空でない
+制約：saはsのsuffix array, 文字列が空でない、文字列のバイト数 < 2^31
 
 計算量：O(n)、n = 文字列のバイト数
 
@@ -40,7 +40,7 @@ Type: `[a : Std::Eq] Std::Array Std::I64 -> Std::Array a -> Std::Array Std::I64`
 
 配列のLCP arrayを計算する
 
-制約：saはsのsuffix array, |s| >= 1
+制約：saはsのsuffix array, 1 <= |s| < 2^31
 
 計算量：O(n)、n = |s|
 
@@ -61,6 +61,8 @@ Type: `Std::String -> Std::Array Std::I64`
 
 AtCoder Libraryの`suffix_array`の移植です。
 
+制約：文字列のバイト数 < 2^31
+
 計算量：O(n)、n = 文字列のバイト数
 
 ##### Returns
@@ -78,6 +80,8 @@ Type: `Std::Array Std::I64 -> Std::Array Std::I64`
 配列のsuffix arrayを計算する
 
 AtCoder Libraryの`suffix_array`の移植です。
+
+制約：|s| < 2^31
 
 計算量：O(n log n)、n = |s|
 
@@ -97,7 +101,7 @@ Type: `Std::I64 -> Std::Array Std::I64 -> Std::Array Std::I64`
 
 AtCoder Libraryの`suffix_array`の移植です。
 
-制約：0 <= s.@(i) <= upper
+制約：0 <= s.@(i) <= upper < 2^31、|s| < 2^31
 
 計算量：O(n + upper)、n = |s|
 
