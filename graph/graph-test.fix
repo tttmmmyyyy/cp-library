@@ -23,7 +23,7 @@ test = (
     pure()
 );
 
-// 範囲外の頂点を持つ辺があると、`build`が理由を書いて止まる
+// 範囲外の頂点を持つ辺があると`build`が、頂点数が2^31以上だと`create`が、理由を書いて止まる
 test_build_out_of_range : IO ();
 test_build_out_of_range = (
     let ezs = EZS::Context::default;
@@ -35,6 +35,8 @@ test_build_out_of_range = (
     );;
     let (out, _, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands", "--check-integer-operations"], "2");
     assert_eq(|_|"in range: " + out, code == 0_U8 && out.find("2", 0).is_some, true);;
+    let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands", "--check-integer-operations"], "3");
+    assert_eq(|_|"too many vertices: " + err, code != 0_U8 && err.find("[CPLib.Graph::GraphBuilder::create] got 2^31 or more vertices", 0).is_some, true);;
     // 後のテストのために、作業ディレクトリをライブラリのルートに戻す
     ezs.cd("../..")
 );
