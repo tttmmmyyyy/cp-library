@@ -28,7 +28,7 @@ UnionFind木を作成する
 
 `0`から`size - 1`までの`size`個の要素を持つUnionFind木を作成する
 
-制約：size >= 0
+制約：0 <= size < 2^31
 
 計算量：O(size)
 
