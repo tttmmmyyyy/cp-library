@@ -152,6 +152,8 @@ Type: `CPLib.Graph::GraphBuilder c -> CPLib.Graph::Graph c`
 
 辺を足し終えたグラフを作る
 
+制約：m < 2^31
+
 計算量：O(n + m)
 
 ##### Parameters
@@ -163,6 +165,8 @@ Type: `CPLib.Graph::GraphBuilder c -> CPLib.Graph::Graph c`
 Type: `Std::I64 -> CPLib.Graph::GraphBuilder c`
 
 頂点数が`n`で辺のない`GraphBuilder`を作成する
+
+制約：0 <= n < 2^31
 
 計算量：O(1)
 
