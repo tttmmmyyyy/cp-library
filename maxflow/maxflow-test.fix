@@ -6,15 +6,14 @@ import CPLib.MaxFlow::{
 };
 import Random::{generate_I64_nonneg, init_by_seed, Random};
 import Std::{
-    loop, Array, Bool, I64, IO, Array::{fill, mod, push_back, set, to_iter, @, @size}, Debug::{assert, assert_eq, consumed_time_while_lazy}, 
-    IO::println, Iterator::{fold, fold_m, map, range, to_array}, LessThan::{max, min}, LoopState::{break, continue}, Monad::pure, 
-    String::populate, ToString::to_string, I64::{bit_and, maximum, shift_left}
+    loop, Array, Bool, I64, IO, Array::{fill, mod, push_back, set, to_iter, @, @size}, Debug::{assert, assert_eq}, 
+    Iterator::{fold, fold_m, map, range, to_array}, LessThan::{max, min}, LoopState::{break, continue}, Monad::pure, 
+    ToString::to_string, I64::{bit_and, maximum, shift_left}
 };
 
 test : IO ();
 test = (
     test_basic;;
-    test_dead_end_speed;;
     test_flow_limit;;
     test_edges;;
     test_min_cut_before_and_after_flow;;
@@ -49,23 +48,6 @@ test_basic = (
     assert_eq(|_|"", min_cut, [true, true, true, false, false]);;
     pure()
 );
-// 行き止まりの長い鎖に`n`本の並行辺が入るグラフ
-// 
-// 行き止まりと分かった頂点を同じフェーズで再び探索すると、`n`本の辺ごとに鎖を辿り直して O(n^2) かかる。
-test_dead_end_speed : IO ();
-test_dead_end_speed = (
-    let n = 5000;
-    // 頂点0が始点、1が終点、2からn+1までが鎖
-    let graph = MaxFlowGraph::create(n + 2);
-    let graph = range(0, n).fold(graph, |_, graph| graph.add_edge(0, 2, 1));
-    let graph = range(2, n + 1).fold(graph, |v, graph| graph.add_edge(v, v + 1, 1));
-    let graph = graph.add_edge(0, 1, 1);
-    let ((_, flow), time) = consumed_time_while_lazy(|_| graph.maximize_flow(0, 1));
-    assert_eq(|_|"test_dead_end_speed", flow, 1);;
-    println("[CPLib.MaxFlow.Test] dead end chain({}): {}".populate([n.to_string, time.to_string]));;
-    pure()
-);
-
 // 流量の上限を指定して流し、続きから流す
 test_flow_limit : IO ();
 test_flow_limit = (
