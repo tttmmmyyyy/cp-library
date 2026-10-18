@@ -50,6 +50,11 @@ _pmod_i128 = |m, x| (
 // - `x`: 整数
 // - `y`: 整数
 // - `m`: 除数
+//
+// # Examples
+// ```fix
+// assert_eq(|_|"", add_mod(5, 4, 7), 2)
+// ```
 add_mod : I64 -> I64 -> I64 -> I64;
 add_mod = |x, y, m| _pmod_i128(m.i128.abs, x.i128 + y.i128);
 
@@ -63,6 +68,11 @@ add_mod = |x, y, m| _pmod_i128(m.i128.abs, x.i128 + y.i128);
 // - `x`: 整数
 // - `y`: 整数
 // - `m`: 除数
+//
+// # Examples
+// ```fix
+// assert_eq(|_|"", sub_mod(2, 5, 7), 4)
+// ```
 sub_mod : I64 -> I64 -> I64 -> I64;
 sub_mod = |x, y, m| _pmod_i128(m.i128.abs, x.i128 - y.i128);
 
@@ -76,6 +86,11 @@ sub_mod = |x, y, m| _pmod_i128(m.i128.abs, x.i128 - y.i128);
 // - `x`: 整数
 // - `y`: 整数
 // - `m`: 除数
+//
+// # Examples
+// ```fix
+// assert_eq(|_|"", mul_mod(5, 4, 7), 6)
+// ```
 mul_mod : I64 -> I64 -> I64 -> I64;
 mul_mod = |x, y, m| _pmod_i128(m.i128.abs, x.i128 * y.i128);
 
