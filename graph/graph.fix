@@ -294,11 +294,28 @@ calc_sccs = |g| (
 //
 // 戻り値は、強連結成分の数`num`と、長さが頂点数の配列`ids`の組。
 // 番号は0以上`num`未満で、トポロジカル順に振られる：uとvが異なる強連結成分に属するとき、uからvに到達できるなら、`ids.@(u) < ids.@(v)`。
+// 番号`c`の強連結成分は、`calc_sccs`の戻り値の`c`番目の要素である。
 //
 // 計算量：O(n + m)
 //
 // # Parameters
 // - `g` : グラフ
+//
+// # Examples
+// ```fix
+// // 0 -> 1 -> 2 -> 1、2 -> 3。{1, 2}が1つの強連結成分になる
+// let g = GraphBuilder::create(4).add_edge(0, 1, ()).add_edge(1, 2, ()).add_edge(2, 1, ()).add_edge(2, 3, ()).build;
+// assert_eq(|_|"", g.calc_scc_ids, (3, [0, 1, 1, 2]))
+// ```
+calc_scc_ids : Graph c -> (I64, Array I64);
+calc_scc_ids = |g| (
+    let (num, ids) = g._calc_scc_ids;
+    (num, ids.map(i64))
+);
+
+// `calc_scc_ids`と同じ番号を、要素が4バイトの配列で返す
+//
+// 頂点の数が多いとき、配列がL3キャッシュに収まりやすい。`calc_sccs`と`CPLib.TwoSat`が使う。
 _calc_scc_ids : Graph c -> (I64, Array I32);
 _calc_scc_ids = |g| (
     // Tarjanの方法。強連結成分は、トポロジカル順の逆に確定する
