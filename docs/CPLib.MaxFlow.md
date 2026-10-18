@@ -158,7 +158,8 @@ Type: `Std::I64 -> Std::I64 -> CPLib.MaxFlow::MaxFlowGraph -> (CPLib.MaxFlow::Ma
 
 制約：0 <= s, t < n, s != t、流せる量 < `I64::maximum`
 
-計算量：O(n^2 m)。辺の容量がすべて1ならO((n + m) sqrt(m))。容量が整数なら、流した量をFとしてO(F (n + m))でもある
+計算量：O(n^2 m)。辺の容量がすべて1ならO((n + m) sqrt(m))。容量が整数なら、流した量をFとしてO(F (n + m))でもある。
+流す量によらず、呼ぶたびにO(n + m)かかる
 
 ##### Parameters
 
@@ -177,7 +178,8 @@ Type: `Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MaxFlow::MaxFlowGraph -> (CPLib
 
 制約：0 <= s, t < n, s != t
 
-計算量：O(n^2 m)。辺の容量がすべて1ならO((n + m) sqrt(m))。容量が整数なら、流した量をFとしてO(F (n + m))でもある
+計算量：O(n^2 m)。辺の容量がすべて1ならO((n + m) sqrt(m))。容量が整数なら、流した量をFとしてO(F (n + m))でもある。
+流す量によらず、呼ぶたびにO(n + m)かかる
 
 ##### Parameters
 
