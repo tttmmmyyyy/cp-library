@@ -5,10 +5,10 @@
 module CPLib.IO;
 
 import Std::{
-    undefined, Array, F64, FromString, I64, IO, Ptr, String, U64, U8, Array::push_back, FromBytes::from_bytes,
-    FromString::from_string, Iterator, Iterator::{collect_m, generate, map, range, to_array, Item}, 
-    LoopState::{break_m, continue_m}, Monad::pure, loop_m, Option::{none, some}, Ptr::add_offset, 
-    Result::{as_ok, err, ok}, String::{borrow_c_str, get_sub, strip_spaces}, ToI64::i64, ToU8::u8
+    undefined, Array, F64, FromString, I64, IO, Ptr, String, U64, U8, FromString::from_string, Iterator, 
+    Iterator::{collect_m, generate, map, range, to_array, Item}, Monad::pure, Option::{none, some}, 
+    Ptr::add_offset, Result::{err, ok}, String::{borrow_c_str, get_sub, strip_spaces, unsafe_from_c_str_ptr_io}, 
+    ToI64::i64
 };
 
 // 文字列をパースして`I64`整数に変換する
@@ -118,13 +118,9 @@ read_f = FFI_CALL_IO[F64 cp_lib_read_double()];
 // 空白文字を読み飛ばし、次の空白文字か入力の終わりまでを読む。
 read_s : IO String;
 read_s = (
-    let head = *FFI_CALL_IO[U8 cp_lib_read_token_head()];
-    let bytes = *loop_m([head], |bytes| (
-        let c = *FFI_CALL_IO[I64 cp_lib_read_token_next()];
-        if c < 0 { break_m $ bytes };
-        continue_m $ bytes.push_back(c.u8)
-    ));
-    pure $ bytes.push_back(0_U8).from_bytes.as_ok
+    // 字句全体をC側のバッファに読み、そこから`String`を1回の複写で作る
+    let ptr = *FFI_CALL_IO[Ptr cp_lib_read_token()];
+    unsafe_from_c_str_ptr_io(ptr)
 );
 
 // 非空白文字を一つ読み込む
