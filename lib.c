@@ -102,30 +102,48 @@ uint8_t cp_lib_read_char(void)
     return (uint8_t)c;
 }
 
-// 空白文字を読み飛ばし、字句の最初の文字を返す。
-uint8_t cp_lib_read_token_head(void)
+// 字句を読むバッファ。読んだ字句の長さに合わせて伸ばし、縮めない。
+static char *cp_lib_token_buf = NULL;
+static size_t cp_lib_token_cap = 0;
+
+// 空白文字を読み飛ばし、次の空白文字か入力の終わりまでを読んで、NUL で終わる文字列として返す。
+// 字句の後の空白文字は読まずに残す。返す文字列は、次にこの関数を呼ぶまで有効である。
+const char *cp_lib_read_token(void)
 {
     int c = cp_lib_skip_spaces();
     if (c == EOF)
     {
         cp_lib_fail("a string", c);
     }
-    return (uint8_t)c;
-}
-
-// 字句の続きの文字を 1 つ読んで返す。字句が終わっていれば（空白文字か入力の終わりなら）-1 を返し、
-// 空白文字は読まずに残す。
-int64_t cp_lib_read_token_next(void)
-{
-    int c = getchar_unlocked();
-    if (c == EOF)
+    size_t len = 0;
+    while (1)
     {
-        return -1;
+        // 字句の後に NUL を置く場所を残して伸ばす
+        if (len + 1 >= cp_lib_token_cap)
+        {
+            size_t cap = cp_lib_token_cap == 0 ? 64 : cp_lib_token_cap * 2;
+            char *buf = realloc(cp_lib_token_buf, cap);
+            if (buf == NULL)
+            {
+                fflush(stdout);
+                fprintf(stderr, "CPLib.IO: out of memory while reading a string\n");
+                abort();
+            }
+            cp_lib_token_buf = buf;
+            cp_lib_token_cap = cap;
+        }
+        cp_lib_token_buf[len++] = (char)c;
+        c = getchar_unlocked();
+        if (c == EOF)
+        {
+            break;
+        }
+        if (cp_lib_is_space(c))
+        {
+            ungetc(c, stdin);
+            break;
+        }
     }
-    if (cp_lib_is_space(c))
-    {
-        ungetc(c, stdin);
-        return -1;
-    }
-    return c;
+    cp_lib_token_buf[len] = '\0';
+    return cp_lib_token_buf;
 }
