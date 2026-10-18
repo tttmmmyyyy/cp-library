@@ -18,8 +18,8 @@ import Std::{
 // 計算量：O(1)
 //
 // # Parameters
-// - `m`: 除数
-// - `x`: 被除数
+// - `m`: 法
+// - `x`: 整数
 //
 // # Examples
 // ```fix
@@ -49,7 +49,7 @@ _pmod_i128 = |m, x| (
 // # Parameters
 // - `x`: 整数
 // - `y`: 整数
-// - `m`: 除数
+// - `m`: 法
 //
 // # Examples
 // ```fix
@@ -67,7 +67,7 @@ add_mod = |x, y, m| _pmod_i128(m.i128.abs, x.i128 + y.i128);
 // # Parameters
 // - `x`: 整数
 // - `y`: 整数
-// - `m`: 除数
+// - `m`: 法
 //
 // # Examples
 // ```fix
@@ -85,7 +85,7 @@ sub_mod = |x, y, m| _pmod_i128(m.i128.abs, x.i128 - y.i128);
 // # Parameters
 // - `x`: 整数
 // - `y`: 整数
-// - `m`: 除数
+// - `m`: 法
 //
 // # Examples
 // ```fix
