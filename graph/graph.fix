@@ -112,7 +112,7 @@ type Graph c = struct {
     //
     // 頂点番号と辺の位置は、配列をキャッシュに収めやすいよう4バイトで持つ
     _start : Array I32,
-    // 辺の終点を始点の順に並べた配列。同じ始点の辺は足した順に並ぶ
+    // 辺の終点を始点の順に並べた配列。同じ始点の辺の並びは、`GraphBuilder::build`で作ったグラフでは足した順、`reverse`で作ったグラフでは元のグラフの始点の昇順
     _to : Array I32,
     // 辺のデータを、`_to`と同じ順に並べた配列
     _data : Array c
@@ -157,7 +157,9 @@ DEPRECATED[get_size, "Use `CPLib.Graph::@size` instead."];
 get_out_degree : I64 -> Graph c -> I64;
 get_out_degree = |v, graph| (graph.@_start.@(v + 1) - graph.@_start.@(v)).i64;
 
-// 頂点`v`から出る辺を、足した順に返すイテレータを作る
+// 頂点`v`から出る辺を返すイテレータを作る
+//
+// 辺は、`GraphBuilder::build`で作ったグラフでは足した順に、`reverse`で作ったグラフでは元のグラフの始点の昇順に並ぶ。
 //
 // 制約：0 <= v < n
 //
@@ -171,6 +173,43 @@ to_iter_edges = |v, graph| (
     let to = graph.@_to;
     let data = graph.@_data;
     range(graph.@_start.@(v).i64, graph.@_start.@(v + 1).i64).map(|p| Edge::make(to.@(p).i64, data.@(p)))
+);
+
+// すべての辺の向きを逆にしたグラフを作る
+//
+// 元のグラフの辺u -> vは、データを引き継いで辺v -> uになる。頂点vから出る辺は、元のグラフの始点uの昇順に並び、同じ始点の辺は元のグラフでの並びの順になる。
+//
+// 計算量：O(n + m)
+//
+// # Parameters
+// - `graph` : グラフ
+//
+// # Examples
+// ```fix
+// // 0 -> 1 -> 2、0 -> 2。逆にすると、2から1と0へ、1から0へ辺が出る
+// let g = GraphBuilder::create(3).add_edge(0, 1, "a").add_edge(1, 2, "b").add_edge(0, 2, "c").build;
+// let rg = g.reverse;
+// assert_eq(|_|"", rg.to_iter_edges(2).map(|Edge { to, data }| (to, data)).to_array, [(0, "c"), (1, "b")])
+// ```
+reverse : Graph c -> Graph c;
+reverse = |graph| (
+    let n = graph.@size;
+    let start = graph.@_start;
+    let to = graph.@_to;
+    let data = graph.@_data;
+    let m = to.@size;
+    // 終点ごとに辺の数を数え、累積和を取る
+    let rstart = to.to_iter.fold(fill(n + 1, 0_I32), |v, rstart| rstart.mod(v.i64 + 1, |d| d + 1_I32));
+    let rstart = range(0, n).fold(rstart, |v, rstart| rstart.set(v + 1, rstart.@(v) + rstart.@(v + 1)));
+    // 元の辺を始点の昇順に見て、終点の区間に並べる。perm.@(q)は位置qに置く辺の、元のグラフでの位置。nextは各頂点の区間で次に置く位置
+    let (rto, perm, _) = range(0, n).fold((fill(m, 0_I32), fill(m, 0_I32), rstart), |u, (rto, perm, next)|
+        range(start.@(u).i64, start.@(u + 1).i64).fold((rto, perm, next), |p, (rto, perm, next)|
+            let v = to.@(p).i64;
+            let q = next.@(v);
+            (rto.set(q.i64, u.i32), perm.set(q.i64, p.i32), next.set(v, q + 1_I32))
+        )
+    );
+    Graph { _start : rstart, _to : rto, _data : from_map(m, |q| data.@(perm.@(q).i64)) }
 );
 
 // ノードとその距離を表す型（ダイクストラ法などで使用）

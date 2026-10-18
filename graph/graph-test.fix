@@ -1,6 +1,6 @@
 module CPLib.Graph.Test;
 
-import CPLib.Graph::{bellman_ford, calc_scc_ids, calc_sccs, dijkstra, get_out_degree, to_iter_edges, @size, Edge, GraphBuilder, GraphBuilder::{add_edge, build, create}};
+import CPLib.Graph::{bellman_ford, calc_scc_ids, calc_sccs, dijkstra, get_out_degree, reverse, to_iter_edges, @size, Edge, GraphBuilder, GraphBuilder::{add_edge, build, create}};
 import CPLib.Trait::Inf::inf;
 import EZS::{cd, run_o, run_wi_oec, Context::default};
 import Random::{generate_I64_nonneg, init_by_seed};
@@ -12,6 +12,7 @@ import Std::{
 test : IO ();
 test = (
     test_to_iter_edges;;
+    test_reverse_random;;
     test_dijkstra;;
     test_bellman_ford_random;;
     test_scc;;
@@ -333,4 +334,34 @@ test_bellman_ford_negative_cycle = (
     assert_eq(|_|"no negative cycle: " + out, code == 0_U8 && out.find("[0, 2, -2]", 0).is_some, true);;
     // 後のテストのために、作業ディレクトリをライブラリのルートに戻す
     ezs.cd("../..")
+);
+
+// 逆にしたグラフの頂点vから出る辺は、元のグラフでvに入る辺を、始点の昇順、同じ始点なら元の並びの順に並べたもので、データも引き継ぐ
+test_reverse_random : IO ();
+test_reverse_random = (
+    let rng = Random::init_by_seed(1_U64);
+    range(0, 300).fold_m(rng, |_, rng|
+        let (rng, n) = rng.generate_I64_nonneg;
+        let n = n % 12 + 1;
+        let (rng, m) = rng.generate_I64_nonneg;
+        let m = m % (3 * n);
+        // 辺のデータは足した順の番号にして、どの辺かを区別できるようにする
+        let (g, rng) = range(0, m).fold((GraphBuilder::create(n), rng), |i, (g, rng)|
+            let (rng, u) = rng.generate_I64_nonneg;
+            let (rng, v) = rng.generate_I64_nonneg;
+            (g.add_edge(u % n, v % n, i), rng)
+        );
+        let g = g.build;
+        let rg = g.reverse;
+        assert_eq(|_|"test_reverse_random: size", rg.@size, n);;
+        range(0, n).fold_m((), |v, _|
+            let expected = range(0, n).fold([], |u, acc|
+                g.to_iter_edges(u).fold(acc, |Edge { to, data }, acc| if to == v { acc.push_back((u, data)) } else { acc })
+            );
+            let actual = rg.to_iter_edges(v).map(|Edge { to, data }| (to, data)).to_array;
+            assert_eq(|_|"test_reverse_random: edges of " + v.to_string, actual, expected)
+        );;
+        rng.pure
+    ).forget;;
+    pure()
 );
