@@ -6,7 +6,7 @@ import Std::{
     Array::{empty, fill, push_back, set, to_iter, @, @size}, I128::abs, I64::{abs, bit_and, shift_right}, Indexable::{iget, imod}, 
     Iterator::{check_all, filter_map, fold, get_first, loop_iter, loop_iter_s, range, range_step}, 
     LoopState::{break, continue, is_break, is_continue}, Multiplicative, One::one, Option::{as_some, none, some}, ToI128::i128, ToI64::i64, 
-    ToU128::u128, ToU32::u32, ToU64::u64, ToU8::u8, Tuple2::{act_0, act_1}, U64::{bit_and, shift_right}
+    ToU128::u128, ToU32::u32, ToU64::u64, ToU8::u8, Tuple2::{act_0, act_1}, U64::{bit_and, count_leading_zeros, shift_left, shift_right}
 };
 
 // `x`を`m`で割った余りを非負で返す
@@ -81,14 +81,16 @@ mul_mod = |x, y, m| _pmod_i128(m.i128.abs, x.i128 * y.i128);
 
 // 64ビット整数の平方根の整数部分を計算する
 //
-// 計算量：O(log s)
+// 計算量：O(1)
 //
 // # Parameters
 // - `s`: 64ビット整数
 isqrt : U64 -> U64;
 isqrt = |s| (
     if s <= 1_U64 { s };
-    let x0 = s / 2_U64;
+    // s < 2^bitsなので、2^ceil(bits / 2)は√s以上。√s以上の値から始めたニュートン法は、単調に減って√sの整数部分で止まる
+    let bits = 64_U64 - s.count_leading_zeros;
+    let x0 = 1_U64.shift_left((bits + 1_U64) / 2_U64);
     let x1 = (x0 + s / x0) / 2_U64;
     loop((x0, x1), |(x0, x1)| 
         if x1 >= x0 { break $ x0 };
