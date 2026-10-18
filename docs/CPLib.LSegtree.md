@@ -87,6 +87,24 @@ Type: `CPLib.LSegtree::LSegtree m a -> Std::I64`
 
 - `tree` : セグメント木
 
+#### act_at
+
+Type: `[a : CPLib.Trait::Action, a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoid, CPLib.Trait::Action::Set a = m] Std::I64 -> a -> CPLib.LSegtree::LSegtree m a -> CPLib.LSegtree::LSegtree m a`
+
+1つの要素に作用を適用する
+
+`act_range(i, i + 1, a)`と同じ結果になる。
+
+制約：0 <= i < n
+
+計算量：O(log n)
+
+##### Parameters
+
+- `i` : インデックス（0-indexed）
+- `a` : 作用
+- `tree` : セグメント木
+
 #### act_range
 
 Type: `[a : CPLib.Trait::Action, a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoid, CPLib.Trait::Action::Set a = m] Std::I64 -> Std::I64 -> a -> CPLib.LSegtree::LSegtree m a -> CPLib.LSegtree::LSegtree m a`

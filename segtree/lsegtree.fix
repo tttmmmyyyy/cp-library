@@ -244,7 +244,7 @@ set = |i, value, tree| (
     tree._recalc_above(i)
 );
 
-// 1つの要素に作用を掛ける
+// 1つの要素に作用を適用する
 //
 // `act_range(i, i + 1, a)`と同じ結果になる。
 //
@@ -261,7 +261,7 @@ act_at = |i, a, tree| (
     if !(0 <= i && i < tree.@_n) { undefined("[CPLib.LSegtree::act_at] `i` is out of [0, n)") };
     let i = i + tree.@_n;
     let tree = tree._propagate_above(i);
-    // 葉は遅延作用を持たないので、値に直接作用を掛ける
+    // 葉は遅延作用を持たないので、値に直接作用を適用する
     let tree = tree.mod__elems(|elems| elems.set(i, act(a, elems.@(i))));
     tree._recalc_above(i)
 );
