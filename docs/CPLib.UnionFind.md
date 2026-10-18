@@ -44,6 +44,18 @@ Type: `Std::I64 -> CPLib.UnionFind::UnionFind -> (CPLib.UnionFind::UnionFind, St
 
 `get_leader`の別名（非推奨）
 
+#### get_group_count
+
+Type: `CPLib.UnionFind::UnionFind -> Std::I64`
+
+グループの数を取得する
+
+計算量：O(1)
+
+##### Parameters
+
+- `uf` : UnionFind木
+
 #### get_group_size
 
 Type: `Std::I64 -> CPLib.UnionFind::UnionFind -> (CPLib.UnionFind::UnionFind, Std::I64)`
@@ -111,6 +123,35 @@ Type: `Std::I64 -> Std::I64 -> CPLib.UnionFind::UnionFind -> (CPLib.UnionFind::U
 - `x` : 1つ目の要素
 - `y` : 2つ目の要素
 - `uf` : UnionFind木
+
+#### try_unite
+
+Type: `Std::I64 -> Std::I64 -> CPLib.UnionFind::UnionFind -> (CPLib.UnionFind::UnionFind, Std::Bool)`
+
+2つの要素を同じグループにし、2つが別のグループだったかを返す
+
+別のグループだったなら併合して`true`を、すでに同じグループに属しているなら何もせず`false`を返す。
+
+制約：0 <= x, y < size
+
+計算量：ならしO(α(size))
+
+##### Parameters
+
+- `x` : 1つ目の要素
+- `y` : 2つ目の要素
+- `uf` : UnionFind木
+
+##### Examples
+
+```fix
+// クラスカル法：別のグループを結ぶ辺だけを採る
+let (uf, taken) = [(0, 1), (1, 2), (0, 2)].to_iter.fold((create(3), []), |(x, y), (uf, taken)|
+    let (uf, merged) = uf.try_unite(x, y);
+    (uf, taken.push_back(merged))
+);
+assert_eq(|_|"", taken, [true, true, false])
+```
 
 #### unite
 

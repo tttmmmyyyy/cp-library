@@ -14,7 +14,7 @@ module CPLib.UnionFind;
 
 import Std::{
     loop, undefined, Array, Bool, I32, I64, Array::{fill, mod, push_back, set, @, @size}, Iterator::{fold, range}, 
-    I32::maximum, LoopState::{break, continue}, ToI32::i32, ToI64::i64
+    I32::maximum, LoopState::{break, continue}, ToI32::i32, ToI64::i64, Tuple2::@0
 };
 
 type UnionFind = struct {
@@ -22,6 +22,8 @@ type UnionFind = struct {
     //
     // 4バイトの要素で持つのは、配列をキャッシュに収めやすくするため。2*10^6要素で8MBになり、`I64`の16MBと違ってL3キャッシュに収まる機械が多い。
     _parent_or_size : Array I32,
+    // グループの数
+    _group_count : I64,
 };
 
 // UnionFind木を作成する
@@ -37,7 +39,7 @@ type UnionFind = struct {
 create : I64 -> UnionFind;
 create = |size| (
     if size > I32::maximum.i64 { undefined("[CPLib.UnionFind::create] got a size of 2^31 or more") };
-    UnionFind { _parent_or_size : fill(size, -1_I32) }
+    UnionFind { _parent_or_size : fill(size, -1_I32), _group_count : size }
 );
 
 // 指定された要素の属するグループの代表元を取得する
@@ -91,15 +93,50 @@ _find_root = |x, uf| (
 // - `y` : 2つ目の要素
 // - `uf` : UnionFind木
 unite : I64 -> I64 -> UnionFind -> UnionFind;
-unite = |x, y, uf| (
+unite = |x, y, uf| try_unite(x, y, uf).@0;
+
+// 2つの要素を同じグループにし、2つが別のグループだったかを返す
+// 
+// 別のグループだったなら併合して`true`を、すでに同じグループに属しているなら何もせず`false`を返す。
+// 
+// 制約：0 <= x, y < size
+//
+// 計算量：ならしO(α(size))
+//
+// # Parameters
+// - `x` : 1つ目の要素
+// - `y` : 2つ目の要素
+// - `uf` : UnionFind木
+//
+// # Examples
+// ```fix
+// // クラスカル法：別のグループを結ぶ辺だけを採る
+// let (uf, taken) = [(0, 1), (1, 2), (0, 2)].to_iter.fold((create(3), []), |(x, y), (uf, taken)|
+//     let (uf, merged) = uf.try_unite(x, y);
+//     (uf, taken.push_back(merged))
+// );
+// assert_eq(|_|"", taken, [true, true, false])
+// ```
+try_unite : I64 -> I64 -> UnionFind -> (UnionFind, Bool);
+try_unite = |x, y, uf| (
     let (uf, rx) = _find_root(x, uf);
     let (uf, ry) = _find_root(y, uf);
-    if rx == ry { uf };
+    if rx == ry { (uf, false) };
     let ps = uf.@_parent_or_size;
     let (rx, ry) = if ps.@(rx) <= ps.@(ry) { (rx, ry) } else { (ry, rx) };
     let sz = ps.@(rx) + ps.@(ry);
-    uf.mod__parent_or_size(|ps| ps.set(rx, sz).set(ry, rx.i32))
+    let uf = uf.mod__parent_or_size(|ps| ps.set(rx, sz).set(ry, rx.i32));
+    (uf.mod__group_count(|c| c - 1), true)
 );
+
+// グループの数を取得する
+//
+// 計算量：O(1)
+//
+// # Parameters
+// - `uf` : UnionFind木
+get_group_count : UnionFind -> I64;
+get_group_count = |uf| uf.@_group_count;
 
 // 2つの要素が同じグループに属しているかどうかを判定する
 // 

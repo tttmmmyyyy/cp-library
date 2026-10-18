@@ -298,16 +298,16 @@ test_out_of_range = (
     ezs.cd("segtree/out-of-range");;
     ezs.run_o(["fix", "deps", "update"]);;
     let trees = ["Segtree", "DSegtree", "LSegtree", "LDSegtree"];
-    let funcs = ["@", "set", "fold", "calc_max_right", "calc_min_left", "act_range"];
+    let funcs = ["@", "set", "fold", "calc_max_right", "calc_min_left", "act_range", "act_at"];
     range(0, 4).fold_m((), |t, _|
-        // act_rangeは遅延木（LSegtreeとLDSegtree）だけにある
-        let func_count = if t < 2 { 5 } else { 6 };
+        // act_rangeとact_atは遅延木（LSegtreeとLDSegtree）だけにある
+        let func_count = if t < 2 { 5 } else { 7 };
         range(0, func_count).fold_m((), |f, _|
             let expected = "[CPLib." + trees.@(t) + "::" + funcs.@(f) + "]";
             let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], t.to_string + " " + f.to_string);
             assert_eq(|_|expected + ": " + err, code != 0_U8 && err.find(expected, 0).is_some, true)
         );;
-        let (out, _, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], t.to_string + " 6");
+        let (out, _, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], t.to_string + " 7");
         let expected = if t < 2 { "6" } else { "3" };
         assert_eq(|_|"in range " + t.to_string + ": " + out, code == 0_U8 && out.find(expected, 0).is_some, true)
     );;

@@ -49,6 +49,30 @@ Type: `[c : CPLib.Trait::Inf, c : Std::Additive, c : Std::Eq, c : Std::LessThan]
 - `start` : 開始ノードの番号
 - `graph` : グラフ
 
+#### calc_scc_ids
+
+Type: `CPLib.Graph::Graph c -> (Std::I64, Std::Array Std::I64)`
+
+頂点ごとに、その頂点を含む強連結成分の番号を求める
+
+戻り値は、強連結成分の数`num`と、長さが頂点数の配列`ids`の組。
+番号は0以上`num`未満で、トポロジカル順に振られる：uとvが異なる強連結成分に属するとき、uからvに到達できるなら、`ids.@(u) < ids.@(v)`。
+番号`c`の強連結成分は、`calc_sccs`の戻り値の`c`番目の要素である。
+
+計算量：O(n + m)
+
+##### Parameters
+
+- `g` : グラフ
+
+##### Examples
+
+```fix
+// 0 -> 1 -> 2 -> 1、2 -> 3。{1, 2}が1つの強連結成分になる
+let g = GraphBuilder::create(4).add_edge(0, 1, ()).add_edge(1, 2, ()).add_edge(2, 1, ()).add_edge(2, 3, ()).build;
+assert_eq(|_|"", g.calc_scc_ids, (3, [0, 1, 1, 2]))
+```
+
 #### calc_sccs
 
 Type: `CPLib.Graph::Graph c -> Std::Array (Std::Array Std::I64)`
