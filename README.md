@@ -42,6 +42,10 @@
   * `CPLib.Misc` : next_permutation。
   * `CPLib.Memoize` : メモ化モナドの実装。ハッシュマップや配列をメモリ領域として利用可能。
 
+## 性能
+
+AtCoder Library（C++）と遜色ない速さで動きます。セグメント木、畳み込み、最大フローなどの機能ごとに、同じ処理をAtCoder Libraryで書いたC++のプログラムと速さを比べています（AtCoder Libraryにない機能は、C++で書いたプログラムと比べています）。結果は[Fixのベンチマーク](https://tttmmmyyyy.github.io/fixlang/benchmark/)にあります。
+
 ## 関数の名前
 
 値を返す関数の名前は、次の決まりで先頭の動詞を選んでいます。ただし、Fixの標準ライブラリや競技プログラミングで広く使われている名前があるものは、その名前を使います（例：`fold`、`pow_mod`、`floor_sum`、`dijkstra`）。
