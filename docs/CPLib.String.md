@@ -79,7 +79,7 @@ Type: `[a : Std::Eq, a : Std::LessThan] Std::Array a -> Std::Array Std::I64`
 
 比較できる要素の配列のsuffix arrayを計算する
 
-AtCoder Libraryの`suffix_array`の移植です。要素を整列して0から順に番号を振り直し、その番号の列のsuffix arrayを求めます。
+AtCoder Libraryの`suffix_array`の移植です。要素を座標圧縮し（大小の順に0から番号を振り）、その番号の列のsuffix arrayを求めます。
 
 制約：|s| < 2^31、`<`と`==`が全順序を与える
 
