@@ -2,7 +2,7 @@ module CPLib.Convolution;
 
 import CPLib.Arithmetic::{pmod, _inv_gcd};
 import CPLib.ZP::{
-    inv, make, P167772161, P469762049, P754974721, PrimeProvider, ZP, _butterfly, _butterfly_inv, 
+    inv, zp, P167772161, P469762049, P754974721, PrimeProvider, ZP, _butterfly, _butterfly_inv, 
     _calc_next_pot, PrimeProvider::value, ZP::{@prime, @value}
 };
 import Std::{
@@ -26,8 +26,8 @@ import Std::{
 // # Examples
 // ```fix
 // # import CPLib.ZP;
-// let a = [1, 2].map(ZP::make) : Array (ZP P998244353);
-// let b = [3, 4].map(ZP::make);
+// let a = [1, 2].map(zp) : Array (ZP P998244353);
+// let b = [3, 4].map(zp);
 // // (1 + 2x)(3 + 4x) = 3 + 10x + 8x^2
 // assert_eq(|_|"", convolve_zp(a, b).map(@value), [3_U32, 10_U32, 8_U32])
 // ```
@@ -41,9 +41,9 @@ convolve_zp = |x, y| (
     let pm1 = x.@(0).@prime.value.i64 - 1;
     if pm1.bit_and(-pm1) < pot { undefined("[CPLib.Convolution::convolve_zp] the result is longer than the largest power of two dividing p - 1") };
     let x = x.reserve(pot);
-    let x = range(x.@size, pot).fold(x, |i, x| x.push_back(ZP::make(0)));
+    let x = range(x.@size, pot).fold(x, |i, x| x.push_back(zp(0)));
     let y = y.reserve(pot);
-    let y = range(y.@size, pot).fold(y, |i, y| y.push_back(ZP::make(0)));
+    let y = range(y.@size, pot).fold(y, |i, y| y.push_back(zp(0)));
 
     // 変換した値はビット反転した順に並ぶが、要素ごとに掛けて逆変換するので、並べ替えずに使える
     let x = x._butterfly;
@@ -54,7 +54,7 @@ convolve_zp = |x, y| (
 
     // 逆変換するとpot倍された結果が返るので、potで割る
     let x = x._butterfly_inv.truncate(n);
-    let iz = ZP::make(pot).inv;
+    let iz = zp(pot).inv;
     x.map(|v| v * iz)
 );
 
@@ -85,9 +85,9 @@ convolve_i64 = |a, b| (
     let __M2M3 = __M2 * __M3;
     let __M1M2M3 = __M1M2 * __M3;
 
-    let c1 = convolve_zp(a.map(make), b.map(make)) : Array (ZP P754974721);
-    let c2 = convolve_zp(a.map(make), b.map(make)) : Array (ZP P167772161);
-    let c3 = convolve_zp(a.map(make), b.map(make)) : Array (ZP P469762049);
+    let c1 = convolve_zp(a.map(zp), b.map(zp)) : Array (ZP P754974721);
+    let c2 = convolve_zp(a.map(zp), b.map(zp)) : Array (ZP P167772161);
+    let c3 = convolve_zp(a.map(zp), b.map(zp)) : Array (ZP P469762049);
 
     let i1 = _inv_gcd(__M2M3.i64, __M1.i64).@1.u64;
     let i2 = _inv_gcd(__M1M3.i64, __M2.i64).@1.u64;

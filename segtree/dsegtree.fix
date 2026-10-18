@@ -43,11 +43,15 @@ type DSegtree m = struct {
 // - `n` : セグメント木の要素数
 // - `unit` : モノイドの単位元
 // - `op` : モノイドの演算子
-init : I64 -> m -> ((m, m) -> m) -> DSegtree m;
-init = |n, unit, op| (
+create : I64 -> m -> ((m, m) -> m) -> DSegtree m;
+create = |n, unit, op| (
     let elems = fill(n * 2, unit);
     DSegtree { _elems : elems, _n : n, _unit : unit, _op : op }
 );
+
+// `create`の別名（非推奨）
+init : I64 -> m -> ((m, m) -> m) -> DSegtree m = create;
+DEPRECATED[init, "Use `CPLib.DSegtree::create` instead."];
 
 // 要素の配列からセグメント木を作成する
 // 

@@ -67,12 +67,16 @@ type LDSegtree m a = struct {
 // - `act_unit` : 作用モノイドの単位元
 // - `act_op` : 作用モノイドの演算子
 // - `act` : 右作用
-init : I64 -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((a, m) -> m) -> LDSegtree m a;
-init = |n, unit, op, act_unit, act_op, act| (
+create : I64 -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((a, m) -> m) -> LDSegtree m a;
+create = |n, unit, op, act_unit, act_op, act| (
     let elems = fill(n * 2, unit);
     let lazy = fill(n * 2, act_unit);
     LDSegtree { _elems : elems, _lazy : lazy, _n : n, _unit : unit, _op : op, _act_unit : act_unit, _act_op : act_op, _act : act }
 );
+
+// `create`の別名（非推奨）
+init : I64 -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((a, m) -> m) -> LDSegtree m a = create;
+DEPRECATED[init, "Use `CPLib.LDSegtree::create` instead."];
 
 // 要素の配列からセグメント木を作成する
 // 

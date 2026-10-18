@@ -303,12 +303,12 @@ inv_mod = |m, a| (
 // ```fix
 // import BoolArray;
 //
-// let table = create_prime_table(10);
+// let table = calc_prime_table(10);
 // assert(|_|"", table.@(7));;
 // assert(|_|"", !table.@(9))
 // ```
-create_prime_table : I64 -> BoolArray;
-create_prime_table = |size| (
+calc_prime_table : I64 -> BoolArray;
+calc_prime_table = |size| (
     let table = BoolArray::make(size).fill_true;
     let size = table.get_size;
     let table = table.set(0, false).set(1, false);
@@ -321,6 +321,10 @@ create_prime_table = |size| (
     table
 );
 
+// `calc_prime_table`の別名（非推奨）
+create_prime_table : I64 -> BoolArray = calc_prime_table;
+DEPRECATED[create_prime_table, "Use `CPLib.Arithmetic::calc_prime_table` instead."];
+
 // [0, n)の範囲での素数リストを作成する
 //
 // 制約：n >= 1
@@ -329,9 +333,9 @@ create_prime_table = |size| (
 //
 // # Parameters
 // - `n` : 素数リストの上限（exclusive）
-create_prime_list : I64 -> Array U32;
-create_prime_list = |n| (
-    let table = create_prime_table(n);
+calc_prime_list : I64 -> Array U32;
+calc_prime_list = |n| (
+    let table = calc_prime_table(n);
     let count = range(0, n).fold(0, |i, cnt| if table.@(i) { cnt + 1 } else { cnt });
     let list = empty(count);
     let list = range(0, n).fold(list, |p, list|
@@ -339,6 +343,10 @@ create_prime_list = |n| (
     );
     list
 );
+
+// `calc_prime_list`の別名（非推奨）
+create_prime_list : I64 -> Array U32 = calc_prime_list;
+DEPRECATED[create_prime_list, "Use `CPLib.Arithmetic::calc_prime_list` instead."];
 
 // 線形ふるいを用いて、[0, n)の範囲で、各数の最小の素因数を格納した配列と、素数のリストを作成する
 // 
@@ -351,8 +359,8 @@ create_prime_list = |n| (
 // `(lp, ps)`
 // - `lp`: 最小素因子テーブル。長さnの配列で、`lp.@(i)`は`i`の最小の素因数。`lp.@(0)`, `lp.@(1)`は0。
 // - `ps`: [0, n)の範囲の素数のリスト
-linear_sieve : U32 -> (Array U32, Array U32);
-linear_sieve = |n| (
+calc_lp_table : U32 -> (Array U32, Array U32);
+calc_lp_table = |n| (
     let n = n.i64;
     let lp = fill(n, 0_U32);
     let ps = empty(n / 10);
@@ -369,6 +377,10 @@ linear_sieve = |n| (
         (lp, ps)
     )
 );
+
+// `calc_lp_table`の別名（非推奨）
+linear_sieve : U32 -> (Array U32, Array U32) = calc_lp_table;
+DEPRECATED[linear_sieve, "Use `CPLib.Arithmetic::calc_lp_table` instead."];
 
 // 試し割りにより、数を素因数分解する（素因子を重複ありのフラットな配列で返す）
 //
@@ -427,8 +439,8 @@ factorize = |n| (
 //
 // # Parameters
 // - `n`: 正の整数
-euler_tortient : I64 -> I64;
-euler_tortient = |n| (
+calc_totient : I64 -> I64;
+calc_totient = |n| (
     if n == 1 { 1 };
     let (d, n, tot) = loop((2, n, 1), |(d, n, tot)|
         if d > n / d { break $ (d, n, tot) };
@@ -442,6 +454,10 @@ euler_tortient = |n| (
     if n > 1 { tot * (n - 1) } else { tot }
 );
 
+// `calc_totient`の別名（非推奨）
+euler_tortient : I64 -> I64 = calc_totient;
+DEPRECATED[euler_tortient, "Use `CPLib.Arithmetic::calc_totient` instead."];
+
 // 0 <= i < n に対するオイラーのトーシェント関数 φ(i) の表を作成する
 //
 // `table.@(i)` が φ(i) の値となる。ただし `table.@(0) = 0` とする。
@@ -450,8 +466,8 @@ euler_tortient = |n| (
 //
 // # Parameters
 // - `n`: 表の上限（exclusive）
-euler_tortient_table : I64 -> Array I64;
-euler_tortient_table = |n| (
+calc_totient_table : I64 -> Array I64;
+calc_totient_table = |n| (
     let table = fill(n, 0);
     let table = range(0, n).fold(table, |i, table| table.set(i, i));
     range(2, n).fold(table, |i, table|
@@ -459,6 +475,10 @@ euler_tortient_table = |n| (
         range_step(i, n, i).fold(table, |j, table| table.set(j, table.@(j) / i * (i - 1)))
     )
 );
+
+// `calc_totient_table`の別名（非推奨）
+euler_tortient_table : I64 -> Array I64 = calc_totient_table;
+DEPRECATED[euler_tortient_table, "Use `CPLib.Arithmetic::calc_totient_table` instead."];
 
 // 最小素因子テーブルを用いて、数を素因数分解する
 //
@@ -468,7 +488,7 @@ euler_tortient_table = |n| (
 //
 // # Parameters
 // - `n`: 素因数分解する数
-// - `lp_table`: 最小素因子テーブル。最小素因子テーブルの定義は`linear_sieve`のコメントを参照。
+// - `lp_table`: 最小素因子テーブル。最小素因子テーブルの定義は`calc_lp_table`のコメントを参照。
 // 
 // # Returns
 // 素因数分解の結果。
@@ -477,7 +497,7 @@ euler_tortient_table = |n| (
 //
 // # Examples
 // ```fix
-// let (lp, _) = linear_sieve(100_U32);
+// let (lp, _) = calc_lp_table(100_U32);
 // assert_eq(|_|"", factorize_via_lp_table(12_U32, lp), [(2_U32, 2_U8), (3_U32, 1_U8)]) // 12 = 2^2 * 3
 // ```
 factorize_via_lp_table : U32 -> Array U32 -> Array (U32, U8) = |n, lp_table| (
@@ -776,7 +796,7 @@ _floor_sum_unsigned = |n, m, a, b| (
 // 
 // # Parameters
 // - `c_max`: `c`の上限（inclusive）
-pythagorean_triples : I64 -> Array (I64, I64, I64) = |c_max| (
+calc_pythagorean_triples : I64 -> Array (I64, I64, I64) = |c_max| (
     let m_max = isqrt((c_max - 1).u64).i64;
     range(1, m_max+1).fold([], |m, triples|
         let n_max = isqrt((c_max - m * m).u64).i64;
@@ -790,3 +810,7 @@ pythagorean_triples : I64 -> Array (I64, I64, I64) = |c_max| (
         )
     )
 );
+
+// `calc_pythagorean_triples`の別名（非推奨）
+pythagorean_triples : I64 -> Array (I64, I64, I64) = calc_pythagorean_triples;
+DEPRECATED[pythagorean_triples, "Use `CPLib.Arithmetic::calc_pythagorean_triples` instead."];

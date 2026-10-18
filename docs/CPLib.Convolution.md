@@ -43,8 +43,8 @@ Type: `[p : CPLib.ZP::PrimeProvider] Std::Array (CPLib.ZP::ZP p) -> Std::Array (
 ##### Examples
 
 ```fix
-let a = [1, 2].map(ZP::make) : Array (ZP P998244353);
-let b = [3, 4].map(ZP::make);
+let a = [1, 2].map(zp) : Array (ZP P998244353);
+let b = [3, 4].map(zp);
 // (1 + 2x)(3 + 4x) = 3 + 10x + 8x^2
 assert_eq(|_|"", convolve_zp(a, b).map(@value), [3_U32, 10_U32, 8_U32])
 ```

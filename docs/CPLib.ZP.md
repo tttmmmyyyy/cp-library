@@ -30,9 +30,9 @@ impl P17 : PrimeProvider {
 }
 
 main : IO () = (
-    let zp = ZP::make(-5) : ZP P17;
-    let zp = zp * zp;
-    assert_eq(|_|"", zp.@value, 8_U32) // (-5)*(-5) = 25 = 8 mod 17
+    let x = zp(-5) : ZP P17;
+    let y = x * x;
+    assert_eq(|_|"", y.@value, 8_U32) // (-5)*(-5) = 25 = 8 mod 17
 );
 ```
 
@@ -73,6 +73,22 @@ Type: `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::ZP p -> CPLib.ZP::ZP p`
 
 #### make
 
+**Deprecated**: Use `CPLib.ZP::zp` instead.
+
+Type: `[p : CPLib.ZP::PrimeProvider] Std::I64 -> CPLib.ZP::ZP p`
+
+`zp`の別名（非推奨）
+
+#### primitive_root
+
+Type: `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::ZP p`
+
+法pの原始根を一つ得る
+
+計算量：O(sqrt(p))。pがこのモジュールに定義されている素数ならO(1)
+
+#### zp
+
 Type: `[p : CPLib.ZP::PrimeProvider] Std::I64 -> CPLib.ZP::ZP p`
 
 `I64`から`ZP p`の値を作成する
@@ -82,14 +98,6 @@ Type: `[p : CPLib.ZP::PrimeProvider] Std::I64 -> CPLib.ZP::ZP p`
 ##### Parameters
 
 - `x` : `I64`型の整数
-
-#### primitive_root
-
-Type: `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::ZP p`
-
-法pの原始根を一つ得る
-
-計算量：O(sqrt(p))。pがこのモジュールに定義されている素数ならO(1)
 
 ### namespace CPLib.ZP::PrimeProvider
 

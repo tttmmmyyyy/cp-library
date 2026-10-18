@@ -168,6 +168,18 @@ let tree = tree.act_range(0, 2, make(2)); // [3, 4, 5, 4]
 assert_eq(|_|"", tree.calc_min_left(4, |x| x.@v <= 4), 3)
 ```
 
+#### create
+
+Type: `[a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoid] Std::I64 -> CPLib.LSegtree::LSegtree m a`
+
+すべての要素が単位元であるような遅延伝搬セグメント木を作成する
+
+計算量：O(n)
+
+##### Parameters
+
+- `n` : セグメント木の要素数
+
 #### fold
 
 Type: `[a : CPLib.Trait::Action, a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoid, CPLib.Trait::Action::Set a = m] Std::I64 -> Std::I64 -> CPLib.LSegtree::LSegtree m a -> (CPLib.LSegtree::LSegtree m a, m)`
@@ -200,15 +212,11 @@ Type: `[m : CPLib.Trait::Monoid] CPLib.LSegtree::LSegtree m a -> m`
 
 #### init
 
+**Deprecated**: Use `CPLib.LSegtree::create` instead.
+
 Type: `[a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoid] Std::I64 -> CPLib.LSegtree::LSegtree m a`
 
-すべての要素が単位元であるような遅延伝搬セグメント木を作成する
-
-計算量：O(n)
-
-##### Parameters
-
-- `n` : セグメント木の要素数
+`create`の別名（非推奨）
 
 #### set
 

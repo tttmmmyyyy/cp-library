@@ -146,6 +146,23 @@ let tree = tree.act_range(0, 2, 2); // [3, 4, 5, 4]
 assert_eq(|_|"", tree.calc_min_left(4, |x| x <= 4), 3)
 ```
 
+#### create
+
+Type: `Std::I64 -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((a, m) -> m) -> CPLib.LDSegtree::LDSegtree m a`
+
+すべての要素が単位元であるような遅延伝搬セグメント木を作成する
+
+計算量：O(n)
+
+##### Parameters
+
+- `n` : セグメント木の要素数
+- `unit` : 値モノイドの単位元
+- `op` : 値モノイドの演算子
+- `act_unit` : 作用モノイドの単位元
+- `act_op` : 作用モノイドの演算子
+- `act` : 右作用
+
 #### fold
 
 Type: `Std::I64 -> Std::I64 -> CPLib.LDSegtree::LDSegtree m a -> (CPLib.LDSegtree::LDSegtree m a, m)`
@@ -178,20 +195,11 @@ Type: `CPLib.LDSegtree::LDSegtree m a -> m`
 
 #### init
 
+**Deprecated**: Use `CPLib.LDSegtree::create` instead.
+
 Type: `Std::I64 -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((a, m) -> m) -> CPLib.LDSegtree::LDSegtree m a`
 
-すべての要素が単位元であるような遅延伝搬セグメント木を作成する
-
-計算量：O(n)
-
-##### Parameters
-
-- `n` : セグメント木の要素数
-- `unit` : 値モノイドの単位元
-- `op` : 値モノイドの演算子
-- `act_unit` : 作用モノイドの単位元
-- `act_op` : 作用モノイドの演算子
-- `act` : 右作用
+`create`の別名（非推奨）
 
 #### set
 

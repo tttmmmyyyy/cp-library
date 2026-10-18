@@ -1,6 +1,6 @@
 module CPLib.DSegtree.Test;
 
-import CPLib.DSegtree::{build, calc_max_right, calc_min_left, fold, fold_all, init, set, @, @size, DSegtree, DSegtree::@_elems};
+import CPLib.DSegtree::{build, calc_max_right, calc_min_left, fold, fold_all, create, set, @, @size, DSegtree, DSegtree::@_elems};
 import Random::{generate_I64_nonneg, init_by_seed, Random};
 import Std::{
     Bool, I64, IO, String, Array::{fill, push_back, set, to_iter, @}, 
@@ -31,7 +31,7 @@ test = (
 test_one : IO ();
 test_one = (
     // [""]
-    let tree = DSegtree::init(1, "", |(lhs, rhs)| lhs + rhs);
+    let tree = DSegtree::create(1, "", |(lhs, rhs)| lhs + rhs);
     assert_eq(|_|"", tree.@size, 1);;
     assert_eq(|_|"", tree.@(0), "");;
     assert_eq(|_|"", tree.fold(0, 1), "");;
@@ -54,7 +54,7 @@ test_one = (
 test_two : IO ();
 test_two = (
     // ["", ""]
-    let tree = DSegtree::init(2, "", |(lhs, rhs)| lhs + rhs);
+    let tree = DSegtree::create(2, "", |(lhs, rhs)| lhs + rhs);
     assert_eq(|_|"", tree.@size, 2);;
     assert_eq(|_|"", tree.@(0), "");;
     assert_eq(|_|"", tree.@(1), "");;
@@ -94,7 +94,7 @@ test_two = (
 test_three : IO ();
 test_three = (
     // ["", "", ""]
-    let tree = DSegtree::init(3, "", |(lhs, rhs)| lhs + rhs);
+    let tree = DSegtree::create(3, "", |(lhs, rhs)| lhs + rhs);
     assert_eq(|_|"", tree.@size, 3);;
     assert_eq(|_|"", tree.@(0), "");;
     assert_eq(|_|"", tree.@(1), "");;
@@ -139,13 +139,13 @@ test_three = (
 // 書き換えると、文字列の連結のように`op`を重ねるほど値が大きくなるモノイドでは、`set`のたびに根の値が添字0の要素に連結される。
 test_set_leaves_index_zero : IO ();
 test_set_leaves_index_zero = (
-    let tree = DSegtree::init(4, "", |(lhs, rhs)| lhs + rhs);
+    let tree = DSegtree::create(4, "", |(lhs, rhs)| lhs + rhs);
     let tree = range(0, 100).fold(tree, |i, tree| tree.set(i % 4, "x"));
     assert_eq(|_|"", tree.@_elems.@(0), "");;
     assert_eq(|_|"", tree.fold(0, 4), "xxxx");;
 
     // 要素数1の木では根が葉である
-    let tree = DSegtree::init(1, "", |(lhs, rhs)| lhs + rhs);
+    let tree = DSegtree::create(1, "", |(lhs, rhs)| lhs + rhs);
     let tree = tree.set(0, "a").set(0, "b");
     assert_eq(|_|"", tree.@_elems.@(0), "");;
     assert_eq(|_|"", tree.fold(0, 1), "b");;
@@ -156,7 +156,7 @@ test_set_leaves_index_zero = (
 // ランダムにテストを行う
 // 
 // # Parameters
-// - `is_build` : セグメント木をbuildで構築するかどうか。そうでないときはinitで構築する
+// - `is_build` : セグメント木をbuildで構築するかどうか。そうでないときはcreateで構築する
 // - `rng` : 乱数生成器
 test_random : Bool -> Random -> IO Random;
 test_random = |is_build, rng| (
@@ -165,7 +165,7 @@ test_random = |is_build, rng| (
 
     let (tree, arr) = if !is_build {
         let arr = fill(n, "");
-        (DSegtree::init(n, "", |(lhs, rhs)| lhs + rhs), arr)
+        (DSegtree::create(n, "", |(lhs, rhs)| lhs + rhs), arr)
     } else {
         let arr = range(0, n).map(|i| i.u8.to_string).to_array;
         (DSegtree::build(arr, "", |(lhs, rhs)| lhs + rhs), arr)
@@ -201,7 +201,7 @@ test_speed = (
     // もしn^2実装になっていたらこのテストは終わらない。
     let n = 1e5;
     let rng = Random::init_by_seed(0_U64);
-    let tree = DSegtree::init(n, 0, |(lhs, rhs)| max(lhs, rhs)) : DSegtree I64;
+    let tree = DSegtree::create(n, 0, |(lhs, rhs)| max(lhs, rhs)) : DSegtree I64;
     let ((tree, rng, fold_sum), time) = consumed_time_while_lazy(|_| range(0, n).fold((tree, rng, 0), |_, (tree, rng, fold_sum)| (
         // set
         let (rng, i) = rng.generate_I64_nonneg;

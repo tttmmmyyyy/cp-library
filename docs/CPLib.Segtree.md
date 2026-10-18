@@ -8,7 +8,7 @@ Defined in cp-library@0.15.0
 要素は`CPLib.Trait.Monoid`を実装している必要があります。
 和・積・最小値・最大値のモノイドは`CPLib.Monoid`にあります。
 それ以外のモノイドは、自分で型を作成し、`Monoid`を実装してください。
-あとは、`init`や`build`を使ってセグメント木を作成し、
+あとは、`create`や`build`を使ってセグメント木を作成し、
 `@`で要素を取得、`set`で要素を更新、`fold`で区間の畳み込みを計算できます。
 `fold_all`は全体の畳み込みを、`calc_max_right`と`calc_min_left`は区間の畳み込みが条件を満たす端を計算します。
 ```fix
@@ -152,6 +152,18 @@ main : IO () = (
 );
 ```
 
+#### create
+
+Type: `[m : CPLib.Trait::Monoid] Std::I64 -> CPLib.Segtree::Segtree m`
+
+すべての要素が単位元であるようなセグメント木を作成する
+
+計算量：O(n)
+
+##### Parameters
+
+- `n` : セグメント木の要素数
+
 #### fold
 
 Type: `[m : CPLib.Trait::Monoid] Std::I64 -> Std::I64 -> CPLib.Segtree::Segtree m -> m`
@@ -182,15 +194,11 @@ Type: `[m : CPLib.Trait::Monoid] CPLib.Segtree::Segtree m -> m`
 
 #### init
 
+**Deprecated**: Use `CPLib.Segtree::create` instead.
+
 Type: `[m : CPLib.Trait::Monoid] Std::I64 -> CPLib.Segtree::Segtree m`
 
-すべての要素が単位元であるようなセグメント木を作成する
-
-計算量：O(n)
-
-##### Parameters
-
-- `n` : セグメント木の要素数
+`create`の別名（非推奨）
 
 #### set
 
