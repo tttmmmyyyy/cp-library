@@ -1,7 +1,7 @@
 module Main;
 
 import CPLib.IO::{read_c, read_cs, read_f, read_fs, read_i, read_is, read_s, read_ss, read_u, read_us};
-import Std::{F64, IO, Array::@, Debug::assert, Functor::map, IO::println, Monad::pure, String::{get_bytes, @size}, ToU64::u64};
+import Std::{F64, IO, Array::@, Debug::assert, Functor::map, IO::{input_line_s, println}, Monad::pure, String::{get_bytes, @size}, ToU64::u64};
 
 main : IO ();
 main = (
@@ -35,9 +35,20 @@ main = (
     let xs = *read_cs(10);
     assert(|_|"10", xs == ['c', 'h', 'a', 'r', 'a', 'c', 't', 'e', 'r', 's']);;
 
+    // 文字列の後に整数と文字列を読み、続けてStdのinput_line_sで行を読む。
+    // read_sは字句の後の改行を読まずに残すので、1回目のinput_line_sは行の残り（空）を返す
+    let (a, n, b) = (*read_s, *read_i, *read_s);
+    assert(|_|"11", a == "abc" && n == 42 && b == "def");;
+    let (rest, line) = (*input_line_s, *input_line_s);
+    assert(|_|"12", rest == "" && line == "rest of line");;
+
+    // 文字列の後に文字を読む
+    let (s, c) = (*read_s, *read_c);
+    assert(|_|"13", s == "ghi" && c == 'J');;
+
     // 入力の終わりで止まる長い字句
     let s = *read_s;
-    assert(|_|"11", s.@size == 1000 && s.get_bytes.@(0) == 'x' && s.get_bytes.@(999) == 'x');;
+    assert(|_|"14", s.@size == 1000 && s.get_bytes.@(0) == 'x' && s.get_bytes.@(999) == 'x');;
 
     "PASS".println
 );
