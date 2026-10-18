@@ -113,6 +113,28 @@ Type: `[p : CPLib.ZP::PrimeProvider] p -> Std::U32`
 
 Trait member of `CPLib.ZP::PrimeProvider`
 
+### namespace CPLib.ZP::ZP
+
+#### @prime
+
+Type: `CPLib.ZP::ZP p -> p`
+
+`x`の法`p`を与える`PrimeProvider`の値を返す
+
+##### Parameters
+
+- `x` : `ZP p`型の整数
+
+#### @value
+
+Type: `CPLib.ZP::ZP p -> Std::U32`
+
+`x`を[0, p)の整数として返す
+
+##### Parameters
+
+- `x` : `ZP p`型の整数
+
 ## Types and aliases
 
 ### namespace CPLib.ZP
@@ -168,14 +190,6 @@ NTT-friendly prime (2^23 | p-1)
 Defined as: `type ZP p = unbox struct { ...fields... }`
 
 素数`p`を法とする整数の環
-
-##### field `value`
-
-Type: `Std::U32`
-
-##### field `prime`
-
-Type: `p`
 
 ## Traits and aliases
 

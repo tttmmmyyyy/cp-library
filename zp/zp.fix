@@ -48,7 +48,27 @@ import Std::{
 };
 
 // 素数`p`を法とする整数の環
-type ZP p = struct { value : U32, prime : p };
+type ZP p = struct {
+    // 0 <= _value < p を保つ
+    _value : U32,
+    _prime : p
+};
+
+namespace ZP {
+    // `x`を[0, p)の整数として返す
+    //
+    // # Parameters
+    // - `x` : `ZP p`型の整数
+    @value : ZP p -> U32;
+    @value = |x| x.@_value;
+
+    // `x`の法`p`を与える`PrimeProvider`の値を返す
+    //
+    // # Parameters
+    // - `x` : `ZP p`型の整数
+    @prime : ZP p -> p;
+    @prime = |x| x.@_prime;
+}
 
 trait p : PrimeProvider {
     create : p;
@@ -113,7 +133,7 @@ zp = |x| (
     let p = pp.value;
     let x = x % p.i64;
     let x = if x < 0 { x + p.i64 } else { x };
-    ZP { value : x.u32, prime : pp }
+    ZP { _value : x.u32, _prime : pp }
 );
 
 // `zp`の別名（非推奨）
@@ -130,8 +150,8 @@ DEPRECATED[make, "Use `CPLib.ZP::zp` instead."];
 // - `x` : `ZP p`型の整数
 inv : [p : PrimeProvider] ZP p -> ZP p;
 inv = |x| (
-    let p = x.@prime.value;
-    if x.@value == 0_U32 { undefined("[CPLib.ZP::inv] division by zero") };
+    let p = x.@_prime.value;
+    if x.@_value == 0_U32 { undefined("[CPLib.ZP::inv] division by zero") };
     x.power(p.i64 - 2) // フェルマーの小定理
 );
 
@@ -143,48 +163,48 @@ primitive_root = (
     let pp = PrimeProvider::create;
     let p = pp.value;
     let r = calc_primitive_root(p.i64);
-    ZP { value : r.u32, prime : pp }
+    ZP { _value : r.u32, _prime : pp }
 );
 
 impl [p : PrimeProvider] ZP p : Eq {
     eq = |this, that| (
-        let p = this.@prime.value;
-        this.@value == that.@value
+        let p = this.@_prime.value;
+        this.@_value == that.@_value
     );
 }
 
 impl [p : PrimeProvider] ZP p : Add {
     add = |this, that| (
-        let p = this.@prime.value;
-        let v = this.@value + that.@value;
+        let p = this.@_prime.value;
+        let v = this.@_value + that.@_value;
         let v = if v >= p { v - p } else { v };
-        ZP { value : v, prime : this.@prime }
+        ZP { _value : v, _prime : this.@_prime }
     );
 }
 
 impl [p : PrimeProvider] ZP p : Neg {
     neg = |this| (
-        let p = this.@prime.value;
-        let v = p - this.@value;
+        let p = this.@_prime.value;
+        let v = p - this.@_value;
         let v = if v >= p { v - p } else { v };
-        ZP { value : v, prime : this.@prime }
+        ZP { _value : v, _prime : this.@_prime }
     );
 }
 
 impl [p : PrimeProvider] ZP p : Sub {
     sub = |this, that| (
-        let p = this.@prime.value;
-        let v = this.@value;
-        let v = if v < that.@value { v + p } else { v };
-        let v = v - that.@value;
-        ZP { value : v, prime : this.@prime }
+        let p = this.@_prime.value;
+        let v = this.@_value;
+        let v = if v < that.@_value { v + p } else { v };
+        let v = v - that.@_value;
+        ZP { _value : v, _prime : this.@_prime }
     );
 }
 
 impl [p : PrimeProvider] ZP p : Mul {
     mul = |this, that| (
-        let p = this.@prime.value.u64;
-        ZP { value : ((this.@value.u64 * that.@value.u64) % p).u32, prime : this.@prime }
+        let p = this.@_prime.value.u64;
+        ZP { _value : ((this.@_value.u64 * that.@_value.u64) % p).u32, _prime : this.@_prime }
     );
 }
 
@@ -201,7 +221,7 @@ impl [p : PrimeProvider] ZP p : One {
 }
 
 impl ZP p : ToString {
-    to_string = |this| this.@value.to_string;
+    to_string = |this| this.@_value.to_string;
 }
 
 // 与えられた64ビット整数と等しいかより大きい最小の2のべき乗を計算する
@@ -251,7 +271,7 @@ fft = |dir, x| (
     let n = pot;
 
     // p - 1 = 2^k * c (c: 奇数) と分解し、2^k >= n であることを確認する
-    let pm1 = x.@(0).@prime.value.i64 - 1;
+    let pm1 = x.@(0).@_prime.value.i64 - 1;
     if pm1.bit_and(-pm1) < n { undefined("[CPLib.ZP::fft] the size of `x` exceeds the largest power of two dividing p - 1") };
 
     match dir {
@@ -310,7 +330,7 @@ type _FFTInfo p = struct {
 _fft_info : [p : PrimeProvider] _FFTInfo p;
 _fft_info = (
     let g = ZP::primitive_root;
-    let pm1 = g.@prime.value.i64 - 1;
+    let pm1 = g.@_prime.value.i64 - 1;
     let rank2 = pm1.count_trailing_zeros;
     let r = g.power(pm1.shift_right(rank2));
     let root = fill(rank2 + 1, r);
@@ -351,8 +371,8 @@ _butterfly = |a : Array (ZP p)| (
     let pp = PrimeProvider::create : p;
     let p = pp.value.u64;
     // 以下で配列aを読み書きする添字は、ループの範囲から0以上n未満に収まる
-    let load = |i, a| a.unsafe_get_bounds_unchecked(i).@value.u64;
-    let store = |i, v, a| a.unsafe_set_bounds_unchecked(i, ZP { value : (v % p).u32, prime : pp });
+    let load = |i, a| a.unsafe_get_bounds_unchecked(i).@_value.u64;
+    let store = |i, v, a| a.unsafe_set_bounds_unchecked(i, ZP { _value : (v % p).u32, _prime : pp });
     // lenは、済ませた段の数
     loop((0, a), |(len, a)|
         if len >= h { break $ a };
@@ -376,13 +396,13 @@ _butterfly = |a : Array (ZP p)| (
         // 書き込む値はどれも4p^2未満で、p < 2^31なのでU64に収まる。
         // この段はh - len >= 2のときだけ走り、h <= rank2なのでroot.@(2)がある
         let mod2 = p * p;
-        let imag = info.@root.@(2).@value.u64;
+        let imag = info.@root.@(2).@_value.u64;
         let q = 1.shift_left(h - len - 2);
         let blocks = 1.shift_left(len);
         let (a, _) = range(0, blocks).fold((a, one), |s, (a, rot)|
             let rot2 = rot * rot;
             let rot3 = rot2 * rot;
-            let (r1, r2, r3) = (rot.@value.u64, rot2.@value.u64, rot3.@value.u64);
+            let (r1, r2, r3) = (rot.@_value.u64, rot2.@_value.u64, rot3.@_value.u64);
             let offset = s.shift_left(h - len);
             let a = range(offset, offset + q).fold(a, |i, a|
                 let a0 = load(i, a);
@@ -416,8 +436,8 @@ _butterfly_inv = |a : Array (ZP p)| (
     let pp = PrimeProvider::create : p;
     let p = pp.value.u64;
     // 以下で配列aを読み書きする添字は、ループの範囲から0以上n未満に収まる
-    let load = |i, a| a.unsafe_get_bounds_unchecked(i).@value.u64;
-    let store = |i, v, a| a.unsafe_set_bounds_unchecked(i, ZP { value : (v % p).u32, prime : pp });
+    let load = |i, a| a.unsafe_get_bounds_unchecked(i).@_value.u64;
+    let store = |i, v, a| a.unsafe_set_bounds_unchecked(i, ZP { _value : (v % p).u32, _prime : pp });
     // lenは、まだ戻していない段の数
     loop((h, a), |(len, a)|
         if len == 0 { break $ a };
@@ -427,7 +447,7 @@ _butterfly_inv = |a : Array (ZP p)| (
             let blocks = 1.shift_left(len - 1);
             let (a, _) = range(0, blocks).fold((a, one), |s, (a, irot)|
                 let offset = s.shift_left(h - len + 1);
-                let ir = irot.@value.u64;
+                let ir = irot.@_value.u64;
                 let a = range(offset, offset + q).fold(a, |i, a|
                     let l = load(i, a);
                     let r = load(i + q, a);
@@ -441,13 +461,13 @@ _butterfly_inv = |a : Array (ZP p)| (
         };
         // 基数4の段。掛ける前の値はどれも4p未満で、積は4p^2未満なので、p < 2^31ならU64に収まる。
         // この段はlen >= 2のときだけ走り、len <= h <= rank2なのでiroot.@(2)がある
-        let iimag = info.@iroot.@(2).@value.u64;
+        let iimag = info.@iroot.@(2).@_value.u64;
         let q = 1.shift_left(h - len);
         let blocks = 1.shift_left(len - 2);
         let (a, _) = range(0, blocks).fold((a, one), |s, (a, irot)|
             let irot2 = irot * irot;
             let irot3 = irot2 * irot;
-            let (r1, r2, r3) = (irot.@value.u64, irot2.@value.u64, irot3.@value.u64);
+            let (r1, r2, r3) = (irot.@_value.u64, irot2.@_value.u64, irot3.@_value.u64);
             let offset = s.shift_left(h - len + 2);
             let a = range(offset, offset + q).fold(a, |i, a|
                 let a0 = load(i, a);
