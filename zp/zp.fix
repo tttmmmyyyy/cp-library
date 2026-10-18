@@ -27,9 +27,9 @@
 // }
 //
 // main : IO () = (
-//     let zp = ZP::make(-5) : ZP P17;
-//     let zp = zp * zp;
-//     assert_eq(|_|"", zp.@value, 8_U32) // (-5)*(-5) = 25 = 8 mod 17
+//     let x = zp(-5) : ZP P17;
+//     let y = x * x;
+//     assert_eq(|_|"", y.@value, 8_U32) // (-5)*(-5) = 25 = 8 mod 17
 // );
 // ```
 module CPLib.ZP;
@@ -107,14 +107,18 @@ impl P469762049 : PrimeProvider {
 //
 // # Parameters
 // - `x` : `I64`型の整数
-make : [p : PrimeProvider] I64 -> ZP p;
-make = |x| (
+zp : [p : PrimeProvider] I64 -> ZP p;
+zp = |x| (
     let pp = PrimeProvider::create;
     let p = pp.value;
     let x = x % p.i64;
     let x = if x < 0 { x + p.i64 } else { x };
     ZP { value : x.u32, prime : pp }
 );
+
+// `zp`の別名（非推奨）
+make : [p : PrimeProvider] I64 -> ZP p = zp;
+DEPRECATED[make, "Use `CPLib.ZP::zp` instead."];
 
 // `ZP p`の逆元を求める。
 // 
@@ -189,11 +193,11 @@ impl [p : PrimeProvider] ZP p : Div {
 }
 
 impl [p : PrimeProvider] ZP p : Zero {
-    zero = ZP::make(0);
+    zero = zp(0);
 }
 
 impl [p : PrimeProvider] ZP p : One {
-    one = ZP::make(1);
+    one = zp(1);
 }
 
 impl ZP p : ToString {
@@ -243,7 +247,7 @@ fft = |dir, x| (
     let n = x.@size;
     let pot = _calc_next_pot(n.u64).i64;
     let x = x.reserve(pot);
-    let x = range(n, pot).fold(x, |i, x| x.push_back(ZP::make(0)));
+    let x = range(n, pot).fold(x, |i, x| x.push_back(zp(0)));
     let n = pot;
 
     // p - 1 = 2^k * c (c: 奇数) と分解し、2^k >= n であることを確認する
@@ -253,7 +257,7 @@ fft = |dir, x| (
     match dir {
         forward() => x._butterfly._bit_reverse,
         inverse() => (
-            let ni = ZP::make(n).inv;
+            let ni = zp(n).inv;
             x._bit_reverse._butterfly_inv.map(|v| v * ni)
         )
     }

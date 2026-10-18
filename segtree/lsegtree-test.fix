@@ -1,7 +1,7 @@
 module CPLib.LSegtree.Test;
 
 import CPLib.Arithmetic::pmod;
-import CPLib.LSegtree::{act_range, build, calc_max_right, calc_min_left, fold, fold_all, init, set, @, LSegtree};
+import CPLib.LSegtree::{act_range, build, calc_max_right, calc_min_left, fold, fold_all, create, set, @, LSegtree};
 import CPLib.Trait::{Action, Monoid, Action::act, Monoid::{op, unit}};
 import Random::{generate_I64_nonneg, init_by_seed, Random};
 import Std::{
@@ -135,7 +135,7 @@ gen_random_alphabetical_string = |rng| (
 // 要素数0の木で、空区間への作用と畳み込みができる
 test_empty : IO ();
 test_empty = (
-    let tree = LSegtree::init(0) : LSegtree StrConcat ShiftAlphabet;
+    let tree = LSegtree::create(0) : LSegtree StrConcat ShiftAlphabet;
     let tree = tree.act_range(0, 0, ShiftAlphabet::make(3, 1));
     let (_, v) = tree.fold(0, 0);
     assert_eq(|_|"lsegtree empty", v, StrConcat::make(""))
@@ -144,7 +144,7 @@ test_empty = (
 // n要素のセグメント木に対してランダムな操作をops回行い、foldの結果を愚直な計算と比べる
 //
 // # Parameters
-// - `is_build` : セグメント木をbuildで構築するかどうか。そうでないときはinitで構築する
+// - `is_build` : セグメント木をbuildで構築するかどうか。そうでないときはcreateで構築する
 // - `n` : 要素数
 // - `ops` : 操作の回数
 // - `rng` : 乱数生成器
@@ -153,7 +153,7 @@ test_random = |is_build, n, ops, rng| (
 
     let (tree, arr) = if !is_build {
         let arr = fill(n, StrConcat::make(""));
-        (LSegtree::init(n), arr)
+        (LSegtree::create(n), arr)
     } else {
         let arr = range(0, n).map(|i| 
             let v = String::from_U8('a' + (i % 26).u8);
@@ -212,7 +212,7 @@ test_speed = (
     // もしn^2実装になっていたらこのテストは終わらない。
     let n = 1e5;
     let rng = Random::init_by_seed(0_U64);
-    let tree = LSegtree::init(n) : LSegtree I64Max I64Add;
+    let tree = LSegtree::create(n) : LSegtree I64Max I64Add;
     let ((tree, rng, fold_sum, search_ok), time) = consumed_time_while_lazy(|_| range(0, n).fold((tree, rng, 0, true), |_, (tree, rng, fold_sum, search_ok)| (
         // set
         let (rng, i) = rng.generate_I64_nonneg;

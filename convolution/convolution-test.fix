@@ -1,7 +1,7 @@
 module CPLib.Convolution.Test;
 
 import CPLib.Convolution::{convolve_i64, convolve_zp};
-import CPLib.ZP::{make, P1000000007, P998244353, PrimeProvider, ZP};
+import CPLib.ZP::{zp, P1000000007, P998244353, PrimeProvider, ZP};
 import Std::{
     Array, IO, Array::{@, @size, to_iter}, Debug::{assert_eq, consumed_time_while_lazy}, 
     I64::{maximum, minimum, shift_left}, IO::println, Iterator::{fold, fold_m, map, range, to_array}, 
@@ -28,8 +28,8 @@ test = (
 test_zp : IO ();
 test_zp = (
     // p = 17, 基本
-    let x = [ZP::make(1), ZP::make(2), ZP::make(3)] : Array (ZP P17);
-    let y = [ZP::make(4), ZP::make(5), ZP::make(6)] : Array (ZP P17);
+    let x = [zp(1), zp(2), zp(3)] : Array (ZP P17);
+    let y = [zp(4), zp(5), zp(6)] : Array (ZP P17);
     let z = convolve_zp(x, y);
     assert_eq(|_|"[test_zp] case 1", z.@(0), x.@(0) * y.@(0));;
     assert_eq(|_|"[test_zp] case 2", z.@(1), x.@(0) * y.@(1) + x.@(1) * y.@(0));;
@@ -39,19 +39,19 @@ test_zp = (
     assert_eq(|_|"[test_zp] case 6", z.@size, x.@size + y.@size - 1);;
 
     // p = 17, 長さギリギリ
-    let x = range(0, 16).map(ZP::make).to_array : Array (ZP P17);
-    let y = [ZP::make(1)];
+    let x = range(0, 16).map(zp).to_array : Array (ZP P17);
+    let y = [zp(1)];
     let z = convolve_zp(x, y);
     assert_eq(|_|"[test_zp] case 7", z, x);;
 
     // p = 1000000007, p - 1を割る2のべき乗は2までなので、結果の長さ2まで
-    let x = [ZP::make(3)] : Array (ZP P1000000007);
-    let y = [ZP::make(4), ZP::make(5)];
-    assert_eq(|_|"[test_zp] case 7.1", convolve_zp(x, y), [ZP::make(12), ZP::make(15)]);;
+    let x = [zp(3)] : Array (ZP P1000000007);
+    let y = [zp(4), zp(5)];
+    assert_eq(|_|"[test_zp] case 7.1", convolve_zp(x, y), [zp(12), zp(15)]);;
 
     // p = 998244353, 基本
-    let x = [ZP::make(1), ZP::make(2), ZP::make(3)] : Array (ZP P998244353);
-    let y = [ZP::make(4), ZP::make(5), ZP::make(6)] : Array (ZP P998244353);
+    let x = [zp(1), zp(2), zp(3)] : Array (ZP P998244353);
+    let y = [zp(4), zp(5), zp(6)] : Array (ZP P998244353);
     let z = convolve_zp(x, y);
     assert_eq(|_|"[test_zp] case 8", z.@(0), x.@(0) * y.@(0));;
     assert_eq(|_|"[test_zp] case 9", z.@(1), x.@(0) * y.@(1) + x.@(1) * y.@(0));;
@@ -61,17 +61,17 @@ test_zp = (
     assert_eq(|_|"[test_zp] case 13", z.@size, x.@size + y.@size - 1);;
 
     // p = 998244353, 長さギリギリ
-    let x = range(0, 1.shift_left(23)).map(ZP::make).to_array : Array (ZP P998244353);
-    let y = [ZP::make(1)];
+    let x = range(0, 1.shift_left(23)).map(zp).to_array : Array (ZP P998244353);
+    let y = [zp(1)];
     let (z, time) = consumed_time_while_lazy(|_| convolve_zp(x, y));
     assert_eq(|_|"[test_zp] case 14", z, x);;
 
     // ベンチマーク
     let n = 1e5;
-    let x = range(0, n).map(ZP::make).to_array : Array (ZP P998244353);
-    let y = range(0, n).map(ZP::make).to_array : Array (ZP P998244353);
+    let x = range(0, n).map(zp).to_array : Array (ZP P998244353);
+    let y = range(0, n).map(zp).to_array : Array (ZP P998244353);
     let (z, time) = consumed_time_while_lazy(|_| convolve_zp(x, y));
-    let ans_n1 = range(0, n).fold(ZP::make(0), |i, acc| acc + x.@(i) * y.@(n-1-i));
+    let ans_n1 = range(0, n).fold(zp(0), |i, acc| acc + x.@(i) * y.@(n-1-i));
     assert_eq(|_|"[test_zp] case 15", z.@(n-1), ans_n1);;
     println $ "[CPLib.Convolution.Test] convolve_zp({}): {}".populate([n.to_string, time.to_string]);;
 

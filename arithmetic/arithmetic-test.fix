@@ -2,9 +2,9 @@ module CPLib.Arithmetic.Test;
 
 import BoolArray::BoolArray::@;
 import CPLib.Arithmetic::{
-    add_mod, calc_gcd, create_prime_list, create_prime_table, euler_tortient, euler_tortient_table, 
+    add_mod, calc_gcd, calc_prime_list, calc_prime_table, calc_totient, calc_totient_table, 
     ext_gcd, factorize, factorize_flat, factorize_via_lp_table, inv_mod, is_prime, isqrt, 
-    lift_crt, linear_sieve, mul_mod, pmod, pow_mod, pow_mod_u, power, pythagorean_triples, sub_mod, _calc_primitive_root, 
+    lift_crt, calc_lp_table, mul_mod, pmod, pow_mod, pow_mod_u, power, calc_pythagorean_triples, sub_mod, _calc_primitive_root, 
     _inv_gcd
 };
 import Random::{generate_I64_nonneg, generate_U64, init_by_seed};
@@ -292,7 +292,7 @@ test_inv_mod = (
 
 test_prime_table : IO ();
 test_prime_table = (
-    let prime_table = create_prime_table(20);
+    let prime_table = calc_prime_table(20);
     assert_eq(|_|"test_prime_table 0", prime_table.@(0), false);;
     assert_eq(|_|"test_prime_table 1", prime_table.@(1), false);;
     assert_eq(|_|"test_prime_table 2", prime_table.@(2), true);;
@@ -319,18 +319,18 @@ test_prime_table = (
 test_prime_list : IO ();
 test_prime_list = (
     let n = 1e8;
-    assert_eq(|_|"test_prime_list 1", create_prime_list(20).map(i64), [2, 3, 5, 7, 11, 13, 17, 19]);;
-    let (res, time) = consumed_time_while_lazy(|_| create_prime_list(n));
+    assert_eq(|_|"test_prime_list 1", calc_prime_list(20).map(i64), [2, 3, 5, 7, 11, 13, 17, 19]);;
+    let (res, time) = consumed_time_while_lazy(|_| calc_prime_list(n));
 
     assert_eq(|_|"test_prime_list 2", res.@size, 5761455);;
-    println $ "[CPLib.Arithmetic.Test] create_prime_list({}): {}".populate([n.to_string, time.to_string]);;
+    println $ "[CPLib.Arithmetic.Test] calc_prime_list({}): {}".populate([n.to_string, time.to_string]);;
     pure()
 );
 
 test_miller_rabin_u64 : IO ();
 test_miller_rabin_u64 = (
     let __N = 1e5;
-    let prime_table = create_prime_table(__N);
+    let prime_table = calc_prime_table(__N);
     range(0, __N).fold_m((), |n, _|
         assert_eq(|_|"check_is_prime_u64: " + n.to_string, prime_table.@(n), is_prime(n.u64))
     );;
@@ -419,39 +419,39 @@ test_calc_primitive_root = (
 );
 
 test_pythagorean_triples : IO () = (
-    assert_eq(|_|"pythagorean_triples 1", 
-        pythagorean_triples(1).sort,
+    assert_eq(|_|"calc_pythagorean_triples 1", 
+        calc_pythagorean_triples(1).sort,
         []
     );;
 
-    assert_eq(|_|"pythagorean_triples 2", 
-        pythagorean_triples(2).sort,
+    assert_eq(|_|"calc_pythagorean_triples 2", 
+        calc_pythagorean_triples(2).sort,
         []
     );;
 
-    assert_eq(|_|"pythagorean_triples 3", 
-        pythagorean_triples(3).sort,
+    assert_eq(|_|"calc_pythagorean_triples 3", 
+        calc_pythagorean_triples(3).sort,
         []
     );;   
 
-    assert_eq(|_|"pythagorean_triples 4", 
-        pythagorean_triples(4).sort,
+    assert_eq(|_|"calc_pythagorean_triples 4", 
+        calc_pythagorean_triples(4).sort,
         []
     );; 
 
 
-    assert_eq(|_|"pythagorean_triples 5", 
-        pythagorean_triples(5).sort,
+    assert_eq(|_|"calc_pythagorean_triples 5", 
+        calc_pythagorean_triples(5).sort,
         [(3, 4, 5)]
     );;
 
-    assert_eq(|_|"pythagorean_triples 25", 
-        pythagorean_triples(25).sort,
+    assert_eq(|_|"calc_pythagorean_triples 25", 
+        calc_pythagorean_triples(25).sort,
         [(3, 4, 5), (15, 8, 17), (5, 12, 13), (7, 24, 25)].sort
     );;
 
-    assert_eq(|_|"pythagorean_triples 101", 
-        pythagorean_triples(101).sort,
+    assert_eq(|_|"calc_pythagorean_triples 101", 
+        calc_pythagorean_triples(101).sort,
         [(3, 4, 5), (15, 8, 17), (35, 12, 37), (63, 16, 65), (99, 20, 101), (5, 12, 13), (21, 20, 29), (45, 28, 53), (77, 36, 85), (7, 24, 25), (55, 48, 73), (9, 40, 41), (33, 56, 65), (65, 72, 97), (11, 60, 61), (39, 80, 89), (13, 84, 85)].sort
     );;    
 
@@ -512,33 +512,33 @@ test_factorize = (
 
 test_euler_tortient : IO ();
 test_euler_tortient = (
-    assert_eq(|_|"euler_tortient 1", euler_tortient(1), 1);;
-    assert_eq(|_|"euler_tortient 2", euler_tortient(2), 1);;
-    assert_eq(|_|"euler_tortient 3", euler_tortient(3), 2);;
-    assert_eq(|_|"euler_tortient 4", euler_tortient(4), 2);;
-    assert_eq(|_|"euler_tortient 5", euler_tortient(5), 4);;
-    assert_eq(|_|"euler_tortient 6", euler_tortient(6), 2);;
-    assert_eq(|_|"euler_tortient 7", euler_tortient(7), 6);;
-    assert_eq(|_|"euler_tortient 8", euler_tortient(8), 4);;
-    assert_eq(|_|"euler_tortient 9", euler_tortient(9), 6);;
-    assert_eq(|_|"euler_tortient 10", euler_tortient(10), 4);;
-    assert_eq(|_|"euler_tortient 12", euler_tortient(12), 4);;
-    assert_eq(|_|"euler_tortient 36", euler_tortient(36), 12);; // 2^2 * 3^2 -> 36 * 1/2 * 2/3 = 12
-    assert_eq(|_|"euler_tortient 49", euler_tortient(49), 42);; // 7^2 -> 42
-    assert_eq(|_|"euler_tortient 1000003", euler_tortient(1000003), 1000002);; // prime
+    assert_eq(|_|"calc_totient 1", calc_totient(1), 1);;
+    assert_eq(|_|"calc_totient 2", calc_totient(2), 1);;
+    assert_eq(|_|"calc_totient 3", calc_totient(3), 2);;
+    assert_eq(|_|"calc_totient 4", calc_totient(4), 2);;
+    assert_eq(|_|"calc_totient 5", calc_totient(5), 4);;
+    assert_eq(|_|"calc_totient 6", calc_totient(6), 2);;
+    assert_eq(|_|"calc_totient 7", calc_totient(7), 6);;
+    assert_eq(|_|"calc_totient 8", calc_totient(8), 4);;
+    assert_eq(|_|"calc_totient 9", calc_totient(9), 6);;
+    assert_eq(|_|"calc_totient 10", calc_totient(10), 4);;
+    assert_eq(|_|"calc_totient 12", calc_totient(12), 4);;
+    assert_eq(|_|"calc_totient 36", calc_totient(36), 12);; // 2^2 * 3^2 -> 36 * 1/2 * 2/3 = 12
+    assert_eq(|_|"calc_totient 49", calc_totient(49), 42);; // 7^2 -> 42
+    assert_eq(|_|"calc_totient 1000003", calc_totient(1000003), 1000002);; // prime
     pure()
 );
 
 test_euler_tortient_table : IO ();
 test_euler_tortient_table = (
-    let t = euler_tortient_table(21);
-    assert_eq(|_|"euler_tortient_table 21", t, [0, 1, 1, 2, 2, 4, 2, 6, 4, 6, 4, 10, 4, 12, 6, 8, 8, 16, 6, 18, 8]);;
+    let t = calc_totient_table(21);
+    assert_eq(|_|"calc_totient_table 21", t, [0, 1, 1, 2, 2, 4, 2, 6, 4, 6, 4, 10, 4, 12, 6, 8, 8, 16, 6, 18, 8]);;
     pure()
 );
 
 test_factorize_via_lp_table : IO ();
 test_factorize_via_lp_table = (
-    let (lp, _) = linear_sieve(400_U32);
+    let (lp, _) = calc_lp_table(400_U32);
 
     // n=0, n=1: 素因数なし
     assert_eq(|_|"factorize_via_lp_table 0", factorize_via_lp_table(0_U32, lp), []);;    
@@ -564,7 +564,7 @@ test_factorize_via_lp_table = (
 
 test_linear_sieve : IO ();
 test_linear_sieve = (
-    let (lp, ps) = linear_sieve(21_U32);
+    let (lp, ps) = calc_lp_table(21_U32);
 
     assert_eq(|_|"case lp 0", lp.@(0), 0_U32);;
     assert_eq(|_|"case lp 1", lp.@(1), 0_U32);;

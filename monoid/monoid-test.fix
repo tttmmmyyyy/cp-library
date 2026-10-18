@@ -5,7 +5,7 @@ import CPLib.LSegtree;
 import CPLib.Monoid;
 import CPLib.Segtree;
 import CPLib.Trait::{Action, Monoid, Action::Set, Monoid::unit, NegInf::neg_inf};
-import CPLib.ZP::{make, P998244353, ZP};
+import CPLib.ZP::{zp, P998244353, ZP};
 import Random::{generate_I64_nonneg, init_by_seed, Random};
 
 type Mint = ZP P998244353;
@@ -16,7 +16,7 @@ test = (
 
     // セグメント木で値のモノイドを使う
     let rng = *check_segtree("Sum", |x| Sum { v : x }, |s| s.@v, |a, b| a + b, 0, gen_small, rng);
-    let rng = *check_segtree("Product", |x| Product { v : x }, |s| s.@v, |a, b| a * b, ZP::make(1) : Mint, gen_mint, rng);
+    let rng = *check_segtree("Product", |x| Product { v : x }, |s| s.@v, |a, b| a * b, zp(1) : Mint, gen_mint, rng);
     let rng = *check_segtree("Min", |x| Min { v : x }, |s| s.@v, |a, b| min(a, b), I64::maximum, gen_small, rng);
     let rng = *check_segtree("Max", |x| Monoid::Max { v : x }, |s| s.@v, |a, b| max(a, b), I64::minimum, gen_small, rng);
     let rng = *check_segtree("WeightedSum", WeightedSum::make_single, |s| s.@v, |a, b| a + b, 0, gen_small, rng);
@@ -34,7 +34,7 @@ test = (
     let rng = *check_lsegtree("RangeMul Min", |x| Min { v : x }, |s| s.@v, |a, b| min(a, b), I64::maximum, gen_small, gen_mul_nonneg : Random -> (Random, RangeMul Min I64, I64 -> I64), rng);
     let rng = *check_lsegtree("RangeMul Max", |x| Max { v : x }, |s| s.@v, |a, b| max(a, b), I64::minimum, gen_small, gen_mul_nonneg : Random -> (Random, RangeMul Max I64, I64 -> I64), rng);
     let rng = *check_lsegtree("RangeMul WeightedSum", WeightedSum::make_single, |s| s.@v, |a, b| a + b, 0, gen_small, gen_mul_nonneg : Random -> (Random, RangeMul WeightedSum I64, I64 -> I64), rng);
-    let rng = *check_lsegtree("RangeAffine WeightedSum", WeightedSum::make_single, |s| s.@v, |a, b| a + b, ZP::make(0) : Mint, gen_mint, gen_affine, rng);
+    let rng = *check_lsegtree("RangeAffine WeightedSum", WeightedSum::make_single, |s| s.@v, |a, b| a + b, zp(0) : Mint, gen_mint, gen_affine, rng);
 
     test_units;;
     test_init_weighted_sum;;
@@ -54,7 +54,7 @@ gen_small = |rng| (
 gen_mint : Random -> (Random, Mint);
 gen_mint = |rng| (
     let (rng, x) = rng.generate_I64_nonneg;
-    (rng, ZP::make(x))
+    (rng, zp(x))
 );
 
 // 区間加算の作用と、それを1要素に行う関数
@@ -188,7 +188,7 @@ check_lsegtree = |name, to_m, from_m, naive_op, naive_unit, gen, gen_act, rng| (
 test_units : IO ();
 test_units = (
     assert_eq(|_|"Sum unit", (Monoid::unit : Sum I64).@v, 0);;
-    assert_eq(|_|"Product unit", (Monoid::unit : Product (ZP P998244353)).@v, ZP::make(1));;
+    assert_eq(|_|"Product unit", (Monoid::unit : Product (ZP P998244353)).@v, zp(1));;
     assert_eq(|_|"Min unit", (Monoid::unit : Min I64).@v, I64::maximum);;
     assert_eq(|_|"Max unit", (Monoid::unit : Max I64).@v, I64::minimum);;
     assert_eq(|_|"Max unit U64", (Monoid::unit : Max U64).@v, 0_U64);;
@@ -211,7 +211,7 @@ test_units = (
 // `init`で作った`WeightedSum`の要素は重みが0で、作用を受けても変わらない
 test_init_weighted_sum : IO ();
 test_init_weighted_sum = (
-    let tree = LSegtree::init(3) : LSegtree (WeightedSum I64) (RangeAdd WeightedSum I64);
+    let tree = LSegtree::create(3) : LSegtree (WeightedSum I64) (RangeAdd WeightedSum I64);
     let tree = tree.set(1, WeightedSum::make_single(10));
     let tree = tree.act_range(0, 3, RangeAdd { a : 7 });
     assert_eq(|_|"init WeightedSum add", (tree.fold_all.@v, tree.fold_all.@w), (17, 1));;
@@ -222,13 +222,13 @@ test_init_weighted_sum = (
 test_replace_digits : IO ();
 test_replace_digits = (
     let n = 8;
-    let leaves = range(0, n).map(|i| WeightedSum { v : ZP::make(0), w : ZP::make(10).power(n - 1 - i) } : WeightedSum Mint).to_array;
+    let leaves = range(0, n).map(|i| WeightedSum { v : zp(0), w : zp(10).power(n - 1 - i) } : WeightedSum Mint).to_array;
     let leaves = leaves.map(|leaf| leaf.set_v(leaf.@w)); // すべての桁が1
     let tree = LSegtree::build(leaves) : LSegtree (WeightedSum Mint) (RangeAssign WeightedSum Mint);
     let queries = [(3, 6, 2, 11222211), (1, 4, 7, 77772211), (3, 8, 3, 77333333), (2, 2, 2, 72333333), (4, 5, 1, 72311333)];
     queries.to_iter.fold_m(tree, |(l, r, d, expected), tree|
-        let tree = tree.act_range(l - 1, r, RangeAssign::make(ZP::make(d)));
-        assert_eq(|_|"Replace Digits", tree.fold_all.@v, ZP::make(expected));;
+        let tree = tree.act_range(l - 1, r, RangeAssign::make(zp(d)));
+        assert_eq(|_|"Replace Digits", tree.fold_all.@v, zp(expected));;
         pure $ tree
     ).forget
 );

@@ -85,12 +85,16 @@ type LSegtree m a = struct {
 //
 // # Parameters
 // - `n` : セグメント木の要素数
-init : [m : Monoid, a : Monoid] I64 -> LSegtree m a;
-init = |n| (
+create : [m : Monoid, a : Monoid] I64 -> LSegtree m a;
+create = |n| (
     let elems = fill(n * 2, Monoid::unit);
     let lazy = fill(n, Monoid::unit);
     LSegtree { _elems : elems, _lazy : lazy, _n : n }
 );
+
+// `create`の別名（非推奨）
+init : [m : Monoid, a : Monoid] I64 -> LSegtree m a = create;
+DEPRECATED[init, "Use `CPLib.LSegtree::create` instead."];
 
 // 要素の配列からセグメント木を作成する
 // 

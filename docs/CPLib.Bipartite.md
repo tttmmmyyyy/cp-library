@@ -11,7 +11,7 @@ Defined in cp-library@0.15.0
 ```fix
 // 左右に2頂点ずつある二部グラフ
 let g = create(2, 2).add_edge(0, 0).add_edge(0, 1).add_edge(1, 1);
-let flow = g.maximize_flow;
+let flow = g.calc_flow;
 // 最大マッチングは辺(0, 0)と辺(1, 1)
 assert_eq(|_|"", flow.get_max_matching, [true, false, true])
 ```
@@ -74,6 +74,14 @@ Type: `Std::I64 -> Std::I64 -> CPLib.Bipartite::BipartiteGraph -> CPLib.Bipartit
 - `right` : 右側の頂点番号
 - `graph` : 二部グラフ
 
+#### calc_flow
+
+Type: `CPLib.Bipartite::BipartiteGraph -> CPLib.Bipartite::BipartiteGraphFlow`
+
+二部グラフに対応する最大フロー問題を作成し、解く
+
+計算量：O((n + m) sqrt(n))
+
 #### create
 
 Type: `Std::I64 -> Std::I64 -> CPLib.Bipartite::BipartiteGraph`
@@ -89,11 +97,11 @@ Type: `Std::I64 -> Std::I64 -> CPLib.Bipartite::BipartiteGraph`
 
 #### maximize_flow
 
+**Deprecated**: Use `CPLib.Bipartite::BipartiteGraph::calc_flow` instead.
+
 Type: `CPLib.Bipartite::BipartiteGraph -> CPLib.Bipartite::BipartiteGraphFlow`
 
-二部グラフに対応する最大フロー問題を作成し、解く
-
-計算量：O((n + m) sqrt(n))
+`calc_flow`の別名（非推奨）
 
 ### namespace CPLib.Bipartite::BipartiteGraphFlow
 

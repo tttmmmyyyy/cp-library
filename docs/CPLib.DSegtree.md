@@ -111,6 +111,20 @@ let tree = build([1, 2, 3, 4], 0, |(x, y)| x + y);
 assert_eq(|_|"", tree.calc_min_left(4, |s| s <= 7), 2)
 ```
 
+#### create
+
+Type: `Std::I64 -> m -> ((m, m) -> m) -> CPLib.DSegtree::DSegtree m`
+
+すべての要素が単位元であるようなセグメント木を作成する
+
+計算量：O(n)
+
+##### Parameters
+
+- `n` : セグメント木の要素数
+- `unit` : モノイドの単位元
+- `op` : モノイドの演算子
+
 #### fold
 
 Type: `Std::I64 -> Std::I64 -> CPLib.DSegtree::DSegtree m -> m`
@@ -141,17 +155,11 @@ Type: `CPLib.DSegtree::DSegtree m -> m`
 
 #### init
 
+**Deprecated**: Use `CPLib.DSegtree::create` instead.
+
 Type: `Std::I64 -> m -> ((m, m) -> m) -> CPLib.DSegtree::DSegtree m`
 
-すべての要素が単位元であるようなセグメント木を作成する
-
-計算量：O(n)
-
-##### Parameters
-
-- `n` : セグメント木の要素数
-- `unit` : モノイドの単位元
-- `op` : モノイドの演算子
+`create`の別名（非推奨）
 
 #### set
 

@@ -6,7 +6,7 @@
 // ```fix
 // // 左右に2頂点ずつある二部グラフ
 // let g = create(2, 2).add_edge(0, 0).add_edge(0, 1).add_edge(1, 1);
-// let flow = g.maximize_flow;
+// let flow = g.calc_flow;
 // // 最大マッチングは辺(0, 0)と辺(1, 1)
 // assert_eq(|_|"", flow.get_max_matching, [true, false, true])
 // ```
@@ -100,8 +100,8 @@ namespace BipartiteGraph {
     // 二部グラフに対応する最大フロー問題を作成し、解く
     //
     // 計算量：O((n + m) sqrt(n))
-    maximize_flow : BipartiteGraph -> BipartiteGraphFlow;
-    maximize_flow = |bg| (
+    calc_flow : BipartiteGraph -> BipartiteGraphFlow;
+    calc_flow = |bg| (
         let n = bg.@_left_size + bg.@_right_size + 2; // 開始と終了の頂点を含む
         let s = n - 2;
         let t = n - 1;
@@ -116,6 +116,9 @@ namespace BipartiteGraph {
         let (graph, flow) = graph.maximize_flow(s, t);
         BipartiteGraphFlow { _graph : bg, _max_flow : graph, _edge_ids : eids }
     );
+    // `calc_flow`の別名（非推奨）
+    maximize_flow : BipartiteGraph -> BipartiteGraphFlow = calc_flow;
+    DEPRECATED[maximize_flow, "Use `CPLib.Bipartite::BipartiteGraph::calc_flow` instead."];
 
 }
 
@@ -191,7 +194,7 @@ namespace BipartiteGraphFlow {
     // - `max_flow` : 二部グラフの最大フロー
     calc_min_vertex_cover : BipartiteGraphFlow -> (Array Bool, Array Bool);
     calc_min_vertex_cover = |flow| (
-        // `maximize_flow`は、開始地点を左右の頂点の後ろに置いた
+        // `calc_flow`は、開始地点を左右の頂点の後ろに置いた
         let s = flow.@_graph.@_left_size + flow.@_graph.@_right_size;
         let min_cut = flow.@_max_flow.calc_min_cut(s); // 第i番目の頂点に残余グラフで到達可能かどうかの配列
         let left_cover = range(0, flow.@_graph.@_left_size).map(|i| !min_cut.@(i)).to_array;

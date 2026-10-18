@@ -37,23 +37,25 @@ Type: `Std::I64 -> Std::I64 -> Std::I64`
 - `a`: 整数
 - `b`: 整数
 
-#### calc_primitive_root
+#### calc_lp_table
 
-Type: `Std::I64 -> Std::I64`
+Type: `Std::U32 -> (Std::Array Std::U32, Std::Array Std::U32)`
 
-素数pの原始根r（1 <= r < p）を一つ求める。
+線形ふるいを用いて、[0, n)の範囲で、各数の最小の素因数を格納した配列と、素数のリストを作成する
 
-https://cp-algorithms.com/algebra/primitive-root.html#algorithm-for-finding-a-primitive-root
-
-制約：pは素数
-
-計算量：O(sqrt(p))。pが`CPLib.ZP`に定義されている素数ならO(1)
+計算量：O(n)
 
 ##### Parameters
 
-- `p`: 素数
+- `n` : 上限（exclusive）
 
-#### create_prime_list
+##### Returns
+
+`(lp, ps)`
+- `lp`: 最小素因子テーブル。長さnの配列で、`lp.@(i)`は`i`の最小の素因数。`lp.@(0)`, `lp.@(1)`は0。
+- `ps`: [0, n)の範囲の素数のリスト
+
+#### calc_prime_list
 
 Type: `Std::I64 -> Std::Array Std::U32`
 
@@ -67,7 +69,7 @@ Type: `Std::I64 -> Std::Array Std::U32`
 
 - `n` : 素数リストの上限（exclusive）
 
-#### create_prime_table
+#### calc_prime_table
 
 Type: `Std::I64 -> BoolArray::BoolArray`
 
@@ -90,12 +92,47 @@ Type: `Std::I64 -> BoolArray::BoolArray`
 ```fix
 import BoolArray;
 
-let table = create_prime_table(10);
+let table = calc_prime_table(10);
 assert(|_|"", table.@(7));;
 assert(|_|"", !table.@(9))
 ```
 
-#### euler_tortient
+#### calc_primitive_root
+
+Type: `Std::I64 -> Std::I64`
+
+素数pの原始根r（1 <= r < p）を一つ求める。
+
+https://cp-algorithms.com/algebra/primitive-root.html#algorithm-for-finding-a-primitive-root
+
+制約：pは素数
+
+計算量：O(sqrt(p))。pが`CPLib.ZP`に定義されている素数ならO(1)
+
+##### Parameters
+
+- `p`: 素数
+
+#### calc_pythagorean_triples
+
+Type: `Std::I64 -> Std::Array (Std::I64, Std::I64, Std::I64)`
+
+原始ピタゴラス数`(a, b, c)`を列挙する
+
+`a^2 + b^2 = c^2`を満たす正の整数の組`(a, b, c)`で、`gcd(a, b, c) = 1`を満たすものを列挙する
+
+また、このような`a`, `b`は必ず片方が奇数でもう片方が偶数である。
+この関数の戻り値では`a`が奇数、`b`が偶数となる。
+
+制約：c_max >= 1
+
+計算量：O(c_max log c_max)
+
+##### Parameters
+
+- `c_max`: `c`の上限（inclusive）
+
+#### calc_totient
 
 Type: `Std::I64 -> Std::I64`
 
@@ -109,7 +146,7 @@ Type: `Std::I64 -> Std::I64`
 
 - `n`: 正の整数
 
-#### euler_tortient_table
+#### calc_totient_table
 
 Type: `Std::I64 -> Std::Array Std::I64`
 
@@ -122,6 +159,38 @@ Type: `Std::I64 -> Std::Array Std::I64`
 ##### Parameters
 
 - `n`: 表の上限（exclusive）
+
+#### create_prime_list
+
+**Deprecated**: Use `CPLib.Arithmetic::calc_prime_list` instead.
+
+Type: `Std::I64 -> Std::Array Std::U32`
+
+`calc_prime_list`の別名（非推奨）
+
+#### create_prime_table
+
+**Deprecated**: Use `CPLib.Arithmetic::calc_prime_table` instead.
+
+Type: `Std::I64 -> BoolArray::BoolArray`
+
+`calc_prime_table`の別名（非推奨）
+
+#### euler_tortient
+
+**Deprecated**: Use `CPLib.Arithmetic::calc_totient` instead.
+
+Type: `Std::I64 -> Std::I64`
+
+`calc_totient`の別名（非推奨）
+
+#### euler_tortient_table
+
+**Deprecated**: Use `CPLib.Arithmetic::calc_totient_table` instead.
+
+Type: `Std::I64 -> Std::Array Std::I64`
+
+`calc_totient_table`の別名（非推奨）
 
 #### ext_gcd
 
@@ -204,7 +273,7 @@ Type: `Std::U32 -> Std::Array Std::U32 -> Std::Array (Std::U32, Std::U8)`
 ##### Parameters
 
 - `n`: 素因数分解する数
-- `lp_table`: 最小素因子テーブル。最小素因子テーブルの定義は`linear_sieve`のコメントを参照。
+- `lp_table`: 最小素因子テーブル。最小素因子テーブルの定義は`calc_lp_table`のコメントを参照。
 
 ##### Returns
 
@@ -215,7 +284,7 @@ Type: `Std::U32 -> Std::Array Std::U32 -> Std::Array (Std::U32, Std::U8)`
 ##### Examples
 
 ```fix
-let (lp, _) = linear_sieve(100_U32);
+let (lp, _) = calc_lp_table(100_U32);
 assert_eq(|_|"", factorize_via_lp_table(12_U32, lp), [(2_U32, 2_U8), (3_U32, 1_U8)]) // 12 = 2^2 * 3
 ```
 
@@ -334,21 +403,11 @@ assert_eq(|_|"", lift_crt([0, 1], [2, 4]), (0, 0))
 
 #### linear_sieve
 
+**Deprecated**: Use `CPLib.Arithmetic::calc_lp_table` instead.
+
 Type: `Std::U32 -> (Std::Array Std::U32, Std::Array Std::U32)`
 
-線形ふるいを用いて、[0, n)の範囲で、各数の最小の素因数を格納した配列と、素数のリストを作成する
-
-計算量：O(n)
-
-##### Parameters
-
-- `n` : 上限（exclusive）
-
-##### Returns
-
-`(lp, ps)`
-- `lp`: 最小素因子テーブル。長さnの配列で、`lp.@(i)`は`i`の最小の素因数。`lp.@(0)`, `lp.@(1)`は0。
-- `ps`: [0, n)の範囲の素数のリスト
+`calc_lp_table`の別名（非推奨）
 
 #### mul_mod
 
@@ -453,22 +512,11 @@ assert_eq(|_|"", 3.power(4), 81)
 
 #### pythagorean_triples
 
+**Deprecated**: Use `CPLib.Arithmetic::calc_pythagorean_triples` instead.
+
 Type: `Std::I64 -> Std::Array (Std::I64, Std::I64, Std::I64)`
 
-原始ピタゴラス数`(a, b, c)`を列挙する
-
-`a^2 + b^2 = c^2`を満たす正の整数の組`(a, b, c)`で、`gcd(a, b, c) = 1`を満たすものを列挙する
-
-また、このような`a`, `b`は必ず片方が奇数でもう片方が偶数である。
-この関数の戻り値では`a`が奇数、`b`が偶数となる。
-
-制約：c_max >= 1
-
-計算量：O(c_max log c_max)
-
-##### Parameters
-
-- `c_max`: `c`の上限（inclusive）
+`calc_pythagorean_triples`の別名（非推奨）
 
 #### sub_mod
 
