@@ -137,7 +137,7 @@ test_empty : IO ();
 test_empty = (
     let tree = LSegtree::create(0) : LSegtree StrConcat ShiftAlphabet;
     let tree = tree.act_range(0, 0, ShiftAlphabet::make(3, 1));
-    let (_, v) = tree.fold(0, 0);
+    let v = tree.fold(0, 0);
     assert_eq(|_|"lsegtree empty", v, StrConcat::make(""))
 );
 
@@ -206,7 +206,7 @@ test_random = |is_build, n, ops, rng| (
         let (rng, r) = rng.generate_I64_nonneg;
         let l = l % n;
         let r = l + r % (n - l + 1);
-        let (tree, v) = tree.fold(l, r);
+        let v = tree.fold(l, r);
         let w = range(l, r).fold(Monoid::unit, |i, acc| Monoid::op(acc, arr.@(i)));
         assert_eq(|_|"lsegtree random", v, w);;
 
@@ -246,7 +246,7 @@ test_speed = (
         let k = k % n; // 0 <= k < n
         let l = l % n; // 0 <= l < n
         let (k, l) = if k <= l { (k, l) } else { (l, k) };
-        let (tree, v) = tree.fold(k, l);
+        let v = tree.fold(k, l);
 
         let fold_sum = fold_sum.max(v.@v);
 

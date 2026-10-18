@@ -44,12 +44,10 @@
 // 
 // main : IO () = (
 //     let tree = build([1, 2, 3].map(make)) : LSegtree I64Max I64Add;
-//     let (tree, res) = tree.fold(0, 3);
-//     assert_eq(|_|"", res.@v, 3);;
+//     assert_eq(|_|"", tree.fold(0, 3).@v, 3);;
 //     let tree = tree.set(1, make(3)); // [1, 3, 3]
 //     let tree = tree.act_range(0, 2, make(1)); // [2, 4, 3]
-//     let (_, res) = tree.fold(0, 2);
-//     assert_eq(|_|"", res.@v, 4)
+//     assert_eq(|_|"", tree.fold(0, 2).@v, 4)
 // );
 // ```
 module CPLib.LSegtree;
@@ -267,8 +265,6 @@ act_at = |i, a, tree| (
 );
 
 // 半開区間[l, r)にある要素の畳み込みを計算する
-// 
-// 遅延作用の伝搬が行われるので、ツリー自体も更新される。
 //
 // 制約：0 <= l <= r <= n
 //
@@ -278,19 +274,31 @@ act_at = |i, a, tree| (
 // - `l` : 区間の左端 (0-indexed)
 // - `r` : 区間の右端 (0-indexed, exclusive)
 // - `tree` : セグメント木
-fold : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> I64 -> LSegtree m a -> (LSegtree m a, m);
+fold : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> I64 -> LSegtree m a -> m;
 fold = |l, r, tree| (
     if !(0 <= l && l <= r && r <= tree.@_n) { undefined("[CPLib.LSegtree::fold] `l` and `r` do not satisfy 0 <= l <= r <= n") };
-    if l == r { (tree, Monoid::unit) };
-    let l = l + tree.@_n;
-    let r = r + tree.@_n;
-    // l0はlを、r0はrを、奇数になるまで2で割ったもの（r0はさらに1を引く）。
-    // `_fold_nodes`が値を読むノードの祖先は、l0とr0の祖先に含まれる。そこで作用を伝搬させておけばよい。
-    let l0 = l.shift_right(l.count_trailing_zeros);
-    let r0 = r.shift_right(r.count_trailing_zeros) - 1;
-    let tree = tree._propagate_above(l0);
-    let tree = tree._propagate_above(r0);
-    (tree, tree._fold_nodes(l, r))
+    if l == r { Monoid::unit };
+    let n = tree.@_n;
+    let l = l + n;
+    let r = r + n;
+    let elems = tree.@_elems;
+    // 木を書き換えずに、読むノードの値に、祖先がまだ伝搬していない作用を適用して読む。
+    // 段hで左端の側に読むノードは、葉lのh段上の祖先か、その兄弟である。どちらの祖先も、葉lの祖先のうちh段より上のものである。
+    // 右端の側に読むノードも同じく、葉r - 1のh段上の祖先か、その兄弟である。
+    let pending_l = tree._pending_above(l);
+    let pending_r = tree._pending_above(r - 1);
+    let (acc_l, acc_r) = loop((l, r, 0, Monoid::unit, Monoid::unit), |(l, r, h, acc_l, acc_r)|
+        if l >= r { break $ (acc_l, acc_r) };
+        let (l, acc_l) = if l % 2 == 0 { (l, acc_l) } else {
+            (l + 1, Monoid::op(acc_l, act(pending_l.@(h), elems.@(l))))
+        };
+        let (r, acc_r) = if r % 2 == 0 { (r, acc_r) } else {
+            let r = r - 1;
+            (r, Monoid::op(act(pending_r.@(h), elems.@(r)), acc_r))
+        };
+        continue $ (l.shift_right(1), r.shift_right(1), h + 1, acc_l, acc_r)
+    );
+    Monoid::op(acc_l, acc_r)
 );
 
 // 半開区間[l, r)に右から作用を適用する

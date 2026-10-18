@@ -176,7 +176,7 @@ check_lsegtree = |name, to_m, from_m, naive_op, naive_unit, gen, gen_act, rng| (
             let r = l + r % (n - l + 1);
             let naive = range(l, r).fold(naive_unit, |i, acc| naive_op(acc, arr.@(i)));
             assert_eq(|_|name + " fold_all", from_m(tree.fold_all), arr.to_iter.fold(naive_unit, |x, acc| naive_op(acc, x)));;
-            let (tree, res) = tree.fold(l, r);
+            let res = tree.fold(l, r);
             assert_eq(|_|name + " fold", from_m(res), naive);;
             pure $ (tree, arr, rng)
         );

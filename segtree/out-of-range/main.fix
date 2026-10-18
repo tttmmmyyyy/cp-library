@@ -36,22 +36,22 @@ main = (
         let tree = LSegtree::build(elems.map(|v| Max { v })) : LSegtree (Max I64) (RangeAdd Max I64);
         if op == 0 { tree.@(-1).@v };
         if op == 1 { tree.set(-1, Max { v : 0 }).fold_all.@v };
-        if op == 2 { tree.fold(2, 1).@1.@v };
+        if op == 2 { tree.fold(2, 1).@v };
         if op == 3 { tree.calc_max_right(4, |_| true) };
         if op == 4 { tree.calc_min_left(-1, |_| true) };
         if op == 5 { tree.act_range(-1, 2, RangeAdd { a : 10 }).fold_all.@v };
         if op == 6 { tree.act_at(-1, RangeAdd { a : 10 }).fold_all.@v };
-        tree.fold(0, 3).@1.@v
+        tree.fold(0, 3).@v
     } else {
         let tree = LDSegtree::build(elems, I64::minimum, |(x, y)| max(x, y), 0, |(a, b)| a + b, |(a, x)| a + x);
         if op == 0 { tree.@(-1) };
         if op == 1 { tree.set(-1, 0).fold_all };
-        if op == 2 { tree.fold(2, 1).@1 };
+        if op == 2 { tree.fold(2, 1) };
         if op == 3 { tree.calc_max_right(4, |_| true) };
         if op == 4 { tree.calc_min_left(-1, |_| true) };
         if op == 5 { tree.act_range(-1, 2, 10).fold_all };
         if op == 6 { tree.act_at(-1, 10).fold_all };
-        tree.fold(0, 3).@1
+        tree.fold(0, 3)
     };
     println(res.to_string)
 );
