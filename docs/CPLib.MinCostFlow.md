@@ -124,6 +124,7 @@ Type: `Std::I64 -> Std::I64 -> CPLib.MinCostFlow::MinCostFlowGraph -> (CPLib.Min
 
 計算量：O(F (n + m) log(n + m))、Fは流した量。
 容量が正の辺にコストが負のものがあるとき（負のコストの辺を足したときと、2回目以降に呼ぶとき）は、追加でO(n (n + m))かかる
+流す量によらず、呼ぶたびにO(n + m)かかる
 
 ##### Parameters
 
@@ -148,6 +149,7 @@ xはこの呼び出しで流した量、g(x)はそのコストである。
 
 計算量：O(F (n + m) log(n + m))、Fは流した量。
 容量が正の辺にコストが負のものがあるとき（負のコストの辺を足したときと、2回目以降に呼ぶとき）は、追加でO(n (n + m))かかる
+流す量によらず、呼ぶたびにO(n + m)かかる
 
 ##### Parameters
 
@@ -168,6 +170,7 @@ Type: `Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MinCostFlow::MinCostFlowGraph -
 
 計算量：O(F (n + m) log(n + m))、Fは流した量。
 容量が正の辺にコストが負のものがあるとき（負のコストの辺を足したときと、2回目以降に呼ぶとき）は、追加でO(n (n + m))かかる
+流す量によらず、呼ぶたびにO(n + m)かかる
 
 ##### Parameters
 
@@ -189,6 +192,7 @@ Type: `Std::I64 -> Std::I64 -> Std::I64 -> CPLib.MinCostFlow::MinCostFlowGraph -
 
 計算量：O(F (n + m) log(n + m))、Fは流した量。
 容量が正の辺にコストが負のものがあるとき（負のコストの辺を足したときと、2回目以降に呼ぶとき）は、追加でO(n (n + m))かかる
+流す量によらず、呼ぶたびにO(n + m)かかる
 
 ##### Parameters
 
