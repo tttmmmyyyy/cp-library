@@ -40,8 +40,8 @@ convolve_zp = |x, y| (
     let pot = _calc_next_pot(n.u64).i64;
     let pm1 = x.@(0).@prime.value.i64 - 1;
     if pm1.bit_and(-pm1) < pot { undefined("[CPLib.Convolution::convolve_zp] the result is longer than the largest power of two dividing p - 1") };
-    // 短いほうの長さが60以下なら、NTTで変換するより素朴に掛けるほうが速い
-    if min(x.@size, y.@size) <= 60 { _convolve_naive(x, y) };
+    // 短いほうの長さが40以下なら、長いほうの長さによらず、NTTで変換するより素朴に掛けるほうが速い
+    if min(x.@size, y.@size) <= 40 { _convolve_naive(x, y) };
     let x = x.reserve(pot);
     let x = range(x.@size, pot).fold(x, |i, x| x.push_back(ZP::make(0)));
     let y = y.reserve(pot);
