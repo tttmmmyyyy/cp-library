@@ -1,6 +1,6 @@
 module CPLib.String.Test;
 
-import CPLib.String::{calc_lcp_array, calc_lcp_array_any, calc_suffix_array, calc_suffix_array_i64, calc_z_array, calc_z_array_any, _sa_doubling};
+import CPLib.String::{calc_lcp_array, calc_lcp_array_any, calc_suffix_array, calc_suffix_array_any, calc_suffix_array_i64, calc_z_array, calc_z_array_any, _sa_doubling};
 import EZS::{cd, run_o, run_wi_oec, Context::default};
 import Random::{generate_U64, init_by_seed};
 import Std::{
@@ -91,6 +91,10 @@ test_sa_lcp_random = (
         let common = |i, j| loop(0, |k| if i + k < n && j + k < n && s.@(i + k) == s.@(j + k) { continue $ k + 1 } else { break $ k });
         let sa = s.calc_suffix_array_i64;
         assert_eq(|_|"test_sa_lcp_random: permutation", sa.sort_by(|(x, y)| x < y), range(0, n).to_array);;
+        // 要素の大小の順が同じなら、要素の型が違っても同じsuffix arrayになる
+        let digits = s.map(|x| (x + 7) / 1000);
+        assert_eq(|_|"test_sa_lcp_random: any U8", digits.map(|d| 'a' + d.u8).calc_suffix_array_any, sa);;
+        assert_eq(|_|"test_sa_lcp_random: any String", digits.map(|d| ["x", "xy", "y"].@(d)).calc_suffix_array_any, sa);;
         range(0, n - 1).fold_m((), |i, _|
             let (x, y) = (sa.@(i), sa.@(i + 1));
             let k = common(x, y);

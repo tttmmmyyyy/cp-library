@@ -73,21 +73,44 @@ AtCoder Libraryの`suffix_array`の移植です。
 
 - `s` : 対象の文字列
 
+#### calc_suffix_array_any
+
+Type: `[a : Std::Eq, a : Std::LessThan] Std::Array a -> Std::Array Std::I64`
+
+比較できる要素の配列のsuffix arrayを計算する
+
+AtCoder Libraryの`suffix_array`の移植です。要素を整列して0から順に番号を振り直し、その番号の列のsuffix arrayを求めます。
+
+制約：|s| < 2^31、`<`と`==`が全順序を与える
+
+計算量：O(n log n)、n = |s|。要素の比較をO(1)とする
+
+##### Returns
+
+`[0, 1, ..., n)` の順列`sa`で、0 <= i < n - 1を満たすすべての`i`について`s[sa.@(i)..) < s[sa.@(i+1)..)` が成り立つもの
+
+##### Parameters
+
+- `s` : 対象の配列
+
+##### Examples
+
+```fix
+// 接尾辞を辞書順に並べると "ab", "abab", "b", "bab"
+assert_eq(|_|"", calc_suffix_array_any(["a", "b", "a", "b"]), [2, 0, 3, 1])
+```
+
 #### calc_suffix_array_i64
 
 Type: `Std::Array Std::I64 -> Std::Array Std::I64`
 
-配列のsuffix arrayを計算する
+`I64`の配列のsuffix arrayを計算する
 
-AtCoder Libraryの`suffix_array`の移植です。
+`calc_suffix_array_any`と同じ結果を返す。
 
 制約：|s| < 2^31
 
 計算量：O(n log n)、n = |s|
-
-##### Returns
-
-`[0, 1, ..., s.get_size)` の順列`sa`で、任意の`i`について`s[sa.@(i)..) < s[sa.@(i+1)..)` が成り立つもの
 
 ##### Parameters
 
