@@ -25,8 +25,7 @@ let tree = build(
     |(a, x)| x + a                    // 作用：加算
 );
 let tree = tree.act_range(0, 2, 10); // [11, 12, 3]
-let (_, res) = tree.fold(1, 3);
-assert_eq(|_|"", res, 12)
+assert_eq(|_|"", tree.fold(1, 3), 12)
 ```
 
 ## Values
@@ -183,11 +182,9 @@ Type: `Std::I64 -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((a, m) -> m) -> 
 
 #### fold
 
-Type: `Std::I64 -> Std::I64 -> CPLib.LDSegtree::LDSegtree m a -> (CPLib.LDSegtree::LDSegtree m a, m)`
+Type: `Std::I64 -> Std::I64 -> CPLib.LDSegtree::LDSegtree m a -> m`
 
 半開区間[l, r)にある要素の畳み込みを計算する
-
-遅延作用の伝搬が行われるので、ツリー自体も更新される。
 
 制約：0 <= l <= r <= n
 

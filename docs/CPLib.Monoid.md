@@ -44,8 +44,7 @@ import CPLib.Segtree;
 let segtree = Segtree::build([1, 2, 3].map(|v| Max { v })) : Segtree (Max I64);
 let lsegtree = LSegtree::build([1, 2, 3].map(|v| Max { v })) : LSegtree (Max I64) (RangeAdd Max I64);
 let lsegtree = lsegtree.act_range(0, 2, RangeAdd { a : 10 }); // [11, 12, 3]
-let (_, res) = lsegtree.fold(1, 3);
-assert_eq(|_|"", res.@v, 12);;
+assert_eq(|_|"", lsegtree.fold(1, 3).@v, 12);;
 assert_eq(|_|"", segtree.fold(0, 2).@v, 2)
 ```
 

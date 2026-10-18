@@ -47,12 +47,10 @@ impl I64Add : Action {
 
 main : IO () = (
     let tree = build([1, 2, 3].map(make)) : LSegtree I64Max I64Add;
-    let (tree, res) = tree.fold(0, 3);
-    assert_eq(|_|"", res.@v, 3);;
+    assert_eq(|_|"", tree.fold(0, 3).@v, 3);;
     let tree = tree.set(1, make(3)); // [1, 3, 3]
     let tree = tree.act_range(0, 2, make(1)); // [2, 4, 3]
-    let (_, res) = tree.fold(0, 2);
-    assert_eq(|_|"", res.@v, 4)
+    assert_eq(|_|"", tree.fold(0, 2).@v, 4)
 );
 ```
 
@@ -200,11 +198,9 @@ Type: `[a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoid] Std::I64 -> CPLib.LSeg
 
 #### fold
 
-Type: `[a : CPLib.Trait::Action, a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoid, CPLib.Trait::Action::Set a = m] Std::I64 -> Std::I64 -> CPLib.LSegtree::LSegtree m a -> (CPLib.LSegtree::LSegtree m a, m)`
+Type: `[a : CPLib.Trait::Action, a : CPLib.Trait::Monoid, m : CPLib.Trait::Monoid, CPLib.Trait::Action::Set a = m] Std::I64 -> Std::I64 -> CPLib.LSegtree::LSegtree m a -> m`
 
 半開区間[l, r)にある要素の畳み込みを計算する
-
-遅延作用の伝搬が行われるので、ツリー自体も更新される。
 
 制約：0 <= l <= r <= n
 
