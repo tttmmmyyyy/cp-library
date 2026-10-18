@@ -367,7 +367,7 @@ Type: `Std::U64 -> Std::U64`
 
 64ビット整数の平方根の整数部分を計算する
 
-計算量：O(log s)
+計算量：O(log log s)
 
 ##### Parameters
 

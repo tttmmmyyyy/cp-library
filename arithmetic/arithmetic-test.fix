@@ -14,7 +14,7 @@ import Std::{
     Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, I32::maximum, 
     I64::{maximum, minimum, shift_left}, IO::println, Iterator::{collect_m, filter, fold, fold_m, map, range}, 
     LessThan::max, LoopState::{break, continue}, Monad::pure, Option::is_some, String::{find, populate}, ToI64::i64, 
-    ToString::to_string, ToU128::u128, ToU32::u32, ToU64::u64, U32::{maximum, shift_left}, U64::{maximum, shift_left}
+    ToString::to_string, ToU128::u128, ToU32::u32, ToU64::u64, U32::{maximum, shift_left}, U64::{maximum, shift_left, shift_right}
 };
 
 // floor_math:
@@ -111,6 +111,20 @@ test_isqrt = (
     assert_eq(|_|"isqrt 5", isqrt(5_U64), 2_U64);;
     assert_eq(|_|"isqrt 5", isqrt(2000000_U64), 1414_U64);;
     assert_eq(|_|"isqrt 5", isqrt(U64::maximum), (1.shift_left(32) - 1).u64);;
+
+    // 小さい数はすべて、大きい数は平方数の前後と乱数で、二分探索と比べる
+    range(0, 10000).fold_m((), |s, _|
+        assert_eq(|_|"isqrt small " + s.to_string, isqrt(s.u64), isqrt_bs(s.u64))
+    );;
+    let rng = Random::init_by_seed(1_U64);
+    let rng = *range(0, 10000).fold_m(rng, |_, rng|
+        let (rng, s) = rng.generate_U64;
+        let k = s.shift_right(32_U64);
+        let squares = [k * k - 1_U64, k * k, k * k + 1_U64];
+        squares.to_iter.fold_m((), |s, _| assert_eq(|_|"isqrt square " + s.to_string, isqrt(s), isqrt_bs(s)));;
+        assert_eq(|_|"isqrt random " + s.to_string, isqrt(s), isqrt_bs(s));;
+        pure(rng)
+    );
 
     pure()
 );
@@ -255,6 +269,23 @@ test_inv_mod = (
         assert_eq(|_|"test_inv_mod ax mod m - 1, x = " + x.to_string, ax, 1);;
         assert(|_|"test_inv_mod 0 <= x < m, x = " + x.to_string, 0 <= x && x < m);;
         pure()
+    );;
+    // 合成数を含む小さな法の、互いに素なすべての a
+    range(1, 60).fold_m((), |m, _|
+        range(-70, 70).filter(|a| calc_gcd(a, m) == 1).fold_m((), |a, _|
+            let x = a.inv_mod(m);
+            let label = "test_inv_mod a = " + a.to_string + ", m = " + m.to_string;
+            assert_eq(|_|label, mul_mod(a, x, m), 1.pmod(m));;
+            assert(|_|label + ", x = " + x.to_string, 0 <= x && x < m)
+        )
+    );;
+    // 大きな法（2^61 - 1、素数）と、I64の端の値
+    let m = 2305843009213693951;
+    [I64::minimum, I64::maximum, -1, 1, 2, m - 1, m + 1].to_iter.fold_m((), |a, _|
+        let x = a.inv_mod(m);
+        let label = "test_inv_mod large a = " + a.to_string;
+        assert_eq(|_|label, mul_mod(a, x, m), 1);;
+        assert(|_|label + ", x = " + x.to_string, 0 <= x && x < m)
     );;
     pure()
 );
