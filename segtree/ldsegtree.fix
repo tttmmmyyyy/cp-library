@@ -236,6 +236,31 @@ set = |i, value, tree| (
     LDSegtree { _n : n, _unit : unit, _op : op, _act_unit : act_unit, _act_op : act_op, _act : act, _elems : elems, _lazy : lazy }
 );
 
+// 1つの要素に作用を掛ける
+//
+// `act_range(i, i + 1, a)`と同じ結果になる。
+//
+// 制約：0 <= i < n
+//
+// 計算量：O(log n)
+//
+// # Parameters
+// - `i` : インデックス（0-indexed）
+// - `a` : 作用
+// - `tree` : セグメント木
+act_at : I64 -> a -> LDSegtree m a -> LDSegtree m a;
+act_at = |i, a, tree| (
+    if !(0 <= i && i < tree.@_n) { undefined("[CPLib.LDSegtree::act_at] `i` is out of [0, n)") };
+    let LDSegtree { _n : n, _unit : unit, _op : op, _act_unit : act_unit, _act_op : act_op, _act : act, _elems : elems, _lazy : lazy } = tree;
+    let i = i + n;
+    let (elems, lazy) = _propagate_above(i, act_unit, act_op, act, elems, lazy);
+    // 葉の値に、葉の遅延作用とaを続けて掛けた値を置き、遅延作用を単位元に戻す
+    let elems = elems.set(i, act((a, act((lazy.@(i), elems.@(i))))));
+    let lazy = lazy.set(i, act_unit);
+    let elems = _recalc_above(i, op, act, elems, lazy);
+    LDSegtree { _n : n, _unit : unit, _op : op, _act_unit : act_unit, _act_op : act_op, _act : act, _elems : elems, _lazy : lazy }
+);
+
 // 半開区間[l, r)にある要素の畳み込みを計算する
 // 
 // 遅延作用の伝搬が行われるので、ツリー自体も更新される。

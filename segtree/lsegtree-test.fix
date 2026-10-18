@@ -1,7 +1,7 @@
 module CPLib.LSegtree.Test;
 
 import CPLib.Arithmetic::pmod;
-import CPLib.LSegtree::{act_range, build, calc_max_right, calc_min_left, fold, fold_all, create, set, @, LSegtree};
+import CPLib.LSegtree::{act_at, act_range, build, calc_max_right, calc_min_left, fold, fold_all, create, set, @, LSegtree};
 import CPLib.Trait::{Action, Monoid, Action::act, Monoid::{op, unit}};
 import Random::{generate_I64_nonneg, init_by_seed, Random};
 import Std::{
@@ -164,7 +164,7 @@ test_random = |is_build, n, ops, rng| (
 
     let (_1, _2, rng) = *range(0, ops).fold_m((tree, arr, rng), |_, (tree, arr, rng)|
         let (rng, dice) = rng.generate_I64_nonneg;
-        let dice = dice % 2;
+        let dice = dice % 3;
         let (tree, arr, rng) = *if dice == 0 {
             // setによる更新
             let (rng, i) = rng.generate_I64_nonneg;
@@ -173,6 +173,16 @@ test_random = |is_build, n, ops, rng| (
             let v = StrConcat::make(v);
             let tree = tree.set(i, v);
             let arr = arr.set(i, v);
+            pure $ (tree, arr, rng)
+        } else if dice == 1 {
+            // 1つの要素への作用による更新
+            let (rng, i) = rng.generate_I64_nonneg;
+            let i = i % n;
+            let (rng, a) = rng.generate_I64_nonneg;
+            let (rng, b) = rng.generate_I64_nonneg;
+            let a = ShiftAlphabet::make(a, b);
+            let tree = tree.act_at(i, a);
+            let arr = arr.set(i, act(a, arr.@(i)));
             pure $ (tree, arr, rng)
         } else {
             // 範囲作用による更新

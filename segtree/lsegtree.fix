@@ -244,6 +244,28 @@ set = |i, value, tree| (
     tree._recalc_above(i)
 );
 
+// 1つの要素に作用を掛ける
+//
+// `act_range(i, i + 1, a)`と同じ結果になる。
+//
+// 制約：0 <= i < n
+//
+// 計算量：O(log n)
+//
+// # Parameters
+// - `i` : インデックス（0-indexed）
+// - `a` : 作用
+// - `tree` : セグメント木
+act_at : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> a -> LSegtree m a -> LSegtree m a;
+act_at = |i, a, tree| (
+    if !(0 <= i && i < tree.@_n) { undefined("[CPLib.LSegtree::act_at] `i` is out of [0, n)") };
+    let i = i + tree.@_n;
+    let tree = tree._propagate_above(i);
+    // 葉は遅延作用を持たないので、値に直接作用を掛ける
+    let tree = tree.mod__elems(|elems| elems.set(i, act(a, elems.@(i))));
+    tree._recalc_above(i)
+);
+
 // 半開区間[l, r)にある要素の畳み込みを計算する
 // 
 // 遅延作用の伝搬が行われるので、ツリー自体も更新される。
