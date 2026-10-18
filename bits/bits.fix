@@ -157,7 +157,7 @@ bit_check : [a : Bits, a : Eq] I64 -> a -> Bool = |i, x| x.and(one.shl(i)) != ze
 // # Parameters
 // - `i` : ビット位置
 // - `x` : 対象のビット列
-bit_set : [a : Bits, a : Eq] I64 -> a -> a = |i, x| x.or(one.shl(i));
+bit_set : [a : Bits] I64 -> a -> a = |i, x| x.or(one.shl(i));
     
 // 第iビットを消す
 // 
@@ -166,7 +166,7 @@ bit_set : [a : Bits, a : Eq] I64 -> a -> a = |i, x| x.or(one.shl(i));
 // # Parameters
 // - `i` : ビット位置
 // - `x` : 対象のビット列
-bit_clear : [a : Bits, a : Eq] I64 -> a -> a = |i, x| x.and(one.shl(i).not);
+bit_clear : [a : Bits] I64 -> a -> a = |i, x| x.and(one.shl(i).not);
 
 // 第iビットを反転する
 // 
@@ -175,7 +175,7 @@ bit_clear : [a : Bits, a : Eq] I64 -> a -> a = |i, x| x.and(one.shl(i).not);
 // # Parameters
 // - `i` : ビット位置
 // - `x` : 対象のビット列
-bit_flip : [a : Bits, a : Eq] I64 -> a -> a = |i, x| x.xor(one.shl(i));
+bit_flip : [a : Bits] I64 -> a -> a = |i, x| x.xor(one.shl(i));
 
 type BitCombinationIterator = struct { _sub : I64, _end : I64 };
 

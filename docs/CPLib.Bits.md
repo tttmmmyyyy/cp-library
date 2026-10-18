@@ -23,7 +23,7 @@ Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> Std::Bool`
 
 #### bit_clear
 
-Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> a`
+Type: `[a : CPLib.Bits::Bits] Std::I64 -> a -> a`
 
 第iビットを消す
 
@@ -55,7 +55,7 @@ assert_eq(|_|"", bit_combinations(3, 2).to_array, [0b011, 0b101, 0b110])
 
 #### bit_flip
 
-Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> a`
+Type: `[a : CPLib.Bits::Bits] Std::I64 -> a -> a`
 
 第iビットを反転する
 
@@ -68,7 +68,7 @@ Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> a`
 
 #### bit_set
 
-Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> a`
+Type: `[a : CPLib.Bits::Bits] Std::I64 -> a -> a`
 
 第iビットを立てる
 
