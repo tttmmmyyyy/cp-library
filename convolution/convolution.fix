@@ -8,7 +8,7 @@ import CPLib.ZP::{
 import Std::{
     undefined, Array, I64, 
     Array::{fill, push_back, reserve, truncate, @, @size, unsafe_set_bounds_unchecked}, 
-    Functor::map, I64::{bit_and, shift_left}, Iterator::{fold, range}, ToI64::i64, ToU64::u64, Tuple2::@1
+    Functor::map, I64::{bit_and, shift_left}, Iterator::{fold, range}, LessThan::min, ToI64::i64, ToU64::u64, Tuple2::@1
 };
 
 // 2つの配列の畳み込みを計算する
@@ -40,6 +40,8 @@ convolve_zp = |x, y| (
     let pot = _calc_next_pot(n.u64).i64;
     let pm1 = x.@(0).@prime.value.i64 - 1;
     if pm1.bit_and(-pm1) < pot { undefined("[CPLib.Convolution::convolve_zp] the result is longer than the largest power of two dividing p - 1") };
+    // 短いほうの長さが60以下なら、NTTで変換するより素朴に掛けるほうが速い
+    if min(x.@size, y.@size) <= 60 { _convolve_naive(x, y) };
     let x = x.reserve(pot);
     let x = range(x.@size, pot).fold(x, |i, x| x.push_back(ZP::make(0)));
     let y = y.reserve(pot);
@@ -56,6 +58,23 @@ convolve_zp = |x, y| (
     let x = x._butterfly_inv.truncate(n);
     let iz = ZP::make(pot).inv;
     x.map(|v| v * iz)
+);
+
+// 2つの空でない配列の畳み込みを、要素の積をすべて足し合わせて計算する
+//
+// 計算量：O(|x| |y|)
+_convolve_naive : [p : PrimeProvider] Array (ZP p) -> Array (ZP p) -> Array (ZP p);
+_convolve_naive = |x, y| (
+    // 内側のループを短いほうの配列にする
+    let (x, y) = if x.@size < y.@size { (y, x) } else { (x, y) };
+    let n = x.@size;
+    let m = y.@size;
+    // zの長さはn + m - 1なので、添字i + jは範囲内にある
+    let z = fill(n + m - 1, ZP::make(0));
+    range(0, n).fold(z, |i, z|
+        let xi = x.@(i);
+        range(0, m).fold(z, |j, z| z.unsafe_set_bounds_unchecked(i + j, z.@(i + j) + xi * y.@(j)))
+    )
 );
 
 // 2つの整数配列の畳み込みを計算する
