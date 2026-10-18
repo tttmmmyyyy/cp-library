@@ -10,7 +10,7 @@ Defined in cp-library@0.15.0
 
 #### bit_check
 
-Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> Std::Bool`
+Type: `[a : CPLib.Bits::Bits, a : Std::Eq, a : Std::One, a : Std::Zero] Std::I64 -> a -> Std::Bool`
 
 第iビットが立っているかを調べる
 
@@ -23,7 +23,7 @@ Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> Std::Bool`
 
 #### bit_clear
 
-Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> a`
+Type: `[a : CPLib.Bits::Bits, a : Std::One] Std::I64 -> a -> a`
 
 第iビットを消す
 
@@ -55,7 +55,7 @@ assert_eq(|_|"", bit_combinations(3, 2).to_array, [0b011, 0b101, 0b110])
 
 #### bit_flip
 
-Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> a`
+Type: `[a : CPLib.Bits::Bits, a : Std::One] Std::I64 -> a -> a`
 
 第iビットを反転する
 
@@ -68,7 +68,7 @@ Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> a`
 
 #### bit_set
 
-Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> a`
+Type: `[a : CPLib.Bits::Bits, a : Std::One] Std::I64 -> a -> a`
 
 第iビットを立てる
 
@@ -101,7 +101,7 @@ assert_eq(|_|"", bit_subsets(0b101).to_array, [0b101, 0b100, 0b001, 0b000])
 
 #### to_string_bits
 
-Type: `[a : CPLib.Bits::Bits, a : Std::Eq] Std::I64 -> a -> Std::String`
+Type: `[a : CPLib.Bits::Bits, a : Std::Eq, a : Std::One, a : Std::Zero] Std::I64 -> a -> Std::String`
 
 ビット列を0と1の文字列として表示する
 
@@ -123,12 +123,6 @@ Trait member of `CPLib.Bits::Bits`
 #### not
 
 Type: `[a : CPLib.Bits::Bits] a -> a`
-
-Trait member of `CPLib.Bits::Bits`
-
-#### one
-
-Type: `[a : CPLib.Bits::Bits] a`
 
 Trait member of `CPLib.Bits::Bits`
 
@@ -165,12 +159,6 @@ Trait member of `CPLib.Bits::Bits`
 #### xor
 
 Type: `[a : CPLib.Bits::Bits] a -> a -> a`
-
-Trait member of `CPLib.Bits::Bits`
-
-#### zero
-
-Type: `[a : CPLib.Bits::Bits] a`
 
 Trait member of `CPLib.Bits::Bits`
 
@@ -215,14 +203,6 @@ Type: `Std::I64 -> a -> a`
 ##### method `shr`
 
 Type: `Std::I64 -> a -> a`
-
-##### method `zero`
-
-Type: `a`
-
-##### method `one`
-
-Type: `a`
 
 ##### method `popcount`
 
