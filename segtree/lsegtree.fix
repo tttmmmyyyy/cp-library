@@ -56,7 +56,7 @@ module CPLib.LSegtree;
 
 import CPLib.Trait::{Action, Monoid, Action::{act, Set}, Monoid::{op, unit}};
 import Std::{
-    loop, Array, Bool, I64, Array::{fill, set, @, @size}, I64::{count_leading_zeros, count_trailing_zeros, shift_left, shift_right}, 
+    loop, undefined, Array, Bool, I64, Array::{fill, set, @, @size}, I64::{count_leading_zeros, count_trailing_zeros, shift_left, shift_right}, 
     Iterator::{fold, range, range_step}, LoopState::{break, continue}
 };
 
@@ -210,6 +210,7 @@ _pending_above = |j, tree| (
 // - `tree` : セグメント木
 @ : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> LSegtree m a -> m;
 @ = |i, tree| (
+    if !(0 <= i && i < tree.@_n) { undefined("[CPLib.LSegtree::@] `i` is out of [0, n)") };
     let j = i + tree.@_n;
     // 葉jの祖先がまだ伝搬していない作用を、深いノードから順に合成する。浅いノードの作用ほど後から加わったものである。
     let lazy = tree.@_lazy;
@@ -232,6 +233,7 @@ _pending_above = |j, tree| (
 // - `tree` : セグメント木
 set : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> m -> LSegtree m a -> LSegtree m a;
 set = |i, value, tree| (
+    if !(0 <= i && i < tree.@_n) { undefined("[CPLib.LSegtree::set] `i` is out of [0, n)") };
     let i = i + tree.@_n;
     let tree = tree._propagate_above(i);
     let tree = tree.mod__elems(set(i, value));
@@ -252,6 +254,7 @@ set = |i, value, tree| (
 // - `tree` : セグメント木
 fold : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> I64 -> LSegtree m a -> (LSegtree m a, m);
 fold = |l, r, tree| (
+    if !(0 <= l && l <= r && r <= tree.@_n) { undefined("[CPLib.LSegtree::fold] `l` and `r` do not satisfy 0 <= l <= r <= n") };
     if l == r { (tree, Monoid::unit) };
     let l = l + tree.@_n;
     let r = r + tree.@_n;
@@ -277,6 +280,7 @@ fold = |l, r, tree| (
 // - `tree` : セグメント木
 act_range : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> I64 -> a -> LSegtree m a -> LSegtree m a;
 act_range = |l, r, a, tree| (
+    if !(0 <= l && l <= r && r <= tree.@_n) { undefined("[CPLib.LSegtree::act_range] `l` and `r` do not satisfy 0 <= l <= r <= n") };
     if l == r { tree };
     let l = l + tree.@_n;
     let r = r + tree.@_n;
@@ -361,6 +365,7 @@ fold_all = |tree| (
 // ```
 calc_max_right : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> (m -> Bool) -> LSegtree m a -> I64;
 calc_max_right = |l, f, tree| (
+    if !(0 <= l && l <= tree.@_n) { undefined("[CPLib.LSegtree::calc_max_right] `l` is out of [0, n]") };
     let n = tree.@_n;
     if l == n { n };
     let l = l + n;
@@ -454,6 +459,7 @@ calc_max_right = |l, f, tree| (
 // ```
 calc_min_left : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> (m -> Bool) -> LSegtree m a -> I64;
 calc_min_left = |r, f, tree| (
+    if !(0 <= r && r <= tree.@_n) { undefined("[CPLib.LSegtree::calc_min_left] `r` is out of [0, n]") };
     let n = tree.@_n;
     if r == 0 { 0 };
     let l = n;

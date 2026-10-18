@@ -20,6 +20,7 @@ test = (
     test_scc_long_path;;
     test_scc_random;;
     test_build_out_of_range;;
+    test_bellman_ford_negative_cycle;;
     pure()
 );
 
@@ -316,4 +317,20 @@ test_scc_speed = (
     assert_eq(|_|"test_scc_speed", sccs.@size, 99999);;
     println("[CPLib.Graph.Test] calc_sccs({}): {}".populate([n.to_string, time.to_string]));;
     pure()
+);
+
+// 頂点0から到達できる負の閉路があると、`bellman_ford`が理由を書いて止まる。到達できない負の閉路があっても止まらない
+test_bellman_ford_negative_cycle : IO ();
+test_bellman_ford_negative_cycle = (
+    let ezs = EZS::Context::default;
+    ezs.cd("graph/negative-cycle");;
+    ezs.run_o(["fix", "deps", "update"]);;
+    let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], "0");
+    assert_eq(|_|"reachable: " + err, code != 0_U8 && err.find("[CPLib.Graph::bellman_ford] a negative cycle is reachable from `start`", 0).is_some, true);;
+    let (out, _, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], "1");
+    assert_eq(|_|"unreachable: " + out, code == 0_U8 && out.find("[0, 2, 9223372036854775807]", 0).is_some, true);;
+    let (out, _, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], "2");
+    assert_eq(|_|"no negative cycle: " + out, code == 0_U8 && out.find("[0, 2, -2]", 0).is_some, true);;
+    // 後のテストのために、作業ディレクトリをライブラリのルートに戻す
+    ezs.cd("../..")
 );

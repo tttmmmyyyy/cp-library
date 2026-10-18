@@ -1,0 +1,13 @@
+// 変数が2つの2-SAT問題に、標準入力で選んだ節を足して解く。0：変数の番号が2（n以上2n未満）、1：変数の番号が-1、2：範囲内
+module Main;
+
+import CPLib.IO::read_i;
+import CPLib.TwoSat::{add_clause, create, solve};
+import Std::{IO, IO::println, ToString::to_string};
+
+main : IO ();
+main = (
+    let case = *read_i;
+    let (a, b) = if case == 0 { (0, 2) } else if case == 1 { (-1, 1) } else { (0, 1) };
+    println(TwoSat::create(2).add_clause(a, true, b, true).solve.to_string)
+);

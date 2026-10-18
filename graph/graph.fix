@@ -256,7 +256,8 @@ bellman_ford = |start, graph| (
     let n = graph.@size;
     let d = fill(n, inf);
     let d = d.set(start, zero);
-    loop(d, |d|
+    // 負の閉路がなければ、最短路は高々n - 1本の辺からなるので、n巡目の緩和では距離が変わらない。
+    loop((d, 1), |(d, round)|
         let (d, update) = range(0, n).fold((d, false), |i, (d, update)|
             let dist = d.@(i);
             if dist == inf { (d, update) }; // 到達できないノード
@@ -267,7 +268,8 @@ bellman_ford = |start, graph| (
             )
         );
         if !update { break $ d };
-        continue $ d
+        if round >= n { undefined("[CPLib.Graph::bellman_ford] a negative cycle is reachable from `start`") };
+        continue $ (d, round + 1)
     )
 );
 

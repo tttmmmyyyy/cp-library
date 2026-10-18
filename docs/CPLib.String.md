@@ -12,13 +12,13 @@ Type: `Std::Array Std::I64 -> Std::String -> Std::Array Std::I64`
 
 文字列のLCP arrayを計算する
 
-制約：saはsのsuffix array, 文字列が空でない、文字列のバイト数 < 2^31
+制約：saはsのsuffix array, 文字列のバイト数 < 2^31
 
 計算量：O(n)、n = 文字列のバイト数
 
 ##### Returns
 
-長さ`s.get_size - 1`の配列`lcp`で、`lcp.@(i)`は`s[sa.@(i)..)`と`s[sa.@(i+1)..)`の最長共通接頭辞の長さを表す。
+長さ`max(n - 1, 0)`の配列`lcp`で、`lcp.@(i)`は`s[sa.@(i)..)`と`s[sa.@(i+1)..)`の最長共通接頭辞の長さを表す。
 
 ##### Parameters
 
@@ -40,13 +40,13 @@ Type: `[a : Std::Eq] Std::Array Std::I64 -> Std::Array a -> Std::Array Std::I64`
 
 配列のLCP arrayを計算する
 
-制約：saはsのsuffix array, 1 <= |s| < 2^31
+制約：saはsのsuffix array, |s| < 2^31
 
 計算量：O(n)、n = |s|
 
 ##### Returns
 
-長さ`s.get_size - 1`の配列`lcp`で、`lcp.@(i)`は`s[sa.@(i)..)`と`s[sa.@(i+1)..)`の最長共通接頭辞の長さを表す。
+長さ`max(n - 1, 0)`の配列`lcp`で、`lcp.@(i)`は`s[sa.@(i)..)`と`s[sa.@(i+1)..)`の最長共通接頭辞の長さを表す。
 
 ##### Parameters
 
