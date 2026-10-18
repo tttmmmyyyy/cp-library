@@ -2,6 +2,22 @@
 
 Defined in cp-library@0.15.0
 
+文字列と配列の接尾辞・接頭辞を扱うアルゴリズム（suffix array、LCP array、Z-array）
+
+文字列を受ける関数は、文字列をバイトの列として扱います。各関数には、任意の要素型の配列を受ける`_any`版があります。
+
+`s[i..)`は、`s`の`i`番目以降からなる接尾辞を表します。
+
+## Examples
+
+```fix
+let s = "abab";
+let sa = calc_suffix_array(s); // 接尾辞を辞書順に並べると "ab", "abab", "b", "bab"
+assert_eq(|_|"", sa, [2, 0, 3, 1]);;
+assert_eq(|_|"", calc_lcp_array(sa, s), [2, 0, 1]);;
+assert_eq(|_|"", calc_z_array(s), [4, 0, 2, 0])
+```
+
 ## Values
 
 ### namespace CPLib.String
@@ -67,7 +83,7 @@ AtCoder Libraryの`suffix_array`の移植です。
 
 ##### Returns
 
-`[0, 1, ..., s.get_size)` の順列`sa`で、任意の`i`について`s[sa.@(i)..) < s[sa.@(i+1)..)` が成り立つもの
+`[0, 1, ..., n)` の順列`sa`で、0 <= i < n - 1を満たすすべての`i`について`s[sa.@(i)..) < s[sa.@(i+1)..)` が成り立つもの。n = 文字列のバイト数
 
 ##### Parameters
 
@@ -130,7 +146,7 @@ AtCoder Libraryの`suffix_array`の移植です。
 
 ##### Returns
 
-`[0, 1, ..., s.get_size)` の順列`sa`で、任意の`i`について`s[sa.@(i)..) < s[sa.@(i+1)..)` が成り立つもの
+`[0, 1, ..., n)` の順列`sa`で、0 <= i < n - 1を満たすすべての`i`について`s[sa.@(i)..) < s[sa.@(i+1)..)` が成り立つもの
 
 ##### Parameters
 
@@ -147,7 +163,7 @@ Type: `Std::String -> Std::Array Std::I64`
 
 ##### Returns
 
-長さ`s.get_size`の配列`z`で、`z.@(i)`は`s[i..)`と`s.[0..)`の最長共通接頭辞の長さを表す。
+長さnの配列`z`で、`z.@(i)`は`s[i..)`と`s`の最長共通接頭辞の長さを表す。n = 文字列のバイト数
 
 ##### Parameters
 
@@ -163,7 +179,7 @@ Type: `[a : Std::Eq] Std::Array a -> Std::Array Std::I64`
 
 ##### Returns
 
-長さ`s.get_size`の配列`z`で、`z.@(i)`は`s[i..)`と`s.[0..)`の最長共通接頭辞の長さを表す。
+長さnの配列`z`で、`z.@(i)`は`s[i..)`と`s`の最長共通接頭辞の長さを表す。
 
 ##### Parameters
 

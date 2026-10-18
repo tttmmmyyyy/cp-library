@@ -747,10 +747,10 @@ calc_primitive_root = |p| (
 // 計算量：O(log m)
 // 
 // # Parameters
-// - `n`
-// - `m`
-// - `a`
-// - `b`
+// - `n`: 項の数
+// - `m`: 除数
+// - `a`: `i`の係数
+// - `b`: 定数項
 //
 // # Examples
 // ```fix
