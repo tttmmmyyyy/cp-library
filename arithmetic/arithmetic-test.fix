@@ -3,7 +3,7 @@ module CPLib.Arithmetic.Test;
 import BoolArray::BoolArray::@;
 import CPLib.Arithmetic::{
     add_mod, calc_gcd, calc_prime_list, calc_prime_table, calc_totient, calc_totient_table, 
-    ext_gcd, factorize, factorize_flat, factorize_via_lp_table, inv_mod, is_prime, isqrt, 
+    ext_gcd, factorize, floor_sum, factorize_flat, factorize_via_lp_table, inv_mod, is_prime, isqrt, 
     lift_crt, calc_lp_table, mul_mod, pmod, pow_mod, pow_mod_u, power, calc_pythagorean_triples, sub_mod, _calc_primitive_root, 
     _inv_gcd
 };
@@ -44,6 +44,7 @@ test = (
     test_crt;;
     test_calc_primitive_root;;
     test_pythagorean_triples;;
+    test_floor_sum;;
     test_out_of_range;;
 
     pure()
@@ -404,6 +405,29 @@ test_crt = (
         assert_eq(|_|"[test_crt] y mod m1", y.pmod(m1), r1);;
         rng.pure
     ).forget;;
+    pure()
+);
+
+// 小さな引数のすべての組で、floor_sumを項ごとの和と比べる。aとbが負の場合を含む
+test_floor_sum : IO ();
+test_floor_sum = (
+    let naive = |n, m, a, b| range(0, n).fold(0, |i, acc|
+        let x = a * i + b;
+        acc + (x - x.pmod(m)) / m
+    );
+    range(0, 20).fold_m((), |n, _|
+        range(1, 20).fold_m((), |m, _|
+            range(-20, 21).fold_m((), |a, _|
+                range(-20, 21).fold_m((), |b, _|
+                    assert_eq(|_|"test_floor_sum n={} m={} a={} b={}".populate([n.to_string, m.to_string, a.to_string, b.to_string]), 
+                        floor_sum(n, m, a, b), naive(n, m, a, b))
+                )
+            )
+        )
+    );;
+    // 制約の上限の n と m。答えは 0 + 1 + ... + (n - 1) = n(n - 1)/2 で、I64に収まる
+    let n = (1_U64.shift_left(32_U64) - 1_U64).i64;
+    assert_eq(|_|"test_floor_sum: n = 2^32 - 1", floor_sum(n, n, n, 0), n * ((n - 1) / 2));;
     pure()
 );
 
