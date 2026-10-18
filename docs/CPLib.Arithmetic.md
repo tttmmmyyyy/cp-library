@@ -22,6 +22,12 @@ Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::I64`
 - `y`: 整数
 - `m`: 除数
 
+##### Examples
+
+```fix
+assert_eq(|_|"", add_mod(5, 4, 7), 2)
+```
+
 #### calc_gcd
 
 Type: `Std::I64 -> Std::I64 -> Std::I64`
@@ -425,6 +431,12 @@ Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::I64`
 - `y`: 整数
 - `m`: 除数
 
+##### Examples
+
+```fix
+assert_eq(|_|"", mul_mod(5, 4, 7), 6)
+```
+
 #### pmod
 
 Type: `Std::I64 -> Std::I64 -> Std::I64`
@@ -533,6 +545,12 @@ Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::I64`
 - `x`: 整数
 - `y`: 整数
 - `m`: 除数
+
+##### Examples
+
+```fix
+assert_eq(|_|"", sub_mod(2, 5, 7), 4)
+```
 
 ## Types and aliases
 
