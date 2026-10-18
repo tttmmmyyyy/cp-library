@@ -118,7 +118,7 @@ read_f = FFI_CALL_IO[F64 cp_lib_read_double()];
 // 空白文字を読み飛ばし、次の空白文字か入力の終わりまでを読む。
 read_s : IO String;
 read_s = (
-    // 字句全体をC側のバッファに読み、そこから`String`を1回の複写で作る
+    // 字句全体をC側のバッファに読み、そこから`String`を1回のコピーで作る
     let ptr = *FFI_CALL_IO[Ptr cp_lib_read_token()];
     unsafe_from_c_str_ptr_io(ptr)
 );
