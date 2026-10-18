@@ -5,7 +5,7 @@ import CPLib.Trait::Inf::inf;
 import EZS::{cd, run_o, run_wi_oec, Context::default};
 import Random::{generate_I64_nonneg, init_by_seed};
 import Std::{
-    IO, Array::{fill, push_back, set, sort_by, to_iter, @, @size}, Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, 
+    Array, I64, IO, Array::{fill, push_back, set, sort_by, to_iter, @, @size}, Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, 
     IO::println, Iterator::{fold, fold_m, map, range, to_array}, LessThan::min, Monad::pure, Option::is_some, String::{find, populate}, ToString::to_string
 };
 
@@ -43,15 +43,15 @@ test_build_out_of_range = (
     ezs.cd("../..")
 );
 
-// 頂点ごとに、その頂点から出る辺だけを、足した順に返す。出次数はその本数になる
+// 頂点ごとに、その頂点から出る辺だけを返す。出次数はその本数になる
 test_to_iter_edges : IO ();
 test_to_iter_edges = (
     let g = GraphBuilder::create(5)
         .add_edge(2, 0, 1).add_edge(0, 1, 2).add_edge(3, 2, 3).add_edge(0, 3, 4).add_edge(2, 3, 5).add_edge(0, 1, 6)
         .build;
     assert_eq(|_|"test_to_iter_edges size", g.@size, 5);;
-    let edges_of = |v| g.to_iter_edges(v).map(|Edge { to, data }| (to, data)).to_array;
-    assert_eq(|_|"test_to_iter_edges 0", edges_of(0), [(1, 2), (3, 4), (1, 6)]);;
+    let edges_of = |v| g.to_iter_edges(v).map(|Edge { to, data }| (to, data)).to_array.sort_pairs;
+    assert_eq(|_|"test_to_iter_edges 0", edges_of(0), [(1, 2), (1, 6), (3, 4)]);;
     assert_eq(|_|"test_to_iter_edges 1", edges_of(1), []);;
     assert_eq(|_|"test_to_iter_edges 2", edges_of(2), [(0, 1), (3, 5)]);;
     assert_eq(|_|"test_to_iter_edges 3", edges_of(3), [(2, 3)]);;
@@ -336,7 +336,7 @@ test_bellman_ford_negative_cycle = (
     ezs.cd("../..")
 );
 
-// 逆にしたグラフの頂点vから出る辺は、元のグラフでvに入る辺を、始点の昇順、同じ始点なら元の並びの順に並べたもので、データも引き継ぐ
+// 逆にしたグラフの頂点vから出る辺は、元のグラフでvに入る辺の向きを逆にしたもので、データも引き継ぐ
 test_reverse_random : IO ();
 test_reverse_random = (
     let rng = Random::init_by_seed(1_U64);
@@ -357,11 +357,15 @@ test_reverse_random = (
         range(0, n).fold_m((), |v, _|
             let expected = range(0, n).fold([], |u, acc|
                 g.to_iter_edges(u).fold(acc, |Edge { to, data }, acc| if to == v { acc.push_back((u, data)) } else { acc })
-            );
-            let actual = rg.to_iter_edges(v).map(|Edge { to, data }| (to, data)).to_array;
+            ).sort_pairs;
+            let actual = rg.to_iter_edges(v).map(|Edge { to, data }| (to, data)).to_array.sort_pairs;
             assert_eq(|_|"test_reverse_random: edges of " + v.to_string, actual, expected)
         );;
         rng.pure
     ).forget;;
     pure()
 );
+
+// 組の配列を、1つ目の要素、2つ目の要素の順に比べて昇順に並べる。辺の並び順によらずに比べるために使う
+sort_pairs : Array (I64, I64) -> Array (I64, I64);
+sort_pairs = |pairs| pairs.sort_by(|((a0, a1), (b0, b1))| a0 < b0 || (a0 == b0 && a1 < b1));

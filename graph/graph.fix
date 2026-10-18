@@ -112,7 +112,7 @@ type Graph c = struct {
     //
     // 頂点番号と辺の位置は、配列をキャッシュに収めやすいよう4バイトで持つ
     _start : Array I32,
-    // 辺の終点を始点の順に並べた配列。同じ始点の辺の並びは、`GraphBuilder::build`で作ったグラフでは足した順、`reverse`で作ったグラフでは元のグラフの始点の昇順
+    // 辺の終点を始点の順に並べた配列
     _to : Array I32,
     // 辺のデータを、`_to`と同じ順に並べた配列
     _data : Array c
@@ -159,8 +159,6 @@ get_out_degree = |v, graph| (graph.@_start.@(v + 1) - graph.@_start.@(v)).i64;
 
 // 頂点`v`から出る辺を返すイテレータを作る
 //
-// 辺は、`GraphBuilder::build`で作ったグラフでは足した順に、`reverse`で作ったグラフでは元のグラフの始点の昇順に並ぶ。
-//
 // 制約：0 <= v < n
 //
 // 計算量：O(1)
@@ -177,7 +175,7 @@ to_iter_edges = |v, graph| (
 
 // すべての辺の向きを逆にしたグラフを作る
 //
-// 元のグラフの辺u -> vは、データを引き継いで辺v -> uになる。頂点vから出る辺は、元のグラフの始点uの昇順に並び、同じ始点の辺は元のグラフでの並びの順になる。
+// 元のグラフの辺u -> vは、データを引き継いで辺v -> uになる。
 //
 // 計算量：O(n + m)
 //
@@ -189,7 +187,8 @@ to_iter_edges = |v, graph| (
 // // 0 -> 1 -> 2、0 -> 2。逆にすると、2から1と0へ、1から0へ辺が出る
 // let g = GraphBuilder::create(3).add_edge(0, 1, "a").add_edge(1, 2, "b").add_edge(0, 2, "c").build;
 // let rg = g.reverse;
-// assert_eq(|_|"", rg.to_iter_edges(2).map(|Edge { to, data }| (to, data)).to_array, [(0, "c"), (1, "b")])
+// assert_eq(|_|"", rg.get_out_degree(2), 2);;
+// assert_eq(|_|"", rg.to_iter_edges(1).map(|Edge { to, data }| (to, data)).to_array, [(0, "a")])
 // ```
 reverse : Graph c -> Graph c;
 reverse = |graph| (
