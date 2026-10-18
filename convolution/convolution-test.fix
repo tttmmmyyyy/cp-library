@@ -3,8 +3,8 @@ module CPLib.Convolution.Test;
 import CPLib.Convolution::{convolve_i64, convolve_zp};
 import CPLib.ZP::{make, P1000000007, P998244353, PrimeProvider, ZP};
 import Std::{
-    Array, IO, Array::{@, @size}, Debug::{assert_eq, consumed_time_while_lazy}, 
-    I64::{maximum, minimum, shift_left}, IO::println, Iterator::{fold, map, range, to_array}, 
+    Array, IO, Array::{@, @size, to_iter}, Debug::{assert_eq, consumed_time_while_lazy}, 
+    I64::{maximum, minimum, shift_left}, IO::println, Iterator::{fold, fold_m, map, range, to_array}, 
     Monad::pure, String::populate, ToString::to_string
 };
 
@@ -21,6 +21,7 @@ test : IO ();
 test = (
     test_zp;;
     test_i64;;
+    test_short_and_long;;
     pure()
 );
 
@@ -101,4 +102,33 @@ test_i64 = (
     assert_eq(|_|"[test_i64] case 11", z.@size, x.@size + y.@size - 1);;
 
     pure()
+);
+
+// 片方が短い入力（素朴な掛け算で計算する）でも、両方が長い入力（NTTで計算する）でも、定義どおりの和と一致する
+test_short_and_long : IO ();
+test_short_and_long = (
+    let sizes = [1, 2, 39, 40, 41, 100];
+    sizes.to_iter.fold_m((), |n, _|
+        sizes.to_iter.fold_m((), |m, _|
+            let x = range(0, n).map(|i| ZP::make(i * 1000003 + 7)).to_array : Array (ZP P998244353);
+            let y = range(0, m).map(|j| ZP::make(j * 998244 + 11)).to_array : Array (ZP P998244353);
+            let expected = range(0, n + m - 1).map(|k|
+                range(0, n).fold(ZP::make(0), |i, acc|
+                    let j = k - i;
+                    if j < 0 || j >= m { acc } else { acc + x.@(i) * y.@(j) }
+                )
+            ).to_array;
+            let label = "[test_short_and_long] " + n.to_string + " x " + m.to_string;
+            assert_eq(|_|label + " zp", convolve_zp(x, y), expected);;
+            let xi = range(0, n).map(|i| i * 37 - 500).to_array;
+            let yi = range(0, m).map(|j| 1000 - j * 13).to_array;
+            let expected_i = range(0, n + m - 1).map(|k|
+                range(0, n).fold(0, |i, acc|
+                    let j = k - i;
+                    if j < 0 || j >= m { acc } else { acc + xi.@(i) * yi.@(j) }
+                )
+            ).to_array;
+            assert_eq(|_|label + " i64", convolve_i64(xi, yi), expected_i)
+        )
+    )
 );
