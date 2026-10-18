@@ -1,13 +1,11 @@
 module CPLib.Bits.Test;
 
-import CPLib.Bits::{
-    bit_check, bit_clear, bit_combinations, bit_flip, bit_set, bit_subsets, to_string_bits, 
-    Bits::popcount
-};
+// 利用者と同じくモジュールをまるごとimportして、Stdの名前と曖昧にならないことも確かめる
+import CPLib.Bits;
 import EZS::{cd, run_o, run_wi_oec, Context::default};
 import Std::{
-    IO, Array::{@, @size}, Debug::assert_eq, Functor::map, I64::shift_left, Iterator::{fold_m, range, to_array}, Monad::pure, 
-    Option::is_some, String::find, ToString::to_string
+    I64, IO, U8, Array::{@, @size}, Debug::assert_eq, Functor::map, I64::shift_left, Iterator::{fold_m, range, to_array}, Monad::pure, 
+    One::one, Option::is_some, String::find, ToString::to_string, Zero::zero
 };
 
 test : IO () = (
@@ -18,6 +16,7 @@ test : IO () = (
     test_to_string_bits;;
     test_small_types_popcount;;
     test_bit_combinations_out_of_range;;
+    test_std_zero_one;;
     pure()
 );
 
@@ -227,4 +226,11 @@ test_bit_combinations_out_of_range = (
     assert_eq(|_|"in range: " + out, code == 0_U8 && out.find("62", 0).is_some, true);;
     // 後のテストのために、作業ディレクトリをライブラリのルートに戻す
     ezs.cd("../..")
+);
+
+// `CPLib.Bits`をまるごとimportしても、Stdの`zero`と`one`を名前空間なしで書ける
+test_std_zero_one : IO () = (
+    assert_eq(|_|"test_std_zero_one zero", zero : I64, 0);;
+    assert_eq(|_|"test_std_zero_one one", one : U8, 1_U8);;
+    pure()
 );
