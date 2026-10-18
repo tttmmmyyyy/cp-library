@@ -128,11 +128,36 @@ Type: `CPLib.Graph::Graph c -> Std::I64`
 
 `@size`の別名（非推奨）
 
+#### reverse
+
+Type: `CPLib.Graph::Graph c -> CPLib.Graph::Graph c`
+
+すべての辺の向きを逆にしたグラフを作る
+
+元のグラフの辺u -> vは、データを引き継いで辺v -> uになる。頂点vから出る辺は、元のグラフの始点uの昇順に並び、同じ始点の辺は元のグラフでの並びの順になる。
+
+計算量：O(n + m)
+
+##### Parameters
+
+- `graph` : グラフ
+
+##### Examples
+
+```fix
+// 0 -> 1 -> 2、0 -> 2。逆にすると、2から1と0へ、1から0へ辺が出る
+let g = GraphBuilder::create(3).add_edge(0, 1, "a").add_edge(1, 2, "b").add_edge(0, 2, "c").build;
+let rg = g.reverse;
+assert_eq(|_|"", rg.to_iter_edges(2).map(|Edge { to, data }| (to, data)).to_array, [(0, "c"), (1, "b")])
+```
+
 #### to_iter_edges
 
 Type: `[?it : Std::Iterator, Std::Iterator::Item ?it = CPLib.Graph::Edge c] Std::I64 -> CPLib.Graph::Graph c -> ?it`
 
-頂点`v`から出る辺を、足した順に返すイテレータを作る
+頂点`v`から出る辺を返すイテレータを作る
+
+辺は、`GraphBuilder::build`で作ったグラフでは足した順に、`reverse`で作ったグラフでは元のグラフの始点の昇順に並ぶ。
 
 制約：0 <= v < n
 
