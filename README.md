@@ -44,7 +44,7 @@
 
 ## 性能
 
-AtCoder Library（C++）と遜色ない速さで動きます。セグメント木、畳み込み、最大フローなどの機能ごとに、同じ処理をAtCoder Libraryを使って書いたC++のプログラムと速さを比べています（AtCoder Libraryにない機能は、AtCoder Libraryを使わずにC++で書いたプログラムと比べています）。結果は[Fixのベンチマーク](https://tttmmmyyyy.github.io/fixlang/benchmark/)にあります。
+[AtCoder Library](https://github.com/atcoder/ac-library)（C++）と遜色ない速さで動きます。セグメント木、畳み込み、最大フローなどの機能ごとに、同じ処理をAtCoder Libraryを使って書いたC++のプログラムと速さを比べています（AtCoder Libraryにない機能は、AtCoder Libraryを使わずにC++で書いたプログラムと比べています）。結果は[Fixのベンチマーク](https://tttmmmyyyy.github.io/fixlang/benchmark/)にあります。
 
 ## 関数の名前
 
