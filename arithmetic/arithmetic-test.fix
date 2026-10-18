@@ -270,6 +270,23 @@ test_inv_mod = (
         assert(|_|"test_inv_mod 0 <= x < m, x = " + x.to_string, 0 <= x && x < m);;
         pure()
     );;
+    // 合成数を含む小さな法の、互いに素なすべての a
+    range(1, 60).fold_m((), |m, _|
+        range(-70, 70).filter(|a| calc_gcd(a, m) == 1).fold_m((), |a, _|
+            let x = a.inv_mod(m);
+            let label = "test_inv_mod a = " + a.to_string + ", m = " + m.to_string;
+            assert_eq(|_|label, mul_mod(a, x, m), 1.pmod(m));;
+            assert(|_|label + ", x = " + x.to_string, 0 <= x && x < m)
+        )
+    );;
+    // 大きな法（2^61 - 1、素数）と、I64の端の値
+    let m = 2305843009213693951;
+    [I64::minimum, I64::maximum, -1, 1, 2, m - 1, m + 1].to_iter.fold_m((), |a, _|
+        let x = a.inv_mod(m);
+        let label = "test_inv_mod large a = " + a.to_string;
+        assert_eq(|_|label, mul_mod(a, x, m), 1);;
+        assert(|_|label + ", x = " + x.to_string, 0 <= x && x < m)
+    );;
     pure()
 );
 

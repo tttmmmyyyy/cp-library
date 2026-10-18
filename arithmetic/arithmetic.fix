@@ -281,11 +281,9 @@ _mul_mod_u = |m, x, y| (x.u128 * y.u128 % m.u128).u64;
 inv_mod : I64 -> I64 -> I64;
 inv_mod = |m, a| (
     let m = m.abs;
-    let (d, (inv_x, _)) = ext_gcd(a.pmod(m), m);
-    if d != 1 {
-        undefined("[CPLib.Arithmetic::inv_mod] `a` is not coprime to `m`")
-    };
-    inv_x.pmod(m)
+    let (g, x) = _inv_gcd(a, m);
+    if g != 1 { undefined("[CPLib.Arithmetic::inv_mod] `a` is not coprime to `m`") };
+    x
 );
 
 // [0, n)の範囲での素数テーブルを作成する
