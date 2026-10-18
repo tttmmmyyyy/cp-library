@@ -110,10 +110,10 @@ test_short_and_long = (
     let sizes = [1, 2, 39, 40, 41, 100];
     sizes.to_iter.fold_m((), |n, _|
         sizes.to_iter.fold_m((), |m, _|
-            let x = range(0, n).map(|i| ZP::make(i * 1000003 + 7)).to_array : Array (ZP P998244353);
-            let y = range(0, m).map(|j| ZP::make(j * 998244 + 11)).to_array : Array (ZP P998244353);
+            let x = range(0, n).map(|i| zp(i * 1000003 + 7)).to_array : Array (ZP P998244353);
+            let y = range(0, m).map(|j| zp(j * 998244 + 11)).to_array : Array (ZP P998244353);
             let expected = range(0, n + m - 1).map(|k|
-                range(0, n).fold(ZP::make(0), |i, acc|
+                range(0, n).fold(zp(0), |i, acc|
                     let j = k - i;
                     if j < 0 || j >= m { acc } else { acc + x.@(i) * y.@(j) }
                 )

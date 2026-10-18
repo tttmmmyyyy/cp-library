@@ -70,7 +70,7 @@ _convolve_naive = |x, y| (
     let n = x.@size;
     let m = y.@size;
     // zの長さはn + m - 1なので、添字i + jは範囲内にある
-    let z = fill(n + m - 1, ZP::make(0));
+    let z = fill(n + m - 1, zp(0));
     range(0, n).fold(z, |i, z|
         let xi = x.@(i);
         range(0, m).fold(z, |j, z| z.unsafe_set_bounds_unchecked(i + j, z.@(i + j) + xi * y.@(j)))
