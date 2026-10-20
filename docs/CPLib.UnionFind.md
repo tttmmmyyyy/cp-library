@@ -1,6 +1,6 @@
 # CPLib.UnionFind
 
-Defined in cp-library@0.15.0
+Defined in cp-library@0.15.1
 
 Union-Find木
 
