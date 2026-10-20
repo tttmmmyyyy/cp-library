@@ -1,6 +1,6 @@
 # CPLib.MinCostFlow
 
-Defined in cp-library@0.15.0
+Defined in cp-library@0.15.1
 
 最小費用流問題
 

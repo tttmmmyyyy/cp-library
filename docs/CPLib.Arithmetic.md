@@ -1,6 +1,6 @@
 # CPLib.Arithmetic
 
-Defined in cp-library@0.15.0
+Defined in cp-library@0.15.1
 
 ## Values
 

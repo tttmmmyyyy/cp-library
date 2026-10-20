@@ -412,9 +412,10 @@ DEPRECATED[linear_sieve, "Use `CPLib.Arithmetic::calc_lp_table` instead."];
 factorize_flat : I64 -> Array I64;
 factorize_flat = |n| (
     let (d, n, factors) = loop((2, n, []), |(d, n, factors)|
-        if d > n / d { break $ (d, n, factors) };
-        if n % d != 0 { continue $ (d + 1, n, factors) };
-        continue $ (d, n / d, factors.push_back(d))
+        let q = n / d;
+        if d > q { break $ (d, n, factors) };
+        if n - q * d != 0 { continue $ (d + 1, n, factors) };
+        continue $ (d, q, factors.push_back(d))
     );
     if n > 1 { factors.push_back(n) } else { factors }
 );
@@ -435,8 +436,9 @@ factorize_flat = |n| (
 factorize : I64 -> Array (I64, U8);
 factorize = |n| (
     let (d, n, factors) = loop((2, n, []), |(d, n, factors)|
-        if d > n / d { break $ (d, n, factors) };
-        if n % d != 0 { continue $ (d + 1, n, factors) };
+        let q = n / d;
+        if d > q { break $ (d, n, factors) };
+        if n - q * d != 0 { continue $ (d + 1, n, factors) };
         let (n, e) = loop((n, 0_U8), |(n, e)|
             if n % d != 0 { break $ (n, e) };
             continue $ (n / d, e + 1_U8)
@@ -458,8 +460,9 @@ calc_totient : I64 -> I64;
 calc_totient = |n| (
     if n == 1 { 1 };
     let (d, n, tot) = loop((2, n, 1), |(d, n, tot)|
-        if d > n / d { break $ (d, n, tot) };
-        if n % d != 0 { continue $ (d + 1, n, tot) };
+        let m = n / d;
+        if d > m { break $ (d, n, tot) };
+        if n - m * d != 0 { continue $ (d + 1, n, tot) };
         let (q, n) = loop((1, n), |(q, n)|
             if n % d != 0 { break $ (q, n) };
             continue $ (q * d, n / d)
@@ -698,8 +701,9 @@ _calc_primitive_root = |p| (
     // 全ての φ(p) = p-1 の素因子qに対し g^(φ(p) / q) != 1 であるならば、gは原子根である。
 
     let factors = loop((2, p-1, []), |(q, n, factors)|
-        if q > n / q { break $ if n > 1 { factors.push_back(n) } else { factors } };
-        if n % q != 0 { continue $ (q + 1, n, factors) };
+        let m = n / q;
+        if q > m { break $ if n > 1 { factors.push_back(n) } else { factors } };
+        if n - m * q != 0 { continue $ (q + 1, n, factors) };
         let factors = factors.push_back(q);
         let n = loop(n, |n|
             if n % q != 0 { break $ n };
