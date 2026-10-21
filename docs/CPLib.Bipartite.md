@@ -1,6 +1,6 @@
 # CPLib.Bipartite
 
-Defined in cp-library@0.15.1
+Defined in cp-library@0.15.2
 
 二部グラフを扱うモジュール
 

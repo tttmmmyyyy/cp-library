@@ -1,6 +1,6 @@
 # CPLib.String
 
-Defined in cp-library@0.15.1
+Defined in cp-library@0.15.2
 
 文字列と配列の接尾辞・接頭辞を扱うアルゴリズム（suffix array、LCP array、Z-array）
 

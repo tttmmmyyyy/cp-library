@@ -1,6 +1,6 @@
 # CPLib.LDSegtree
 
-Defined in cp-library@0.15.1
+Defined in cp-library@0.15.2
 
 モノイド構造および作用が動的に決められる遅延伝搬セグメント木
 
@@ -210,11 +210,11 @@ Type: `CPLib.LDSegtree::LDSegtree m a -> m`
 
 #### init
 
-**Deprecated**: Use `CPLib.LDSegtree::create` instead.
+**Deprecated**: Use `CPLib.LDSegtree::create` instead, and swap the two arguments of the action function: `init` takes it as `(m, a) -> m`, with the value first, while `create` takes it as `(a, m) -> m`, with the action first.
 
-Type: `Std::I64 -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((a, m) -> m) -> CPLib.LDSegtree::LDSegtree m a`
+Type: `Std::I64 -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((m, a) -> m) -> CPLib.LDSegtree::LDSegtree m a`
 
-`create`の別名（非推奨）
+`create`の別名（非推奨）。ただし作用`act`は、値を先に取る`(m, a) -> m`で受け取る
 
 #### set
 

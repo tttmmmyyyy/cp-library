@@ -1,6 +1,6 @@
 # CPLib.Memoize
 
-Defined in cp-library@0.15.1
+Defined in cp-library@0.15.2
 
 関数のメモ化（memoize）
 
