@@ -73,9 +73,10 @@ create = |n, unit, op, act_unit, act_op, act| (
     LDSegtree { _elems : elems, _lazy : lazy, _n : n, _unit : unit, _op : op, _act_unit : act_unit, _act_op : act_op, _act : act }
 );
 
-// `create`の別名（非推奨）
-init : I64 -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((a, m) -> m) -> LDSegtree m a = create;
-DEPRECATED[init, "Use `CPLib.LDSegtree::create` instead."];
+// `create`の別名（非推奨）。ただし作用`act`は、値を先に取る`(m, a) -> m`で受け取る
+init : I64 -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((m, a) -> m) -> LDSegtree m a;
+init = |n, unit, op, act_unit, act_op, act| create(n, unit, op, act_unit, act_op, |(a, x)| act((x, a)));
+DEPRECATED[init, "Use `CPLib.LDSegtree::create` instead, and swap the two arguments of the action function: `init` takes it as `(m, a) -> m`, with the value first, while `create` takes it as `(a, m) -> m`, with the action first."];
 
 // 要素の配列からセグメント木を作成する
 // 
