@@ -2,16 +2,16 @@
 module CPLib.Bits;
 
 import Std::{
-    Bool, Eq, I16, I32, I64, I8, Iterator, String, U16, U32, U64, U8, Array::{fill, set}, 
-    FromBytes::from_bytes, I16::{bit_and, bit_not, bit_or, bit_xor, shift_left, shift_right}, 
-    I32::{bit_and, bit_not, bit_or, bit_xor, shift_left, shift_right}, 
-    I64::{bit_and, bit_not, bit_or, bit_xor, shift_left, shift_right}, 
-    I8::{bit_and, bit_not, bit_or, bit_xor, shift_left, shift_right}, Iterator::{fold, range}, 
-    Option::{none, some}, Result::as_ok, ToI16::i16, ToI32::i32, ToI64::i64, ToI8::i8, ToU16::u16, 
-    ToU32::u32, ToU64::u64, ToU8::u8, U16::{bit_and, bit_not, bit_or, bit_xor, shift_left, shift_right}, 
-    U32::{bit_and, bit_not, bit_or, bit_xor, shift_left, shift_right}, 
-    U64::{bit_and, bit_not, bit_or, bit_xor, shift_left, shift_right}, 
-    U8::{bit_and, bit_not, bit_or, bit_xor, shift_left, shift_right}
+    undefined, Bool, Eq, I16, I32, I64, I8, Iterator, String, U16, U32, U64, U8, Array::{fill, set}, 
+    FromBytes::from_bytes, I16::{bit_and, bit_not, bit_or, bit_xor, count_ones, shift_left, shift_right}, 
+    I32::{bit_and, bit_not, bit_or, bit_xor, count_ones, shift_left, shift_right}, 
+    I64::{bit_and, bit_not, bit_or, bit_xor, count_ones, shift_left, shift_right}, 
+    I8::{bit_and, bit_not, bit_or, bit_xor, count_ones, shift_left, shift_right}, Iterator::{fold, range}, 
+    One, One::one, Option::{none, some}, Result::as_ok, ToI16::i16, ToI32::i32, ToI64::i64, ToI8::i8, ToU16::u16, 
+    ToU32::u32, ToU64::u64, ToU8::u8, Zero, Zero::zero, U16::{bit_and, bit_not, bit_or, bit_xor, count_ones, shift_left, shift_right}, 
+    U32::{bit_and, bit_not, bit_or, bit_xor, count_ones, shift_left, shift_right}, 
+    U64::{bit_and, bit_not, bit_or, bit_xor, count_ones, shift_left, shift_right}, 
+    U8::{bit_and, bit_not, bit_or, bit_xor, count_ones, shift_left, shift_right}
 };
 
 trait a : Bits {
@@ -21,8 +21,6 @@ trait a : Bits {
     not : a -> a;
     shl : I64 -> a -> a;
     shr : I64 -> a -> a;
-    zero : a;
-    one : a;
     // ビット表現における1の個数を数える
     // 
     // # Parameters
@@ -37,9 +35,7 @@ impl U64 : Bits {
     not = U64::bit_not;
     shl = u64 >> U64::shift_left;
     shr = u64 >> U64::shift_right;
-    zero = 0_U64;
-    one = 1_U64;
-    popcount = |x| FFI_CALL[I64 cp_lib_popcount64(U64), x.u64];
+    popcount = |x| x.count_ones.i64;
 }
 
 impl I64 : Bits {
@@ -49,9 +45,7 @@ impl I64 : Bits {
     not = I64::bit_not;
     shl = i64 >> I64::shift_left;
     shr = i64 >> I64::shift_right;
-    zero = 0_I64;
-    one = 1_I64;
-    popcount = |x| FFI_CALL[I64 cp_lib_popcount64(U64), x.u64];
+    popcount = |x| x.count_ones.i64;
 }
 
 impl U32 : Bits {
@@ -61,9 +55,7 @@ impl U32 : Bits {
     not = U32::bit_not;
     shl = u32 >> U32::shift_left;
     shr = u32 >> U32::shift_right;
-    zero = 0_U32;
-    one = 1_U32;
-    popcount = |x| FFI_CALL[I64 cp_lib_popcount32(U32), x.u32];
+    popcount = |x| x.count_ones.i64;
 }
 
 impl I32 : Bits {
@@ -73,9 +65,7 @@ impl I32 : Bits {
     not = I32::bit_not;
     shl = i32 >> I32::shift_left;
     shr = i32 >> I32::shift_right;
-    zero = 0_I32;
-    one = 1_I32;
-    popcount = |x| FFI_CALL[I64 cp_lib_popcount32(U32), x.u32];
+    popcount = |x| x.count_ones.i64;
 }
 
 impl U16 : Bits {
@@ -85,9 +75,7 @@ impl U16 : Bits {
     not = U16::bit_not;
     shl = u16 >> U16::shift_left;
     shr = u16 >> U16::shift_right;
-    zero = 0_U16;
-    one = 1_U16;
-    popcount = |x| FFI_CALL[I64 cp_lib_popcount32(U32), x.u32];
+    popcount = |x| x.count_ones.i64;
 }
 
 impl I16 : Bits {
@@ -97,9 +85,7 @@ impl I16 : Bits {
     not = I16::bit_not;
     shl = i16 >> I16::shift_left;
     shr = i16 >> I16::shift_right;
-    zero = 0_I16;
-    one = 1_I16;
-    popcount = |x| FFI_CALL[I64 cp_lib_popcount32(U32), x.u16.u32];
+    popcount = |x| x.count_ones.i64;
 }
 
 impl U8 : Bits {
@@ -109,9 +95,7 @@ impl U8 : Bits {
     not = U8::bit_not;
     shl = u8 >> U8::shift_left;
     shr = u8 >> U8::shift_right;
-    zero = 0_U8;
-    one = 1_U8;
-    popcount = |x| FFI_CALL[I64 cp_lib_popcount32(U32), x.u32];
+    popcount = |x| x.count_ones.i64;
 }
 
 impl I8 : Bits {
@@ -121,16 +105,17 @@ impl I8 : Bits {
     not = I8::bit_not;
     shl = i8 >> I8::shift_left;
     shr = i8 >> I8::shift_right;
-    zero = 0_I8;
-    one = 1_I8;
-    popcount = |x| FFI_CALL[I64 cp_lib_popcount32(U32), x.u8.u32];
+    popcount = |x| x.count_ones.i64;
 }
 
 // ビット列を0と1の文字列として表示する
 // 
+// 制約：0 <= n <= ビット幅
+//
 // # Parameters
-// - `n` : 下位からnビットのみを表示する。0 <= n < (ビット幅) でないときは未定義動作
-to_string_bits : [a : Bits, a : Eq] I64 -> a -> String = |n, x| (
+// - `n` : 下位からnビットのみを表示する
+// - `x` : 対象のビット列
+to_string_bits : [a : Bits, a : Eq, a : One, a : Zero] I64 -> a -> String = |n, x| (
     let s = fill(n+1, '\0');
     let s = range(0, n).fold(s, |i, s|
         if x.bit_check(i) { s.set(n - 1 - i, '1') } else { s.set(n - 1 - i, '0') }
@@ -140,67 +125,83 @@ to_string_bits : [a : Bits, a : Eq] I64 -> a -> String = |n, x| (
 
 // 第iビットが立っているかを調べる
 // 
+// 制約：0 <= i < ビット幅
+//
 // # Parameters
-// - `i` : ビット位置。0 <= i < (ビット幅）でないときは未定義動作
+// - `i` : ビット位置
 // - `x` : 対象のビット列
-bit_check : [a : Bits, a : Eq] I64 -> a -> Bool = |i, x| x.and(one.shl(i)) != zero;
+bit_check : [a : Bits, a : Eq, a : One, a : Zero] I64 -> a -> Bool = |i, x| x.and(one.shl(i)) != zero;
 
 // 第iビットを立てる
 //
+// 制約：0 <= i < ビット幅
+//
 // # Parameters
-// - `i` : ビット位置。0 <= i < (ビット幅）でないときは未定義動作
+// - `i` : ビット位置
 // - `x` : 対象のビット列
-bit_set : [a : Bits, a : Eq] I64 -> a -> a = |i, x| x.or(one.shl(i));
+bit_set : [a : Bits, a : One] I64 -> a -> a = |i, x| x.or(one.shl(i));
     
 // 第iビットを消す
 // 
+// 制約：0 <= i < ビット幅
+//
 // # Parameters
-// - `i` : ビット位置。0 <= i < (ビット幅）でないときは未定義動作
+// - `i` : ビット位置
 // - `x` : 対象のビット列
-bit_clear : [a : Bits, a : Eq] I64 -> a -> a = |i, x| x.and(one.shl(i).not);
+bit_clear : [a : Bits, a : One] I64 -> a -> a = |i, x| x.and(one.shl(i).not);
 
 // 第iビットを反転する
 // 
+// 制約：0 <= i < ビット幅
+//
 // # Parameters
-// - `i` : ビット位置。0 <= i < (ビット幅）でないときは未定義動作
+// - `i` : ビット位置
 // - `x` : 対象のビット列
-bit_flip : [a : Bits, a : Eq] I64 -> a -> a = |i, x| x.xor(one.shl(i));
+bit_flip : [a : Bits, a : One] I64 -> a -> a = |i, x| x.xor(one.shl(i));
 
-type BitCombinationIterator = struct { sub : I64, end : I64 };
+type BitCombinationIterator = struct { _sub : I64, _end : I64 };
 
 impl BitCombinationIterator : Iterator {
     type Item BitCombinationIterator = I64;
-    advance = |BitCombinationIterator { sub : sub, end : end }| (
-        if sub == 0 { some $ (BitCombinationIterator { sub: -1, end: -1 }, 0) }; // 次でnone
+    advance = |BitCombinationIterator { _sub : sub, _end : end }| (
+        if sub == 0 { some $ (BitCombinationIterator { _sub: -1, _end: -1 }, 0) }; // 次でnone
         if sub >= end { none() };
         let x = sub.bit_and(-sub);
         let y = sub + x;
         let next = (sub.bit_and(y.bit_not) / x).shift_right(1).bit_or(y);
-        some $ (BitCombinationIterator { sub: next, end: end }, sub)
+        some $ (BitCombinationIterator { _sub: next, _end: end }, sub)
     );
 }
 
 // 高々nビットの数のうち、ちょうどmビットが立っているものを昇順で列挙するイテレータ
 // 
+// 制約：0 <= n <= 62
+//
 // # Parameters
-// - `n` : ビット数（0 <= n <= 62）
+// - `n` : ビット数
 // - `m` : 立っているビット数
+//
+// # Examples
+// ```fix
+// assert_eq(|_|"", bit_combinations(3, 2).to_array, [0b011, 0b101, 0b110])
+// ```
 bit_combinations : I64 -> I64 -> BitCombinationIterator = |n, m| (
-    if m < 0 || n < m { BitCombinationIterator { sub : -1, end : -1 } };
+    if !(0 <= n && n <= 62) { undefined("[CPLib.Bits::bit_combinations] `n` is out of [0, 62]") };
+    if m < 0 || n < m { BitCombinationIterator { _sub : -1, _end : -1 } };
     BitCombinationIterator {
-        sub : 1.shift_left(m) - 1,
-        end : 1.shift_left(n)
+        _sub : 1.shift_left(m) - 1,
+        _end : 1.shift_left(n)
     }
 );
 
-type BitSubsetIterator = struct { sub : I64, set : I64 };
+type BitSubsetIterator = struct { _sub : I64, _set : I64 };
 
 impl BitSubsetIterator : Iterator {
     type Item BitSubsetIterator = I64;
-    advance = |BitSubsetIterator { sub : sub, set : set }| (
+    advance = |BitSubsetIterator { _sub : sub, _set : set }| (
         if set < 0 { none() };
         let next = (sub - 1).bit_and(set);
-        some $ (BitSubsetIterator { sub: next, set: if sub == 0 { -1 } else { set } }, sub)
+        some $ (BitSubsetIterator { _sub: next, _set: if sub == 0 { -1 } else { set } }, sub)
     );
 }
 
@@ -208,8 +209,15 @@ impl BitSubsetIterator : Iterator {
 // 
 // 全体集合から始まり、空集合までを列挙する
 // 
+// 制約：set >= 0
+//
 // # Parameters
-// - `set` : 全体集合 (0 <= set) 
+// - `set` : 全体集合
+//
+// # Examples
+// ```fix
+// assert_eq(|_|"", bit_subsets(0b101).to_array, [0b101, 0b100, 0b001, 0b000])
+// ```
 bit_subsets : I64 -> BitSubsetIterator = (
-    |set| BitSubsetIterator { sub : set, set : set }
+    |set| BitSubsetIterator { _sub : set, _set : set }
 );

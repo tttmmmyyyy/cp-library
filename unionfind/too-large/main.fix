@@ -1,0 +1,13 @@
+// 標準入力で選んだ大きさのUnionFind木を作る。0：2^31（大きすぎる）、1：3
+module Main;
+
+import CPLib.IO::read_i;
+import CPLib.UnionFind::{create, get_group_size};
+import Std::{IO, I64, IO::println, ToString::to_string, Tuple2::@1};
+
+main : IO ();
+main = (
+    let case = *read_i;
+    let size = if case == 0 { 2147483648 } else { 3 };
+    println(UnionFind::create(size).get_group_size(0).@1.to_string)
+);

@@ -2,18 +2,19 @@ module CPLib.Arithmetic.Test;
 
 import BoolArray::BoolArray::@;
 import CPLib.Arithmetic::{
-    add_mod, calc_gcd, create_prime_list, create_prime_table, euler_tortient, euler_tortient_table, 
-    ext_gcd, factorize, factorize_flat, factorize_via_lp_table, inv_mod, is_prime, is_prime_32, isqrt, 
-    lift_crt, linear_sieve, mul_mod, pmod, pow_mod, pythagorean_triples, sub_mod, _calc_primitive_root, 
+    add_mod, calc_gcd, calc_prime_list, calc_prime_table, calc_totient, calc_totient_table, 
+    ext_gcd, factorize, floor_sum, factorize_flat, factorize_via_lp_table, inv_mod, is_prime, isqrt, 
+    lift_crt, calc_lp_table, mul_mod, pmod, pow_mod, pow_mod_u, power, calc_pythagorean_triples, sub_mod, _calc_primitive_root, 
     _inv_gcd
 };
 import Random::{generate_I64_nonneg, generate_U64, init_by_seed};
+import EZS::{cd, run_o, run_wi_oec, Context::default};
 import Std::{
-    loop, IO, U64, Array::{sort, to_iter, @, @size}, 
+    loop, F64, IO, U64, Array::{sort, to_iter, @, @size}, 
     Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, I32::maximum, 
-    I64::{maximum, minimum, shift_left}, IO::println, Iterator::{collect_m, filter, fold_m, map, range}, 
-    LessThan::max, LoopState::{break, continue}, Monad::pure, String::populate, ToI64::i64, 
-    ToString::to_string, ToU32::u32, ToU64::u64, U32::shift_left, U64::{maximum, shift_left}
+    I64::{maximum, minimum, shift_left}, IO::println, Iterator::{collect_m, filter, fold, fold_m, map, range}, 
+    LessThan::max, LoopState::{break, continue}, Monad::pure, Option::is_some, String::{find, populate}, ToI64::i64, 
+    ToString::to_string, ToU128::u128, ToU32::u32, ToU64::u64, U32::{maximum, shift_left}, U64::{maximum, shift_left, shift_right}
 };
 
 // floor_math:
@@ -27,6 +28,7 @@ test = (
     test_gcd;;
     test_ext_gcd;;
     test_pow_mod;;
+    test_power;;
     test_inv_mod;;
     test_prime_table;;
     test_prime_list;;
@@ -42,6 +44,8 @@ test = (
     test_crt;;
     test_calc_primitive_root;;
     test_pythagorean_triples;;
+    test_floor_sum;;
+    test_out_of_range;;
 
     pure()
 );
@@ -76,6 +80,12 @@ test_mod_arithmetic = (
     assert_eq(|_|"mul_mod 2", mul_mod(I64::minimum, I64::minimum, I64::maximum), 1);;
     assert_eq(|_|"mul_mod 3", mul_mod(I64::minimum, I64::maximum, I64::maximum), 0);;
 
+    // 法は絶対値で扱う。I64::minimum の絶対値 2^63 も法になる
+    assert_eq(|_|"add_mod 4", add_mod(I64::maximum, I64::maximum, I64::minimum), I64::maximum-1);;
+    assert_eq(|_|"sub_mod 9", sub_mod(I64::minimum, 1, I64::minimum), I64::maximum);;
+    assert_eq(|_|"mul_mod 4", mul_mod(-3, 5, -7), 6);;
+    assert_eq(|_|"mul_mod 5", mul_mod(I64::maximum, I64::maximum, I64::minimum), 1);;
+
     pure()
 );
 
@@ -103,6 +113,20 @@ test_isqrt = (
     assert_eq(|_|"isqrt 5", isqrt(2000000_U64), 1414_U64);;
     assert_eq(|_|"isqrt 5", isqrt(U64::maximum), (1.shift_left(32) - 1).u64);;
 
+    // 小さい数はすべて、大きい数は平方数の前後と乱数で、二分探索と比べる
+    range(0, 10000).fold_m((), |s, _|
+        assert_eq(|_|"isqrt small " + s.to_string, isqrt(s.u64), isqrt_bs(s.u64))
+    );;
+    let rng = Random::init_by_seed(1_U64);
+    let rng = *range(0, 10000).fold_m(rng, |_, rng|
+        let (rng, s) = rng.generate_U64;
+        let k = s.shift_right(32_U64);
+        let squares = [k * k - 1_U64, k * k, k * k + 1_U64];
+        squares.to_iter.fold_m((), |s, _| assert_eq(|_|"isqrt square " + s.to_string, isqrt(s), isqrt_bs(s)));;
+        assert_eq(|_|"isqrt random " + s.to_string, isqrt(s), isqrt_bs(s));;
+        pure(rng)
+    );
+
     pure()
 );
 
@@ -117,6 +141,12 @@ test_gcd = (
     assert_eq(|_|"gcd 6", calc_gcd(0, 0), 0);;
     assert_eq(|_|"gcd 7", calc_gcd(17, 19), 1);;
     assert_eq(|_|"gcd 8", calc_gcd(17, 17), 17);;
+    // `I64::minimum % -1`は溢れる
+    assert_eq(|_|"gcd 9", calc_gcd(I64::minimum, -1), 1);;
+    assert_eq(|_|"gcd 10", calc_gcd(-1, I64::minimum), 1);;
+    assert_eq(|_|"gcd 11", calc_gcd(I64::minimum, 1), 1);;
+    assert_eq(|_|"gcd 12", calc_gcd(I64::minimum, 6), 2);;
+    assert_eq(|_|"gcd 13", calc_gcd(I64::minimum, I64::maximum), 1);;
 
     pure()
 );
@@ -159,6 +189,28 @@ test_ext_gcd = (
     assert_eq(|_|"ext_gcd 9a", d, 17);;
     assert_eq(|_|"ext_gcd 9b", x * 17 + y * 17, d);;
 
+    // `I64::minimum % -1`は溢れる
+    let (d, (x, y)) = ext_gcd(I64::minimum, -1);
+    assert_eq(|_|"ext_gcd 10a", d, 1);;
+    assert_eq(|_|"ext_gcd 10b", (x, y), (0, -1));;
+
+    let (d, (x, y)) = ext_gcd(-1, I64::minimum);
+    assert_eq(|_|"ext_gcd 11a", d, 1);;
+    assert_eq(|_|"ext_gcd 11b", (x, y), (-1, 0));;
+
+    pure()
+);
+
+// `power`が、底を指数の回数だけ掛けた値に等しいことのテスト
+test_power : IO ();
+test_power = (
+    range(-5, 6).fold_m((), |x, _|
+        range(0, 20).fold_m((), |e, _|
+            let expected = range(0, e).fold(1, |_, acc| acc * x);
+            assert_eq(|_|"power " + x.to_string + "^" + e.to_string, x.power(e), expected)
+        )
+    );;
+    assert_eq(|_|"power F64", 2.0.power(10), 1024.0);;
     pure()
 );
 
@@ -177,6 +229,7 @@ test_pow_mod = (
 
     // 法が1の場合のテスト
     assert_eq(|_|"pow_mod 8 (any^any mod 1)", 7.pow_mod(100, 1), 0);; // mod 1 は常に0
+    assert_eq(|_|"pow_mod 8b (any^0 mod 1)", 7.pow_mod(0, 1), 0);;
 
     // オーバーフローに着目したテスト
     let max = I32::maximum.i64;
@@ -186,6 +239,24 @@ test_pow_mod = (
 
     // 特殊なケース
     assert_eq(|_|"pow_mod 12 (0^0 mod any)", 0.pow_mod(0, 5), 1);;
+
+    // 法が2^32未満の最大の値と、2^32
+    assert_eq(|_|"pow_mod 13 ((m - 1)^3 mod m, m = 2^32 - 1)", 4294967294.pow_mod(3, 4294967295), 4294967294);;
+    assert_eq(|_|"pow_mod 14 ((m - 1)^3 mod m, m = 2^32)", 4294967295.pow_mod(3, 4294967296), 4294967295);;
+    assert_eq(|_|"pow_mod_u 15 (x >= m)", 4294967293_U64.pow_mod_u(10_U64, 4294967291_U64), 1024_U64);;
+
+    // 法が[1, 2^33]のとき、かけ算を繰り返した結果と一致する
+    let rng = Random::init_by_seed(0_U64);
+    range(0, 1000).fold_m(rng, |_, rng|
+        let (rng, x) = rng.generate_U64;
+        let (rng, e) = rng.generate_U64;
+        let (rng, m) = rng.generate_U64;
+        let e = e % 64_U64;
+        let m = m % 8589934592_U64 + 1_U64;
+        let expected = range(0, e.i64).fold(1_U64 % m, |_, p| (p.u128 * x.u128 % m.u128).u64);
+        assert_eq(|_|"[test_pow_mod] pow_mod_u", x.pow_mod_u(e, m), expected);;
+        rng.pure
+    ).forget;;
 
     pure()
 );
@@ -200,12 +271,29 @@ test_inv_mod = (
         assert(|_|"test_inv_mod 0 <= x < m, x = " + x.to_string, 0 <= x && x < m);;
         pure()
     );;
+    // 合成数を含む小さな法の、互いに素なすべての a
+    range(1, 60).fold_m((), |m, _|
+        range(-70, 70).filter(|a| calc_gcd(a, m) == 1).fold_m((), |a, _|
+            let x = a.inv_mod(m);
+            let label = "test_inv_mod a = " + a.to_string + ", m = " + m.to_string;
+            assert_eq(|_|label, mul_mod(a, x, m), 1.pmod(m));;
+            assert(|_|label + ", x = " + x.to_string, 0 <= x && x < m)
+        )
+    );;
+    // 大きな法（2^61 - 1、素数）と、I64の端の値
+    let m = 2305843009213693951;
+    [I64::minimum, I64::maximum, -1, 1, 2, m - 1, m + 1].to_iter.fold_m((), |a, _|
+        let x = a.inv_mod(m);
+        let label = "test_inv_mod large a = " + a.to_string;
+        assert_eq(|_|label, mul_mod(a, x, m), 1);;
+        assert(|_|label + ", x = " + x.to_string, 0 <= x && x < m)
+    );;
     pure()
 );
 
 test_prime_table : IO ();
 test_prime_table = (
-    let prime_table = create_prime_table(20);
+    let prime_table = calc_prime_table(20);
     assert_eq(|_|"test_prime_table 0", prime_table.@(0), false);;
     assert_eq(|_|"test_prime_table 1", prime_table.@(1), false);;
     assert_eq(|_|"test_prime_table 2", prime_table.@(2), true);;
@@ -232,43 +320,56 @@ test_prime_table = (
 test_prime_list : IO ();
 test_prime_list = (
     let n = 1e8;
-    assert_eq(|_|"test_prime_list 1", create_prime_list(20).map(i64), [2, 3, 5, 7, 11, 13, 17, 19]);;
-    let (res, time) = consumed_time_while_lazy(|_| create_prime_list(n));
+    assert_eq(|_|"test_prime_list 1", calc_prime_list(20).map(i64), [2, 3, 5, 7, 11, 13, 17, 19]);;
+    let (res, time) = consumed_time_while_lazy(|_| calc_prime_list(n));
 
     assert_eq(|_|"test_prime_list 2", res.@size, 5761455);;
-    println $ "[CPLib.Arithmetic.Test] create_prime_list({}): {}".populate([n.to_string, time.to_string]);;
+    println $ "[CPLib.Arithmetic.Test] calc_prime_list({}): {}".populate([n.to_string, time.to_string]);;
     pure()
 );
 
 test_miller_rabin_u64 : IO ();
 test_miller_rabin_u64 = (
-    let _N = 1e5;
-    let prime_table = create_prime_table(_N);
-    range(0, _N).fold_m((), |n, _|
+    let __N = 1e5;
+    let prime_table = calc_prime_table(__N);
+    range(0, __N).fold_m((), |n, _|
         assert_eq(|_|"check_is_prime_u64: " + n.to_string, prime_table.@(n), is_prime(n.u64))
     );;
     assert_eq(|_|"2^61-1 is prime", is_prime(1_U64.shift_left(61_U64) - 1_U64), true);;
     assert_eq(|_|"2^59-1 is not prime", is_prime(1_U64.shift_left(59_U64) - 1_U64), false);;
+    // 2^63 を超える n では、法の乗算の積が 128 ビットを要する
+    assert_eq(|_|"2^64-59 is prime", is_prime(18446744073709551557_U64), true);;
+    assert_eq(|_|"4294967291 * 4294967279 is not prime", is_prime(18446743979220271189_U64), false);;
+    // 小さい底に対する強擬素数と Carmichael 数
+    assert_eq(|_|"3215031751", is_prime(3215031751_U64), false);;
+    assert_eq(|_|"3825123056546413051", is_prime(3825123056546413051_U64), false);;
+    assert_eq(|_|"561", is_prime(561_U64), false);;
+    // 2^64 未満の最大の素数と、その付近
+    assert_eq(|_|"2^64-1", is_prime(18446744073709551615_U64), false);;
+    assert_eq(|_|"2^64-58", is_prime(18446744073709551558_U64), false);;
     pure()
 );
 
 test_miller_rabin_u32 : IO ();
 test_miller_rabin_u32 = (
-    let _N = 1e5;
-    let prime_table = create_prime_table(_N);
-    range(0, _N).fold_m((), |n, _|
-        assert_eq(|_|"check_is_prime_u32: " + n.to_string, prime_table.@(n), is_prime_32(n.u32))
-    );;
-    assert_eq(|_|"2^31-1 is prime", is_prime_32(1_U32.shift_left(31_U32) - 1_U32), true);;
-    assert_eq(|_|"2^29-1 is not prime", is_prime_32(1_U32.shift_left(29_U32) - 1_U32), false);;
+    // n < 4759123141 では底2, 7, 61で判定する
+    assert_eq(|_|"2^31-1 is prime", is_prime(1_U64.shift_left(31_U64) - 1_U64), true);;
+    assert_eq(|_|"2^29-1 is not prime", is_prime(1_U64.shift_left(29_U64) - 1_U64), false);;
+    assert_eq(|_|"2^32-5 is prime", is_prime(4294967291_U64), true);;
+    // 底 2, 3, 5, 7 のすべてに対する強擬素数
+    assert_eq(|_|"3215031751 is not prime", is_prime(3215031751_U64), false);;
+    // 4759123141 = 48781 * 97561 は、底2, 7, 61のすべてに対する強擬素数
+    assert_eq(|_|"4759123141 is not prime", is_prime(4759123141_U64), false);;
+    assert_eq(|_|"4759123129 is prime", is_prime(4759123129_U64), true);;
+    assert_eq(|_|"4759123151 is prime", is_prime(4759123151_U64), true);;
     pure()
 );
 
 test_inv_gcd : IO ();
 test_inv_gcd = (
-    let _N = 1e3;
+    let __N = 1e3;
     let rng = Random::init_by_seed(0_U64);
-    range(0, _N).fold_m(rng, |_, rng|
+    range(0, __N).fold_m(rng, |_, rng|
         let (rng, a) = rng.generate_U64;
         let a = a.i64;
         let (rng, b) = rng.generate_I64_nonneg;
@@ -284,9 +385,9 @@ test_inv_gcd = (
 
 test_crt : IO ();
 test_crt = (
-    let _N = 1e3;
+    let __N = 1e3;
     let rng = Random::init_by_seed(0_U64);
-    range(0, _N).fold_m(rng, |_, rng|
+    range(0, __N).fold_m(rng, |_, rng|
         // 解がある場合のみチェック
         let (rng, m0) = rng.generate_I64_nonneg;
         let m0 = max(1, m0 % (I32::maximum.i64 - 1));
@@ -307,10 +408,33 @@ test_crt = (
     pure()
 );
 
+// 小さな引数のすべての組で、floor_sumを項ごとの和と比べる。aとbが負の場合を含む
+test_floor_sum : IO ();
+test_floor_sum = (
+    let naive = |n, m, a, b| range(0, n).fold(0, |i, acc|
+        let x = a * i + b;
+        acc + (x - x.pmod(m)) / m
+    );
+    range(0, 20).fold_m((), |n, _|
+        range(1, 20).fold_m((), |m, _|
+            range(-20, 21).fold_m((), |a, _|
+                range(-20, 21).fold_m((), |b, _|
+                    assert_eq(|_|"test_floor_sum n={} m={} a={} b={}".populate([n.to_string, m.to_string, a.to_string, b.to_string]), 
+                        floor_sum(n, m, a, b), naive(n, m, a, b))
+                )
+            )
+        )
+    );;
+    // 制約の上限の n と m。答えは 0 + 1 + ... + (n - 1) = n(n - 1)/2 で、I64に収まる
+    let n = (1_U64.shift_left(32_U64) - 1_U64).i64;
+    assert_eq(|_|"test_floor_sum: n = 2^32 - 1", floor_sum(n, n, n, 0), n * ((n - 1) / 2));;
+    pure()
+);
+
 test_calc_primitive_root : IO ();
 test_calc_primitive_root = (
     // TODO: add (999999999999999989, 3)
-    [(2, 1), (3, 2), (5, 2), (7, 3), (11, 2), (13, 2), (17, 3), (19, 2), (1e9 + 7, 5), (998244353, 3)].to_iter.map(|(p, ans)|
+    [(2, 1), (3, 2), (5, 2), (7, 3), (11, 2), (13, 2), (17, 3), (19, 2), (1e9 + 7, 5), (1e9 + 9, 13), (998244353, 3)].to_iter.map(|(p, ans)|
         let r = _calc_primitive_root(p);
         assert_eq(|_|"[test_calc_primitive_root] {}".populate([p.to_string]), r, ans)
     ).collect_m;;
@@ -319,39 +443,39 @@ test_calc_primitive_root = (
 );
 
 test_pythagorean_triples : IO () = (
-    assert_eq(|_|"pythagorean_triples 1", 
-        pythagorean_triples(1).sort,
+    assert_eq(|_|"calc_pythagorean_triples 1", 
+        calc_pythagorean_triples(1).sort,
         []
     );;
 
-    assert_eq(|_|"pythagorean_triples 2", 
-        pythagorean_triples(2).sort,
+    assert_eq(|_|"calc_pythagorean_triples 2", 
+        calc_pythagorean_triples(2).sort,
         []
     );;
 
-    assert_eq(|_|"pythagorean_triples 3", 
-        pythagorean_triples(3).sort,
+    assert_eq(|_|"calc_pythagorean_triples 3", 
+        calc_pythagorean_triples(3).sort,
         []
     );;   
 
-    assert_eq(|_|"pythagorean_triples 4", 
-        pythagorean_triples(4).sort,
+    assert_eq(|_|"calc_pythagorean_triples 4", 
+        calc_pythagorean_triples(4).sort,
         []
     );; 
 
 
-    assert_eq(|_|"pythagorean_triples 5", 
-        pythagorean_triples(5).sort,
+    assert_eq(|_|"calc_pythagorean_triples 5", 
+        calc_pythagorean_triples(5).sort,
         [(3, 4, 5)]
     );;
 
-    assert_eq(|_|"pythagorean_triples 25", 
-        pythagorean_triples(25).sort,
+    assert_eq(|_|"calc_pythagorean_triples 25", 
+        calc_pythagorean_triples(25).sort,
         [(3, 4, 5), (15, 8, 17), (5, 12, 13), (7, 24, 25)].sort
     );;
 
-    assert_eq(|_|"pythagorean_triples 101", 
-        pythagorean_triples(101).sort,
+    assert_eq(|_|"calc_pythagorean_triples 101", 
+        calc_pythagorean_triples(101).sort,
         [(3, 4, 5), (15, 8, 17), (35, 12, 37), (63, 16, 65), (99, 20, 101), (5, 12, 13), (21, 20, 29), (45, 28, 53), (77, 36, 85), (7, 24, 25), (55, 48, 73), (9, 40, 41), (33, 56, 65), (65, 72, 97), (11, 60, 61), (39, 80, 89), (13, 84, 85)].sort
     );;    
 
@@ -361,78 +485,84 @@ test_pythagorean_triples : IO () = (
 test_factorize_flat : IO ();
 test_factorize_flat = (
     assert_eq(|_|"factorize_flat 1", factorize_flat(1), []);;
-    assert_eq(|_|"factorize_flat 2", factorize_flat(2), [2_U32]);;
-    assert_eq(|_|"factorize_flat 3", factorize_flat(3), [3_U32]);;
-    assert_eq(|_|"factorize_flat 4", factorize_flat(4), [2_U32, 2_U32]);;
-    assert_eq(|_|"factorize_flat 6", factorize_flat(6), [2_U32, 3_U32]);;
-    assert_eq(|_|"factorize_flat 12", factorize_flat(12), [2_U32, 2_U32, 3_U32]);;
-    assert_eq(|_|"factorize_flat 17", factorize_flat(17), [17_U32]);;
-    assert_eq(|_|"factorize_flat 360", factorize_flat(360), [2_U32, 2_U32, 2_U32, 3_U32, 3_U32, 5_U32]);;
+    assert_eq(|_|"factorize_flat 2", factorize_flat(2), [2]);;
+    assert_eq(|_|"factorize_flat 3", factorize_flat(3), [3]);;
+    assert_eq(|_|"factorize_flat 4", factorize_flat(4), [2, 2]);;
+    assert_eq(|_|"factorize_flat 6", factorize_flat(6), [2, 3]);;
+    assert_eq(|_|"factorize_flat 12", factorize_flat(12), [2, 2, 3]);;
+    assert_eq(|_|"factorize_flat 17", factorize_flat(17), [17]);;
+    assert_eq(|_|"factorize_flat 360", factorize_flat(360), [2, 2, 2, 3, 3, 5]);;
     // 平方数（d > n/d の境界ケース）
-    assert_eq(|_|"factorize_flat 9", factorize_flat(9), [3_U32, 3_U32]);;
-    assert_eq(|_|"factorize_flat 25", factorize_flat(25), [5_U32, 5_U32]);;
-    assert_eq(|_|"factorize_flat 49", factorize_flat(49), [7_U32, 7_U32]);;
-    assert_eq(|_|"factorize_flat 36", factorize_flat(36), [2_U32, 2_U32, 3_U32, 3_U32]);;
-    assert_eq(|_|"factorize_flat 100", factorize_flat(100), [2_U32, 2_U32, 5_U32, 5_U32]);;
-    assert_eq(|_|"factorize_flat 1018081", factorize_flat(1018081), [1009_U32, 1009_U32]);; // 1009^2, 1009 is prime
+    assert_eq(|_|"factorize_flat 9", factorize_flat(9), [3, 3]);;
+    assert_eq(|_|"factorize_flat 25", factorize_flat(25), [5, 5]);;
+    assert_eq(|_|"factorize_flat 49", factorize_flat(49), [7, 7]);;
+    assert_eq(|_|"factorize_flat 36", factorize_flat(36), [2, 2, 3, 3]);;
+    assert_eq(|_|"factorize_flat 100", factorize_flat(100), [2, 2, 5, 5]);;
+    assert_eq(|_|"factorize_flat 1018081", factorize_flat(1018081), [1009, 1009]);; // 1009^2, 1009 is prime
     // 大きめの素数
-    assert_eq(|_|"factorize_flat 1000003", factorize_flat(1000003), [1000003_U32]);;
+    assert_eq(|_|"factorize_flat 1000003", factorize_flat(1000003), [1000003]);;
     // 大きめの合成数：1000000007 は素数なので、1000000007 * 2 = 2000000014
-    assert_eq(|_|"factorize_flat 2000000014", factorize_flat(2000000014), [2_U32, 1000000007_U32]);;
+    assert_eq(|_|"factorize_flat 2000000014", factorize_flat(2000000014), [2, 1000000007]);;
+    // 2^32 以上の素因数：405882859399 と 4294967311 = 2^32 + 15 は素数
+    assert_eq(|_|"factorize_flat 811765718798", factorize_flat(2 * 405882859399), [2, 405882859399]);;
+    assert_eq(|_|"factorize_flat 4294967311", factorize_flat(4294967311), [4294967311]);;
     pure()
 );
 
 test_factorize : IO ();
 test_factorize = (
     assert_eq(|_|"factorize 1", factorize(1), []);;
-    assert_eq(|_|"factorize 2", factorize(2), [(2_U32, 1_U8)]);;
-    assert_eq(|_|"factorize 4", factorize(4), [(2_U32, 2_U8)]);;
-    assert_eq(|_|"factorize 6", factorize(6), [(2_U32, 1_U8), (3_U32, 1_U8)]);;
-    assert_eq(|_|"factorize 12", factorize(12), [(2_U32, 2_U8), (3_U32, 1_U8)]);;
-    assert_eq(|_|"factorize 243", factorize(243), [(3_U32, 5_U8)]);;
-    assert_eq(|_|"factorize 360", factorize(360), [(2_U32, 3_U8), (3_U32, 2_U8), (5_U32, 1_U8)]);;
+    assert_eq(|_|"factorize 2", factorize(2), [(2, 1_U8)]);;
+    assert_eq(|_|"factorize 4", factorize(4), [(2, 2_U8)]);;
+    assert_eq(|_|"factorize 6", factorize(6), [(2, 1_U8), (3, 1_U8)]);;
+    assert_eq(|_|"factorize 12", factorize(12), [(2, 2_U8), (3, 1_U8)]);;
+    assert_eq(|_|"factorize 243", factorize(243), [(3, 5_U8)]);;
+    assert_eq(|_|"factorize 360", factorize(360), [(2, 3_U8), (3, 2_U8), (5, 1_U8)]);;
     // 平方数（d > n/d の境界ケース）
-    assert_eq(|_|"factorize 9", factorize(9), [(3_U32, 2_U8)]);;
-    assert_eq(|_|"factorize 25", factorize(25), [(5_U32, 2_U8)]);;
-    assert_eq(|_|"factorize 49", factorize(49), [(7_U32, 2_U8)]);;
-    assert_eq(|_|"factorize 36", factorize(36), [(2_U32, 2_U8), (3_U32, 2_U8)]);;
-    assert_eq(|_|"factorize 100", factorize(100), [(2_U32, 2_U8), (5_U32, 2_U8)]);;
-    assert_eq(|_|"factorize 81", factorize(81), [(3_U32, 4_U8)]);; // 3^4
-    assert_eq(|_|"factorize 1018081", factorize(1018081), [(1009_U32, 2_U8)]);; // 1009^2
-    assert_eq(|_|"factorize 1000003", factorize(1000003), [(1000003_U32, 1_U8)]);;
-    assert_eq(|_|"factorize 2000000014", factorize(2000000014), [(2_U32, 1_U8), (1000000007_U32, 1_U8)]);;
+    assert_eq(|_|"factorize 9", factorize(9), [(3, 2_U8)]);;
+    assert_eq(|_|"factorize 25", factorize(25), [(5, 2_U8)]);;
+    assert_eq(|_|"factorize 49", factorize(49), [(7, 2_U8)]);;
+    assert_eq(|_|"factorize 36", factorize(36), [(2, 2_U8), (3, 2_U8)]);;
+    assert_eq(|_|"factorize 100", factorize(100), [(2, 2_U8), (5, 2_U8)]);;
+    assert_eq(|_|"factorize 81", factorize(81), [(3, 4_U8)]);; // 3^4
+    assert_eq(|_|"factorize 1018081", factorize(1018081), [(1009, 2_U8)]);; // 1009^2
+    assert_eq(|_|"factorize 1000003", factorize(1000003), [(1000003, 1_U8)]);;
+    assert_eq(|_|"factorize 2000000014", factorize(2000000014), [(2, 1_U8), (1000000007, 1_U8)]);;
+    // 2^32 以上の素因数：405882859399 と 4294967311 = 2^32 + 15 は素数
+    assert_eq(|_|"factorize 811765718798", factorize(2 * 405882859399), [(2, 1_U8), (405882859399, 1_U8)]);;
+    assert_eq(|_|"factorize 4294967311", factorize(4294967311), [(4294967311, 1_U8)]);;
     pure()
 );
 
 test_euler_tortient : IO ();
 test_euler_tortient = (
-    assert_eq(|_|"euler_tortient 1", euler_tortient(1), 1);;
-    assert_eq(|_|"euler_tortient 2", euler_tortient(2), 1);;
-    assert_eq(|_|"euler_tortient 3", euler_tortient(3), 2);;
-    assert_eq(|_|"euler_tortient 4", euler_tortient(4), 2);;
-    assert_eq(|_|"euler_tortient 5", euler_tortient(5), 4);;
-    assert_eq(|_|"euler_tortient 6", euler_tortient(6), 2);;
-    assert_eq(|_|"euler_tortient 7", euler_tortient(7), 6);;
-    assert_eq(|_|"euler_tortient 8", euler_tortient(8), 4);;
-    assert_eq(|_|"euler_tortient 9", euler_tortient(9), 6);;
-    assert_eq(|_|"euler_tortient 10", euler_tortient(10), 4);;
-    assert_eq(|_|"euler_tortient 12", euler_tortient(12), 4);;
-    assert_eq(|_|"euler_tortient 36", euler_tortient(36), 12);; // 2^2 * 3^2 -> 36 * 1/2 * 2/3 = 12
-    assert_eq(|_|"euler_tortient 49", euler_tortient(49), 42);; // 7^2 -> 42
-    assert_eq(|_|"euler_tortient 1000003", euler_tortient(1000003), 1000002);; // prime
+    assert_eq(|_|"calc_totient 1", calc_totient(1), 1);;
+    assert_eq(|_|"calc_totient 2", calc_totient(2), 1);;
+    assert_eq(|_|"calc_totient 3", calc_totient(3), 2);;
+    assert_eq(|_|"calc_totient 4", calc_totient(4), 2);;
+    assert_eq(|_|"calc_totient 5", calc_totient(5), 4);;
+    assert_eq(|_|"calc_totient 6", calc_totient(6), 2);;
+    assert_eq(|_|"calc_totient 7", calc_totient(7), 6);;
+    assert_eq(|_|"calc_totient 8", calc_totient(8), 4);;
+    assert_eq(|_|"calc_totient 9", calc_totient(9), 6);;
+    assert_eq(|_|"calc_totient 10", calc_totient(10), 4);;
+    assert_eq(|_|"calc_totient 12", calc_totient(12), 4);;
+    assert_eq(|_|"calc_totient 36", calc_totient(36), 12);; // 2^2 * 3^2 -> 36 * 1/2 * 2/3 = 12
+    assert_eq(|_|"calc_totient 49", calc_totient(49), 42);; // 7^2 -> 42
+    assert_eq(|_|"calc_totient 1000003", calc_totient(1000003), 1000002);; // prime
     pure()
 );
 
 test_euler_tortient_table : IO ();
 test_euler_tortient_table = (
-    let t = euler_tortient_table(21);
-    assert_eq(|_|"euler_tortient_table 21", t, [0, 1, 1, 2, 2, 4, 2, 6, 4, 6, 4, 10, 4, 12, 6, 8, 8, 16, 6, 18, 8]);;
+    let t = calc_totient_table(21);
+    assert_eq(|_|"calc_totient_table 21", t, [0, 1, 1, 2, 2, 4, 2, 6, 4, 6, 4, 10, 4, 12, 6, 8, 8, 16, 6, 18, 8]);;
     pure()
 );
 
 test_factorize_via_lp_table : IO ();
 test_factorize_via_lp_table = (
-    let (lp, _) = linear_sieve(400_U32);
+    let (lp, _) = calc_lp_table(400_U32);
 
     // n=0, n=1: 素因数なし
     assert_eq(|_|"factorize_via_lp_table 0", factorize_via_lp_table(0_U32, lp), []);;    
@@ -458,7 +588,7 @@ test_factorize_via_lp_table = (
 
 test_linear_sieve : IO ();
 test_linear_sieve = (
-    let (lp, ps) = linear_sieve(21_U32);
+    let (lp, ps) = calc_lp_table(21_U32);
 
     assert_eq(|_|"case lp 0", lp.@(0), 0_U32);;
     assert_eq(|_|"case lp 1", lp.@(1), 0_U32);;
@@ -491,4 +621,25 @@ test_linear_sieve = (
     assert_eq(|_|"case ps 7", ps.@(7), 19_U32);;
 
     pure()
+);
+
+// 制約を満たさない引数を渡すと、`pow_mod`（負の指数）と`lift_crt`（長さの違う配列、1未満の法）が理由を書いて止まる
+test_out_of_range : IO ();
+test_out_of_range = (
+    let ezs = EZS::Context::default;
+    ezs.cd("arithmetic/out-of-range");;
+    ezs.run_o(["fix", "deps", "update"]);;
+    let messages = [
+        "[CPLib.Arithmetic::pow_mod] `e` is negative",
+        "[CPLib.Arithmetic::lift_crt] `rs` and `ms` have different sizes",
+        "[CPLib.Arithmetic::lift_crt] `ms` has an element less than 1"
+    ];
+    range(0, 3).fold_m((), |case, _|
+        let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], case.to_string);
+        assert_eq(|_|"case " + case.to_string + ": " + err, code != 0_U8 && err.find(messages.@(case), 0).is_some, true)
+    );;
+    let (out, _, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], "3");
+    assert_eq(|_|"in range: " + out, code == 0_U8 && out.find("(2, (8, 15))", 0).is_some, true);;
+    // 後のテストのために、作業ディレクトリをライブラリのルートに戻す
+    ezs.cd("../..")
 );

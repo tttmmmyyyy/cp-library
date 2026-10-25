@@ -1,6 +1,6 @@
 # CPLib.Trait
 
-Defined in cp-library@0.12.2
+Defined in cp-library@0.15.2
 
 ## Values
 
@@ -42,6 +42,14 @@ Type: `[a : CPLib.Trait::Monoid] a`
 Trait member of `CPLib.Trait::Monoid`
 
 単位元
+
+### namespace CPLib.Trait::NegInf
+
+#### neg_inf
+
+Type: `[a : CPLib.Trait::NegInf] a`
+
+Trait member of `CPLib.Trait::NegInf`
 
 ## Types and aliases
 
@@ -94,24 +102,54 @@ Type: `a -> a -> a`
 非可換な場合は、`op(lhs, rhs)`という用法をします。
 これは`rhs.op(lhs)`と同じなので、ドット演算子を使って`op`を呼び出すと左右が反転することに注意！
 
+#### trait `a : NegInf`
+
+各型の負の無限大の値
+
+符号つき整数では最小値、符号なし整数では0、浮動小数点数では負の無限大。
+
+##### method `neg_inf`
+
+Type: `a`
+
 ## Trait implementations
 
 ### impl `Std::F32 : CPLib.Trait::Inf`
 
+### impl `Std::F32 : CPLib.Trait::NegInf`
+
 ### impl `Std::F64 : CPLib.Trait::Inf`
+
+### impl `Std::F64 : CPLib.Trait::NegInf`
 
 ### impl `Std::I16 : CPLib.Trait::Inf`
 
+### impl `Std::I16 : CPLib.Trait::NegInf`
+
 ### impl `Std::I32 : CPLib.Trait::Inf`
+
+### impl `Std::I32 : CPLib.Trait::NegInf`
 
 ### impl `Std::I64 : CPLib.Trait::Inf`
 
+### impl `Std::I64 : CPLib.Trait::NegInf`
+
 ### impl `Std::I8 : CPLib.Trait::Inf`
+
+### impl `Std::I8 : CPLib.Trait::NegInf`
 
 ### impl `Std::U16 : CPLib.Trait::Inf`
 
+### impl `Std::U16 : CPLib.Trait::NegInf`
+
 ### impl `Std::U32 : CPLib.Trait::Inf`
+
+### impl `Std::U32 : CPLib.Trait::NegInf`
 
 ### impl `Std::U64 : CPLib.Trait::Inf`
 
+### impl `Std::U64 : CPLib.Trait::NegInf`
+
 ### impl `Std::U8 : CPLib.Trait::Inf`
+
+### impl `Std::U8 : CPLib.Trait::NegInf`

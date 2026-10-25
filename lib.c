@@ -1,96 +1,149 @@
+#include <ctype.h>
 #include <stdint.h>
-#include <inttypes.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-// Fixコンパイラが128bit整数をサポートしていないため、64bit整数のmod nでの乗算及び加算をGCCの128bit整数を使用して実装する。
-
-uint64_t cp_lib_mul_mod(uint64_t a, uint64_t b, uint64_t mod)
+// 読み込みに失敗したことを標準エラーに書いて、プログラムを止める。それまでに書いた標準出力は出力する。
+static void cp_lib_fail(const char *what, int c)
 {
-    __uint128_t product = (__uint128_t)a * b;
-    return (uint64_t)(product % mod);
-}
-
-uint64_t cp_lib_add_mod(uint64_t a, uint64_t b, uint64_t mod)
-{
-    __uint128_t sum = (__uint128_t)a + b;
-    return (uint64_t)(sum % mod);
-}
-
-uint64_t cp_lib_add_mod_signed(int64_t a, int64_t b, uint64_t mod)
-{
-    __int128_t sum = (__int128_t)a + b;
-    __int128_t r = sum % mod;
-    if (r < 0)
+    fflush(stdout);
+    if (c == EOF)
     {
-        r += mod;
+        fprintf(stderr, "CPLib.IO: unexpected end of input while reading %s\n", what);
     }
-    return (uint64_t)(r);
-}
-
-uint64_t cp_lib_sub_mod_signed(int64_t a, int64_t b, uint64_t mod)
-{
-    __int128_t diff = (__int128_t)a - b;
-    __int128_t r = diff % mod;
-    if (r < 0)
+    else if (isgraph(c))
     {
-        r += mod;
+        fprintf(stderr, "CPLib.IO: unexpected character '%c' while reading %s\n", c, what);
     }
-    return (uint64_t)(r);
-}
-
-uint64_t cp_lib_mul_mod_signed(int64_t a, int64_t b, uint64_t mod)
-{
-    __int128_t product = (__int128_t)a * b;
-    __int128_t r = product % mod;
-    if (r < 0)
+    else
     {
-        r += mod;
+        fprintf(stderr, "CPLib.IO: unexpected byte %d while reading %s\n", c, what);
     }
-    return (uint64_t)(r);
+    abort();
 }
 
-int64_t cp_lib_read_i64()
+static int cp_lib_is_space(int c)
 {
-    int64_t value;
-    scanf("%" SCNd64, &value);
+    return c == ' ' || c == '\n' || c == '\r' || c == '\t' || c == '\v' || c == '\f';
+}
+
+// 空白文字を読み飛ばし、その次の文字を読んで返す。
+static int cp_lib_skip_spaces(void)
+{
+    int c = getchar_unlocked();
+    while (cp_lib_is_space(c))
+    {
+        c = getchar_unlocked();
+    }
+    return c;
+}
+
+// 符号と数字の並びを読み、その絶対値と符号を返す。数字の後の文字は読まずに残す。
+//
+// 値は 2^64 を法として求める。
+static uint64_t cp_lib_read_digits(const char *what, int *negative)
+{
+    int c = cp_lib_skip_spaces();
+    *negative = 0;
+    if (c == '-' || c == '+')
+    {
+        *negative = c == '-';
+        c = getchar_unlocked();
+    }
+    if (c < '0' || '9' < c)
+    {
+        cp_lib_fail(what, c);
+    }
+    uint64_t value = 0;
+    while ('0' <= c && c <= '9')
+    {
+        value = value * 10 + (uint64_t)(c - '0');
+        c = getchar_unlocked();
+    }
+    if (c != EOF)
+    {
+        ungetc(c, stdin);
+    }
     return value;
 }
 
-uint64_t cp_lib_read_u64()
+int64_t cp_lib_read_i64(void)
 {
-    uint64_t value;
-    scanf("%" SCNu64, &value);
-    return value;
+    int negative;
+    uint64_t value = cp_lib_read_digits("an integer", &negative);
+    return (int64_t)(negative ? -value : value);
 }
 
-double cp_lib_read_double()
+uint64_t cp_lib_read_u64(void)
+{
+    int negative;
+    uint64_t value = cp_lib_read_digits("an unsigned integer", &negative);
+    return negative ? -value : value;
+}
+
+double cp_lib_read_double(void)
 {
     double value;
-    scanf("%lf", &value);
+    if (scanf("%lf", &value) != 1)
+    {
+        int c = getchar_unlocked();
+        cp_lib_fail("a floating point number", c);
+    }
     return value;
 }
 
-uint8_t cp_lib_read_char()
+uint8_t cp_lib_read_char(void)
 {
-    uint8_t value;
-    scanf(" %c", &value);
-    return value;
+    int c = cp_lib_skip_spaces();
+    if (c == EOF)
+    {
+        cp_lib_fail("a character", c);
+    }
+    return (uint8_t)c;
 }
 
-// 可変長引数関数でないscanfラッパー
-//
-// Fix 1.1.0のFFI_CALLは可変長引数関数をサポートしていないため、このようにラップする必要がある。
-void cp_lib_scanf(char *format, void *buf)
-{
-    scanf(format, buf);
-}
+// 字句を読むバッファ。読んだ字句の長さに合わせて伸ばし、縮めない。
+static char *cp_lib_token_buf = NULL;
+static size_t cp_lib_token_cap = 0;
 
-int64_t cp_lib_popcount64(uint64_t x)
+// 空白文字を読み飛ばし、次の空白文字か入力の終わりまでを読んで、NUL で終わる文字列として返す。
+// 字句の後の空白文字は読まずに残す。返す文字列は、次にこの関数を呼ぶまで有効である。
+const char *cp_lib_read_token(void)
 {
-    return __builtin_popcountll(x);
-}
-
-int64_t cp_lib_popcount32(uint32_t x)
-{
-    return __builtin_popcount(x);
+    int c = cp_lib_skip_spaces();
+    if (c == EOF)
+    {
+        cp_lib_fail("a string", c);
+    }
+    size_t len = 0;
+    while (1)
+    {
+        // 字句の後に NUL を置く場所を残して伸ばす
+        if (len + 1 >= cp_lib_token_cap)
+        {
+            size_t cap = cp_lib_token_cap == 0 ? 64 : cp_lib_token_cap * 2;
+            char *buf = realloc(cp_lib_token_buf, cap);
+            if (buf == NULL)
+            {
+                fflush(stdout);
+                fprintf(stderr, "CPLib.IO: out of memory while reading a string\n");
+                abort();
+            }
+            cp_lib_token_buf = buf;
+            cp_lib_token_cap = cap;
+        }
+        cp_lib_token_buf[len++] = (char)c;
+        c = getchar_unlocked();
+        if (c == EOF)
+        {
+            break;
+        }
+        if (cp_lib_is_space(c))
+        {
+            ungetc(c, stdin);
+            break;
+        }
+    }
+    cp_lib_token_buf[len] = '\0';
+    return cp_lib_token_buf;
 }

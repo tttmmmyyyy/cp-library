@@ -1,6 +1,6 @@
 # CPLib.Arithmetic
 
-Defined in cp-library@0.12.2
+Defined in cp-library@0.15.2
 
 ## Values
 
@@ -10,13 +10,23 @@ Defined in cp-library@0.12.2
 
 Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::I64`
 
-`x + y`を`m`で割った余りを（非負で）返す
+`x + y`を`|m|`で割った余りを（非負で）返す
+
+制約：m != 0
+
+計算量：O(1)
 
 ##### Parameters
 
 - `x`: 整数
 - `y`: 整数
-- `m`: 除数 != 0
+- `m`: 法
+
+##### Examples
+
+```fix
+assert_eq(|_|"", add_mod(5, 4, 7), 2)
+```
 
 #### calc_gcd
 
@@ -24,10 +34,74 @@ Type: `Std::I64 -> Std::I64 -> Std::I64`
 
 2つの整数の最大公約数（非負整数）を計算する
 
+制約：最大公約数 <= I64::maximum
+
+計算量：O(log max(|a|, |b|))
+
 ##### Parameters
 
 - `a`: 整数
 - `b`: 整数
+
+#### calc_lp_table
+
+Type: `Std::U32 -> (Std::Array Std::U32, Std::Array Std::U32)`
+
+線形ふるいを用いて、[0, n)の範囲で、各数の最小の素因数を格納した配列と、素数のリストを作成する
+
+計算量：O(n)
+
+##### Parameters
+
+- `n` : 上限（exclusive）
+
+##### Returns
+
+`(lp, ps)`
+- `lp`: 最小素因子テーブル。長さnの配列で、`lp.@(i)`は`i`の最小の素因数。`lp.@(0)`, `lp.@(1)`は0。
+- `ps`: [0, n)の範囲の素数のリスト
+
+#### calc_prime_list
+
+Type: `Std::I64 -> Std::Array Std::U32`
+
+[0, n)の範囲での素数リストを作成する
+
+制約：n >= 1
+
+計算量：O(n log log n)
+
+##### Parameters
+
+- `n` : 素数リストの上限（exclusive）
+
+#### calc_prime_table
+
+Type: `Std::I64 -> BoolArray::BoolArray`
+
+[0, n)の範囲での素数テーブルを作成する
+
+配列（`BoolArray`）`table`は素数テーブルであり、`table.@(n)`が`true`の場合に`n`が素数であることを意味する。
+
+注意：戻り値の要素に`@(n)`でアクセスするには`import BoolArray;`が必要です。
+
+制約：n >= 1
+
+計算量：O(n log log n)
+
+##### Parameters
+
+- `n` : 素数テーブルの上限（exclusive）
+
+##### Examples
+
+```fix
+import BoolArray;
+
+let table = calc_prime_table(10);
+assert(|_|"", table.@(7));;
+assert(|_|"", !table.@(9))
+```
 
 #### calc_primitive_root
 
@@ -37,49 +111,48 @@ Type: `Std::I64 -> Std::I64`
 
 https://cp-algorithms.com/algebra/primitive-root.html#algorithm-for-finding-a-primitive-root
 
-注意：現状、この関数はp-1の素因数分解を素朴なO(sqrt(p))の方法で行います。
+制約：pは素数
+
+計算量：O(sqrt(p))。pが`CPLib.ZP`に定義されている素数ならO(1)
 
 ##### Parameters
 
 - `p`: 素数
 
-#### create_prime_list
+#### calc_pythagorean_triples
 
-Type: `Std::I64 -> Std::Array Std::U32`
+Type: `Std::I64 -> Std::Array (Std::I64, Std::I64, Std::I64)`
 
-[0, n)の範囲での素数リストを作成する
+原始ピタゴラス数`(a, b, c)`を列挙する
 
-##### Parameters
+`a^2 + b^2 = c^2`を満たす正の整数の組`(a, b, c)`で、`gcd(a, b, c) = 1`を満たすものを列挙する
 
-- `n` : 素数リストの上限（exclusive）
+また、このような`a`, `b`は必ず片方が奇数でもう片方が偶数である。
+この関数の戻り値では`a`が奇数、`b`が偶数となる。
 
-#### create_prime_table
+制約：c_max >= 1
 
-Type: `Std::I64 -> BoolArray::BoolArray`
-
-[0, n)の範囲での素数テーブルを作成する
-
-配列（`BoolArray`）`table`は素数テーブルであり、`table.@(n)`が`true`の場合に`n`が素数であることを意味する。
-
-注意：戻り値の要素に`@(n)`でアクセスするには``が必要です。
+計算量：O(c_max log c_max)
 
 ##### Parameters
 
-- `n` : 素数テーブルの上限（exclusive）
+- `c_max`: `c`の上限（inclusive）
 
-#### euler_tortient
+#### calc_totient
 
 Type: `Std::I64 -> Std::I64`
 
 オイラーのトーシェント関数 φ(n) を計算する
 
-試し割りによる O(sqrt(n)) 実装
+制約：n >= 1
+
+計算量：O(sqrt(n))
 
 ##### Parameters
 
-- `n`: 正の整数 >= 1
+- `n`: 正の整数
 
-#### euler_tortient_table
+#### calc_totient_table
 
 Type: `Std::I64 -> Std::Array Std::I64`
 
@@ -87,9 +160,43 @@ Type: `Std::I64 -> Std::Array Std::I64`
 
 `table.@(i)` が φ(i) の値となる。ただし `table.@(0) = 0` とする。
 
+計算量：O(n log log n)
+
 ##### Parameters
 
 - `n`: 表の上限（exclusive）
+
+#### create_prime_list
+
+**Deprecated**: Use `CPLib.Arithmetic::calc_prime_list` instead.
+
+Type: `Std::I64 -> Std::Array Std::U32`
+
+`calc_prime_list`の別名（非推奨）
+
+#### create_prime_table
+
+**Deprecated**: Use `CPLib.Arithmetic::calc_prime_table` instead.
+
+Type: `Std::I64 -> BoolArray::BoolArray`
+
+`calc_prime_table`の別名（非推奨）
+
+#### euler_tortient
+
+**Deprecated**: Use `CPLib.Arithmetic::calc_totient` instead.
+
+Type: `Std::I64 -> Std::I64`
+
+`calc_totient`の別名（非推奨）
+
+#### euler_tortient_table
+
+**Deprecated**: Use `CPLib.Arithmetic::calc_totient_table` instead.
+
+Type: `Std::I64 -> Std::Array Std::I64`
+
+`calc_totient_table`の別名（非推奨）
 
 #### ext_gcd
 
@@ -98,6 +205,10 @@ Type: `Std::I64 -> Std::I64 -> (Std::I64, (Std::I64, Std::I64))`
 拡張ユークリッドの互除法
 
 2つの整数 `a`, `b` に対して、その最大公約数 `d >= 0` および、`ax + by = d` を満たす整数 `x`, `y` を求める
+
+制約：最大公約数 <= I64::maximum
+
+計算量：O(log max(|a|, |b|))
 
 ##### Returns
 
@@ -108,17 +219,27 @@ Type: `Std::I64 -> Std::I64 -> (Std::I64, (Std::I64, Std::I64))`
 - `a`: 整数
 - `b`: 整数
 
+##### Examples
+
+```fix
+let (d, (x, y)) = ext_gcd(12, 18);
+assert_eq(|_|"", d, 6);;
+assert_eq(|_|"", 12 * x + 18 * y, 6)
+```
+
 #### factorize
 
-Type: `Std::I64 -> Std::Array (Std::U32, Std::U8)`
+Type: `Std::I64 -> Std::Array (Std::I64, Std::U8)`
 
 試し割りにより、数を素因数分解する（素因子と指数のペアの配列で返す）
+
+制約：n >= 1
 
 計算量：O(sqrt(n))
 
 ##### Parameters
 
-- `n`: 素因数分解する数 >= 1
+- `n`: 素因数分解する数
 
 ##### Returns
 
@@ -128,15 +249,17 @@ Type: `Std::I64 -> Std::Array (Std::U32, Std::U8)`
 
 #### factorize_flat
 
-Type: `Std::I64 -> Std::Array Std::U32`
+Type: `Std::I64 -> Std::Array Std::I64`
 
 試し割りにより、数を素因数分解する（素因子を重複ありのフラットな配列で返す）
+
+制約：n >= 1
 
 計算量：O(sqrt(n))
 
 ##### Parameters
 
-- `n`: 素因数分解する数 >= 1
+- `n`: 素因数分解する数
 
 ##### Returns
 
@@ -149,16 +272,27 @@ Type: `Std::U32 -> Std::Array Std::U32 -> Std::Array (Std::U32, Std::U8)`
 
 最小素因子テーブルを用いて、数を素因数分解する
 
+制約：n < |lp_table|
+
+計算量：O(log n)
+
 ##### Parameters
 
 - `n`: 素因数分解する数
-- `lp_table`: 長さが少なくとも`n+1`の最小素因子テーブル。最小素因子テーブルの定義は`linear_sieve`のコメントを参照。
+- `lp_table`: 最小素因子テーブル。最小素因子テーブルの定義は`calc_lp_table`のコメントを参照。
 
 ##### Returns
 
 素因数分解の結果。
 `(p, e)`の配列で、`p`は素因子、`e`はその指数を表す。`p`は昇順に並ぶ。
 `n`が0の場合は空の配列を返す。
+
+##### Examples
+
+```fix
+let (lp, _) = calc_lp_table(100_U32);
+assert_eq(|_|"", factorize_via_lp_table(12_U32, lp), [(2_U32, 2_U8), (3_U32, 1_U8)]) // 12 = 2^2 * 3
+```
 
 #### floor_sum
 
@@ -168,33 +302,52 @@ Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::I64 -> Std::I64`
 
 ac-libraryのmathにある同名の関数の移植です。
 
+制約：0 <= n < 2^32, 1 <= m < 2^32
+
+計算量：O(log m)
+
 ##### Parameters
 
-- `n`
-- `m`
-- `a`
-- `b`
+- `n`: 項の数
+- `m`: 除数
+- `a`: `i`の係数
+- `b`: 定数項
+
+##### Examples
+
+```fix
+// floor(1/3) + floor(3/3) + floor(5/3) + floor(7/3) = 0 + 1 + 1 + 2
+assert_eq(|_|"", floor_sum(4, 3, 2, 1), 4)
+```
 
 #### inv_mod
 
 Type: `Std::I64 -> Std::I64 -> Std::I64`
 
-`ax = 1 mod m`なる`x`のうち、`0 <= x < |m|`を満たすものを返す
+`ax = 1 mod m`なる`x`のうち、`0 <= x < m`を満たすものを返す
 
-制約：gcd(a, m) = 1
+制約：gcd(a, m) = 1, m >= 1
+
+計算量：O(log m)
 
 ##### Parameters
 
-- `m`: 法 > 0
+- `m`: 法
 - `a`: 整数
+
+##### Examples
+
+```fix
+assert_eq(|_|"", 3.inv_mod(7), 5) // 3 * 5 = 15 = 1 mod 7
+```
 
 #### is_prime
 
 Type: `Std::U64 -> Std::Bool`
 
-Miller-Rabin 素数判定法（64bit版）
+Miller-Rabin 素数判定法
 
-https://cp-algorithms.com/algebra/primality_tests.html#deterministic-version
+計算量：O(log n)
 
 ##### Parameters
 
@@ -202,11 +355,13 @@ https://cp-algorithms.com/algebra/primality_tests.html#deterministic-version
 
 #### is_prime_32
 
+**Deprecated**: Use `CPLib.Arithmetic::is_prime` instead.
+
 Type: `Std::U32 -> Std::Bool`
 
 Miller-Rabin 素数判定法（32bit版）
 
-https://cp-algorithms.com/algebra/primality_tests.html#deterministic-version
+`is_prime(n.u64)`と同じ。
 
 ##### Parameters
 
@@ -218,9 +373,11 @@ Type: `Std::U64 -> Std::U64`
 
 64ビット整数の平方根の整数部分を計算する
 
+計算量：O(log log s)
+
 ##### Parameters
 
-- `x`: 64ビット整数
+- `s`: 64ビット整数
 
 #### lift_crt
 
@@ -232,40 +389,53 @@ Type: `Std::Array Std::I64 -> Std::Array Std::I64 -> (Std::I64, Std::I64)`
 
 解が存在しない場合は、`(0, 0)`を返します。
 
-制約や計算量オーダーは https://atcoder.github.io/ac-library/master/document_ja/math.html の`crt`と同様です。
+制約：|rs| = |ms|, ms.@(i) >= 1, lcm(ms)が`I64`に収まる
+
+計算量：O(n log lcm(ms))、n = |rs|
 
 ##### Parameters
 
 - `rs`: r(i)の配列
-- `ms`: m(i) >= 1の配列。r(i)と同じ長さ。
+- `ms`: m(i)の配列
+
+##### Examples
+
+```fix
+// x = 2 (mod 3) かつ x = 3 (mod 5) <=> x = 8 (mod 15)
+assert_eq(|_|"", lift_crt([2, 3], [3, 5]), (8, 15));;
+// x = 0 (mod 2) かつ x = 1 (mod 4) には解がない
+assert_eq(|_|"", lift_crt([0, 1], [2, 4]), (0, 0))
+```
 
 #### linear_sieve
 
+**Deprecated**: Use `CPLib.Arithmetic::calc_lp_table` instead.
+
 Type: `Std::U32 -> (Std::Array Std::U32, Std::Array Std::U32)`
 
-線形ふるいを用いて、[0, n)の範囲で、各数の最小の素因数を格納した配列と、素数のリストを作成する
-
-##### Parameters
-
-- `n` : 上限（exclusive）
-
-##### Returns
-
-`(lp, ps)`
-- `lp`: 最小素因子テーブル。長さnの配列で、`lp.@(i)`は`i`の最小の素因数。`lp.@(0)`, `lp.@(1)`は0。
-- `ps`: [0, n)の範囲の素数のリスト
+`calc_lp_table`の別名（非推奨）
 
 #### mul_mod
 
 Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::I64`
 
-`x * y`を`m`で割った余りを（非負で）返す
+`x * y`を`|m|`で割った余りを（非負で）返す
+
+制約：m != 0
+
+計算量：O(1)
 
 ##### Parameters
 
 - `x`: 整数
 - `y`: 整数
-- `m`: 除数 != 0
+- `m`: 法
+
+##### Examples
+
+```fix
+assert_eq(|_|"", mul_mod(5, 4, 7), 6)
+```
 
 #### pmod
 
@@ -275,61 +445,112 @@ Type: `Std::I64 -> Std::I64 -> Std::I64`
 
 C言語の%演算子とは異なり、負の数に対しても正の余りを返す
 
+制約：m >= 1
+
+計算量：O(1)
+
 ##### Parameters
 
-- `m`: 除数 > 0
-- `x`: 被除数
+- `m`: 法
+- `x`: 整数
+
+##### Examples
+
+```fix
+assert_eq(|_|"", (-7).pmod(3), 2)
+```
 
 #### pow_mod
 
 Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::I64`
 
-`x^e`を`n`で割った余りを計算する
+`x^e`を`m`で割った余りを計算する
+
+制約：e >= 0, m >= 1
+
+計算量：O(log e)
 
 ##### Parameters
 
-- `e`: 指数 >= 0
-- `m`: 法 > 0
+- `e`: 指数
+- `m`: 法
 - `x`: 底
+
+##### Examples
+
+```fix
+assert_eq(|_|"", 2.pow_mod(10, 1000), 24) // 2^10 = 1024
+```
 
 #### pow_mod_u
 
 Type: `Std::U64 -> Std::U64 -> Std::U64 -> Std::U64`
 
-`x^e`を`n`で割った余りを計算する（unsigned版）
+`x^e`を`m`で割った余りを計算する（unsigned版）
+
+制約：m >= 1
+
+計算量：O(log e)
 
 ##### Parameters
 
-- `e`: 指数 >= 0
-- `m`: 法 > 0
-- `x`: 底 >= 0
+- `e`: 指数
+- `m`: 法
+- `x`: 底
+
+#### power
+
+Type: `[a : Std::Multiplicative] Std::I64 -> a -> a`
+
+`x`の`e`乗を、繰り返し二乗法で計算します。
+
+`*`と`one`を持つ型（`Multiplicative`を実装した型）なら何にでも使えます。たとえば`I64`、`F64`、`ZP p`や、自分で作った行列の型です。
+`*`は結合的で、`one`はその単位元でなければなりません。
+
+制約：e >= 0
+
+計算量：`*`をO(log e)回
+
+##### Parameters
+
+- `e`: 指数
+- `x`: 底
+
+##### Examples
+
+```fix
+assert_eq(|_|"", 3.power(4), 81)
+```
 
 #### pythagorean_triples
 
+**Deprecated**: Use `CPLib.Arithmetic::calc_pythagorean_triples` instead.
+
 Type: `Std::I64 -> Std::Array (Std::I64, Std::I64, Std::I64)`
 
-原始ピタゴラス数`(a, b, c)`を列挙する
-
-`a^2 + b^2 = c^2`を満たす正の整数の組`(a, b, c)`で、`gcd(a, b, c) = 1`を満たすものを列挙する
-
-また、このような`a`, `b`は必ず片方が奇数でもう片方が偶数である。
-この関数の戻り値では`a`が奇数、`b`が偶数となる。
-
-##### Parameters
-
-- `c_max`: `c`の上限（inclusive), `c_max >= 1`
+`calc_pythagorean_triples`の別名（非推奨）
 
 #### sub_mod
 
 Type: `Std::I64 -> Std::I64 -> Std::I64 -> Std::I64`
 
-`x - y`を`m`で割った余りを（非負で）返す
+`x - y`を`|m|`で割った余りを（非負で）返す
+
+制約：m != 0
+
+計算量：O(1)
 
 ##### Parameters
 
 - `x`: 整数
 - `y`: 整数
-- `m`: 除数 != 0
+- `m`: 法
+
+##### Examples
+
+```fix
+assert_eq(|_|"", sub_mod(2, 5, 7), 4)
+```
 
 ## Types and aliases
 

@@ -1,6 +1,6 @@
 # CPLib.Misc
 
-Defined in cp-library@0.12.2
+Defined in cp-library@0.15.2
 
 ## Values
 
@@ -12,9 +12,9 @@ Type: `[a : Std::LessThanOrEq] Std::I64 -> Std::I64 -> Std::Array a -> Std::Opti
 
 配列のある区間`[begin, end)`を辞書順で次に大きい順列に並び替える。
 
-##### Complexity
+制約：0 <= begin <= end <= |arr|
 
-- `O(end - begin)`
+計算量：O(end - begin)
 
 ##### Returns
 
@@ -24,7 +24,14 @@ Type: `[a : Std::LessThanOrEq] Std::I64 -> Std::I64 -> Std::Array a -> Std::Opti
 
 - `begin`: 区間の開始インデックス
 - `end`: 区間の終了インデックス (exclusive)
-- `arr`: 配列。`0 <= begin <= end <= |arr|`。
+- `arr`: 配列
+
+##### Examples
+
+```fix
+assert_eq(|_|"", [1, 2, 3].next_permutation(0, 3), some([1, 3, 2]));;
+assert_eq(|_|"", [3, 2, 1].next_permutation(0, 3), none())
+```
 
 ## Types and aliases
 

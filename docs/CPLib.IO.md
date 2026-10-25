@@ -1,8 +1,11 @@
 # CPLib.IO
 
-Defined in cp-library@0.12.2
+Defined in cp-library@0.15.2
 
 入出力や数値のパースを楽にする機能のためのモジュール
+
+`read_`で始まる関数は標準入力から空白文字区切りで読み込む。入力が尽きているときや、読もうとした形の
+字句が無いときは、理由を標準エラーに書いてプログラムを止める。
 
 ## Values
 
@@ -58,24 +61,21 @@ Type: `Std::I64 -> Std::IO (Std::Array Std::I64)`
 
 #### read_s
 
-Type: `Std::I64 -> Std::IO Std::String`
+Type: `Std::IO Std::String`
 
 空白文字を含まない文字列を一つ読み込む
 
-##### Parameters
-
-- `n`: 読み込む文字列の長さの上限。バッファのメモリ量に影響する。
+空白文字を読み飛ばし、次の空白文字か入力の終わりまでを読む。
 
 #### read_ss
 
-Type: `Std::I64 -> Std::I64 -> Std::IO (Std::Array Std::String)`
+Type: `Std::I64 -> Std::IO (Std::Array Std::String)`
 
 空白文字を含まない文字列を指定された個数読み込む
 
 ##### Parameters
 
 - `n`: 読み込む個数
-- `m`: 各文字列の長さの上限
 
 #### read_u
 
@@ -97,7 +97,9 @@ Type: `Std::I64 -> Std::IO (Std::Array Std::U64)`
 
 Type: `Std::String -> Std::F64`
 
-文字列をパースして`F64`整数に変換する
+文字列をパースして`F64`に変換する
+
+前後の空白文字は無視する。浮動小数点数として読めないときは、その文字列を標準エラーに書いてプログラムを止める。
 
 ##### Parameters
 
@@ -108,6 +110,8 @@ Type: `Std::String -> Std::F64`
 Type: `Std::String -> Std::Array Std::F64`
 
 "X Y Z"というフォーマットの文字列をパースして`F64`の配列`[X, Y, Z]`に変換する。
+
+数は空白文字の並びで区切る。前後の空白文字（行末の改行など）は無視する。
 
 "stofa" = "String TO Float Array"
 
@@ -121,6 +125,8 @@ Type: `Std::String -> Std::I64`
 
 文字列をパースして`I64`整数に変換する
 
+前後の空白文字は無視する。整数として読めないときは、その文字列を標準エラーに書いてプログラムを止める。
+
 ##### Parameters
 
 - `s`: 変換したい文字列
@@ -130,6 +136,8 @@ Type: `Std::String -> Std::I64`
 Type: `Std::String -> Std::Array Std::I64`
 
 "X Y Z"というフォーマットの文字列をパースして`I64`の配列`[X, Y, Z]`に変換する。
+
+数は空白文字の並びで区切る。前後の空白文字（行末の改行など）は無視する。
 
 "stoia" = "String TO Integer Array"
 
@@ -143,6 +151,8 @@ Type: `Std::String -> Std::U64`
 
 文字列をパースして`U64`整数に変換する
 
+前後の空白文字は無視する。整数として読めないときは、その文字列を標準エラーに書いてプログラムを止める。
+
 ##### Parameters
 
 - `s`: 変換したい文字列
@@ -152,6 +162,8 @@ Type: `Std::String -> Std::U64`
 Type: `Std::String -> Std::Array Std::U64`
 
 "X Y Z"というフォーマットの文字列をパースして`U64`の配列`[X, Y, Z]`に変換する。
+
+数は空白文字の並びで区切る。前後の空白文字（行末の改行など）は無視する。
 
 "stouia" = "String TO Unsigned Integer Array"
 

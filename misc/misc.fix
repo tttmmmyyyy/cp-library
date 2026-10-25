@@ -2,14 +2,15 @@ module CPLib.Misc;
 
 import Std::{
     loop, Array, I64, LessThanOrEq, Option, 
-    Array::{@, unsafe_swap_bounds_unchecked},
+    Array::{@, swap},
     LoopState::{break, continue}, Option::{none, some}
 };
 
 // 配列のある区間`[begin, end)`を辞書順で次に大きい順列に並び替える。
 // 
-// # Complexity
-// - `O(end - begin)`
+// 制約：0 <= begin <= end <= |arr|
+//
+// 計算量：O(end - begin)
 // 
 // # Returns
 // - 新しい順列`arr`が存在する場合は`some(arr)`、そうでない場合は`none()`
@@ -17,7 +18,13 @@ import Std::{
 // # Parameters
 // - `begin`: 区間の開始インデックス
 // - `end`: 区間の終了インデックス (exclusive)
-// - `arr`: 配列。`0 <= begin <= end <= |arr|`。
+// - `arr`: 配列
+//
+// # Examples
+// ```fix
+// assert_eq(|_|"", [1, 2, 3].next_permutation(0, 3), some([1, 3, 2]));;
+// assert_eq(|_|"", [3, 2, 1].next_permutation(0, 3), none())
+// ```
 next_permutation : [a : LessThanOrEq] I64 -> I64 -> Array a -> Option (Array a) = |begin, end, arr| (
     let left = end - 2;
     let left = loop(left, |left|
@@ -28,12 +35,12 @@ next_permutation : [a : LessThanOrEq] I64 -> I64 -> Array a -> Option (Array a) 
     let right = loop(right, |right|
         if arr.@(left) >= arr.@(right) { continue $ right - 1 } else { break $ right }
     );
-    let arr = arr.unsafe_swap_bounds_unchecked(left, right);
+    let arr = arr.swap(left, right);
     let left = left + 1;
     let right = end - 1;
     let (left, right, arr) = loop((left, right, arr), |(left, right, arr)|
         if left < right {
-            let arr = arr.unsafe_swap_bounds_unchecked(left, right);
+            let arr = arr.swap(left, right);
             continue $ (left + 1, right - 1, arr)
         } else {
             break $ (left, right, arr)

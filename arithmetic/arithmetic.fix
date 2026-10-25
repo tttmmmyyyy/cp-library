@@ -2,70 +2,110 @@ module CPLib.Arithmetic;
 
 import BoolArray::{BoolArray, BoolArray::{fill_true, get_size, make, set, @}};
 import Std::{
-    loop, undefined, Array, Bool, I64, U32, U64, U8, Add::add, 
-    Array::{empty, fill, push_back, set, to_iter, @, @size}, I64::abs, Indexable::{iget, imod}, 
+    loop, undefined, Array, Bool, I128, I64, U128, U32, U64, U8, U128::shift_right, Add::add, 
+    Array::{empty, fill, push_back, set, to_iter, @, @size}, I128::abs, I64::{abs, bit_and, shift_right}, Indexable::{iget, imod}, 
     Iterator::{check_all, filter_map, fold, get_first, loop_iter, loop_iter_s, range, range_step}, 
-    LoopState::{break, continue, is_continue}, Option::{as_some, none, some}, ToI64::i64, ToU32::u32, 
-    ToU64::u64, ToU8::u8, Tuple2::{act_0, act_1}, U64::{bit_and, shift_right}
+    LoopState::{break, continue, is_break, is_continue}, Multiplicative, One::one, Option::{as_some, none, some}, ToI128::i128, ToI64::i64, 
+    ToU128::u128, ToU32::u32, ToU64::u64, ToU8::u8, Tuple2::{act_0, act_1}, U64::{bit_and, count_leading_zeros, shift_left, shift_right}
 };
 
 // `x`を`m`で割った余りを非負で返す
 //
 // C言語の%演算子とは異なり、負の数に対しても正の余りを返す
 //
+// 制約：m >= 1
+//
+// 計算量：O(1)
+//
 // # Parameters
-// - `m`: 除数 > 0
-// - `x`: 被除数
+// - `m`: 法
+// - `x`: 整数
+//
+// # Examples
+// ```fix
+// assert_eq(|_|"", (-7).pmod(3), 2)
+// ```
 pmod : I64 -> I64 -> I64;
 pmod = |m, x| (
     let r = x % m;
     if r < 0 { r + m } else { r }
 );
 
-// `x + y`を`m`で割った余りを（非負で）返す
+// `x`を`m`で割った余りを非負で返す
+//
+// 制約：1 <= m <= 2^63
+_pmod_i128 : I128 -> I128 -> I64;
+_pmod_i128 = |m, x| (
+    let r = x % m;
+    (if r < 0_I128 { r + m } else { r }).i64
+);
+
+// `x + y`を`|m|`で割った余りを（非負で）返す
+//
+// 制約：m != 0
+//
+// 計算量：O(1)
 //
 // # Parameters
 // - `x`: 整数
 // - `y`: 整数
-// - `m`: 除数 != 0
+// - `m`: 法
+//
+// # Examples
+// ```fix
+// assert_eq(|_|"", add_mod(5, 4, 7), 2)
+// ```
 add_mod : I64 -> I64 -> I64 -> I64;
-add_mod = |x, y, m| (
-    let m = m.abs.u64;
-    FFI_CALL[I64 cp_lib_add_mod_signed(I64, I64, U64), x, y, m]
-);
+add_mod = |x, y, m| _pmod_i128(m.i128.abs, x.i128 + y.i128);
 
-// `x - y`を`m`で割った余りを（非負で）返す
+// `x - y`を`|m|`で割った余りを（非負で）返す
 // 
-// # Parameters
-// - `x`: 整数
-// - `y`: 整数
-// - `m`: 除数 != 0
-sub_mod : I64 -> I64 -> I64 -> I64;
-sub_mod = |x, y, m| (
-    let m = m.abs.u64;
-    FFI_CALL[I64 cp_lib_sub_mod_signed(I64, I64, U64), x, y, m]
-);
-
-// `x * y`を`m`で割った余りを（非負で）返す
+// 制約：m != 0
+//
+// 計算量：O(1)
 //
 // # Parameters
 // - `x`: 整数
 // - `y`: 整数
-// - `m`: 除数 != 0
+// - `m`: 法
+//
+// # Examples
+// ```fix
+// assert_eq(|_|"", sub_mod(2, 5, 7), 4)
+// ```
+sub_mod : I64 -> I64 -> I64 -> I64;
+sub_mod = |x, y, m| _pmod_i128(m.i128.abs, x.i128 - y.i128);
+
+// `x * y`を`|m|`で割った余りを（非負で）返す
+//
+// 制約：m != 0
+//
+// 計算量：O(1)
+//
+// # Parameters
+// - `x`: 整数
+// - `y`: 整数
+// - `m`: 法
+//
+// # Examples
+// ```fix
+// assert_eq(|_|"", mul_mod(5, 4, 7), 6)
+// ```
 mul_mod : I64 -> I64 -> I64 -> I64;
-mul_mod = |x, y, m| (
-    let m = m.abs.u64;
-    FFI_CALL[I64 cp_lib_mul_mod_signed(I64, I64, U64), x, y, m]
-);
+mul_mod = |x, y, m| _pmod_i128(m.i128.abs, x.i128 * y.i128);
 
 // 64ビット整数の平方根の整数部分を計算する
 //
+// 計算量：O(log log s)
+//
 // # Parameters
-// - `x`: 64ビット整数
+// - `s`: 64ビット整数
 isqrt : U64 -> U64;
 isqrt = |s| (
     if s <= 1_U64 { s };
-    let x0 = s / 2_U64;
+    // s < 2^bitsなので、2^ceil(bits / 2)は√s以上。√s以上の値から始めたニュートン法は、単調に減って√sの整数部分で止まる
+    let bits = 64_U64 - s.count_leading_zeros;
+    let x0 = 1_U64.shift_left((bits + 1_U64) / 2_U64);
     let x1 = (x0 + s / x0) / 2_U64;
     loop((x0, x1), |(x0, x1)| 
         if x1 >= x0 { break $ x0 };
@@ -77,18 +117,33 @@ isqrt = |s| (
 
 // 2つの整数の最大公約数（非負整数）を計算する
 // 
+// 制約：最大公約数 <= I64::maximum
+//
+// 計算量：O(log max(|a|, |b|))
+//
 // # Parameters
 // - `a`: 整数
 // - `b`: 整数
 calc_gcd : I64 -> I64 -> I64;
 calc_gcd = |a, b| (
+    // 互除法で溢れるのは`I64::minimum % -1`だけで、これは`a`か`b`が-1のときに限って現れる
+    if a == -1 || b == -1 { 1 };
+    _calc_gcd(a, b)
+);
+
+_calc_gcd : I64 -> I64 -> I64;
+_calc_gcd = |a, b| (
     if b == 0 { a.abs };
-    calc_gcd(b, a % b)
+    _calc_gcd(b, a % b)
 );
 
 // 拡張ユークリッドの互除法
 // 
 // 2つの整数 `a`, `b` に対して、その最大公約数 `d >= 0` および、`ax + by = d` を満たす整数 `x`, `y` を求める
+//
+// 制約：最大公約数 <= I64::maximum
+//
+// 計算量：O(log max(|a|, |b|))
 //
 // # Returns 
 // `(d, (x, y))`
@@ -96,100 +151,222 @@ calc_gcd = |a, b| (
 // # Parameters
 // - `a`: 整数
 // - `b`: 整数
+//
+// # Examples
+// ```fix
+// let (d, (x, y)) = ext_gcd(12, 18);
+// assert_eq(|_|"", d, 6);;
+// assert_eq(|_|"", 12 * x + 18 * y, 6)
+// ```
 ext_gcd : I64 -> I64 -> (I64, (I64, I64));
 ext_gcd = |a, b| (
+    // 互除法で溢れるのは`I64::minimum % -1`だけで、これは`a`か`b`が-1のときに限って現れる
+    if a == -1 { (1, (-1, 0)) };
+    if b == -1 { (1, (0, -1)) };
+    _ext_gcd(a, b)
+);
+
+_ext_gcd : I64 -> I64 -> (I64, (I64, I64));
+_ext_gcd = |a, b| (
     if b == 0 { 
         if a >= 0 { (a, (1, 0)) } else { (-a, (-1, 0)) }
     };
-    let (d, (x1, y1)) = ext_gcd(b, a % b);
+    let (d, (x1, y1)) = _ext_gcd(b, a % b);
     (d, (y1, x1 - (a / b) * y1))
 );
 
-// `x^e`を`n`で割った余りを計算する
+// `x^e`を`m`で割った余りを計算する
+//
+// 制約：e >= 0, m >= 1
+//
+// 計算量：O(log e)
 //
 // # Parameters
-// - `e`: 指数 >= 0
-// - `m`: 法 > 0
+// - `e`: 指数
+// - `m`: 法
 // - `x`: 底
+//
+// # Examples
+// ```fix
+// assert_eq(|_|"", 2.pow_mod(10, 1000), 24) // 2^10 = 1024
+// ```
 pow_mod : I64 -> I64 -> I64 -> I64;
 pow_mod = |e, m, x| (
+    if e < 0 { undefined("[CPLib.Arithmetic::pow_mod] `e` is negative") };
     let e = e.u64;
     let m = m.abs;
     let x = x.pmod(m).u64;
     x.pow_mod_u(e, m.u64).i64
 );
 
-// `x^e`を`n`で割った余りを計算する（unsigned版）
+// `x^e`を`m`で割った余りを計算する（unsigned版）
+//
+// 制約：m >= 1
+//
+// 計算量：O(log e)
 //
 // # Parameters
-// - `e`: 指数 >= 0
-// - `m`: 法 > 0
-// - `x`: 底 >= 0
+// - `e`: 指数
+// - `m`: 法
+// - `x`: 底
 pow_mod_u : U64 -> U64 -> U64 -> U64;
 pow_mod_u = |e, m, x| (
+    // 次で求めるim = ceil(2^64 / m)は、m = 1のとき64ビットに収まらないので、先に返す
+    if m == 1_U64 { 0_U64 };
+    // 法が2^32未満なら、積が64ビットに収まるので、かけ算の余りを割り算なしで求める（`_mul_mod_barrett`）。
+    // 128ビットの`%`はライブラリ関数の呼び出しになり遅いので、それを使うのは法が2^32以上のときだけにする。
+    if m < 4294967296_U64 {
+        let im = 18446744073709551615_U64 / m + 1_U64; // ceil(2^64 / m)
+        loop((e, 1_U64, x % m), |(e, pow, x)|
+            if e == 0_U64 { break $ pow };
+            let pow = if e.bit_and(1_U64) == 1_U64 { _mul_mod_barrett(m, im, pow, x) } else { pow };
+            continue $ (e.shift_right(1_U64), pow, _mul_mod_barrett(m, im, x, x))
+        )
+    };
     loop((e, 1_U64, x), |(e, pow, x)|
         if e == 0_U64 { break $ pow };
-        let pow = if e.bit_and(1_U64) == 1_U64 { FFI_CALL[U64 cp_lib_mul_mod(U64, U64, U64), pow, x, m] } else { pow };
-        continue $ (e.shift_right(1_U64), pow, FFI_CALL[U64 cp_lib_mul_mod(U64, U64, U64), x, x, m])
+        let pow = if e.bit_and(1_U64) == 1_U64 { _mul_mod_u(m, pow, x) } else { pow };
+        continue $ (e.shift_right(1_U64), pow, _mul_mod_u(m, x, x))
     )
 );
 
-// `ax = 1 mod m`なる`x`のうち、`0 <= x < |m|`を満たすものを返す
+// `x * y`を`m`で割った余りを、割り算を使わずに返す（Barrett reduction）
 //
-// 制約：gcd(a, m) = 1
+// `im = ceil(2^64 / m)`とすると、`q = floor(x * y * im / 2^64)`は`floor(x * y / m)`か、それより1大きい値になる。
+// `x * y - q * m`が負になったときは`m`を足す。
+//
+// 制約：2 <= m < 2^32, im = ceil(2^64 / m), 0 <= x, y < m
+_mul_mod_barrett : U64 -> U64 -> U64 -> U64 -> U64;
+_mul_mod_barrett = |m, im, x, y| (
+    let z = x * y;
+    let qm = (z.u128 * im.u128).shift_right(64_U128).u64 * m;
+    if z < qm { z + m - qm } else { z - qm }
+);
+
+// `x`の`e`乗を、繰り返し二乗法で計算します。
+//
+// `*`と`one`を持つ型（`Multiplicative`を実装した型）なら何にでも使えます。たとえば`I64`、`F64`、`ZP p`や、自分で作った行列の型です。
+// `*`は結合的で、`one`はその単位元でなければなりません。
+//
+// 制約：e >= 0
+//
+// 計算量：`*`をO(log e)回
 //
 // # Parameters
-// - `m`: 法 > 0
+// - `e`: 指数
+// - `x`: 底
+//
+// # Examples
+// ```fix
+// assert_eq(|_|"", 3.power(4), 81)
+// ```
+power : [a : Multiplicative] I64 -> a -> a;
+power = |e, x| (
+    if e < 0 { undefined("[CPLib.Arithmetic::power] the exponent is negative") };
+    if e == 0 { one };
+    // 最上位のビットを処理したら、xをそれ以上二乗せずに終える（使わない二乗が溢れないように）
+    loop((e, one, x), |(e, pow, x)|
+        let pow = if e.bit_and(1) == 1 { pow * x } else { pow };
+        let e = e.shift_right(1);
+        if e == 0 { break $ pow };
+        continue $ (e, pow, x * x)
+    )
+);
+
+// `x * y`を`m`で割った余りを返す
+//
+// 制約：m >= 1
+_mul_mod_u : U64 -> U64 -> U64 -> U64;
+_mul_mod_u = |m, x, y| (x.u128 * y.u128 % m.u128).u64;
+
+// `ax = 1 mod m`なる`x`のうち、`0 <= x < m`を満たすものを返す
+//
+// 制約：gcd(a, m) = 1, m >= 1
+//
+// 計算量：O(log m)
+//
+// # Parameters
+// - `m`: 法
 // - `a`: 整数
+//
+// # Examples
+// ```fix
+// assert_eq(|_|"", 3.inv_mod(7), 5) // 3 * 5 = 15 = 1 mod 7
+// ```
 inv_mod : I64 -> I64 -> I64;
 inv_mod = |m, a| (
     let m = m.abs;
-    let (d, (inv_x, _)) = ext_gcd(a.pmod(m), m);
-    if d != 1 {
-        undefined("[inv_mod] `a` is not coprime to `m`!")
-    };
-    inv_x.pmod(m)
+    let (g, x) = _inv_gcd(a, m);
+    if g != 1 { undefined("[CPLib.Arithmetic::inv_mod] `a` is not coprime to `m`") };
+    x
 );
 
 // [0, n)の範囲での素数テーブルを作成する
 //
 // 配列（`BoolArray`）`table`は素数テーブルであり、`table.@(n)`が`true`の場合に`n`が素数であることを意味する。
 // 
-// 注意：戻り値の要素に`@(n)`でアクセスするには``が必要です。
+// 注意：戻り値の要素に`@(n)`でアクセスするには`import BoolArray;`が必要です。
+//
+// 制約：n >= 1
+//
+// 計算量：O(n log log n)
 //
 // # Parameters
 // - `n` : 素数テーブルの上限（exclusive）
-create_prime_table : I64 -> BoolArray;
-create_prime_table = |size| (
+//
+// # Examples
+// ```fix
+// import BoolArray;
+//
+// let table = calc_prime_table(10);
+// assert(|_|"", table.@(7));;
+// assert(|_|"", !table.@(9))
+// ```
+calc_prime_table : I64 -> BoolArray;
+calc_prime_table = |size| (
     let table = BoolArray::make(size).fill_true;
     let size = table.get_size;
     let table = table.set(0, false).set(1, false);
-    let table = Iterator::range(2, size).loop_iter(table, |n, table|
+    let table = range(2, size).loop_iter(table, |n, table|
         if n > (size - 1) / n { break $ table };
         if !table.@(n) { continue $ table };
-        let table = Iterator::range_step(2 * n, size, n).fold(table, |m, table| table.set(m, false));
+        let table = range_step(2 * n, size, n).fold(table, |m, table| table.set(m, false));
         continue $ table
     );
     table
 );
 
+// `calc_prime_table`の別名（非推奨）
+create_prime_table : I64 -> BoolArray = calc_prime_table;
+DEPRECATED[create_prime_table, "Use `CPLib.Arithmetic::calc_prime_table` instead."];
+
 // [0, n)の範囲での素数リストを作成する
+//
+// 制約：n >= 1
+//
+// 計算量：O(n log log n)
 //
 // # Parameters
 // - `n` : 素数リストの上限（exclusive）
-create_prime_list : I64 -> Array U32;
-create_prime_list = |n| (
-    let table = create_prime_table(n);
-    let count = Iterator::range(0, n).fold(0, |i, cnt| if table.@(i) { cnt + 1 } else { cnt });
-    let list = Array::empty(count);
-    let list = Iterator::range(0, n).fold(list, |p, list|
+calc_prime_list : I64 -> Array U32;
+calc_prime_list = |n| (
+    let table = calc_prime_table(n);
+    let count = range(0, n).fold(0, |i, cnt| if table.@(i) { cnt + 1 } else { cnt });
+    let list = empty(count);
+    let list = range(0, n).fold(list, |p, list|
         if table.@(p) { list.push_back(p.u32) } else { list }
     );
     list
 );
 
+// `calc_prime_list`の別名（非推奨）
+create_prime_list : I64 -> Array U32 = calc_prime_list;
+DEPRECATED[create_prime_list, "Use `CPLib.Arithmetic::calc_prime_list` instead."];
+
 // 線形ふるいを用いて、[0, n)の範囲で、各数の最小の素因数を格納した配列と、素数のリストを作成する
 // 
+// 計算量：O(n)
+//
 // # Parameters
 // - `n` : 上限（exclusive）
 // 
@@ -197,88 +374,95 @@ create_prime_list = |n| (
 // `(lp, ps)`
 // - `lp`: 最小素因子テーブル。長さnの配列で、`lp.@(i)`は`i`の最小の素因数。`lp.@(0)`, `lp.@(1)`は0。
 // - `ps`: [0, n)の範囲の素数のリスト
-linear_sieve : U32 -> (Array U32, Array U32);
-linear_sieve = |n| (
-    let lp = Array::fill(n.i64, 0_U32);
-    let ps = [];
-    Iterator::range(2, n.i64).fold((lp, ps), |i, (lp, ps)|
-        let (lp, ps) = if lp.@(i) == 0_U32 {
-            let p = i.u32;
-            let lp = lp.set(i, p);
-            let ps = ps.push_back(p);
-            (lp, ps)
-        } else {
-            (lp, ps)
-        };
-        ps.to_iter.loop_iter((lp, ps), |p, (lp, ps)|
-            if i * p.i64 >= n.i64 { break $ (lp, ps) };
-            let lp = lp.set(i * p.i64, p);
-            if p == lp.@(i) {
-                break $ (lp, ps)
-            } else {
-                continue $ (lp, ps)
-            }
-        )
+calc_lp_table : U32 -> (Array U32, Array U32);
+calc_lp_table = |n| (
+    let n = n.i64;
+    let lp = fill(n, 0_U32);
+    let ps = empty(n / 10);
+    range(2, n).fold((lp, ps), |i, (lp, ps)|
+        let (lp, ps) = if lp.@(i) == 0_U32 { (lp.set(i, i.u32), ps.push_back(i.u32)) } else { (lp, ps) };
+        // iの最小の素因数以下の素数pについて、i * pの最小の素因数はp
+        let lp_i = lp.@(i);
+        let lp = loop((0, lp), |(k, lp)|
+            if k >= ps.@size { break $ lp };
+            let p = ps.@(k);
+            if p > lp_i || i * p.i64 >= n { break $ lp };
+            continue $ (k + 1, lp.set(i * p.i64, p))
+        );
+        (lp, ps)
     )
 );
 
+// `calc_lp_table`の別名（非推奨）
+linear_sieve : U32 -> (Array U32, Array U32) = calc_lp_table;
+DEPRECATED[linear_sieve, "Use `CPLib.Arithmetic::calc_lp_table` instead."];
+
 // 試し割りにより、数を素因数分解する（素因子を重複ありのフラットな配列で返す）
+//
+// 制約：n >= 1
 //
 // 計算量：O(sqrt(n))
 //
 // # Parameters
-// - `n`: 素因数分解する数 >= 1
+// - `n`: 素因数分解する数
 //
 // # Returns
 // 素因数分解の結果。素因子を昇順に並べた配列（同じ素因子はその指数分だけ繰り返し現れる）。
 // `n`が1の場合は空の配列を返す。
-factorize_flat : I64 -> Array U32;
+factorize_flat : I64 -> Array I64;
 factorize_flat = |n| (
     let (d, n, factors) = loop((2, n, []), |(d, n, factors)|
-        if d > n / d { break $ (d, n, factors) };
-        if n % d != 0 { continue $ (d + 1, n, factors) };
-        continue $ (d, n / d, factors.push_back(d.u32))
+        let q = n / d;
+        if d > q { break $ (d, n, factors) };
+        if n - q * d != 0 { continue $ (d + 1, n, factors) };
+        continue $ (d, q, factors.push_back(d))
     );
-    if n > 1 { factors.push_back(n.u32) } else { factors }
+    if n > 1 { factors.push_back(n) } else { factors }
 );
 
 // 試し割りにより、数を素因数分解する（素因子と指数のペアの配列で返す）
 //
+// 制約：n >= 1
+//
 // 計算量：O(sqrt(n))
 //
 // # Parameters
-// - `n`: 素因数分解する数 >= 1
+// - `n`: 素因数分解する数
 //
 // # Returns
 // 素因数分解の結果。
 // `(p, e)`の配列で、`p`は素因子、`e`はその指数を表す。`p`は昇順に並ぶ。
 // `n`が1の場合は空の配列を返す。
-factorize : I64 -> Array (U32, U8);
+factorize : I64 -> Array (I64, U8);
 factorize = |n| (
     let (d, n, factors) = loop((2, n, []), |(d, n, factors)|
-        if d > n / d { break $ (d, n, factors) };
-        if n % d != 0 { continue $ (d + 1, n, factors) };
+        let q = n / d;
+        if d > q { break $ (d, n, factors) };
+        if n - q * d != 0 { continue $ (d + 1, n, factors) };
         let (n, e) = loop((n, 0_U8), |(n, e)|
             if n % d != 0 { break $ (n, e) };
             continue $ (n / d, e + 1_U8)
         );
-        continue $ (d + 1, n, factors.push_back((d.u32, e)))
+        continue $ (d + 1, n, factors.push_back((d, e)))
     );
-    if n > 1 { factors.push_back((n.u32, 1_U8)) } else { factors }
+    if n > 1 { factors.push_back((n, 1_U8)) } else { factors }
 );
 
 // オイラーのトーシェント関数 φ(n) を計算する
 //
-// 試し割りによる O(sqrt(n)) 実装
+// 制約：n >= 1
+//
+// 計算量：O(sqrt(n))
 //
 // # Parameters
-// - `n`: 正の整数 >= 1
-euler_tortient : I64 -> I64;
-euler_tortient = |n| (
+// - `n`: 正の整数
+calc_totient : I64 -> I64;
+calc_totient = |n| (
     if n == 1 { 1 };
     let (d, n, tot) = loop((2, n, 1), |(d, n, tot)|
-        if d > n / d { break $ (d, n, tot) };
-        if n % d != 0 { continue $ (d + 1, n, tot) };
+        let m = n / d;
+        if d > m { break $ (d, n, tot) };
+        if n - m * d != 0 { continue $ (d + 1, n, tot) };
         let (q, n) = loop((1, n), |(q, n)|
             if n % d != 0 { break $ (q, n) };
             continue $ (q * d, n / d)
@@ -288,15 +472,21 @@ euler_tortient = |n| (
     if n > 1 { tot * (n - 1) } else { tot }
 );
 
+// `calc_totient`の別名（非推奨）
+euler_tortient : I64 -> I64 = calc_totient;
+DEPRECATED[euler_tortient, "Use `CPLib.Arithmetic::calc_totient` instead."];
+
 // 0 <= i < n に対するオイラーのトーシェント関数 φ(i) の表を作成する
 //
 // `table.@(i)` が φ(i) の値となる。ただし `table.@(0) = 0` とする。
 //
+// 計算量：O(n log log n)
+//
 // # Parameters
 // - `n`: 表の上限（exclusive）
-euler_tortient_table : I64 -> Array I64;
-euler_tortient_table = |n| (
-    let table = Array::fill(n, 0);
+calc_totient_table : I64 -> Array I64;
+calc_totient_table = |n| (
+    let table = fill(n, 0);
     let table = range(0, n).fold(table, |i, table| table.set(i, i));
     range(2, n).fold(table, |i, table|
         if table.@(i) != i { table };
@@ -304,16 +494,30 @@ euler_tortient_table = |n| (
     )
 );
 
+// `calc_totient_table`の別名（非推奨）
+euler_tortient_table : I64 -> Array I64 = calc_totient_table;
+DEPRECATED[euler_tortient_table, "Use `CPLib.Arithmetic::calc_totient_table` instead."];
+
 // 最小素因子テーブルを用いて、数を素因数分解する
+//
+// 制約：n < |lp_table|
+//
+// 計算量：O(log n)
 //
 // # Parameters
 // - `n`: 素因数分解する数
-// - `lp_table`: 長さが少なくとも`n+1`の最小素因子テーブル。最小素因子テーブルの定義は`linear_sieve`のコメントを参照。
+// - `lp_table`: 最小素因子テーブル。最小素因子テーブルの定義は`calc_lp_table`のコメントを参照。
 // 
 // # Returns
 // 素因数分解の結果。
 // `(p, e)`の配列で、`p`は素因子、`e`はその指数を表す。`p`は昇順に並ぶ。
 // `n`が0の場合は空の配列を返す。
+//
+// # Examples
+// ```fix
+// let (lp, _) = calc_lp_table(100_U32);
+// assert_eq(|_|"", factorize_via_lp_table(12_U32, lp), [(2_U32, 2_U8), (3_U32, 1_U8)]) // 12 = 2^2 * 3
+// ```
 factorize_via_lp_table : U32 -> Array U32 -> Array (U32, U8) = |n, lp_table| (
     loop((n, []), |(n, fact)|
         let p = lp_table.@(n.i64);
@@ -329,78 +533,77 @@ factorize_via_lp_table : U32 -> Array U32 -> Array (U32, U8) = |n, lp_table| (
     )
 );
 
-// n-1 = 2^s * d (d: 奇数)に対し、2 <= a <= n-2 を使ってnが合成数かどうかを調べる。
+// Miller-Rabin 素数判定法
 // 
-// a^d = 1 (mod n) または、a^(2^r * d) = -1 (mod n) (0 <= r < s) のいずれかが成り立つならば、nは素数である可能性があるので、falseを返す。
-// そうでない場合は、nは合成数であるので、trueを返す。
-// 
-// # Parameters
-// - `n`: 調べる数
-// - `a`: 2 <= a <= n-2 の範囲の整数
-// - `d`: n-1 = 2^s * d の 奇数d
-// - `s`: n-1 = 2^s * d の 2の指数部分
-_check_composite_miller_rabin : U64 -> U64 -> U64 -> I64 -> Bool;
-_check_composite_miller_rabin = |n, a, d, s| (
-    let x = a.pow_mod_u(d, n); // a^d
-    if x == 1_U64 || x == n - 1_U64 { false }; // a^d = 1,  or  a^(2^r * d) = -1 for r = 0
-    range(1, s).loop_iter_s(x, |_r, x|
-        let x = x.pow_mod_u(2_U64, n); // a^(2^r * d)
-        if x == n - 1_U64 { break $ () };
-        continue $ x
-    ).is_continue
-);
-
-// Miller-Rabin 素数判定法（64bit版）
-// 
-// https://cp-algorithms.com/algebra/primality_tests.html#deterministic-version
-// 
+// 計算量：O(log n)
+//
 // # Parameters
 // - `n`: 調べる数
 is_prime : U64 -> Bool;
 is_prime = |n| (
     if n < 2_U64 { false };
-    let (s, d) = loop((0, n-1_U64), |(s, d)|
-        if d % 2_U64 == 0_U64 {
-            continue $ (s + 1, d / 2_U64)
-        } else {
-            break $ (s, d)
-        }
+    // Montgomery乗算は法が奇数であることを要する
+    if n.bit_and(1_U64) == 0_U64 { n == 2_U64 };
+    let (s, d) = loop((0, n - 1_U64), |(s, d)|
+        if d.bit_and(1_U64) == 0_U64 { continue $ (s + 1, d.shift_right(1_U64)) } else { break $ (s, d) }
     );
-    match [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37].to_iter.loop_iter_s((), |a, _|
-        if n == a.u64 { break $ true };
-        if _check_composite_miller_rabin(n, a.u64, d, s) { break $ false };
-        continue $ ()
+    // 数xのMontgomery表現は x * 2^64 mod n。`mul`はMontgomery表現どうしの積を返す
+    let n_inv = range(0, 6).fold(n, |_, x| x * (2_U64 - n * x)); // n * n_inv = 1 (mod 2^64)
+    let mul = |x, y| _montgomery_reduce(n, n_inv, x.u128 * y.u128);
+    let one = (0_U64 - n) % n; // 2^64 mod n
+    let minus_one = n - one;
+    let r2 = (one.u128 * one.u128 % n.u128).u64; // 2^128 mod n。`mul(x, r2)`はxのMontgomery表現
+    // 底は、4759123141未満のすべての数を正しく判定する3個と、2^64未満のすべての数を正しく判定する7個
+    // （https://miller-rabin.appspot.com）。4759123141は、底2, 7, 61のすべてで素数と区別できない最小の合成数。
+    let bases = if n < 4759123141_U64 {
+        [2_U64, 7_U64, 61_U64]
+    } else {
+        [2_U64, 325_U64, 9375_U64, 28178_U64, 450775_U64, 9780504_U64, 1795265022_U64]
+    };
+    match bases.to_iter.loop_iter_s((), |a, _|
+        let a = a % n;
+        if a == 0_U64 { continue $ () };
+        // x = a^d
+        let x = loop((d, one, mul(a, r2)), |(e, pow, b)|
+            if e == 0_U64 { break $ pow };
+            let pow = if e.bit_and(1_U64) == 1_U64 { mul(pow, b) } else { pow };
+            continue $ (e.shift_right(1_U64), pow, mul(b, b))
+        );
+        if x == one || x == minus_one { continue $ () };
+        // a^(2^r * d) = -1 となる 1 <= r < s があれば、nは素数である可能性がある
+        let maybe_prime = range(1, s).loop_iter_s(x, |_, x|
+            let x = mul(x, x);
+            if x == minus_one { break $ () };
+            continue $ x
+        ).is_break;
+        if maybe_prime { continue $ () } else { break $ false }
     ) {
         break(r) => r,
         continue(_) => true
     }
 );
 
+// Montgomery簡約：t * 2^(-64) mod n を返す
+//
+// 制約：nは奇数, n * n_inv = 1 (mod 2^64), t < n * 2^64
+_montgomery_reduce : U64 -> U64 -> U128 -> U64;
+_montgomery_reduce = |n, n_inv, t| (
+    // m = t * n_inv (mod 2^64) とすると t - m * n は 2^64 で割り切れ、(t - m * n) / 2^64 は (-n, n) に入る
+    let hi = t.shift_right(64_U128).u64;
+    let m = t.u64 * n_inv;
+    let mn_hi = (m.u128 * n.u128).shift_right(64_U128).u64;
+    if hi >= mn_hi { hi - mn_hi } else { hi + (n - mn_hi) }
+);
+
 // Miller-Rabin 素数判定法（32bit版）
-// 
-// https://cp-algorithms.com/algebra/primality_tests.html#deterministic-version
+//
+// `is_prime(n.u64)`と同じ。
 // 
 // # Parameters
 // - `n`: 調べる数
 is_prime_32 : U32 -> Bool;
-is_prime_32 = |n| (
-    if n < 2_U32 { false };
-    let (s, d) = loop((0, n-1_U32), |(s, d)|
-        if d % 2_U32 == 0_U32 {
-            continue $ (s + 1, d / 2_U32)
-        } else {
-            break $ (s, d)
-        }
-    );
-    match [2, 3, 5, 7].to_iter.loop_iter_s((), |a, _|
-        if n == a.u32 { break $ true };
-        if _check_composite_miller_rabin(n.u64, a.u64, d.u64, s) { break $ false };
-        continue $ ()
-    ) {
-        break(r) => r,
-        continue(_) => true
-    }
-);
+is_prime_32 = |n| is_prime(n.u64);
+DEPRECATED[is_prime_32, "Use `CPLib.Arithmetic::is_prime` instead."];
 
 // @param b `1 <= b`
 // @return pair (g, x) s.t. g = gcd(a, b), xa = g (mod b), 0 <= x < b/g
@@ -439,19 +642,29 @@ _inv_gcd = |a, b| (
 // 
 // 解が存在しない場合は、`(0, 0)`を返します。
 // 
-// 制約や計算量オーダーは https://atcoder.github.io/ac-library/master/document_ja/math.html の`crt`と同様です。
+// 制約：|rs| = |ms|, ms.@(i) >= 1, lcm(ms)が`I64`に収まる
+//
+// 計算量：O(n log lcm(ms))、n = |rs|
 // 
 // # Parameters
 // - `rs`: r(i)の配列
-// - `ms`: m(i) >= 1の配列。r(i)と同じ長さ。
+// - `ms`: m(i)の配列
+//
+// # Examples
+// ```fix
+// // x = 2 (mod 3) かつ x = 3 (mod 5) <=> x = 8 (mod 15)
+// assert_eq(|_|"", lift_crt([2, 3], [3, 5]), (8, 15));;
+// // x = 0 (mod 2) かつ x = 1 (mod 4) には解がない
+// assert_eq(|_|"", lift_crt([0, 1], [2, 4]), (0, 0))
+// ```
 lift_crt : Array I64 -> Array I64 -> (I64, I64);
 lift_crt = |r, m| (
-    // if r.get_size != m.get_size { undefined("[lift_crt] `rs` and `ms` must have the same size") };
+    if r.@size != m.@size { undefined("[CPLib.Arithmetic::lift_crt] `rs` and `ms` have different sizes") };
     let n = r.@size;
     let r0 = 0; let m0 = 1;
 
     range(0, n).loop_iter((r0, m0), |i, (r0, m0)|
-        // if m.@(i) <= 0 { undefined("[lift_crt] `ms.@(i)` must be positive") };
+        if m.@(i) <= 0 { undefined("[CPLib.Arithmetic::lift_crt] `ms` has an element less than 1") };
         let r1 = r.@(i).pmod(m.@(i));
         let m1 = m.@(i);
         let (r0, r1, m0, m1) = if m0 < m1 {
@@ -488,8 +701,9 @@ _calc_primitive_root = |p| (
     // 全ての φ(p) = p-1 の素因子qに対し g^(φ(p) / q) != 1 であるならば、gは原子根である。
 
     let factors = loop((2, p-1, []), |(q, n, factors)|
-        if n == 1 { break $ factors };
-        if n % q != 0 { continue $ (q + 1, n, factors) };
+        let m = n / q;
+        if q > m { break $ if n > 1 { factors.push_back(n) } else { factors } };
+        if n - m * q != 0 { continue $ (q + 1, n, factors) };
         let factors = factors.push_back(q);
         let n = loop(n, |n|
             if n % q != 0 { break $ n };
@@ -511,13 +725,16 @@ _calc_primitive_root = |p| (
 // 
 // https://cp-algorithms.com/algebra/primitive-root.html#algorithm-for-finding-a-primitive-root
 // 
-// 注意：現状、この関数はp-1の素因数分解を素朴なO(sqrt(p))の方法で行います。
+// 制約：pは素数
+//
+// 計算量：O(sqrt(p))。pが`CPLib.ZP`に定義されている素数ならO(1)
 // 
 // # Parameters
 // - `p`: 素数
 calc_primitive_root : I64 -> I64;
 calc_primitive_root = |p| (
     if p == 1e9 + 7 { 5 };
+    if p == 1e9 + 9 { 13 };
     if p == 998244353 { 3 };
     if p == 754974721 { 11 };
     if p == 167772161 { 3 };
@@ -529,11 +746,21 @@ calc_primitive_root = |p| (
 // 
 // ac-libraryのmathにある同名の関数の移植です。
 // 
+// 制約：0 <= n < 2^32, 1 <= m < 2^32
+//
+// 計算量：O(log m)
+// 
 // # Parameters
-// - `n`
-// - `m`
-// - `a`
-// - `b`
+// - `n`: 項の数
+// - `m`: 除数
+// - `a`: `i`の係数
+// - `b`: 定数項
+//
+// # Examples
+// ```fix
+// // floor(1/3) + floor(3/3) + floor(5/3) + floor(7/3) = 0 + 1 + 1 + 2
+// assert_eq(|_|"", floor_sum(4, 3, 2, 1), 4)
+// ```
 floor_sum : I64 -> I64 -> I64 -> I64 -> I64;
 floor_sum = |n, m, a, b| (
     let ans = 0_U64;
@@ -582,9 +809,13 @@ _floor_sum_unsigned = |n, m, a, b| (
 // また、このような`a`, `b`は必ず片方が奇数でもう片方が偶数である。
 // この関数の戻り値では`a`が奇数、`b`が偶数となる。
 // 
+// 制約：c_max >= 1
+//
+// 計算量：O(c_max log c_max)
+// 
 // # Parameters
-// - `c_max`: `c`の上限（inclusive), `c_max >= 1`
-pythagorean_triples : I64 -> Array (I64, I64, I64) = |c_max| (
+// - `c_max`: `c`の上限（inclusive）
+calc_pythagorean_triples : I64 -> Array (I64, I64, I64) = |c_max| (
     let m_max = isqrt((c_max - 1).u64).i64;
     range(1, m_max+1).fold([], |m, triples|
         let n_max = isqrt((c_max - m * m).u64).i64;
@@ -598,6 +829,10 @@ pythagorean_triples : I64 -> Array (I64, I64, I64) = |c_max| (
         )
     )
 );
+
+// `calc_pythagorean_triples`の別名（非推奨）
+pythagorean_triples : I64 -> Array (I64, I64, I64) = calc_pythagorean_triples;
+DEPRECATED[pythagorean_triples, "Use `CPLib.Arithmetic::calc_pythagorean_triples` instead."];
 
 // ===== 一般化ペル方程式 =====
 // 

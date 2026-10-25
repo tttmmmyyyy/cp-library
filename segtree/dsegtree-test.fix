@@ -1,11 +1,11 @@
 module CPLib.DSegtree.Test;
 
-import CPLib.DSegtree::{build, fold, init, set, @, DSegtree, DSegtree::@n};
+import CPLib.DSegtree::{build, calc_max_right, calc_min_left, fold, fold_all, create, set, @, @size, DSegtree, DSegtree::@_elems};
 import Random::{generate_I64_nonneg, init_by_seed, Random};
 import Std::{
-    Bool, I64, IO, Array::{fill, set, @}, Debug::{assert_eq, consumed_time_while_lazy}, IO::println, 
-    Iterator::{fold, fold_m, map, range, to_array}, LessThan::max, Monad::pure, String::populate, 
-    ToString::to_string, ToU8::u8
+    Bool, I64, IO, String, Array::{fill, push_back, set, to_iter, @}, 
+    Debug::{assert_eq, consumed_time_while_lazy}, IO::println, Iterator::{fold, fold_m, map, range, to_array}, 
+    LessThan::max, Monad::pure, String::{from_U8, get_bytes, populate, @size}, ToString::to_string, ToU8::u8
 };
 
 // https://atcoder.jp/contests/language-test-202505/submissions/68392637
@@ -15,10 +15,12 @@ test = (
     test_one;;
     test_two;;
     test_three;;
+    test_set_leaves_index_zero;;
 
     let rng = Random::init_by_seed(0_U64);
     let rng = *test_random(false, rng);
     let rng = *test_random(true, rng);
+    let rng = *test_search(rng);
 
     test_speed;;
 
@@ -29,8 +31,8 @@ test = (
 test_one : IO ();
 test_one = (
     // [""]
-    let tree = DSegtree::init(1, "", |(lhs, rhs)| lhs + rhs);
-    assert_eq(|_|"", tree.@n, 1);;
+    let tree = DSegtree::create(1, "", |(lhs, rhs)| lhs + rhs);
+    assert_eq(|_|"", tree.@size, 1);;
     assert_eq(|_|"", tree.@(0), "");;
     assert_eq(|_|"", tree.fold(0, 1), "");;
 
@@ -41,7 +43,7 @@ test_one = (
 
     // build ["a"]
     let tree = DSegtree::build(["a"], "", |(lhs, rhs)| lhs + rhs);
-    assert_eq(|_|"", tree.@n, 1);;
+    assert_eq(|_|"", tree.@size, 1);;
     assert_eq(|_|"", tree.@(0), "a");;
     assert_eq(|_|"", tree.fold(0, 1), "a");;
 
@@ -52,8 +54,8 @@ test_one = (
 test_two : IO ();
 test_two = (
     // ["", ""]
-    let tree = DSegtree::init(2, "", |(lhs, rhs)| lhs + rhs);
-    assert_eq(|_|"", tree.@n, 2);;
+    let tree = DSegtree::create(2, "", |(lhs, rhs)| lhs + rhs);
+    assert_eq(|_|"", tree.@size, 2);;
     assert_eq(|_|"", tree.@(0), "");;
     assert_eq(|_|"", tree.@(1), "");;
     assert_eq(|_|"", tree.fold(0, 1), "");;
@@ -78,7 +80,7 @@ test_two = (
 
     // build ["a", "b"]
     let tree = DSegtree::build(["a", "b"], "", |(lhs, rhs)| lhs + rhs);
-    assert_eq(|_|"", tree.@n, 2);;
+    assert_eq(|_|"", tree.@size, 2);;
     assert_eq(|_|"", tree.@(0), "a");;
     assert_eq(|_|"", tree.@(1), "b");;
     assert_eq(|_|"", tree.fold(0, 1), "a");;
@@ -92,8 +94,8 @@ test_two = (
 test_three : IO ();
 test_three = (
     // ["", "", ""]
-    let tree = DSegtree::init(3, "", |(lhs, rhs)| lhs + rhs);
-    assert_eq(|_|"", tree.@n, 3);;
+    let tree = DSegtree::create(3, "", |(lhs, rhs)| lhs + rhs);
+    assert_eq(|_|"", tree.@size, 3);;
     assert_eq(|_|"", tree.@(0), "");;
     assert_eq(|_|"", tree.@(1), "");;
     assert_eq(|_|"", tree.@(2), "");;
@@ -118,7 +120,7 @@ test_three = (
 
     // build ["a", "b", "c"]
     let tree = DSegtree::build(["a", "b", "c"], "", |(lhs, rhs)| lhs + rhs);
-    assert_eq(|_|"", tree.@n, 3);;
+    assert_eq(|_|"", tree.@size, 3);;
     assert_eq(|_|"", tree.@(0), "a");;
     assert_eq(|_|"", tree.@(1), "b");;
     assert_eq(|_|"", tree.@(2), "c");;
@@ -132,10 +134,29 @@ test_three = (
     pure()
 );
 
+// `set`が使われない添字0の要素を書き換えないことのテスト
+//
+// 書き換えると、文字列の連結のように`op`を重ねるほど値が大きくなるモノイドでは、`set`のたびに根の値が添字0の要素に連結される。
+test_set_leaves_index_zero : IO ();
+test_set_leaves_index_zero = (
+    let tree = DSegtree::create(4, "", |(lhs, rhs)| lhs + rhs);
+    let tree = range(0, 100).fold(tree, |i, tree| tree.set(i % 4, "x"));
+    assert_eq(|_|"", tree.@_elems.@(0), "");;
+    assert_eq(|_|"", tree.fold(0, 4), "xxxx");;
+
+    // 要素数1の木では根が葉である
+    let tree = DSegtree::create(1, "", |(lhs, rhs)| lhs + rhs);
+    let tree = tree.set(0, "a").set(0, "b");
+    assert_eq(|_|"", tree.@_elems.@(0), "");;
+    assert_eq(|_|"", tree.fold(0, 1), "b");;
+
+    pure()
+);
+
 // ランダムにテストを行う
 // 
 // # Parameters
-// - `is_build` : セグメント木をbuildで構築するかどうか。そうでないときはinitで構築する
+// - `is_build` : セグメント木をbuildで構築するかどうか。そうでないときはcreateで構築する
 // - `rng` : 乱数生成器
 test_random : Bool -> Random -> IO Random;
 test_random = |is_build, rng| (
@@ -143,8 +164,8 @@ test_random = |is_build, rng| (
     let n = 100;
 
     let (tree, arr) = if !is_build {
-        let arr = Array::fill(n, "");
-        (DSegtree::init(n, "", |(lhs, rhs)| lhs + rhs), arr)
+        let arr = fill(n, "");
+        (DSegtree::create(n, "", |(lhs, rhs)| lhs + rhs), arr)
     } else {
         let arr = range(0, n).map(|i| i.u8.to_string).to_array;
         (DSegtree::build(arr, "", |(lhs, rhs)| lhs + rhs), arr)
@@ -180,7 +201,7 @@ test_speed = (
     // もしn^2実装になっていたらこのテストは終わらない。
     let n = 1e5;
     let rng = Random::init_by_seed(0_U64);
-    let tree = DSegtree::init(n, 0, |(lhs, rhs)| max(lhs, rhs)) : DSegtree I64;
+    let tree = DSegtree::create(n, 0, |(lhs, rhs)| max(lhs, rhs)) : DSegtree I64;
     let ((tree, rng, fold_sum), time) = consumed_time_while_lazy(|_| range(0, n).fold((tree, rng, 0), |_, (tree, rng, fold_sum)| (
         // set
         let (rng, i) = rng.generate_I64_nonneg;
@@ -193,6 +214,7 @@ test_speed = (
         let (rng, l) = rng.generate_I64_nonneg;
         let k = k % n; // 0 <= k < n
         let l = l % n; // 0 <= l < n
+        let (k, l) = if k <= l { (k, l) } else { (l, k) };
         let v = tree.fold(k, l);
 
         let fold_sum = fold_sum.max(v);
@@ -203,4 +225,41 @@ test_speed = (
     println $ "[CPLib.DSegtree.Test] DSegtree({}): {}".populate([n.to_string, time.to_string]);;
 
     pure $ ()
+);
+
+// fold_all、calc_max_right、calc_min_leftが、文書の条件を満たす値を返すことのテスト
+//
+// 要素数0から20の木で、すべての端について調べる。条件には、文字が昇順に並んでいることと、長さが3以下であることを使う。
+test_search : Random -> IO Random;
+test_search = |rng| (
+    range(0, 21).fold_m(rng, |n, rng|
+        let (rng, arr) = range(0, n).fold((rng, []), |_, (rng, arr)|
+            let (rng, c) = rng.generate_I64_nonneg;
+            (rng, arr.push_back(String::from_U8('a' + (c % 4).u8)))
+        );
+        let tree = DSegtree::build(arr, "", |(lhs, rhs)| lhs + rhs);
+        let naive = |(l, r)| range(l, r).fold("", |i, acc| acc + arr.@(i));
+        assert_eq(|_|"dsegtree fold_all", tree.fold_all, naive((0, n)));;
+        let conds = [|x| is_sorted(x), |x| x.@size <= 3];
+        conds.to_iter.fold_m((), |f, _|
+            range(0, n + 1).fold_m((), |e, _|
+                let r = tree.calc_max_right(e, f);
+                assert_eq(|_|"dsegtree calc_max_right range", e <= r && r <= n, true);;
+                assert_eq(|_|"dsegtree calc_max_right true", r == e || f(naive((e, r))), true);;
+                assert_eq(|_|"dsegtree calc_max_right false", r == n || !f(naive((e, r + 1))), true);;
+                let l = tree.calc_min_left(e, f);
+                assert_eq(|_|"dsegtree calc_min_left range", 0 <= l && l <= e, true);;
+                assert_eq(|_|"dsegtree calc_min_left true", l == e || f(naive((l, e))), true);;
+                assert_eq(|_|"dsegtree calc_min_left false", l == 0 || !f(naive((l - 1, e))), true)
+            )
+        );;
+        pure $ rng
+    )
+);
+
+// 文字列の文字が昇順に並んでいるか
+is_sorted : String -> Bool;
+is_sorted = |s| (
+    let bytes = s.get_bytes;
+    range(1, s.@size).fold(true, |i, sorted| sorted && bytes.@(i - 1) <= bytes.@(i))
 );

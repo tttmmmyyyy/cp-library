@@ -1,39 +1,38 @@
 # CPLib.ZP
 
-Defined in cp-library@0.12.2
+Defined in cp-library@0.15.2
 
 素数`p`を法とする整数の環の型`ZP p`を与えるモジュール。
 
-素数`p`は静的でなければならない（コンパイル時に決まる必要がある）。
+法`p`は静的でなければなりません（コンパイル時に決まる必要があります）。
 
-素数`p`は型パラメータとして与える。例として、p = 17 としたい場合、
+制約：p < 2^31。`inv`、`/`、`fft`、`primitive_root`は、pが素数であることを要します。それ以外は、pが素数でなくても動きます。
+法が実行時に動的に変わる場合は、`CPLib.Arithmetic`の`add_mod`・`sub_mod`・`mul_mod`・`pow_mod`・`inv_mod`を使ってください。
 
-- 空の型（フィールドを持たないunboxedな型）`P17`を作成：`type P17 = unbox struct {}`.
-- `P17 : PrimeProvider`を実装する。この際`PrimeProvider::value`関数で17を返すようにする：`value = |_| 17_U32;`
+法`p`は型パラメータとして与えます。例として、p = 17 としたい場合は、
 
-すると`ZP P17`が環"Z/(17)"を表す型となる。
+- 空の型（フィールドを持たないunboxedな型）`P17`を作ります：`type P17 = unbox struct {}`
+- `P17 : PrimeProvider`を実装し、`PrimeProvider::value`関数で17を返すようにします：`value = |_| 17_U32;`
 
-幾つかの有名な素数nに対する PrimeProvider `Pn` はこのモジュールに定義されている。
+すると`ZP P17`が環"Z/(17)"を表す型になります。
+
+いくつかの有名な素数nに対する`PrimeProvider`の型`Pn`は、このモジュールに定義されています。
 
 使用例：
-```
-module Main;
-
+```fix
 import CPLib.ZP;
 
 type P17 = unbox struct {};
 
 impl P17 : PrimeProvider {
     create = P17 {};
-    value = |p| 17_U32;
+    value = |_| 17_U32;
 }
 
-main : IO ();
-main = (
-    let zp = ZP::make(-5) : ZP P17;
-    let zp = zp * zp;
-    assert_eq(|_|"case 1", zp.@value, 8_U32);; // (-5)*(-5) = 25 = 8 mod 17
-    pure()
+main : IO () = (
+    let x = zp(-5) : ZP P17;
+    let y = x * x;
+    assert_eq(|_|"", y.@value, 8_U32) // (-5)*(-5) = 25 = 8 mod 17
 );
 ```
 
@@ -47,7 +46,11 @@ Type: `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::FFTDirection -> Std::Array (CPLib
 
 `ZP p`型の配列に対して高速フーリエ変換を行う
 
-制約：2^c|(p-1)かつ|x| <= 2^cなるcが存在する
+入力の長さを2のべき乗に切り上げ、末尾を0で埋めてから変換する。返る配列の長さは切り上げた長さである（長さ3なら4）。順変換して逆変換すると、元の配列の末尾に0を足した、切り上げた長さの配列が返る。
+
+制約：2^c | (p-1) かつ |x| <= 2^c なる c が存在する
+
+計算量：O(n log n + sqrt(p))、n = |x|。pがこのモジュールに定義されている素数ならO(n log n)
 
 ##### Parameters
 
@@ -62,38 +65,39 @@ Type: `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::ZP p -> CPLib.ZP::ZP p`
 
 0を与えた場合はプログラムを終了する。
 
+計算量：O(log p)
+
 ##### Parameters
 
 - `x` : `ZP p`型の整数
 
 #### make
 
+**Deprecated**: Use `CPLib.ZP::zp` instead.
+
 Type: `[p : CPLib.ZP::PrimeProvider] Std::I64 -> CPLib.ZP::ZP p`
 
-`I64`から素数を作成する
-
-##### Parameters
-
-- `x` : `I64`型の整数
-
-#### power
-
-Type: `[p : CPLib.ZP::PrimeProvider] Std::I64 -> CPLib.ZP::ZP p -> CPLib.ZP::ZP p`
-
-x^e mod p を計算する。
-
-xが0かつeが負のときはプログラムを終了する。
-
-##### Parameters
-
-- `x` : `ZP p`型の数
-- `e` : `I64`型の指数
+`zp`の別名（非推奨）
 
 #### primitive_root
 
 Type: `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::ZP p`
 
-1の原始根を一つ得る
+法pの原始根を一つ得る
+
+計算量：O(sqrt(p))。pがこのモジュールに定義されている素数ならO(1)
+
+#### zp
+
+Type: `[p : CPLib.ZP::PrimeProvider] Std::I64 -> CPLib.ZP::ZP p`
+
+`I64`から`ZP p`の値を作成する
+
+計算量：O(1)
+
+##### Parameters
+
+- `x` : `I64`型の整数
 
 ### namespace CPLib.ZP::PrimeProvider
 
@@ -108,6 +112,28 @@ Trait member of `CPLib.ZP::PrimeProvider`
 Type: `[p : CPLib.ZP::PrimeProvider] p -> Std::U32`
 
 Trait member of `CPLib.ZP::PrimeProvider`
+
+### namespace CPLib.ZP::ZP
+
+#### @prime
+
+Type: `CPLib.ZP::ZP p -> p`
+
+`x`の法`p`を与える`PrimeProvider`の値を返す
+
+##### Parameters
+
+- `x` : `ZP p`型の整数
+
+#### @value
+
+Type: `CPLib.ZP::ZP p -> Std::U32`
+
+`x`を[0, p)の整数として返す
+
+##### Parameters
+
+- `x` : `ZP p`型の整数
 
 ## Types and aliases
 
@@ -165,14 +191,6 @@ Defined as: `type ZP p = unbox struct { ...fields... }`
 
 素数`p`を法とする整数の環
 
-##### field `value`
-
-Type: `Std::U32`
-
-##### field `prime`
-
-Type: `p`
-
 ## Traits and aliases
 
 ### namespace CPLib.ZP
@@ -210,6 +228,8 @@ Type: `p -> Std::U32`
 ### impl `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::ZP p : Std::Mul`
 
 ### impl `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::ZP p : Std::Neg`
+
+### impl `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::ZP p : Std::One`
 
 ### impl `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::ZP p : Std::Sub`
 

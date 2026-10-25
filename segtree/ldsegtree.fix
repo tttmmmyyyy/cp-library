@@ -2,10 +2,30 @@
 //
 // コンストラクタでモノイドおよび作用を指定する点以外は、`CPLib.LSegtree`と同じです。
 // モノイド構造・作用が静的に決まる場合は`CPLib.LSegtree`の方が高速です。
+//
+// 制約・計算量の n は要素数です。計算量は`op`, `act_op`, `act`がO(1)で動くとしたものです。
+//
+// 制約：作用は次を満たす（`a`, `b`は作用、`x`, `y`は値）
+// - act(act_unit, x) = x
+// - act(a, op(x, y)) = op(act(a, x), act(a, y))
+// - act(act_op(a, b), x) = act(b, act(a, x))
+//
+// # Examples
+// ```fix
+// // 区間への加算と、区間の最大値の取得ができるセグメント木
+// let tree = build(
+//     [1, 2, 3],
+//     minimum, |(x, y)| max(x, y), // 値モノイド：最大値
+//     0, |(a, b)| a + b,                // 作用モノイド：加法
+//     |(a, x)| x + a                    // 作用：加算
+// );
+// let tree = tree.act_range(0, 2, 10); // [11, 12, 3]
+// assert_eq(|_|"", tree.fold(1, 3), 12)
+// ```
 module CPLib.LDSegtree;
 
 import Std::{
-    loop, Array, I64, Array::{fill, set, @, @size}, I64::{bit_and, shift_right}, 
+    loop, undefined, Array, Bool, I64, Array::{fill, set, @, @size}, I64::{count_leading_zeros, count_trailing_zeros, shift_left, shift_right}, 
     Iterator::{fold, range, range_step}, LoopState::{break, continue}
 };
 
@@ -14,29 +34,31 @@ import Std::{
 // パラメータ`m`は「値」となるモノイドの型、`a`は「右作用」するモノイドの型。
 type LDSegtree m a = struct {
     // 要素数
-    n : I64,
+    _n : I64,
     // 値モノイドの単位元
-    unit : m,
+    _unit : m,
     // 値モノイドの演算子
-    op : (m, m) -> m,
+    _op : (m, m) -> m,
     // 作用モノイドの単位元
-    act_unit : a,
+    _act_unit : a,
     // 作用モノイドの演算子
-    act_op : (a, a) -> a,
+    _act_op : (a, a) -> a,
     // 右作用
-    act : (m, a) -> m,
+    _act : (a, m) -> m,
     // 値の配列
     // 
     // 1-indexedで運用する：長さは`2n`、第0インデックスは使用しない。
-    elems : Array m,
+    _elems : Array m,
     // 遅延されている作用の配列
     // 
     // 1-indexedで運用する：長さは`2n`、第0インデックスは使用しない。
-    lazy : Array a,
+    _lazy : Array a,
 };
 
 // すべての要素が単位元であるような遅延伝搬セグメント木を作成する
 // 
+// 計算量：O(n)
+//
 // # Parameters
 // - `n` : セグメント木の要素数
 // - `unit` : 値モノイドの単位元
@@ -44,15 +66,22 @@ type LDSegtree m a = struct {
 // - `act_unit` : 作用モノイドの単位元
 // - `act_op` : 作用モノイドの演算子
 // - `act` : 右作用
-init : I64 -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((m, a) -> m) -> LDSegtree m a;
-init = |n, unit, op, act_unit, act_op, act| (
-    let elems = Array::fill(n * 2, unit);
-    let lazy = Array::fill(n * 2, act_unit);
-    LDSegtree { elems : elems, lazy : lazy, n : n, unit : unit, op : op, act_unit : act_unit, act_op : act_op, act : act }
+create : I64 -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((a, m) -> m) -> LDSegtree m a;
+create = |n, unit, op, act_unit, act_op, act| (
+    let elems = fill(n * 2, unit);
+    let lazy = fill(n * 2, act_unit);
+    LDSegtree { _elems : elems, _lazy : lazy, _n : n, _unit : unit, _op : op, _act_unit : act_unit, _act_op : act_op, _act : act }
 );
+
+// `create`の別名（非推奨）。ただし作用`act`は、値を先に取る`(m, a) -> m`で受け取る
+init : I64 -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((m, a) -> m) -> LDSegtree m a;
+init = |n, unit, op, act_unit, act_op, act| create(n, unit, op, act_unit, act_op, |(a, x)| act((x, a)));
+DEPRECATED[init, "Use `CPLib.LDSegtree::create` instead, and swap the two arguments of the action function: `init` takes it as `(m, a) -> m`, with the value first, while `create` takes it as `(a, m) -> m`, with the action first."];
 
 // 要素の配列からセグメント木を作成する
 // 
+// 計算量：O(n)
+//
 // # Parameters
 // - `elems` : セグメント木の要素を格納する配列
 // - `unit` : 値モノイドの単位元
@@ -60,11 +89,11 @@ init = |n, unit, op, act_unit, act_op, act| (
 // - `act_unit` : 作用モノイドの単位元
 // - `act_op` : 作用モノイドの演算子
 // - `act` : 右作用
-build : Array m -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((m, a) -> m) -> LDSegtree m a;
+build : Array m -> m -> ((m, m) -> m) -> a -> ((a, a) -> a) -> ((a, m) -> m) -> LDSegtree m a;
 build = |elems, unit, op, act_unit, act_op, act| (
     let n = elems.@size;
-    let lazy = Array::fill(n * 2, act_unit) : Array a;
-    let tree = Array::fill(n * 2, unit) : Array m;
+    let lazy = fill(n * 2, act_unit) : Array a;
+    let tree = fill(n * 2, unit) : Array m;
     // [n, 2n)に要素をセット
     let tree = range(0, n).fold(tree, |i, tree| tree.set(n + i, elems.@(i)) );
     // [1, n)の範囲を計算
@@ -73,79 +102,120 @@ build = |elems, unit, op, act_unit, act_op, act| (
         let right = tree.@(i * 2 + 1);
         tree.set(i, op $ (left, right))
     );
-    LDSegtree { elems : tree, lazy : lazy, n : n, unit : unit, op : op, act_unit : act_unit, act_op : act_op, act : act }
+    LDSegtree { _elems : tree, _lazy : lazy, _n : n, _unit : unit, _op : op, _act_unit : act_unit, _act_op : act_op, _act : act }
 );
 
-// セグメント木の内部配列の要素に、遅延されている作用を適用した値を取得する
+// 公開関数は木をパターンで分解し、演算のクロージャと配列を個別の値として扱う。内部関数にも、木ではなくこれらの値を渡す。
+// 内部関数が木を受け取って演算を読み出す形にすると、LLVM は演算がどの関数かを突き止められず、間接呼び出しが残る。
+
+// モノイドの演算
+type _Op x = (x, x) -> x;
+
+// 作用`a`を値`m`に適用する関数
+type _Act a m = (a, m) -> m;
+
+// 葉`j`の祖先がまだ値に適用していない作用を、段ごとに合成した配列を作る
 //
-// # Parameters
-// - `i` : 内部配列のインデックス
-// - `tree` : セグメント木
-_eval_at : I64 -> LDSegtree m a -> m;
-_eval_at = |i, tree| (
-    let x = tree.@elems.@(i);
-    let a = tree.@lazy.@(i);
-    tree.@act $ (x, a)
+// 第`h`要素は、`j`の祖先のうち`j`から`h`段より上にあるものの作用を、深いノードから順に合成したものである。
+// 浅いノードの作用ほど後から加わったものなので、`j`の`h`段上の祖先とその兄弟は、自身の作用に続けてこの作用を値に適用すると最新の値になる。
+_pending_above : I64 -> a -> _Op a -> Array a -> Array a;
+_pending_above = |j, act_unit, act_op, lazy| (
+    let height = 63 - j.count_leading_zeros; // jの根からの深さ
+    range_step(height - 1, -1, -1).fold(fill(height + 1, act_unit), |h, pending|
+        pending.set(h, act_op((lazy.@(j.shift_right(h + 1)), pending.@(h + 1))))
+    )
 );
 
-// セグメント木の内部配列の作用を伝搬させる
-// 
-// そのノードの値に作用を適用して、子ノードに非自明な作用を設定する
+// 葉`l`から葉`r`の手前までの畳み込みを、ノードの値から計算する
 //
-// # Parameters
-// - `i` : 内部配列のインデックス
-// - `tree` : セグメント木
-_propagate_at : I64 -> LDSegtree m a -> LDSegtree m a;
-_propagate_at = |i, tree| (
-    // iを更新
-    let elem = tree._eval_at(i);
-    let tree = tree.mod_elems(set(i, elem));
-
-    let a = tree.@lazy.@(i);
-
-    // iの子2iに作用を追加
-    let b = tree.@act_op $ (tree.@lazy.@(i * 2), a);
-    let tree = tree.mod_lazy(set(i * 2, b));
-    
-    // iの子2i+1に作用を追加
-    let b = tree.@act_op $ (tree.@lazy.@(i * 2 + 1), a);
-    let tree = tree.mod_lazy(set(i * 2 + 1, b));
-
-    // iの作用を単位元に戻す
-    let act_unit = tree.@act_unit;
-    let tree = tree.mod_lazy(set(i, act_unit));
-
-    tree
+// 値を読むノードの祖先が、子に伝搬していない作用を持たないときに呼ぶ。
+_fold_nodes : I64 -> I64 -> m -> _Op m -> _Act a m -> Array m -> Array a -> m;
+_fold_nodes = |l, r, unit, op, act, elems, lazy| (
+    let (acc_l, acc_r) = loop((l, r, unit, unit), |(l, r, acc_l, acc_r)|
+        if l >= r {
+            break $ (acc_l, acc_r)
+        };
+        let (l, acc_l) = if l % 2 == 0 { (l, acc_l) } else {
+            let acc_l = op((acc_l, act((lazy.@(l), elems.@(l)))));
+            (l + 1, acc_l)
+        };
+        let (r, acc_r) = if r % 2 == 0 { (r, acc_r) } else {
+            let r = r - 1;
+            let acc_r = op((act((lazy.@(r), elems.@(r))), acc_r));
+            (r, acc_r)
+        };
+        continue $ (l.shift_right(1), r.shift_right(1), acc_l, acc_r)
+    );
+    op((acc_l, acc_r))
 );
 
 // 内部配列のノードiより上において作用を伝搬させる。
 // 
-// ルートから指定されたノードiの一つ上までの各ノードにおいて_propagate_atを呼び出す。
-_propagate_above : I64 -> LDSegtree m a -> LDSegtree m a;
-_propagate_above = |i, tree| (
-    let bit_length = loop((i, 0), |(i, n)| if i == 0 { break $ n } else { continue $ (i / 2, n + 1) });
-    let height = bit_length - 1;
-    range_step(height, 0, -1).fold(tree, |h, tree|
+// ルートから指定されたノードiの一つ上までの各ノードについて、そのノードの値に遅延されている作用を適用し、
+// その作用を子ノードに渡して、ノードの作用を単位元に戻す。
+_propagate_above : I64 -> a -> _Op a -> _Act a m -> Array m -> Array a -> (Array m, Array a);
+_propagate_above = |i, act_unit, act_op, act, elems, lazy| (
+    let height = 63 - i.count_leading_zeros; // iの根からの深さ
+    range_step(height, 0, -1).fold((elems, lazy), |h, (elems, lazy)|
         let j = i.shift_right(h); // iからh個親のノード
-        tree._propagate_at(j)
+        let a = lazy.@(j);
+        let elems = elems.set(j, act((a, elems.@(j))));
+        let lazy = lazy.set(j * 2, act_op((lazy.@(j * 2), a)));
+        let lazy = lazy.set(j * 2 + 1, act_op((lazy.@(j * 2 + 1), a)));
+        let lazy = lazy.set(j, act_unit);
+        (elems, lazy)
     )
 );
 
 // 内部配列のノードiより上の部分の値を再計算する
 // 
 // 作用の単位元へのリセットは行わないので、非自明な作用がついているノードあるいはその子ノードに対して呼び出してはならない。
-_recalc_above : I64 -> LDSegtree m a -> LDSegtree m a;
-_recalc_above = |i, tree| (
-    loop((i, tree), |(i, tree)|
-        if i <= 1 { break $ tree }; // ルートノードに到達したら終了
-        let i = i / 2; // 親ノードに移動
-        let elem = tree.@op $ (tree._eval_at(i * 2), tree._eval_at(i * 2 + 1));
-        let tree = tree.mod_elems(set(i, elem));
-        continue $ (i, tree)
+_recalc_above : I64 -> _Op m -> _Act a m -> Array m -> Array a -> Array m;
+_recalc_above = |i, op, act, elems, lazy| (
+    loop((i.shift_right(1), elems), |(p, elems)|
+        if p == 0 { break $ elems }; // 根（添字1）を更新したら終了
+        let l = act((lazy.@(p * 2), elems.@(p * 2)));
+        let r = act((lazy.@(p * 2 + 1), elems.@(p * 2 + 1)));
+        continue $ (p.shift_right(1), elems.set(p, op((l, r))))
     )
 );
 
+// セグメント木の要素数を取得する
+//
+// 計算量：O(1)
+//
+// # Parameters
+// - `tree` : セグメント木
+@size : LDSegtree m a -> I64;
+@size = |tree| tree.@_n;
+
+// セグメント木の要素を取得する
+//
+// 制約：0 <= i < n
+//
+// 計算量：O(log n)
+//
+// # Parameters
+// - `i` : インデックス（0-indexed）
+// - `tree` : セグメント木
+@ : I64 -> LDSegtree m a -> m;
+@ = |i, tree| (
+    if !(0 <= i && i < tree.@_n) { undefined("[CPLib.LDSegtree::@] `i` is out of [0, n)") };
+    let LDSegtree { _n : n, _act_unit : act_unit, _act_op : act_op, _act : act, _elems : elems, _lazy : lazy, _ } = tree;
+    let j = i + n;
+    // 葉jとその祖先がまだ値に適用していない作用を、深いノードから順に合成する。浅いノードの作用ほど後から加わったものである。
+    let a = loop((j, act_unit), |(k, a)|
+        if k == 0 { break $ a };
+        continue $ (k.shift_right(1), act_op((a, lazy.@(k))))
+    );
+    act((a, elems.@(j)))
+);
+
 // セグメント木の要素を設定する
+//
+// 制約：0 <= i < n
+//
+// 計算量：O(log n)
 //
 // # Parameters
 // - `i` : インデックス（0-indexed）
@@ -153,64 +223,86 @@ _recalc_above = |i, tree| (
 // - `tree` : セグメント木
 set : I64 -> m -> LDSegtree m a -> LDSegtree m a;
 set = |i, value, tree| (
-    let act_unit = tree.@act_unit;
-
-    let i = i + tree.@n;
+    if !(0 <= i && i < tree.@_n) { undefined("[CPLib.LDSegtree::set] `i` is out of [0, n)") };
+    let LDSegtree { _n : n, _unit : unit, _op : op, _act_unit : act_unit, _act_op : act_op, _act : act, _elems : elems, _lazy : lazy } = tree;
+    let i = i + n;
     // iの祖先ノードで作用伝搬を実行しておく（iの直上の「周辺」に遅延作用を散らすのが目的）
-    let tree = tree._propagate_above(i);
+    let (elems, lazy) = _propagate_above(i, act_unit, act_op, act, elems, lazy);
     // ノードiの値を設定し、作用を単位元に戻す
-    let tree = tree.mod_elems(set(i, value));
-    let tree = tree.mod_lazy(set(i, act_unit));
+    let elems = elems.set(i, value);
+    let lazy = lazy.set(i, act_unit);
     // iの親ノードをすべて再計算
-    tree._recalc_above(i)
+    let elems = _recalc_above(i, op, act, elems, lazy);
+    LDSegtree { _n : n, _unit : unit, _op : op, _act_unit : act_unit, _act_op : act_op, _act : act, _elems : elems, _lazy : lazy }
+);
+
+// 1つの要素に作用を適用する
+//
+// `act_range(i, i + 1, a)`と同じ結果になる。
+//
+// 制約：0 <= i < n
+//
+// 計算量：O(log n)
+//
+// # Parameters
+// - `i` : インデックス（0-indexed）
+// - `a` : 作用
+// - `tree` : セグメント木
+act_at : I64 -> a -> LDSegtree m a -> LDSegtree m a;
+act_at = |i, a, tree| (
+    if !(0 <= i && i < tree.@_n) { undefined("[CPLib.LDSegtree::act_at] `i` is out of [0, n)") };
+    let LDSegtree { _n : n, _unit : unit, _op : op, _act_unit : act_unit, _act_op : act_op, _act : act, _elems : elems, _lazy : lazy } = tree;
+    let i = i + n;
+    let (elems, lazy) = _propagate_above(i, act_unit, act_op, act, elems, lazy);
+    // 葉の値を、葉の遅延作用を適用してからaを適用した値に置き換え、葉の遅延作用を単位元に戻す
+    let elems = elems.set(i, act((a, act((lazy.@(i), elems.@(i))))));
+    let lazy = lazy.set(i, act_unit);
+    let elems = _recalc_above(i, op, act, elems, lazy);
+    LDSegtree { _n : n, _unit : unit, _op : op, _act_unit : act_unit, _act_op : act_op, _act : act, _elems : elems, _lazy : lazy }
 );
 
 // 半開区間[l, r)にある要素の畳み込みを計算する
-// 
-// 遅延作用の伝搬が行われるので、ツリー自体も更新される。
+//
+// 制約：0 <= l <= r <= n
+//
+// 計算量：O(log n)
 //
 // # Parameters
 // - `l` : 区間の左端 (0-indexed)
 // - `r` : 区間の右端 (0-indexed, exclusive)
 // - `tree` : セグメント木
-fold : I64 -> I64 -> LDSegtree m a -> (LDSegtree m a, m);
+fold : I64 -> I64 -> LDSegtree m a -> m;
 fold = |l, r, tree| (
-    let l = l + tree.@n;
-    let r = r + tree.@n;
-    // l0 = lが奇数になるまで2で割ったもの。
-    // これは下の「区間積を計算」のセクションで初めて_eval_atを呼び出すインデックスである。
-    let l0 = l / (l.bit_and(-l));
-    // r0も「区間積を計算」のセクションで初めて_eval_atを呼び出すインデックス。
-    let r0 = r / (r.bit_and(-r)) - 1;
-    // これらより親の部分で作用伝搬させておけばよい。
-    let tree = tree._propagate_above(l0);
-    let tree = tree._propagate_above(r0);
-
-    // 区間積を計算
-    let (acc_l, acc_r) = loop((l, r, tree.@unit, tree.@unit), |(l, r, acc_l, acc_r)|
-        if l >= r {
-            break $ (acc_l, acc_r)
-        };
+    if !(0 <= l && l <= r && r <= tree.@_n) { undefined("[CPLib.LDSegtree::fold] `l` and `r` do not satisfy 0 <= l <= r <= n") };
+    if l == r { tree.@_unit };
+    let LDSegtree { _n : n, _unit : unit, _op : op, _act_unit : act_unit, _act_op : act_op, _act : act, _elems : elems, _lazy : lazy } = tree;
+    let l = l + n;
+    let r = r + n;
+    // 木を書き換えずに、読むノードの値に、そのノードと祖先がまだ値に適用していない作用を適用して読む。
+    // 段hで左端の側に読むノードは、葉lのh段上の祖先か、その兄弟である。どちらの祖先も、葉lの祖先のうちh段より上のものである。
+    // 右端の側に読むノードも同じく、葉r - 1のh段上の祖先か、その兄弟である。
+    let pending_l = _pending_above(l, act_unit, act_op, lazy);
+    let pending_r = _pending_above(r - 1, act_unit, act_op, lazy);
+    let (acc_l, acc_r) = loop((l, r, 0, unit, unit), |(l, r, h, acc_l, acc_r)|
+        if l >= r { break $ (acc_l, acc_r) };
         let (l, acc_l) = if l % 2 == 0 { (l, acc_l) } else {
-            let acc_l = tree.@op $ (acc_l, tree._eval_at(l));
-            let l = l + 1;
-            (l, acc_l)
+            (l + 1, op((acc_l, act((act_op((lazy.@(l), pending_l.@(h))), elems.@(l))))))
         };
         let (r, acc_r) = if r % 2 == 0 { (r, acc_r) } else {
             let r = r - 1;
-            let acc_r = tree.@op $ (tree._eval_at(r), acc_r);
-            (r, acc_r)
+            (r, op((act((act_op((lazy.@(r), pending_r.@(h))), elems.@(r))), acc_r)))
         };
-        let l = l / 2;
-        let r = r / 2;
-        continue $ (l, r, acc_l, acc_r)
+        continue $ (l.shift_right(1), r.shift_right(1), h + 1, acc_l, acc_r)
     );
-
-    (tree, tree.@op $ (acc_l, acc_r))
+    op((acc_l, acc_r))
 );
 
 // 半開区間[l, r)に右から作用を適用する
 // 
+// 制約：0 <= l <= r <= n
+//
+// 計算量：O(log n)
+//
 // # Parameters
 // - `l` : 区間の左端 (0-indexed)
 // - `r` : 区間の右端 (0-indexed, exclusive)
@@ -218,33 +310,178 @@ fold = |l, r, tree| (
 // - `tree` : セグメント木
 act_range : I64 -> I64 -> a -> LDSegtree m a -> LDSegtree m a;
 act_range = |l, r, a, tree| (
-    let l = l + tree.@n;
-    let r = r + tree.@n;
-    let l0 = l / (l.bit_and(-l));
-    let r0 = r / (r.bit_and(-r)) - 1;
-    let tree = tree._propagate_above(l0);
-    let tree = tree._propagate_above(r0);
+    if !(0 <= l && l <= r && r <= tree.@_n) { undefined("[CPLib.LDSegtree::act_range] `l` and `r` do not satisfy 0 <= l <= r <= n") };
+    if l == r { tree };
+    let LDSegtree { _n : n, _unit : unit, _op : op, _act_unit : act_unit, _act_op : act_op, _act : act, _elems : elems, _lazy : lazy } = tree;
+    let l = l + n;
+    let r = r + n;
+    let l0 = l.shift_right(l.count_trailing_zeros);
+    let r0 = r.shift_right(r.count_trailing_zeros) - 1;
+    let (elems, lazy) = _propagate_above(l0, act_unit, act_op, act, elems, lazy);
+    let (elems, lazy) = _propagate_above(r0, act_unit, act_op, act, elems, lazy);
 
-    let tree = loop((l, r, tree), |(l, r, tree)|
-        if l >= r { break $ tree };
-        let (l, tree) = if l % 2 == 0 { (l, tree) } else {
-            let act = tree.@lazy.@(l);
-            let act = tree.@act_op $ (act, a); // 右作用
-            let tree = tree.mod_lazy(set(l, act));
-            let l = l + 1;
-            (l, tree)
+    let lazy = loop((l, r, lazy), |(l, r, lazy)|
+        if l >= r { break $ lazy };
+        let (l, lazy) = if l % 2 == 0 { (l, lazy) } else {
+            (l + 1, lazy.set(l, act_op((lazy.@(l), a)))) // 右作用
         };
-        let (r, tree) = if r % 2 == 0 { (r, tree) } else {
+        let (r, lazy) = if r % 2 == 0 { (r, lazy) } else {
             let r = r - 1;
-            let act = tree.@lazy.@(r);
-            let act = tree.@act_op $ (act, a); // 右作用
-            let tree = tree.mod_lazy(set(r, act));
-            (r, tree)
+            (r, lazy.set(r, act_op((lazy.@(r), a)))) // 右作用
         };
-        let l = l / 2;
-        let r = r / 2;
-        continue $ (l, r, tree)
+        continue $ (l.shift_right(1), r.shift_right(1), lazy)
     );
 
-    tree._recalc_above(l0)._recalc_above(r0)
+    let elems = _recalc_above(l0, op, act, elems, lazy);
+    let elems = _recalc_above(r0, op, act, elems, lazy);
+    LDSegtree { _n : n, _unit : unit, _op : op, _act_unit : act_unit, _act_op : act_op, _act : act, _elems : elems, _lazy : lazy }
+);
+
+// すべての要素の畳み込みを計算する
+//
+// 計算量：O(log n)
+//
+// # Parameters
+// - `tree` : セグメント木
+fold_all : LDSegtree m a -> m;
+fold_all = |tree| (
+    let LDSegtree { _n : n, _unit : unit, _op : op, _act : act, _elems : elems, _lazy : lazy, _ } = tree;
+    // 値を読むノードの祖先は、要素の区間に対応しないノードなので、作用を持たない。
+    _fold_nodes(n, n * 2, unit, op, act, elems, lazy)
+);
+
+// `f(fold(l, r))`が真になる最大の`r`を、木の上の二分探索で求める
+//
+// 制約：0 <= l <= n、`f(unit)`が真、`f`は単調（区間を右に伸ばして偽になったら、さらに伸ばしても真にならない）
+//
+// 計算量：O(log n)。`f`の呼び出しもO(log n)回。
+//
+// # Parameters
+// - `l` : 区間の左端 (0-indexed)
+// - `f` : 区間の畳み込みについての条件
+// - `tree` : セグメント木
+//
+// # Examples
+// ```fix
+// // 区間への加算と、区間の最大値の取得ができるセグメント木
+// let tree = build([1, 2, 5, 4], minimum, |(x, y)| max(x, y), 0, |(a, b)| a + b, |(a, x)| x + a);
+// let tree = tree.act_range(0, 2, 2); // [3, 4, 5, 4]
+// // 区間[0, 2)の最大値は4、区間[0, 3)の最大値は5
+// assert_eq(|_|"", tree.calc_max_right(0, |x| x <= 4), 2)
+// ```
+calc_max_right : I64 -> (m -> Bool) -> LDSegtree m a -> I64;
+calc_max_right = |l, f, tree| (
+    if !(0 <= l && l <= tree.@_n) { undefined("[CPLib.LDSegtree::calc_max_right] `l` is out of [0, n]") };
+    let LDSegtree { _n : n, _unit : unit, _op : op, _act_unit : act_unit, _act_op : act_op, _act : act, _elems : elems, _lazy : lazy } = tree;
+    if l == n { n };
+    let l = l + n;
+    let r = n * 2;
+    let pending = _pending_above(l, act_unit, act_op, lazy);
+
+    // `fold(l, n)`が畳み込むノードを左から順に試し、`f`が偽になる最初のノードkと、kより左のノードの畳み込みacc、
+    // kとその祖先がまだ値に適用していない作用の合成aを求める。
+    // 段hで`fold`が畳み込むノードは、lh = ceil(l / 2^h)、rh = floor(r / 2^h)として、lh < rhの段のうち、
+    // 左端の側ではlh（lhが奇数のとき）、右端の側ではrh - 1（rhが奇数のとき）である。
+    // これらを左から順に並べると、左端の側のノードが低い段から、続いて右端の側のノードが高い段から並ぶ。
+    // 左端の側のノードlhは、葉lのh段上の祖先か、その兄弟である。どちらの祖先も、葉lの祖先のうちh段より上のものである。
+    // 右端の側のノードの祖先は、要素の区間に対応しないノードなので、作用を持たない。
+    // 見つからなければkは0とする。
+    let (k, height, acc, a) = loop((l, r, 0, unit), |(lh, rh, h, acc)|
+        if lh >= rh { break $ (0, h, acc, act_unit) };
+        if lh % 2 == 1 {
+            let a = act_op((lazy.@(lh), pending.@(h)));
+            let next = op((acc, act((a, elems.@(lh)))));
+            if !f(next) { break $ (lh, h, acc, a) };
+            continue $ ((lh + 1).shift_right(1), rh.shift_right(1), h + 1, next)
+        };
+        continue $ ((lh + 1).shift_right(1), rh.shift_right(1), h + 1, acc)
+    );
+    let (k, acc, a) = if k != 0 { (k, acc, a) } else {
+        loop((height - 1, acc), |(h, acc)|
+            if h < 0 { break $ (0, acc, a) };
+            let rh = r.shift_right(h);
+            if rh % 2 == 0 { continue $ (h - 1, acc) };
+            let a = lazy.@(rh - 1);
+            let next = op((acc, act((a, elems.@(rh - 1)))));
+            if !f(next) { break $ (rh - 1, acc, a) };
+            continue $ (h - 1, next)
+        )
+    };
+    if k == 0 { n };
+    // kから葉へ降りる。左の子までの畳み込みがfを満たせば右の子へ、満たさなければ左の子へ進む。
+    loop((k, acc, a), |(k, acc, a)|
+        if k >= n { break $ k - n };
+        let left = act_op((lazy.@(k * 2), a));
+        let next = op((acc, act((left, elems.@(k * 2)))));
+        if !f(next) { continue $ (k * 2, acc, left) };
+        continue $ (k * 2 + 1, next, act_op((lazy.@(k * 2 + 1), a)))
+    )
+);
+
+// `f(fold(l, r))`が真になる最小の`l`を、木の上の二分探索で求める
+//
+// 制約：0 <= r <= n、`f(unit)`が真、`f`は単調（区間を左に伸ばして偽になったら、さらに伸ばしても真にならない）
+//
+// 計算量：O(log n)。`f`の呼び出しもO(log n)回。
+//
+// # Parameters
+// - `r` : 区間の右端 (0-indexed, exclusive)
+// - `f` : 区間の畳み込みについての条件
+// - `tree` : セグメント木
+//
+// # Examples
+// ```fix
+// // 区間への加算と、区間の最大値の取得ができるセグメント木
+// let tree = build([1, 2, 5, 4], minimum, |(x, y)| max(x, y), 0, |(a, b)| a + b, |(a, x)| x + a);
+// let tree = tree.act_range(0, 2, 2); // [3, 4, 5, 4]
+// // 区間[3, 4)の最大値は4、区間[2, 4)の最大値は5
+// assert_eq(|_|"", tree.calc_min_left(4, |x| x <= 4), 3)
+// ```
+calc_min_left : I64 -> (m -> Bool) -> LDSegtree m a -> I64;
+calc_min_left = |r, f, tree| (
+    if !(0 <= r && r <= tree.@_n) { undefined("[CPLib.LDSegtree::calc_min_left] `r` is out of [0, n]") };
+    let LDSegtree { _n : n, _unit : unit, _op : op, _act_unit : act_unit, _act_op : act_op, _act : act, _elems : elems, _lazy : lazy } = tree;
+    if r == 0 { 0 };
+    let l = n;
+    let r = r + n;
+    let pending = _pending_above(r - 1, act_unit, act_op, lazy);
+
+    // `fold(0, r)`が畳み込むノードを右から順に試し、`f`が偽になる最初のノードkと、kより右のノードの畳み込みacc、
+    // kとその祖先がまだ値に適用していない作用の合成aを求める。
+    // 段hで`fold`が畳み込むノードは、lh = ceil(l / 2^h)、rh = floor(r / 2^h)として、lh < rhの段のうち、
+    // 左端の側ではlh（lhが奇数のとき）、右端の側ではrh - 1（rhが奇数のとき）である。
+    // これらを右から順に並べると、右端の側のノードが低い段から、続いて左端の側のノードが高い段から並ぶ。
+    // 右端の側のノードrh - 1は、葉r - 1のh段上の祖先か、その兄弟である。どちらの祖先も、葉r - 1の祖先のうちh段より上のものである。
+    // 左端の側のノードの祖先は、要素の区間に対応しないノードなので、作用を持たない。
+    // 見つからなければkは0とする。
+    let (k, height, acc, a) = loop((l, r, 0, unit), |(lh, rh, h, acc)|
+        if lh >= rh { break $ (0, h, acc, act_unit) };
+        if rh % 2 == 1 {
+            let a = act_op((lazy.@(rh - 1), pending.@(h)));
+            let next = op((act((a, elems.@(rh - 1))), acc));
+            if !f(next) { break $ (rh - 1, h, acc, a) };
+            continue $ ((lh + 1).shift_right(1), rh.shift_right(1), h + 1, next)
+        };
+        continue $ ((lh + 1).shift_right(1), rh.shift_right(1), h + 1, acc)
+    );
+    let (k, acc, a) = if k != 0 { (k, acc, a) } else {
+        loop((height - 1, acc), |(h, acc)|
+            if h < 0 { break $ (0, acc, a) };
+            let lh = (l + 1.shift_left(h) - 1).shift_right(h);
+            if lh % 2 == 0 { continue $ (h - 1, acc) };
+            let a = lazy.@(lh);
+            let next = op((act((a, elems.@(lh))), acc));
+            if !f(next) { break $ (lh, acc, a) };
+            continue $ (h - 1, next)
+        )
+    };
+    if k == 0 { 0 };
+    // kから葉へ降りる。右の子からの畳み込みがfを満たせば左の子へ、満たさなければ右の子へ進む。
+    loop((k, acc, a), |(k, acc, a)|
+        if k >= n { break $ k + 1 - n };
+        let right = act_op((lazy.@(k * 2 + 1), a));
+        let next = op((act((right, elems.@(k * 2 + 1))), acc));
+        if !f(next) { continue $ (k * 2 + 1, acc, right) };
+        continue $ (k * 2, next, act_op((lazy.@(k * 2), a)))
+    )
 );

@@ -1,27 +1,43 @@
+// 2-SAT問題
+//
+// 制約・計算量の n は変数の数、m は節の数を表します。
+//
+// # Examples
+// ```fix
+// // 節 (x0 = true) or (x0 = true)（すなわち x0 = true）と、節 (x0 = false) or (x1 = true) を追加して解く
+// let sat = create(2).add_clause(0, true, 0, true).add_clause(0, false, 1, true);
+// assert_eq(|_|"", sat.solve, some([true, true]))
+// ```
 module CPLib.TwoSat;
 
-import CPLib.Graph::{add_edge, calc_sccs, create, Graph};
+import CPLib.Graph::{_calc_scc_ids, GraphBuilder, GraphBuilder::{add_edge, build, create}};
 import Std::{
-    Array, Bool, I64, Option, Array::{fill, set, to_iter, @, @size}, 
-    Iterator::{fold, loop_iter_s, range}, LoopState::{break, continue}, Option::{none, some}
+    undefined, Array, Bool, I64, Option, Array::{fill, set, @}, 
+    Iterator::{loop_iter_s, range}, LoopState::{break, continue}, Option::{none, some}
 };
 
 // 2-SAT問題の型
 type TwoSat = struct {
     // 変数の数
-    n : I64,
+    _n : I64,
     // グラフ
-    graph : Graph (),
+    _graph : GraphBuilder (),
 };
 
 // 2-SAT問題を作る
 //
+// 計算量：O(n)
+//
 // # Parameters
 // - `n` : 変数の数
 create : I64 -> TwoSat;
-create = |n| TwoSat { n : n, graph : Graph::create(n * 2) };
+create = |n| TwoSat { _n : n, _graph : GraphBuilder::create(n * 2) };
 
 // 節 (a = f) or (b = g) を追加する
+//
+// 制約：0 <= a, b < n
+//
+// 計算量：ならしO(1)
 //
 // # Parameters
 // - `a` : 変数1のインデックス
@@ -31,42 +47,40 @@ create = |n| TwoSat { n : n, graph : Graph::create(n * 2) };
 // - `sat` : 2-SAT問題
 add_clause : I64 -> Bool -> I64 -> Bool -> TwoSat -> TwoSat;
 add_clause = |a, f, b, g, sat| (
-    let n = sat.@n;
+    let n = sat.@_n;
+    if !(0 <= a && a < n && 0 <= b && b < n) { undefined("[CPLib.TwoSat::add_clause] `a` or `b` is out of [0, n)") };
     let a = if !f { a._not(n) } else { a };
     let b = if !g { b._not(n) } else { b };
-    sat.mod_graph(|graph|
+    sat.mod__graph(|graph|
         graph.add_edge(a._not(n), b, ()).add_edge(b._not(n), a, ())
     )
 );
 
 // 2-SAT問題を解く
 // 
+// 計算量：O(n + m)
+//
 // # Returns
-// 充足不能な場合は`none()`。充足可能な場合は`some(arr)`を返す。`arr.@(i)`は各リテラルの真偽値を表す。
+// 充足不能な場合は`none()`。充足可能な場合は`some(arr)`を返す。`arr`の長さは変数の数で、`arr.@(i)`は変数`i`に割り当てる値を表す。
 //
 // # Parameters
 // - `sat` : 2-SAT問題
 solve : TwoSat -> Option (Array Bool);
 solve = |sat| (
-    let n = sat.@n;
-    let sccs = sat.@graph.calc_sccs;
-    // 各リテラルのSCCグループインデックスを取得
-    let scc_idx = Array::fill(2 * n, 0);
-    let scc_idx = range(0, sccs.@size).fold(scc_idx, |i, scc_idx|
-        let scc = sccs.@(i);
-        scc.to_iter.fold(scc_idx, |v, scc_idx| scc_idx.set(v, i))
-    );
+    let n = sat.@_n;
+    // リテラルごとの強連結成分の番号。番号はトポロジカル順
+    let (_, ids) = sat.@_graph.build._calc_scc_ids;
     // 答えを構成する
-    let sol = Array::fill(n, false);
+    let sol = fill(n, false);
     match range(0, n).loop_iter_s(sol, |i, sol|
         let a = i;
         let b = a._not(n);
-        if scc_idx.@(a) == scc_idx.@(b) {
+        if ids.@(a) == ids.@(b) {
             // 充足不能
             break $ none()
         };
-        // aが属するSCCのインデックスが大きい方をtrueとする
-        continue $ sol.set(i, scc_idx.@(a) > scc_idx.@(b))
+        // 肯定のリテラルの番号が否定のリテラルの番号より大きければ、変数を真にする
+        continue $ sol.set(i, ids.@(a) > ids.@(b))
     ) {
         break(sol) => sol,
         continue(sol) => some(sol)

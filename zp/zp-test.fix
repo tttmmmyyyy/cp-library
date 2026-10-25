@@ -1,14 +1,22 @@
 module CPLib.ZP.Test;
 
-import CPLib.Arithmetic::pmod;
+import CPLib.Arithmetic::{pmod, power};
 import CPLib.ZP::{
-    fft, inv, make, power, primitive_root, P1000000007, PrimeProvider, ZP, FFTDirection::forward, 
-    ZP::@value
+    fft, inv, primitive_root, zp, P1000000007, P167772161, P998244353, PrimeProvider, ZP, 
+    FFTDirection::{forward, inverse}, PrimeProvider::value, ZP::{@prime, @value}
 };
 import Std::{
-    Array, IO, Array::{to_iter, @size}, Debug::assert_eq, Functor::{forget, map}, 
-    Iterator::{filter, fold_m, product, range}, Monad::pure, ToString::to_string
+    Array, I64, IO, Array::{push_back, to_iter, @, @size}, Debug::assert_eq, Functor::{forget, map}, 
+    Iterator::{filter, fold, fold_m, map, product, range, to_array}, Monad::pure, ToI64::i64, ToString::to_string
 };
+
+// 合成数の法10
+type P10 = unbox struct {};
+
+impl P10 : PrimeProvider {
+    create = P10 {};
+    value = |p| 10_U32;
+}
 
 type P17 = unbox struct {};
 
@@ -21,8 +29,10 @@ test : IO ();
 test = (
     test_basic;;
     test_power;;
+    test_power_composite;;
     test_primitive_root;;
     test_fft_immutability;;
+    test_fft_definition;;
 
     pure()
 );
@@ -30,55 +40,67 @@ test = (
 test_basic : IO ();
 test_basic = (
     assert_eq(|_|"test_zp_basic 1", 
-        ZP::make(1e9) + ZP::make(2e9),
-        ZP::make(999999986) : ZP P1000000007);;
+        zp(1e9) + zp(2e9),
+        zp(999999986) : ZP P1000000007);;
     assert_eq(|_|"test_zp_basic 2", 
-        ZP::make(1e9) * ZP::make(2e9), 
-        ZP::make(98) : ZP P1000000007);;
+        zp(1e9) * zp(2e9), 
+        zp(98) : ZP P1000000007);;
     assert_eq(|_|"test_zp_basic 3", 
-        ZP::make(1e9) / ZP::make(1e9),
-        ZP::make(1) : ZP P1000000007);;
+        zp(1e9) / zp(1e9),
+        zp(1) : ZP P1000000007);;
     assert_eq(|_|"test_zp_basic 4",
-        ZP::make(1e9) - ZP::make(1e9),
-        ZP::make(0) : ZP P1000000007);;
+        zp(1e9) - zp(1e9),
+        zp(0) : ZP P1000000007);;
     assert_eq(|_|"test_zp_basic 5",
-        ZP::make(1e9) + (-ZP::make(1e9)),
-        ZP::make(0) : ZP P1000000007);;
+        zp(1e9) + (-zp(1e9)),
+        zp(0) : ZP P1000000007);;
     assert_eq(|_|"test_zp_basic 6",
-        ZP::make(1e9) + ZP::make(-1e9-1),
-        ZP::make(1000000006) : ZP P1000000007);;
+        zp(1e9) + zp(-1e9-1),
+        zp(1000000006) : ZP P1000000007);;
     
     range(-30, 30).product(range(-30, 30)).fold_m((), |(x, y), _|
         // Addition
         assert_eq(|_|"test_zp_basic " + x.to_string + " + " + y.to_string,
-            ZP::make(x) + ZP::make(y),
-            ZP::make((x + y).pmod(17)) : ZP P17);;
+            zp(x) + zp(y),
+            zp((x + y).pmod(17)) : ZP P17);;
 
         // Subtraction
         assert_eq(|_|"test_zp_basic " + x.to_string + " - " + y.to_string,
-            ZP::make(x) - ZP::make(y),
-            ZP::make((x - y).pmod(17)) : ZP P17);;
+            zp(x) - zp(y),
+            zp((x - y).pmod(17)) : ZP P17);;
 
         // Multiplication
         assert_eq(|_|"test_zp_basic " + x.to_string + " * " + y.to_string,
-            ZP::make(x) * ZP::make(y),
-            ZP::make((x * y).pmod(17)) : ZP P17);;
+            zp(x) * zp(y),
+            zp((x * y).pmod(17)) : ZP P17);;
 
         pure()
     ).forget;;
 
     // Inversion
     range(-30, 30).filter(|x| x.pmod(17) != 0).fold_m((), |x, _|
-        let zp = ZP::make(x) : ZP P17;
-        let zpinv = zp.inv;
+        let z = zp(x) : ZP P17;
+        let zinv = z.inv;
         assert_eq(|_|"test_zp_basic inv " + x.to_string,
-            zp * zpinv,
-            ZP::make(1) : ZP P17);;
+            z * zinv,
+            zp(1) : ZP P17);;
         pure()
     ).forget;;
 
     pure()
 
+);
+
+// 法が合成数でも、`power`が底を指数の回数だけ掛けた値を返すことのテスト
+test_power_composite : IO ();
+test_power_composite = (
+    range(0, 10).fold_m((), |x, _|
+        let x = zp(x) : ZP P10;
+        range(0, 20).fold_m((), |e, _|
+            let expected = range(0, e).fold(zp(1), |_, acc| acc * x);
+            assert_eq(|_|"test_zp_power_composite " + x.to_string + "^" + e.to_string, x.power(e), expected)
+        )
+    )
 );
 
 test_power : IO ();
@@ -88,6 +110,9 @@ test_power = (
         (0, 1, 0),
         (0, 2, 0),
         (0, 3, 0),
+        (0, 0, 1),
+        (0, 16, 0),
+        (0, 32, 0),
         (1, 0, 1),
         (1, 1, 1),
         (1, 2, 1),
@@ -119,10 +144,11 @@ test_power = (
     ];
 
     cases.to_iter.fold_m((), |(x, e, ans), _|
-        let res = ZP::make(x).power(e) : ZP P17;
+        let x = zp(x) : ZP P17;
+        let res = if e >= 0 { x.power(e) } else { x.inv.power(-e) };
         assert_eq(|_|"test_zp_power " + x.to_string + "^" + e.to_string + " = " + res.to_string + " != " + ans.to_string,
             res,
-            ZP::make(ans)
+            zp(ans)
         )
     );;
 
@@ -142,12 +168,56 @@ test_primitive_root = (
 test_fft_immutability : IO ();
 test_fft_immutability = (
     // ZPのFFTが不変であることを確認する
-    let x = [1, 2, 3, 4].map(make) : Array (ZP P17);
+    let x = [1, 2, 3, 4].map(zp) : Array (ZP P17);
     let y = x.fft(forward());
     assert_eq(|_|"test_fft_immutability",
         x.@size, y.@size
     );;
     assert_eq(|_|"test_fft_immutability",
-        x, [1, 2, 3, 4].map(make));;
+        x, [1, 2, 3, 4].map(zp));;
     pure()
+);
+
+// 2^31に近い素数2013265921 = 15 * 2^27 + 1
+type P2013265921 = unbox struct {};
+
+impl P2013265921 : PrimeProvider {
+    create = P2013265921 {};
+    value = |p| 2013265921_U32;
+}
+
+// `fft`の順変換が、多項式に1のべき乗根を代入した値を元の添字の順に返し、逆変換で元に戻ること
+test_fft_definition : IO ();
+test_fft_definition = (
+    // 長さを2のべき乗に切り上げると、基数4の段だけのもの（4、16、64）と基数2の段を含むもの（2、8、32）の両方になる
+    let sizes = [1, 2, 3, 4, 5, 8, 13, 16, 31, 64];
+    sizes.to_iter.fold_m((), |n, _|
+        // p = 17のときは、p - 1 = 16なので長さ16まで
+        if n <= 16 { check_fft_definition(range(0, n).Iterator::map(|i| zp(i * i * 7 + 3)).to_array : Array (ZP P17)) } else { pure() };;
+        check_fft_definition(range(0, n).Iterator::map(|i| zp(i * 998 + 12345)).to_array : Array (ZP P998244353));;
+        check_fft_definition(range(0, n).Iterator::map(|i| zp(-i * i - 1)).to_array : Array (ZP P167772161));;
+        // 値がすべてp - 1のとき、変換の途中の値が最も大きくなる
+        check_fft_definition(range(0, n).Iterator::map(|i| zp(-1)).to_array : Array (ZP P2013265921))
+    );;
+    // p - 1を割る2のべき乗が2までの素数では、長さ2まで変換できる
+    check_fft_definition([zp(3)] : Array (ZP P1000000007));;
+    check_fft_definition([zp(3), zp(5)] : Array (ZP P1000000007))
+);
+
+// `x`の`fft`を、定義どおりに計算した値と比べる
+check_fft_definition : [p : PrimeProvider] Array (ZP p) -> IO ();
+check_fft_definition = |x| (
+    let n = x.@size;
+    let y = x.fft(forward());
+    let m = y.@size;
+    let padded = range(n, m).fold(x, |_, x| x.push_back(zp(0)));
+    // wは1の原始m乗根
+    let g = primitive_root;
+    let w = g.power((g.@prime.value.i64 - 1) / m);
+    let expected = range(0, m).Iterator::map(|k|
+        let wk = w.power(k);
+        range(0, m).fold(zp(0), |j, acc| acc + padded.@(j) * wk.power(j))
+    ).to_array;
+    assert_eq(|_|"test_fft_definition forward " + n.to_string, y, expected);;
+    assert_eq(|_|"test_fft_definition inverse " + n.to_string, y.fft(inverse()), padded)
 );

@@ -1,8 +1,18 @@
 // 二部グラフを扱うモジュール
+//
+// 計算量の n は頂点数（左右の合計）、m は辺数を表します。
+//
+// # Examples
+// ```fix
+// // 左右に2頂点ずつある二部グラフ
+// let g = create(2, 2).add_edge(0, 0).add_edge(0, 1).add_edge(1, 1);
+// let flow = g.calc_flow;
+// // 最大マッチングは辺(0, 0)と辺(1, 1)
+// assert_eq(|_|"", flow.get_max_matching, [true, false, true])
+// ```
 module CPLib.Bipartite;
 
-import CPLib.Graph::EdgeId;
-import CPLib.MaxFlow::{MaxFlowGraph, MaxFlowGraph::{add_edge, add_edge_id, create, get_flow, get_min_cut, maximize_flow}};
+import CPLib.MaxFlow::{MaxFlowEdgeId, MaxFlowGraph, MaxFlowGraph::{add_edge, add_edge_id, create, get_flow, calc_min_cut, maximize_flow}};
 import Std::{
     undefined, Array, Bool, I64, Array::{empty, fill, push_back, set, to_iter, @, @size}, Functor::map, 
     Iterator::{count_up, fold, map, range, to_array, zip}
@@ -10,22 +20,24 @@ import Std::{
 
 // 二部グラフの型
 type BipartiteGraph = struct {
-    left_size : I64,
-    right_size : I64,
-    edges : Array (I64, I64),
+    _left_size : I64,
+    _right_size : I64,
+    _edges : Array (I64, I64),
 };
 
 // 二部グラフに対する最大フロー問題のグラフ
 type BipartiteGraphFlow = struct {
-    graph : BipartiteGraph,
-    max_flow : MaxFlowGraph I64,
-    // 二部グラフの辺に対応する最大フローグラフの辺の識別子
-    edge_ids : Array EdgeId,
+    _graph : BipartiteGraph,
+    _max_flow : MaxFlowGraph,
+    // 二部グラフの辺に対応する最大フローグラフの辺の番号
+    _edge_ids : Array MaxFlowEdgeId,
 };
 
 namespace BipartiteGraph {
 
     // 二部グラフを作成する
+    //
+    // 計算量：O(1)
     //
     // # Parameters
     // - `left_size` : 左側の頂点数
@@ -33,76 +45,117 @@ namespace BipartiteGraph {
     create : I64 -> I64 -> BipartiteGraph;
     create = |left_size, right_size| (
         BipartiteGraph {
-            left_size : left_size,
-            right_size : right_size,
-            edges : []
+            _left_size : left_size,
+            _right_size : right_size,
+            _edges : []
         }
     );
 
     // 二部グラフに辺を追加する
     //
+    // 制約：0 <= left < left_size, 0 <= right < right_size
+    //
+    // 計算量：ならしO(1)
+    //
     // # Parameters
-    // - `graph` : 二部グラフ
     // - `left` : 左側の頂点番号
     // - `right` : 右側の頂点番号
+    // - `graph` : 二部グラフ
     add_edge : I64 -> I64 -> BipartiteGraph -> BipartiteGraph;
     add_edge = |left, right, graph| (
-        if !(0 <= left && left < graph.@left_size) { undefined("Left vertex index out of bounds") };
-        if !(0 <= right && right < graph.@right_size) { undefined("Right vertex index out of bounds") };
-        graph.mod_edges(push_back((left, right)))
+        if !(0 <= left && left < graph.@_left_size) { undefined("[CPLib.Bipartite::BipartiteGraph::add_edge] got a left vertex out of range") };
+        if !(0 <= right && right < graph.@_right_size) { undefined("[CPLib.Bipartite::BipartiteGraph::add_edge] got a right vertex out of range") };
+        graph.mod__edges(push_back((left, right)))
     );
 
+    // 左側の頂点数を取得する
+    //
+    // 計算量：O(1)
+    //
+    // # Parameters
+    // - `graph` : 二部グラフ
+    @left_size : BipartiteGraph -> I64;
+    @left_size = |graph| graph.@_left_size;
+
+    // 右側の頂点数を取得する
+    //
+    // 計算量：O(1)
+    //
+    // # Parameters
+    // - `graph` : 二部グラフ
+    @right_size : BipartiteGraph -> I64;
+    @right_size = |graph| graph.@_right_size;
+
+    // 辺の配列を取得する
+    //
+    // 第`i`要素は、`i`番目に追加した辺の（左側の頂点番号, 右側の頂点番号）です。
+    //
+    // 計算量：O(1)
+    //
+    // # Parameters
+    // - `graph` : 二部グラフ
+    @edges : BipartiteGraph -> Array (I64, I64);
+    @edges = |graph| graph.@_edges;
+
     // 二部グラフに対応する最大フロー問題を作成し、解く
-    maximize_flow : BipartiteGraph -> BipartiteGraphFlow;
-    maximize_flow = |bg| (
-        let n = bg.@left_size + bg.@right_size + 2; // 開始と終了の頂点を含む
+    //
+    // 計算量：O((n + m) sqrt(n))
+    calc_flow : BipartiteGraph -> BipartiteGraphFlow;
+    calc_flow = |bg| (
+        let n = bg.@_left_size + bg.@_right_size + 2; // 開始と終了の頂点を含む
         let s = n - 2;
         let t = n - 1;
-        let graph = MaxFlowGraph::create(n, s, t);
-        let graph = range(0, bg.@left_size).fold(graph, |i, graph| graph.add_edge(s, i, 1));
-        let graph = range(0, bg.@right_size).fold(graph, |i, graph| graph.add_edge(bg.@left_size + i, t, 1));
-        let eids = Array::empty(bg.@edges.@size);
-        let (graph, eids) = bg.@edges.to_iter.fold((graph, eids), |(left, right), (graph, eids)|
-            let (graph, eid) = graph.add_edge_id(left, bg.@left_size + right, 1);
+        let graph = MaxFlowGraph::create(n);
+        let graph = range(0, bg.@_left_size).fold(graph, |i, graph| graph.add_edge(s, i, 1));
+        let graph = range(0, bg.@_right_size).fold(graph, |i, graph| graph.add_edge(bg.@_left_size + i, t, 1));
+        let eids = empty(bg.@_edges.@size);
+        let (graph, eids) = bg.@_edges.to_iter.fold((graph, eids), |(left, right), (graph, eids)|
+            let (graph, eid) = graph.add_edge_id(left, bg.@_left_size + right, 1);
             (graph, push_back(eid, eids))
         );
-        let (graph, flow) = graph.maximize_flow;
-        BipartiteGraphFlow { graph : bg, max_flow : graph, edge_ids : eids }
+        let (graph, flow) = graph.maximize_flow(s, t);
+        BipartiteGraphFlow { _graph : bg, _max_flow : graph, _edge_ids : eids }
     );
+    // `calc_flow`の別名（非推奨）
+    maximize_flow : BipartiteGraph -> BipartiteGraphFlow = calc_flow;
+    DEPRECATED[maximize_flow, "Use `CPLib.Bipartite::BipartiteGraph::calc_flow` instead."];
 
 }
 
 namespace BipartiteGraphFlow {
     // 二部グラフの最大マッチングを取得する
     // 
+    // 計算量：O(m)
+    //
     // # Returns
     // 第i番目に追加した辺がマッチングに含まれる場合は`true`、含まれない場合は`false`とする配列
     //
     // # Parameters
     // - `max_flow` : 二部グラフの最大フロー
     get_max_matching : BipartiteGraphFlow -> Array Bool;
-    get_max_matching = |flow| flow.@edge_ids.map(|eid| flow.@max_flow.get_flow(eid) > 0);
+    get_max_matching = |flow| flow.@_edge_ids.map(|eid| flow.@_max_flow.get_flow(eid) > 0);
 
     // 二部グラフの最小辺カバーを取得する
     //
-    // # 制約
-    // 二部グラフに孤立点がない
+    // 制約：二部グラフに孤立点がない
+    //
+    // 計算量：O(n + m)
     //
     // # Returns
     // 第i番目に追加した辺がカバーに含まれる場合は`true`、含まれない場合は`false`とする配列
     //
     // # Parameters
     // - `max_flow` : 二部グラフの最大フロー
-    get_min_edge_cover : BipartiteGraphFlow -> Array Bool;
-    get_min_edge_cover = |flow| (
-        let edge_n = flow.@graph.@edges.@size;
+    calc_min_edge_cover : BipartiteGraphFlow -> Array Bool;
+    calc_min_edge_cover = |flow| (
+        let edge_n = flow.@_graph.@_edges.@size;
         let matching = flow.get_max_matching;
-        let l_cov = Array::fill(flow.@graph.@left_size, false);
-        let r_cov = Array::fill(flow.@graph.@right_size, false);
+        let l_cov = fill(flow.@_graph.@_left_size, false);
+        let r_cov = fill(flow.@_graph.@_right_size, false);
         // 最大マッチングにカバーされている点を`l_cov`と`r_cov`に反映
         let (l_cov, r_cov) = matching.to_iter.zip(count_up(0)).fold((l_cov, r_cov), |(matched, ei), (l_cov, r_cov)|
             if !matched { (l_cov, r_cov) };
-            let (left_v, right_v) = flow.@graph.@edges.@(ei);
+            let (left_v, right_v) = flow.@_graph.@_edges.@(ei);
             let l_cov = l_cov.set(left_v, true);
             let r_cov = r_cov.set(right_v, true);
             (l_cov, r_cov)
@@ -110,7 +163,7 @@ namespace BipartiteGraphFlow {
         // 最大マッチングから初めて、まだカバーしていない点をカバーできる辺を追加していく。
         let min_cov = matching;
         let (min_cov, l_cov, r_cov) = range(0, edge_n).fold((min_cov, l_cov, r_cov), |ei, (min_cov, l_cov, r_cov)|
-            let (left_v, right_v) = flow.@graph.@edges.@(ei);
+            let (left_v, right_v) = flow.@_graph.@_edges.@(ei);
             if matching.@(ei) {
                 (min_cov, l_cov, r_cov)
             };
@@ -124,36 +177,53 @@ namespace BipartiteGraphFlow {
         );
         min_cov
     );
+    // `calc_min_edge_cover`の別名（非推奨）
+    get_min_edge_cover : BipartiteGraphFlow -> Array Bool = calc_min_edge_cover;
+    DEPRECATED[get_min_edge_cover, "Use `CPLib.Bipartite::BipartiteGraphFlow::calc_min_edge_cover` instead."];
+
 
     // 二部グラフの最小点被覆を取得する
     //
+    // 計算量：O(n + m)
+    //
     // # Returns
     // 左側の頂点の被覆と右側の頂点の被覆をそれぞれ`Array Bool`として返す。
     // ある頂点が被覆に含まれる場合は`true`、含まれない場合は`false`となる配列が返される。
     //
     // # Parameters
     // - `max_flow` : 二部グラフの最大フロー
-    get_min_vertex_cover : BipartiteGraphFlow -> (Array Bool, Array Bool);
-    get_min_vertex_cover = |flow| (
-        let min_cut = flow.@max_flow.get_min_cut; // 第i番目の頂点に残余グラフで到達可能かどうかの配列
-        let left_cover = range(0, flow.@graph.@left_size).map(|i| !min_cut.@(i)).to_array;
-        let right_cover = range(0, flow.@graph.@right_size).map(|i| min_cut.@(flow.@graph.@left_size + i)).to_array;
+    calc_min_vertex_cover : BipartiteGraphFlow -> (Array Bool, Array Bool);
+    calc_min_vertex_cover = |flow| (
+        // `calc_flow`は、開始地点を左右の頂点の後ろに置いた
+        let s = flow.@_graph.@_left_size + flow.@_graph.@_right_size;
+        let min_cut = flow.@_max_flow.calc_min_cut(s); // 第i番目の頂点に残余グラフで到達可能かどうかの配列
+        let left_cover = range(0, flow.@_graph.@_left_size).map(|i| !min_cut.@(i)).to_array;
+        let right_cover = range(0, flow.@_graph.@_right_size).map(|i| min_cut.@(flow.@_graph.@_left_size + i)).to_array;
         (left_cover, right_cover)
     );
+    // `calc_min_vertex_cover`の別名（非推奨）
+    get_min_vertex_cover : BipartiteGraphFlow -> (Array Bool, Array Bool) = calc_min_vertex_cover;
+    DEPRECATED[get_min_vertex_cover, "Use `CPLib.Bipartite::BipartiteGraphFlow::calc_min_vertex_cover` instead."];
 
-    // 二部グラフの最大孤立集合（最大安定集合）を取得する
+
+    // 二部グラフの最大独立集合（最大安定集合）を取得する
     // 
+    // 計算量：O(n + m)
+    //
     // # Returns
-    // 左側の頂点の被覆と右側の頂点の被覆をそれぞれ`Array Bool`として返す。
-    // ある頂点が被覆に含まれる場合は`true`、含まれない場合は`false`となる配列が返される。
+    // 左側の頂点と右側の頂点のそれぞれについて、最大独立集合に含まれる頂点を`true`、含まれない頂点を`false`とする`Array Bool`を返す。
     // 
     // # Parameters
     // - `max_flow` : 二部グラフの最大フロー
-    get_max_indep_set : BipartiteGraphFlow -> (Array Bool, Array Bool);
-    get_max_indep_set = |flow| (
-        let (left_cover, right_cover) = flow.get_min_vertex_cover;
+    calc_max_indep_set : BipartiteGraphFlow -> (Array Bool, Array Bool);
+    calc_max_indep_set = |flow| (
+        let (left_cover, right_cover) = flow.calc_min_vertex_cover;
         let left_stable = left_cover.map(|x| !x);
         let right_stable = right_cover.map(|x| !x);
         (left_stable, right_stable)
     );
+    // `calc_max_indep_set`の別名（非推奨）
+    get_max_indep_set : BipartiteGraphFlow -> (Array Bool, Array Bool) = calc_max_indep_set;
+    DEPRECATED[get_max_indep_set, "Use `CPLib.Bipartite::BipartiteGraphFlow::calc_max_indep_set` instead."];
+
 }

@@ -1,25 +1,35 @@
-// 遅延伝番セグメント木（右作用）
+// 遅延伝搬セグメント木（右作用）
 // 
-// ある要素の値を取得する関数`@`はないので、もし必要なら`fold(i, i+1)`を使うこと。
+// 制約・計算量の n は要素数です。計算量は各モノイドの`op`と`act`がO(1)で動くとしたものです。
+//
+// 制約：作用は次を満たす（`a`, `b`は作用、`x`, `y`は値）
+// - act(unit, x) = x
+// - act(a, op(x, y)) = op(act(a, x), act(a, y))
+// - act(op(a, b), x) = act(b, act(a, x))
+//
+// 和（`Sum`、`WeightedSum`）・最小値・最大値のモノイドと、区間加算・区間乗算・区間代入・アフィン変換の作用は`CPLib.Monoid`にあります。
+// それ以外のモノイドと作用は、次の例のように型を作成し、`Monoid`と`Action`を実装してください。
 //
 // 使用例
-// ```
+// ```fix
+// # module DocTest;
+// import CPLib.LSegtree;
+// import CPLib.Trait;
+//
 // // 最大値モノイド
 // type I64Max = struct { v : I64 };
 // namespace I64Max {
-//     make : I64 -> I64Max;
-//     make = |v| I64Max { v : v };
+//     make : I64 -> I64Max = |v| I64Max { v };
 // }
 // impl I64Max : Monoid {
-//     unit = make(I64::minimum);
+//     unit = make(minimum);
 //     op = |lhs, rhs| make $ lhs.@v.max(rhs.@v);
 // }
 // 
 // // 加法モノイド
 // type I64Add = struct { v : I64 };
 // namespace I64Add {
-//     make : I64 -> I64Add;
-//     make = |v| I64Add { v : v };
+//     make : I64 -> I64Add = |v| I64Add { v };
 // }
 // impl I64Add : Monoid {
 //     unit = make(0);
@@ -29,27 +39,22 @@
 // // 加法モノイドの最大値モノイドに対する作用
 // impl I64Add : Action {
 //     type Set I64Add = I64Max; // 作用を受ける集合の型
-//     act = |a, x| I64Max::make(x.@v + a.@v);
+//     act = |a, x| make(x.@v + a.@v);
 // }
 // 
-// main : IO ();
-// main = (
-//     let tree = LSegtree::init(3) : LSegtree I64Max I64Add;
-//     let tree = tree.set(0, I64Max::make(1));
-//     let tree = tree.set(1, I64Max::make(2));
-//     let tree = tree.set(2, I64Max::make(3));
-//     let (tree, res) = tree.fold(0, 3); // res.@v == 3
-//     let tree = tree.set(1, I64Max::make(3)); // [1, 3, 3]
-//     let tree = tree.act_range(0, 2, I64Add::make(1)); // [2, 4, 4]
-//     let (tree, res) = tree.fold(0, 2); // res.@v == 4
-//     pure()
+// main : IO () = (
+//     let tree = build([1, 2, 3].map(make)) : LSegtree I64Max I64Add;
+//     assert_eq(|_|"", tree.fold(0, 3).@v, 3);;
+//     let tree = tree.set(1, make(3)); // [1, 3, 3]
+//     let tree = tree.act_range(0, 2, make(1)); // [2, 4, 3]
+//     assert_eq(|_|"", tree.fold(0, 2).@v, 4)
 // );
 // ```
 module CPLib.LSegtree;
 
 import CPLib.Trait::{Action, Monoid, Action::{act, Set}, Monoid::{op, unit}};
 import Std::{
-    loop, Array, I64, Array::{fill, set, @, @size}, I64::{bit_and, shift_right}, 
+    loop, undefined, Array, Bool, I64, Array::{fill, set, @, @size}, I64::{count_leading_zeros, count_trailing_zeros, shift_left, shift_right}, 
     Iterator::{fold, range, range_step}, LoopState::{break, continue}
 };
 
@@ -60,37 +65,46 @@ import Std::{
 // パラメータ`m`は「値」となるモノイドの型、`a`は「右作用」するモノイドの型。
 type LSegtree m a = struct {
     // 要素数
-    n : I64,
-    // 値の配列
+    _n : I64,
+    // ノードの値の配列
     // 
-    // 1-indexedで運用する：長さは`2n`、第0インデックスは使用しない。
-    elems : Array m,
-    // 遅延されている作用の配列
+    // 1-indexedで運用する：長さは`2n`、第0インデックスは使用しない。ノード`k`の子は`2k`と`2k+1`、要素`i`は葉`n+i`。
+    // 葉の値は要素の値である。内部ノード`k`の値は`act(_lazy[k], op(_elems[2k], _elems[2k+1]))`に等しい。
+    _elems : Array m,
+    // 内部ノードの、子にまだ伝搬していない作用の配列
     // 
-    // 1-indexedで運用する：長さは`2n`、第0インデックスは使用しない。
-    lazy : Array a,
+    // 1-indexedで運用する：長さは`n`、第0インデックスは使用しない。
+    _lazy : Array a,
 };
 
 // すべての要素が単位元であるような遅延伝搬セグメント木を作成する
 // 
+// 計算量：O(n)
+//
 // # Parameters
 // - `n` : セグメント木の要素数
-init : [m : Monoid, a : Monoid] I64 -> LSegtree m a;
-init = |n| (
-    let elems = Array::fill(n * 2, Monoid::unit);
-    let lazy = Array::fill(n * 2, Monoid::unit);
-    LSegtree { elems : elems, lazy : lazy, n : n }
+create : [m : Monoid, a : Monoid] I64 -> LSegtree m a;
+create = |n| (
+    let elems = fill(n * 2, Monoid::unit);
+    let lazy = fill(n, Monoid::unit);
+    LSegtree { _elems : elems, _lazy : lazy, _n : n }
 );
+
+// `create`の別名（非推奨）
+init : [m : Monoid, a : Monoid] I64 -> LSegtree m a = create;
+DEPRECATED[init, "Use `CPLib.LSegtree::create` instead."];
 
 // 要素の配列からセグメント木を作成する
 // 
+// 計算量：O(n)
+//
 // # Parameters
 // - `elems` : セグメント木の要素を格納する配列
 build : [m : Monoid, a : Monoid] Array m -> LSegtree m a;
 build = |elems| (
     let n = elems.@size;
-    let lazy = Array::fill(n * 2, Monoid::unit) : Array a;
-    let tree = Array::fill(n * 2, Monoid::unit) : Array m;
+    let lazy = fill(n, Monoid::unit) : Array a;
+    let tree = fill(n * 2, Monoid::unit) : Array m;
     // [n, 2n)に要素をセット
     let tree = range(0, n).fold(tree, |i, tree| tree.set(n + i, elems.@(i)) );
     // [1, n)の範囲を計算
@@ -99,78 +113,121 @@ build = |elems| (
         let right = tree.@(i * 2 + 1);
         tree.set(i, Monoid::op(left, right))
     );
-    LSegtree { elems : tree, lazy : lazy, n : n }
+    LSegtree { _elems : tree, _lazy : lazy, _n : n }
 );
 
-// セグメント木の内部配列の要素に、遅延されている作用を適用した値を取得する
+// ノード`k`に作用`a`を適用する
 //
-// # Parameters
-// - `i` : 内部配列のインデックス
-// - `tree` : セグメント木
-_eval_at : [a : Action, Set a = m] I64 -> LSegtree m a -> m;
-_eval_at = |i, tree| (
-    let x = tree.@elems.@(i);
-    let a = tree.@lazy.@(i);
-    act(a, x)
+// ノードの値に作用を適用し、内部ノードなら子に伝搬する作用に`a`を合成する。
+_apply_at : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> a -> LSegtree m a -> LSegtree m a;
+_apply_at = |k, a, tree| (
+    let tree = tree.mod__elems(|elems| elems.set(k, act(a, elems.@(k))));
+    if k >= tree.@_n { tree };
+    tree.mod__lazy(|lazy| lazy.set(k, Monoid::op(lazy.@(k), a))) // 右作用
 );
 
-// セグメント木の内部配列の作用を伝搬させる
-// 
-// そのノードの値に作用を適用して、子ノードに非自明な作用を設定する
-//
-// # Parameters
-// - `i` : 内部配列のインデックス
-// - `tree` : セグメント木
+// 内部ノード`k`の作用を子に伝搬する
 _propagate_at : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> LSegtree m a -> LSegtree m a;
-_propagate_at = |i, tree| (
-    // iを更新
-    let elem = tree._eval_at(i);
-    let tree = tree.mod_elems(set(i, elem));
-
-    let a = tree.@lazy.@(i);
-
-    // iの子2iに作用を追加
-    let b = Monoid::op(tree.@lazy.@(i * 2), a);
-    let tree = tree.mod_lazy(set(i * 2, b));
-    
-    // iの子2i+1に作用を追加
-    let b = Monoid::op(tree.@lazy.@(i * 2 + 1), a);
-    let tree = tree.mod_lazy(set(i * 2 + 1, b));
-
-    // iの作用を単位元に戻す
-    let tree = tree.mod_lazy(set(i, Monoid::unit));
-
-    tree
+_propagate_at = |k, tree| (
+    let a = tree.@_lazy.@(k);
+    let tree = tree._apply_at(k * 2, a)._apply_at(k * 2 + 1, a);
+    tree.mod__lazy(set(k, Monoid::unit))
 );
 
-// 内部配列のノードiより上において作用を伝搬させる。
-// 
-// ルートから指定されたノードiの一つ上までの各ノードにおいて_propagate_atを呼び出す。
+// ノード`k`の祖先すべてで、根から順に作用を子に伝搬する
 _propagate_above : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> LSegtree m a -> LSegtree m a;
-_propagate_above = |i, tree| (
-    let bit_length = loop((i, 0), |(i, n)| if i == 0 { break $ n } else { continue $ (i / 2, n + 1) });
-    let height = bit_length - 1;
+_propagate_above = |k, tree| (
+    let height = 63 - k.count_leading_zeros; // kの根からの深さ
     range_step(height, 0, -1).fold(tree, |h, tree|
-        let j = i.shift_right(h); // iからh個親のノード
+        let j = k.shift_right(h); // kからh個親のノード
         tree._propagate_at(j)
     )
 );
 
-// 内部配列のノードiより上の部分の値を再計算する
+// ノード`k`の祖先すべての値を、下から順に子の値から計算し直す
 // 
-// 作用の単位元へのリセットは行わないので、非自明な作用がついているノードあるいはその子ノードに対して呼び出してはならない。
+// 祖先が子に伝搬していない作用を持たないときに呼ぶ。
 _recalc_above : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> LSegtree m a -> LSegtree m a;
-_recalc_above = |i, tree| (
-    loop((i, tree), |(i, tree)|
-        if i <= 1 { break $ tree }; // ルートノードに到達したら終了
-        let i = i / 2; // 親ノードに移動
-        let elem = Monoid::op(tree._eval_at(i * 2), tree._eval_at(i * 2 + 1));
-        let tree = tree.mod_elems(set(i, elem));
-        continue $ (i, tree)
+_recalc_above = |k, tree| (
+    loop((k.shift_right(1), tree), |(p, tree)|
+        if p == 0 { break $ tree }; // 根（添字1）を更新したら終了
+        let elem = Monoid::op(tree.@_elems.@(p * 2), tree.@_elems.@(p * 2 + 1));
+        let tree = tree.mod__elems(set(p, elem));
+        continue $ (p.shift_right(1), tree)
     )
 );
 
+// 葉`l`から葉`r`の手前までの畳み込みを、ノードの値から計算する
+//
+// 値を読むノードの祖先が、子に伝搬していない作用を持たないときに呼ぶ。
+_fold_nodes : [m : Monoid] I64 -> I64 -> LSegtree m a -> m;
+_fold_nodes = |l, r, tree| (
+    let elems = tree.@_elems;
+    let (acc_l, acc_r) = loop((l, r, Monoid::unit, Monoid::unit), |(l, r, acc_l, acc_r)|
+        if l >= r {
+            break $ (acc_l, acc_r)
+        };
+        let (l, acc_l) = if l % 2 == 0 { (l, acc_l) } else {
+            (l + 1, Monoid::op(acc_l, elems.@(l)))
+        };
+        let (r, acc_r) = if r % 2 == 0 { (r, acc_r) } else {
+            let r = r - 1;
+            (r, Monoid::op(elems.@(r), acc_r))
+        };
+        continue $ (l.shift_right(1), r.shift_right(1), acc_l, acc_r)
+    );
+    Monoid::op(acc_l, acc_r)
+);
+
+// 葉`j`の祖先がまだ伝搬していない作用を、段ごとに合成した配列を作る
+//
+// 第`h`要素は、`j`の祖先のうち`j`から`h`段より上にあるものの作用を、深いノードから順に合成したものである。
+// 浅いノードの作用ほど後から加わったものなので、`j`の`h`段上の祖先とその兄弟は、値にこの作用を適用すると最新の値になる。
+_pending_above : [a : Monoid] I64 -> LSegtree m a -> Array a;
+_pending_above = |j, tree| (
+    let lazy = tree.@_lazy;
+    let height = 63 - j.count_leading_zeros; // jの根からの深さ
+    range_step(height - 1, -1, -1).fold(fill(height + 1, Monoid::unit), |h, pending|
+        pending.set(h, Monoid::op(lazy.@(j.shift_right(h + 1)), pending.@(h + 1)))
+    )
+);
+
+// セグメント木の要素数を取得する
+//
+// 計算量：O(1)
+//
+// # Parameters
+// - `tree` : セグメント木
+@size : LSegtree m a -> I64;
+@size = |tree| tree.@_n;
+
+// セグメント木の要素を取得する
+//
+// 制約：0 <= i < n
+//
+// 計算量：O(log n)
+//
+// # Parameters
+// - `i` : インデックス（0-indexed）
+// - `tree` : セグメント木
+@ : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> LSegtree m a -> m;
+@ = |i, tree| (
+    if !(0 <= i && i < tree.@_n) { undefined("[CPLib.LSegtree::@] `i` is out of [0, n)") };
+    let j = i + tree.@_n;
+    // 葉jの祖先がまだ伝搬していない作用を、深いノードから順に合成する。浅いノードの作用ほど後から加わったものである。
+    let lazy = tree.@_lazy;
+    let a = loop((j.shift_right(1), Monoid::unit), |(k, a)|
+        if k == 0 { break $ a };
+        continue $ (k.shift_right(1), Monoid::op(a, lazy.@(k)))
+    );
+    act(a, tree.@_elems.@(j))
+);
+
 // セグメント木の要素を設定する
+//
+// 制約：0 <= i < n
+//
+// 計算量：O(log n)
 //
 // # Parameters
 // - `i` : インデックス（0-indexed）
@@ -178,62 +235,78 @@ _recalc_above = |i, tree| (
 // - `tree` : セグメント木
 set : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> m -> LSegtree m a -> LSegtree m a;
 set = |i, value, tree| (
-    let i = i + tree.@n;
-    // iの祖先ノードで作用伝搬を実行しておく（iの直上の「周辺」に遅延作用を散らすのが目的）
+    if !(0 <= i && i < tree.@_n) { undefined("[CPLib.LSegtree::set] `i` is out of [0, n)") };
+    let i = i + tree.@_n;
     let tree = tree._propagate_above(i);
-    // ノードiの値を設定し、作用を単位元に戻す
-    let tree = tree.mod_elems(set(i, value));
-    let tree = tree.mod_lazy(set(i, Monoid::unit));
-    // iの親ノードをすべて再計算
+    let tree = tree.mod__elems(set(i, value));
+    tree._recalc_above(i)
+);
+
+// 1つの要素に作用を適用する
+//
+// `act_range(i, i + 1, a)`と同じ結果になる。
+//
+// 制約：0 <= i < n
+//
+// 計算量：O(log n)
+//
+// # Parameters
+// - `i` : インデックス（0-indexed）
+// - `a` : 作用
+// - `tree` : セグメント木
+act_at : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> a -> LSegtree m a -> LSegtree m a;
+act_at = |i, a, tree| (
+    if !(0 <= i && i < tree.@_n) { undefined("[CPLib.LSegtree::act_at] `i` is out of [0, n)") };
+    let i = i + tree.@_n;
+    let tree = tree._propagate_above(i);
+    // 葉は遅延作用を持たないので、値に直接作用を適用する
+    let tree = tree.mod__elems(|elems| elems.set(i, act(a, elems.@(i))));
     tree._recalc_above(i)
 );
 
 // 半開区間[l, r)にある要素の畳み込みを計算する
-// 
-// 遅延作用の伝搬が行われるので、ツリー自体も更新される。
+//
+// 制約：0 <= l <= r <= n
+//
+// 計算量：O(log n)
 //
 // # Parameters
 // - `l` : 区間の左端 (0-indexed)
 // - `r` : 区間の右端 (0-indexed, exclusive)
 // - `tree` : セグメント木
-fold : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> I64 -> LSegtree m a -> (LSegtree m a, m);
+fold : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> I64 -> LSegtree m a -> m;
 fold = |l, r, tree| (
-    let l = l + tree.@n;
-    let r = r + tree.@n;
-    // l0 = lが奇数になるまで2で割ったもの。
-    // これは下の「区間積を計算」のセクションで初めて_eval_atを呼び出すインデックスである。
-    let l0 = l / (l.bit_and(-l));
-    // r0も「区間積を計算」のセクションで初めて_eval_atを呼び出すインデックス。
-    let r0 = r / (r.bit_and(-r)) - 1;
-    // これらより親の部分で作用伝搬させておけばよい。
-    let tree = tree._propagate_above(l0);
-    let tree = tree._propagate_above(r0);
-
-    // 区間積を計算
-    let (acc_l, acc_r) = loop((l, r, Monoid::unit, Monoid::unit), |(l, r, acc_l, acc_r)|
-        if l >= r {
-            break $ (acc_l, acc_r)
-        };
+    if !(0 <= l && l <= r && r <= tree.@_n) { undefined("[CPLib.LSegtree::fold] `l` and `r` do not satisfy 0 <= l <= r <= n") };
+    if l == r { Monoid::unit };
+    let n = tree.@_n;
+    let l = l + n;
+    let r = r + n;
+    let elems = tree.@_elems;
+    // 木を書き換えずに、読むノードの値に、祖先がまだ伝搬していない作用を適用して読む。
+    // 段hで左端の側に読むノードは、葉lのh段上の祖先か、その兄弟である。どちらの祖先も、葉lの祖先のうちh段より上のものである。
+    // 右端の側に読むノードも同じく、葉r - 1のh段上の祖先か、その兄弟である。
+    let pending_l = tree._pending_above(l);
+    let pending_r = tree._pending_above(r - 1);
+    let (acc_l, acc_r) = loop((l, r, 0, Monoid::unit, Monoid::unit), |(l, r, h, acc_l, acc_r)|
+        if l >= r { break $ (acc_l, acc_r) };
         let (l, acc_l) = if l % 2 == 0 { (l, acc_l) } else {
-            let acc_l = Monoid::op(acc_l, tree._eval_at(l));
-            let l = l + 1;
-            (l, acc_l)
+            (l + 1, Monoid::op(acc_l, act(pending_l.@(h), elems.@(l))))
         };
         let (r, acc_r) = if r % 2 == 0 { (r, acc_r) } else {
             let r = r - 1;
-            let acc_r = Monoid::op(tree._eval_at(r), acc_r);
-            (r, acc_r)
+            (r, Monoid::op(act(pending_r.@(h), elems.@(r)), acc_r))
         };
-        let l = l / 2;
-        let r = r / 2;
-        continue $ (l, r, acc_l, acc_r)
+        continue $ (l.shift_right(1), r.shift_right(1), h + 1, acc_l, acc_r)
     );
-
-    (tree, Monoid::op(acc_l, acc_r))
+    Monoid::op(acc_l, acc_r)
 );
 
 // 半開区間[l, r)に右から作用を適用する
 // 
+// 制約：0 <= l <= r <= n
+//
+// 計算量：O(log n)
+//
 // # Parameters
 // - `l` : 区間の左端 (0-indexed)
 // - `r` : 区間の右端 (0-indexed, exclusive)
@@ -241,33 +314,229 @@ fold = |l, r, tree| (
 // - `tree` : セグメント木
 act_range : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> I64 -> a -> LSegtree m a -> LSegtree m a;
 act_range = |l, r, a, tree| (
-    let l = l + tree.@n;
-    let r = r + tree.@n;
-    let l0 = l / (l.bit_and(-l));
-    let r0 = r / (r.bit_and(-r)) - 1;
+    if !(0 <= l && l <= r && r <= tree.@_n) { undefined("[CPLib.LSegtree::act_range] `l` and `r` do not satisfy 0 <= l <= r <= n") };
+    if l == r { tree };
+    let l = l + tree.@_n;
+    let r = r + tree.@_n;
+    let l0 = l.shift_right(l.count_trailing_zeros);
+    let r0 = r.shift_right(r.count_trailing_zeros) - 1;
     let tree = tree._propagate_above(l0);
     let tree = tree._propagate_above(r0);
 
     let tree = loop((l, r, tree), |(l, r, tree)|
         if l >= r { break $ tree };
         let (l, tree) = if l % 2 == 0 { (l, tree) } else {
-            let act = tree.@lazy.@(l);
-            let act = Monoid::op(act, a); // 右作用
-            let tree = tree.mod_lazy(set(l, act));
-            let l = l + 1;
-            (l, tree)
+            (l + 1, tree._apply_at(l, a))
         };
         let (r, tree) = if r % 2 == 0 { (r, tree) } else {
             let r = r - 1;
-            let act = tree.@lazy.@(r);
-            let act = Monoid::op(act, a); // 右作用
-            let tree = tree.mod_lazy(set(r, act));
-            (r, tree)
+            (r, tree._apply_at(r, a))
         };
-        let l = l / 2;
-        let r = r / 2;
-        continue $ (l, r, tree)
+        continue $ (l.shift_right(1), r.shift_right(1), tree)
     );
 
+    // 作用を適用したノードの祖先は、l0とr0の祖先に含まれる。
     tree._recalc_above(l0)._recalc_above(r0)
+);
+
+
+// すべての要素の畳み込みを計算する
+//
+// 計算量：O(log n)
+//
+// # Parameters
+// - `tree` : セグメント木
+fold_all : [m : Monoid] LSegtree m a -> m;
+fold_all = |tree| (
+    // 値を読むノードの祖先は、要素の区間に対応しないノードなので、作用を持たない。
+    let n = tree.@_n;
+    tree._fold_nodes(n, n * 2)
+);
+
+// `f(fold(l, r))`が真になる最大の`r`を、木の上の二分探索で求める
+//
+// 制約：0 <= l <= n、`f(unit)`が真、`f`は単調（区間を右に伸ばして偽になったら、さらに伸ばしても真にならない）
+//
+// 計算量：O(log n)。`f`の呼び出しもO(log n)回。
+//
+// # Parameters
+// - `l` : 区間の左端 (0-indexed)
+// - `f` : 区間の畳み込みについての条件
+// - `tree` : セグメント木
+//
+// # Examples
+// ```fix
+// # module DocTest;
+// # import CPLib.LSegtree;
+// # import CPLib.Trait;
+// # type I64Max = struct { v : I64 };
+// # namespace I64Max {
+// #     make : I64 -> I64Max = |v| I64Max { v };
+// # }
+// # impl I64Max : Monoid {
+// #     unit = make(minimum);
+// #     op = |lhs, rhs| make $ lhs.@v.max(rhs.@v);
+// # }
+// # type I64Add = struct { v : I64 };
+// # namespace I64Add {
+// #     make : I64 -> I64Add = |v| I64Add { v };
+// # }
+// # impl I64Add : Monoid {
+// #     unit = make(0);
+// #     op = |lhs, rhs| make $ lhs.@v + rhs.@v;
+// # }
+// # impl I64Add : Action {
+// #     type Set I64Add = I64Max;
+// #     act = |a, x| make(x.@v + a.@v);
+// # }
+// # main : IO () = (
+// // `I64Max`は最大値モノイド、`I64Add`はそれに加算で作用する加法モノイド（定義はモジュールの使用例と同じ）
+// let tree = build([1, 2, 5, 4].map(make)) : LSegtree I64Max I64Add;
+// let tree = tree.act_range(0, 2, make(2)); // [3, 4, 5, 4]
+// // 区間[0, 2)の最大値は4、区間[0, 3)の最大値は5
+// assert_eq(|_|"", tree.calc_max_right(0, |x| x.@v <= 4), 2)
+// # );
+// ```
+calc_max_right : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> (m -> Bool) -> LSegtree m a -> I64;
+calc_max_right = |l, f, tree| (
+    if !(0 <= l && l <= tree.@_n) { undefined("[CPLib.LSegtree::calc_max_right] `l` is out of [0, n]") };
+    let n = tree.@_n;
+    if l == n { n };
+    let l = l + n;
+    let r = n * 2;
+    let elems = tree.@_elems;
+    let lazy = tree.@_lazy;
+    let pending = tree._pending_above(l);
+
+    // `fold(l, n)`が畳み込むノードを左から順に試し、`f`が偽になる最初のノードkと、kより左のノードの畳み込みacc、
+    // kの祖先がまだ伝搬していない作用の合成aを求める。
+    // 段hで`fold`が畳み込むノードは、lh = ceil(l / 2^h)、rh = floor(r / 2^h)として、lh < rhの段のうち、
+    // 左端の側ではlh（lhが奇数のとき）、右端の側ではrh - 1（rhが奇数のとき）である。
+    // これらを左から順に並べると、左端の側のノードが低い段から、続いて右端の側のノードが高い段から並ぶ。
+    // 左端の側のノードlhは、葉lのh段上の祖先か、その兄弟である。どちらの祖先も、葉lの祖先のうちh段より上のものである。
+    // 右端の側のノードの祖先は、要素の区間に対応しないノードなので、作用を持たない。
+    // 見つからなければkは0とする。
+    let (k, height, acc, a) = loop((l, r, 0, Monoid::unit), |(lh, rh, h, acc)|
+        if lh >= rh { break $ (0, h, acc, Monoid::unit) };
+        if lh % 2 == 1 {
+            let a = pending.@(h);
+            let next = Monoid::op(acc, act(a, elems.@(lh)));
+            if !f(next) { break $ (lh, h, acc, a) };
+            continue $ ((lh + 1).shift_right(1), rh.shift_right(1), h + 1, next)
+        };
+        continue $ ((lh + 1).shift_right(1), rh.shift_right(1), h + 1, acc)
+    );
+    let (k, acc) = if k != 0 { (k, acc) } else {
+        loop((height - 1, acc), |(h, acc)|
+            if h < 0 { break $ (0, acc) };
+            let rh = r.shift_right(h);
+            if rh % 2 == 0 { continue $ (h - 1, acc) };
+            let next = Monoid::op(acc, elems.@(rh - 1));
+            if !f(next) { break $ (rh - 1, acc) };
+            continue $ (h - 1, next)
+        )
+    };
+    if k == 0 { n };
+    // kから葉へ降りる。左の子までの畳み込みがfを満たせば右の子へ、満たさなければ左の子へ進む。
+    // aは、降りた先のノードの祖先がまだ伝搬していない作用の合成である。
+    loop((k, acc, a), |(k, acc, a)|
+        if k >= n { break $ k - n };
+        let a = Monoid::op(lazy.@(k), a);
+        let next = Monoid::op(acc, act(a, elems.@(k * 2)));
+        if f(next) { continue $ (k * 2 + 1, next, a) } else { continue $ (k * 2, acc, a) }
+    )
+);
+
+// `f(fold(l, r))`が真になる最小の`l`を、木の上の二分探索で求める
+//
+// 制約：0 <= r <= n、`f(unit)`が真、`f`は単調（区間を左に伸ばして偽になったら、さらに伸ばしても真にならない）
+//
+// 計算量：O(log n)。`f`の呼び出しもO(log n)回。
+//
+// # Parameters
+// - `r` : 区間の右端 (0-indexed, exclusive)
+// - `f` : 区間の畳み込みについての条件
+// - `tree` : セグメント木
+//
+// # Examples
+// ```fix
+// # module DocTest;
+// # import CPLib.LSegtree;
+// # import CPLib.Trait;
+// # type I64Max = struct { v : I64 };
+// # namespace I64Max {
+// #     make : I64 -> I64Max = |v| I64Max { v };
+// # }
+// # impl I64Max : Monoid {
+// #     unit = make(minimum);
+// #     op = |lhs, rhs| make $ lhs.@v.max(rhs.@v);
+// # }
+// # type I64Add = struct { v : I64 };
+// # namespace I64Add {
+// #     make : I64 -> I64Add = |v| I64Add { v };
+// # }
+// # impl I64Add : Monoid {
+// #     unit = make(0);
+// #     op = |lhs, rhs| make $ lhs.@v + rhs.@v;
+// # }
+// # impl I64Add : Action {
+// #     type Set I64Add = I64Max;
+// #     act = |a, x| make(x.@v + a.@v);
+// # }
+// # main : IO () = (
+// // `I64Max`は最大値モノイド、`I64Add`はそれに加算で作用する加法モノイド（定義はモジュールの使用例と同じ）
+// let tree = build([1, 2, 5, 4].map(make)) : LSegtree I64Max I64Add;
+// let tree = tree.act_range(0, 2, make(2)); // [3, 4, 5, 4]
+// // 区間[3, 4)の最大値は4、区間[2, 4)の最大値は5
+// assert_eq(|_|"", tree.calc_min_left(4, |x| x.@v <= 4), 3)
+// # );
+// ```
+calc_min_left : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> (m -> Bool) -> LSegtree m a -> I64;
+calc_min_left = |r, f, tree| (
+    if !(0 <= r && r <= tree.@_n) { undefined("[CPLib.LSegtree::calc_min_left] `r` is out of [0, n]") };
+    let n = tree.@_n;
+    if r == 0 { 0 };
+    let l = n;
+    let r = r + n;
+    let elems = tree.@_elems;
+    let lazy = tree.@_lazy;
+    let pending = tree._pending_above(r - 1);
+
+    // `fold(0, r)`が畳み込むノードを右から順に試し、`f`が偽になる最初のノードkと、kより右のノードの畳み込みacc、
+    // kの祖先がまだ伝搬していない作用の合成aを求める。
+    // 段hで`fold`が畳み込むノードは、lh = ceil(l / 2^h)、rh = floor(r / 2^h)として、lh < rhの段のうち、
+    // 左端の側ではlh（lhが奇数のとき）、右端の側ではrh - 1（rhが奇数のとき）である。
+    // これらを右から順に並べると、右端の側のノードが低い段から、続いて左端の側のノードが高い段から並ぶ。
+    // 右端の側のノードrh - 1は、葉r - 1のh段上の祖先か、その兄弟である。どちらの祖先も、葉r - 1の祖先のうちh段より上のものである。
+    // 左端の側のノードの祖先は、要素の区間に対応しないノードなので、作用を持たない。
+    // 見つからなければkは0とする。
+    let (k, height, acc, a) = loop((l, r, 0, Monoid::unit), |(lh, rh, h, acc)|
+        if lh >= rh { break $ (0, h, acc, Monoid::unit) };
+        if rh % 2 == 1 {
+            let a = pending.@(h);
+            let next = Monoid::op(act(a, elems.@(rh - 1)), acc);
+            if !f(next) { break $ (rh - 1, h, acc, a) };
+            continue $ ((lh + 1).shift_right(1), rh.shift_right(1), h + 1, next)
+        };
+        continue $ ((lh + 1).shift_right(1), rh.shift_right(1), h + 1, acc)
+    );
+    let (k, acc) = if k != 0 { (k, acc) } else {
+        loop((height - 1, acc), |(h, acc)|
+            if h < 0 { break $ (0, acc) };
+            let lh = (l + 1.shift_left(h) - 1).shift_right(h);
+            if lh % 2 == 0 { continue $ (h - 1, acc) };
+            let next = Monoid::op(elems.@(lh), acc);
+            if !f(next) { break $ (lh, acc) };
+            continue $ (h - 1, next)
+        )
+    };
+    if k == 0 { 0 };
+    // kから葉へ降りる。右の子からの畳み込みがfを満たせば左の子へ、満たさなければ右の子へ進む。
+    // aは、降りた先のノードの祖先がまだ伝搬していない作用の合成である。
+    loop((k, acc, a), |(k, acc, a)|
+        if k >= n { break $ k + 1 - n };
+        let a = Monoid::op(lazy.@(k), a);
+        let next = Monoid::op(act(a, elems.@(k * 2 + 1)), acc);
+        if f(next) { continue $ (k * 2, next, a) } else { continue $ (k * 2 + 1, acc, a) }
+    )
 );

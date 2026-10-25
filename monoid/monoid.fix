@@ -1,0 +1,237 @@
+// セグメント木でよく使うモノイドと作用を提供するモジュール。
+//
+// `CPLib.Segtree`と`CPLib.LSegtree`は、モノイドの型（`Monoid`トレイトを実装した型）と作用の型（`Action`トレイトを実装した型）を要求します。
+// 自作の型に`Monoid`トレイトや`Action`トレイトを実装して使うこともできます（書き方の例は`CPLib.Segtree`と`CPLib.LSegtree`のモジュールの説明にあります）。
+// このモジュールは、競技プログラミングでよく使うモノイドと作用の型を用意し、`Monoid`トレイトと`Action`トレイトを実装しています。
+//
+// モノイドは`Sum e`、`Product e`、`Min e`、`Max e`、`WeightedSum e`です。
+// `e`は`I64`や`F64`などの要素の型で、それぞれのモノイドが必要とする演算のトレイト（`Add`、`Mul`、`LessThan`など）と単位元のトレイト（`Zero`、`One`、`Inf`、`NegInf`など）を実装している必要があります。
+// モノイドの値はフィールド`v`に入れます（`WeightedSum`は`v`と`w`の2つ）。
+// たとえば`Max I64`の値は`Max { v : 3 }`で作り、`x.@v`で取り出します。
+//
+// `WeightedSum e`は`e`型の値2つ（フィールド`v`と`w`）の組で、`op((v1, w1), (v2, w2)) = (v1 + v2, w1 + w2)`と定義されています。
+// 典型的には、`LSegtree`で和のモノイドを扱うときに使います。
+// このとき`w`はノードが受け持つ区間の長さ（葉では1）を表し、区間への作用を計算するのに使われます。
+//
+// 作用は`RangeAdd m e`、`RangeMul m e`、`RangeAssign m e`、`RangeAffine m e`です。
+// `m`は作用を受けるモノイドの型コンストラクタ（`Max e`ではなく`Max`）で、`e`はモノイドの要素の型です。
+//
+// 利用できるモノイドと作用の組み合わせと、作用の内容は次のとおりです。
+//
+// | 作用 | `Sum { v }` | `Min / Max { v }` | `WeightedSum { v, w }` |
+// | --- | --- | --- | --- |
+// | `RangeAdd { a }` | なし | `v + a` | `(v + w a, w)` |
+// | `RangeMul { a }` | `a v` | `a v`（`a >= 0`） | `(a v, w)` |
+// | `RangeAssign { a }` | なし | `a` | `(w a, w)` |
+// | `RangeAffine { a, b }` | なし | `a v + b`（`a >= 0`） | `(a v + b w, w)` |
+//
+// 表のセルは、作用を受けた後の値です（`WeightedSum`は`(v, w)`の組）。
+// `RangeAssign`のフィールド`a`は`Option e`で、`some(c)`なら`c`を代入し、`none()`なら何もしません。
+//
+// モノイドや作用の計算には、オーバーフローを防ぐ仕組みはありません。
+// 特に、`Min` / `Max`を使うセグメント木を`create`で作ると、すべての要素が`inf`（`Max`では`neg_inf`）で初期化されます。この状態では、作用によって整数はオーバーフローしやすく、浮動小数は0を掛けるとNaNになることに注意してください。
+//
+// これらのモノイドや作用でセグメント木を作るときは、次のように型注釈でモノイドと作用を指定します。
+//
+// ```fix
+// # module DocTest;
+// import CPLib.LSegtree;
+// import CPLib.Monoid;
+// import CPLib.Segtree;
+// # main : IO () = (
+// let segtree = Segtree::build([1, 2, 3].map(|v| Max { v })) : Segtree (Max I64);
+// let lsegtree = LSegtree::build([1, 2, 3].map(|v| Max { v })) : LSegtree (Max I64) (RangeAdd Max I64);
+// let lsegtree = lsegtree.act_range(0, 2, RangeAdd { a : 10 }); // [11, 12, 3]
+// assert_eq(|_|"", lsegtree.fold(1, 3).@v, 12);;
+// assert_eq(|_|"", segtree.fold(0, 2).@v, 2)
+// # );
+// ```
+module CPLib.Monoid;
+
+import CPLib.Trait::{Action, Inf, Monoid, NegInf, Action::{act, Set}, Inf::inf, Monoid::{op, unit}, NegInf::neg_inf};
+import Std::{
+    Add, LessThan, Mul, One, Option, Zero, LessThan::{max, min}, One::one, Option::{is_some, none, some},
+    Zero::zero
+};
+
+// 和のモノイド
+//
+// `LSegtree`で区間に加算・代入・アフィン変換を作用させる和には`WeightedSum`を使います（区間乗算は`Sum`にも作用します）。
+type Sum e = struct { v : e };
+
+impl [e : Zero, e : Add] Sum e : Monoid {
+    unit = Sum { v : zero };
+    op = |x, y| Sum { v : x.@v + y.@v };
+}
+
+// 積のモノイド
+type Product e = struct { v : e };
+
+impl [e : One, e : Mul] Product e : Monoid {
+    unit = Product { v : one };
+    op = |x, y| Product { v : x.@v * y.@v };
+}
+
+// 最小値のモノイド
+//
+// 単位元は`inf`です。
+type Min e = struct { v : e };
+
+impl [e : LessThan, e : Inf] Min e : Monoid {
+    unit = Min { v : inf };
+    op = |x, y| Min { v : min(x.@v, y.@v) };
+}
+
+// 最大値のモノイド
+//
+// 単位元は`neg_inf`です。
+type Max e = struct { v : e };
+
+impl [e : LessThan, e : NegInf] Max e : Monoid {
+    unit = Max { v : neg_inf };
+    op = |x, y| Max { v : max(x.@v, y.@v) };
+}
+
+// 重みつきの和のモノイド
+//
+// 葉を`make_single`で作ると`w`は1になり、ノードの`w`はそのノードが受け持つ区間の長さになります。
+// 木は`make_single`で作った葉から`build`で作るか、`create`の後に`set`で葉を入れてください。`create`の要素は`w`が0で、作用を受けても変わりません。
+type WeightedSum e = struct {
+    // 値と重みの積の和
+    v : e,
+    // 重みの和
+    w : e
+};
+
+namespace WeightedSum {
+    // 重みが1の値を作る
+    //
+    // # Parameters
+    // - `v` : 要素の値
+    make_single : [e : One] e -> WeightedSum e;
+    make_single = |v| WeightedSum { v, w : one };
+}
+
+impl [e : Zero, e : Add] WeightedSum e : Monoid {
+    unit = WeightedSum { v : zero, w : zero };
+    op = |x, y| WeightedSum { v : x.@v + y.@v, w : x.@w + y.@w };
+}
+
+// 区間加算の作用
+//
+// 型引数`m`は作用を受けるモノイドの型コンストラクタ（`Min`、`Max`、`WeightedSum`）、型引数`e`は要素の型です。
+type [m : * -> *] RangeAdd m e = struct { a : e };
+
+impl [m : * -> *, e : Zero, e : Add] RangeAdd m e : Monoid {
+    unit = RangeAdd { a : zero };
+    op = |x, y| RangeAdd { a : x.@a + y.@a };
+}
+
+impl [e : Add] RangeAdd Min e : Action {
+    type Set (RangeAdd Min e) = Min e;
+    act = |t, x| Min { v : x.@v + t.@a };
+}
+
+impl [e : Add] RangeAdd Max e : Action {
+    type Set (RangeAdd Max e) = Max e;
+    act = |t, x| Max { v : x.@v + t.@a };
+}
+
+impl [e : Add, e : Mul] RangeAdd WeightedSum e : Action {
+    type Set (RangeAdd WeightedSum e) = WeightedSum e;
+    act = |t, x| WeightedSum { v : x.@v + t.@a * x.@w, w : x.@w };
+}
+
+// 区間乗算の作用
+//
+// 型引数`m`は作用を受けるモノイドの型コンストラクタ（`Sum`、`Min`、`Max`、`WeightedSum`）、型引数`e`は要素の型です。
+//
+// `Min` / `Max`に作用させるときは、フィールド`a`を0以上にしてください。負だと作用の定義を満たしません。
+type [m : * -> *] RangeMul m e = struct { a : e };
+
+impl [m : * -> *, e : One, e : Mul] RangeMul m e : Monoid {
+    unit = RangeMul { a : one };
+    op = |x, y| RangeMul { a : x.@a * y.@a };
+}
+
+impl [e : Mul] RangeMul Sum e : Action {
+    type Set (RangeMul Sum e) = Sum e;
+    act = |t, x| Sum { v : t.@a * x.@v };
+}
+
+impl [e : Mul] RangeMul Min e : Action {
+    type Set (RangeMul Min e) = Min e;
+    act = |t, x| Min { v : t.@a * x.@v };
+}
+
+impl [e : Mul] RangeMul Max e : Action {
+    type Set (RangeMul Max e) = Max e;
+    act = |t, x| Max { v : t.@a * x.@v };
+}
+
+impl [e : Mul] RangeMul WeightedSum e : Action {
+    type Set (RangeMul WeightedSum e) = WeightedSum e;
+    act = |t, x| WeightedSum { v : t.@a * x.@v, w : x.@w };
+}
+
+// 区間代入の作用
+//
+// 型引数`m`は作用を受けるモノイドの型コンストラクタ（`Min`、`Max`、`WeightedSum`）、型引数`e`は要素の型です。
+// フィールド`a`が`some(c)`のときは`c`を代入し、`none()`のときは何もしません。`RangeAssign::make(c)`は`RangeAssign { a : some(c) }`を作ります。
+type [m : * -> *] RangeAssign m e = struct { a : Option e };
+
+namespace RangeAssign {
+    // 値`c`を代入する作用を作る
+    //
+    // # Parameters
+    // - `c` : 代入する値
+    make : [m : * -> *] e -> RangeAssign m e;
+    make = |c| RangeAssign { a : some(c) };
+}
+
+impl [m : * -> *] RangeAssign m e : Monoid {
+    unit = RangeAssign { a : none() };
+    op = |x, y| if y.@a.is_some { y } else { x };
+}
+
+impl RangeAssign Min e : Action {
+    type Set (RangeAssign Min e) = Min e;
+    act = |t, x| match t.@a { some(v) => Min { v }, none(_) => x };
+}
+
+impl RangeAssign Max e : Action {
+    type Set (RangeAssign Max e) = Max e;
+    act = |t, x| match t.@a { some(v) => Max { v }, none(_) => x };
+}
+
+impl [e : Mul] RangeAssign WeightedSum e : Action {
+    type Set (RangeAssign WeightedSum e) = WeightedSum e;
+    act = |t, x| match t.@a { some(v) => WeightedSum { v : v * x.@w, w : x.@w }, none(_) => x };
+}
+
+// アフィン変換`x -> a * x + b`の作用
+//
+// 型引数`m`は作用を受けるモノイドの型コンストラクタ（`Min`、`Max`、`WeightedSum`）、型引数`e`は要素の型です。
+//
+// `Min` / `Max`に作用させるときは、フィールド`a`を0以上にしてください。負だと作用の定義を満たしません。
+type [m : * -> *] RangeAffine m e = struct { a : e, b : e };
+
+impl [m : * -> *, e : Zero, e : One, e : Add, e : Mul] RangeAffine m e : Monoid {
+    unit = RangeAffine { a : one, b : zero };
+    op = |x, y| RangeAffine { a : x.@a * y.@a, b : x.@b * y.@a + y.@b };
+}
+
+impl [e : Add, e : Mul] RangeAffine Min e : Action {
+    type Set (RangeAffine Min e) = Min e;
+    act = |t, x| Min { v : t.@a * x.@v + t.@b };
+}
+
+impl [e : Add, e : Mul] RangeAffine Max e : Action {
+    type Set (RangeAffine Max e) = Max e;
+    act = |t, x| Max { v : t.@a * x.@v + t.@b };
+}
+
+impl [e : Add, e : Mul] RangeAffine WeightedSum e : Action {
+    type Set (RangeAffine WeightedSum e) = WeightedSum e;
+    act = |t, x| WeightedSum { v : t.@a * x.@v + t.@b * x.@w, w : x.@w };
+}
