@@ -5,12 +5,16 @@ import Std::{
     loop, undefined, Add, Array, Bool, Div, Eq, I128, I64, LessThan, LessThanOrEq, Mul, Multiplicative, 
     Neg, One, Option, Sub, ToString, U128, U32, U64, U8, Zero, Add::add, 
     Array::{@, @size, empty, fill, push_back, set, to_iter}, Debug::debug_printfln, I128::abs, 
-    I64::{abs, bit_and, shift_right}, Indexable::{iget, imod}, 
-    Iterator::{check_all, filter_map, fold, get_first, loop_iter, loop_iter_s, range, range_step}, 
+    I64::{abs, bit_and, count_leading_zeros, shift_right}, I8::count_leading_zeros, 
+    Indexable::{iget, imod}, 
+    Iterator::{
+        check_all, count_up, filter, filter_map, flat_map, flatten, fold, get_first, loop_iter, loop_iter_s, 
+        map, range, range_step, take_while, to_array
+    }, 
     LoopState::{break, continue, is_break, is_continue}, One::one, 
-    Option::{as_some, is_none, is_some, none, some}, ToI128::i128, ToI64::i64, ToString::to_string, 
-    ToU128::u128, ToU32::u32, ToU64::u64, ToU8::u8, Tuple2::{act_0, act_1}, U128::shift_right, 
-    U64::{bit_and, count_leading_zeros, shift_left, shift_right}, Zero::zero
+    Option::{as_some, is_none, is_some, none, some}, String::format, ToI128::i128, ToI64::i64, 
+    ToString::to_string, ToU128::u128, ToU32::u32, ToU64::u64, ToU8::u8, Tuple2::{act_0, act_1}, 
+    U128::shift_right, U64::{bit_and, count_leading_zeros, shift_left, shift_right}, Zero::zero
 };
 
 // `x`を`m`で割った余りを非負で返す
@@ -856,7 +860,13 @@ DEPRECATED[pythagorean_triples, "Use `CPLib.Arithmetic::calc_pythagorean_triples
 
 // TODO: trait.fixとかにおく
 // TODO: どういう名前にするべきか。Divの要件について書く。
-trait Integer = Add + Zero + Mul + One + Sub + Neg + Div + Eq + LessThan + LessThanOrEq;
+trait Integer = Add + Zero + Mul + One + Sub + Neg + Div + Eq + LessThan + LessThanOrEq + FromI64;
+trait a : FromI64 {
+    from_i64 : I64 -> a;
+}
+impl I64 : FromI64 {
+    from_i64 = |x|x;
+}
 
 // PQaアルゴリズムの1ステップ
 // 
@@ -867,9 +877,9 @@ trait Integer = Add + Zero + Mul + One + Sub + Neg + Div + Eq + LessThan + LessT
 // - `d` : 平方数でない正の自然数
 // - `s` : w = root(d) の整数部分
 // - `pq`: `(p, q)`。 q != 0, q | (d - p^2)
-_pqa_step : [a : Integer] a -> a -> (a, a) -> (a, (a, a)) = |d, s, (p, q)| (
+_pqa_step : I64 -> I64 -> (I64, I64) -> (I64, (I64, I64)) = |d, s, (p, q)| (
     // flooor(x / y) を計算する。y > 0 を仮定
-    let floor_div : a -> a -> a = |x, y| (
+    let floor_div : I64 -> I64 -> I64 = |x, y| (
         if x >= zero { x / y } else { (x - y + one) / y } 
     );
     let a = if q > zero { floor_div(p + s, q) } else { floor_div(-(p + s + one), -q) };
@@ -884,7 +894,8 @@ _pqa_step : [a : Integer] a -> a -> (a, a) -> (a, (a, a)) = |d, s, (p, q)| (
 // 
 // # Parameters
 // - `g` : 行列
-_pqa_step_g : [a : Integer] (a, a, a, a) -> a -> (a, a, a, a) = |g, a| (
+_pqa_step_g : [a : Integer] (a, a, a, a) -> I64 -> (a, a, a, a) = |g, a| (
+    let a = a.from_i64;
     let (i, j, k, l) = g; 
     (a * i + j, i, a * k + l, k)
 );
@@ -894,8 +905,8 @@ _pqa_step_g : [a : Integer] (a, a, a, a) -> a -> (a, a, a, a) = |g, a| (
 // # Parameters
 // - `s` : w = root(d) の整数部分
 // - `pq`: `(p, q)`。 q != 0
-_pqa_reduced : [a : Integer] a -> (a, a) -> Bool = |s, (p, q)| (
-    zero < q && zero < p && p <= s && s - p < q && q <= s + p
+_pqa_reduced : I64 -> (I64, I64) -> Bool = |s, (p, q)| (
+    0 < q && 0 < p && p <= s && s - p < q && q <= s + p
 );
 
 // PQaアルゴリズム
@@ -912,14 +923,14 @@ _pqa_reduced : [a : Integer] a -> (a, a) -> Bool = |s, (p, q)| (
 // - `d` : 平方数でない正の整数
 // - `s` : w = root(s) の整数部分
 // - `pq`: `(p, q)`。 q != 0, q | (d - p^2)
-_pqa : [a : Integer] a -> a -> (a, a) -> Option ((a, a), (a, a, a, a)) = |d, s, t| (
+_pqa : [a : Integer] I64 -> I64 -> (I64, I64) -> Option ((I64, I64), (a, a, a, a)) = |d, s, t| (
     let g = (one, zero, zero, one);
     // red は最初に得られた簡約な t。
     // 簡約な2次無理数を連分数展開するといずれ自身に戻ってくるので、
     // t が red に戻ってきたら、展開が巡回し始めたとわかる。
     loop((t, g, none()), |(t, g, red)|
         let (p, q) = t;
-        if q == one || q == -one { (t, g).some.break };        
+        if q.abs == 1 { (t, g).some.break };        
         if red.is_some && red.as_some == t { // 以前訪れた簡約な t に戻ったら
             none().break
         };
@@ -938,24 +949,25 @@ _pqa : [a : Integer] a -> a -> (a, a) -> Option ((a, a), (a, a, a, a)) = |d, s, 
 // 
 // # Returns
 // ある基本単数 a + bw に対する (a, b)
-_pqa_fundamental_unit : [a : Integer, a : ToString] a -> a -> (a, a) = |d, s| (
+_pqa_fundamental_unit : [a : Integer] I64 -> I64 -> (a, a) = |d, s| (
     // t = s + w は簡約で、q = 1 を満たす。よって t の連分数展開は必ず t に戻る。
     // 初めて |q| = 1 となる u = (p + w) / q で終わったとき、t = gu となる g から L(t) = r L(u) <=> Z[w] = r Z[w] となり、r は単数である。
     // さらに、定理より、Z[w] = r Z[w] となるような r はすべて t = s + w の連分数展開から作られるので、
     // 「初めて|q| = 1 となる」のところで止まれば、基本単数が得られる。
     
     // `_pqa` は、はじめから |q| = 1 のとき何もしないこと、ここでは必要のない簡約性のチェックが入っていることから、使わない。
-    let t = (s, one);
+    let t = (s, 1);
     let g = (one, zero, zero, one);
     let g = loop((t, g), |(t, g)|
         let (a, t) = _pqa_step(d, s, t);
         let g = _pqa_step_g(g, a);
         let (p, q) = t;        
-        if q == one || q == -one { g.break }; // |q| = 1 の脱出は step のあと
+        if q.abs == 1 { g.break }; // |q| = 1 の脱出は step のあと
         (t, g).continue
     );
     // 基本単数は kt + l
     let (i, j, k, l) = g;
+    let s = s.from_i64;
     (k*s+l, k)
 );
 
@@ -963,14 +975,74 @@ _pqa_fundamental_unit : [a : Integer, a : ToString] a -> a -> (a, a) = |d, s| (
 // 
 // # Parameters
 // - `d` : 正の整数
-_floor_root : [a : Integer] a -> a = |d| (
-    // TODO: あとでニュートン法にする
-    let lo = one; // lo*lo <= d
-    let hi = d; // hi*hi > d
-    loop((lo, hi), |(lo, hi)|
-        if hi - lo == one { lo.break };
-        let mid = lo + (hi - lo) / (one + one); // IntegerにI64からの埋め込みを加えるべき
-        if mid*mid <= d { let lo = mid; (lo, hi).continue };
-        let hi = mid; (lo, hi).continue
-    )
+// _floor_root : [a : Integer] a -> a = |d| (
+//     // TODO: あとでニュートン法にする
+//     let lo = one; // lo*lo <= d
+//     let hi = d; // hi*hi > d
+//     loop((lo, hi), |(lo, hi)|
+//         if hi - lo == one { lo.break };
+//         let mid = lo + (hi - lo) / (one + one); // TODO: IntegerにI64からの埋め込みを加えるべき
+//         if mid*mid <= d { let lo = mid; (lo, hi).continue };
+//         let hi = mid; (lo, hi).continue
+//     )
+// );
+
+// `d` が 正であること、平方数でないことをチェックし、floor(root(d)) を返す
+_check_pell_d : I64 -> I64 = |d| (
+    if d <= zero { undefined("[CPLib.Arithmetic, pell equation solver] d is not positive!") };
+    let s = d.u64.isqrt.i64;
+    if s * s == d { undefined("[CPLib.Arithmetic, pell equation solver] d is square!") };
+    s
+);
+
+// ペル方程式 x^2 - d y^2 = ±1 の基本解を求める
+// 
+// 戻り値を e とするとき、解の全体は、±e^n (n は整数) である。
+// （ここで、解を実数 x + y root(d) と同一視している。）
+// 
+// # Parameters
+// - `d` : d > 1, dは平方数でない
+// 
+// # Returns
+// - `(x, y)` : x > 0, y > 0, x + y root(d) は ペル方程式 x^2 - d y^2 = ±1 の基本解。
+calc_pell_fundamental_solution : [a : Integer] I64 -> I64 -> (a, a) = |d, m| (
+    let s = _check_pell_d(d);
+    let (x, y) = _pqa_fundamental_unit(d, s);
+    let x = if x < zero { -x } else { x };
+    let y = if y < zero { -y } else { y };
+    (x, y)
+);
+
+// 一般化ペル方程式 x^2 - d y^2 = ±m の代表解のリストを求める
+// 
+// ペル方程式 x^2 - d y^2 = ±1 の基本解を e とする。
+// 一般化ペル方程式 x^2 - d y^2 = ±m の解は、その代表解 r(i) から、
+// ± r(i) e^n によって得られる。
+// 
+// # Parameters
+// - `d` : d > 1, dは平方数でない
+// - `m` : m != 0
+calc_general_pell_representatives : [a : Integer] I64 -> I64 -> Array (a, a) = |d, m| (
+    if d <= zero { undefined("[CPLib.Arithmetic, pell equation solver] m is zero!") };
+    let s = _check_pell_d(d);
+    let m = m.abs;
+    // x, y が互いに素なケースに帰着する：e | x,y なら、(x/e)^2 - d (y/e)^2 = m / (e^2) なので、m / (e^2) ごとに解いて、x, y を e 倍する
+    count_up(1).take_while(|e| e*e <= m).filter(|e| m % (e*e) == 0).flat_map(|e|
+        let m = m / (e*e);
+        range(0, m).filter(|z| (z*z - d) % m == 0).filter_map(|z|
+            let t = (z, m);
+            match _pqa(d, s, t) {
+                none() => none(),
+                some((_u, (i, j, k, l))) => (
+                    // t = gu, u is integral
+                    let z = z.from_i64;
+                    let m = m.from_i64;
+                    let e = e.from_i64;
+                    let x = k*z - m*i;
+                    let y = k;
+                    (x*e, y*e).some
+                )
+            }
+        )
+    ).to_array
 );
