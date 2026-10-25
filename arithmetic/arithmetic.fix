@@ -598,3 +598,27 @@ pythagorean_triples : I64 -> Array (I64, I64, I64) = |c_max| (
         )
     )
 );
+
+// ===== 一般化ペル方程式 =====
+// 
+// 正の非平方数dに対し、w = root(d) とする。
+
+// TODO: trait.fixとかにおく
+// TODO: どういう名前にするべきか。
+trait Integer = Add + Zero + Mul + One + Sub + Neg + Div + Eq + LessThan + LessThanOrEq;
+
+// PQaアルゴリズムの1ステップ
+// 
+// t = (p + w) / q を整数演算だけで連分数展開する。
+// 整数部分 a と次の無理数 t1 に対応する (p, q) を返す。
+// 
+// # Parameters
+// - `d`
+// - `s` : wの整数部分
+// - `pq`: `(p, q)`。 q != 0, q | (d - p^2)
+_pqa_step : [a : Integer] a -> a -> (a, a) -> (a, (a, a)) = |d, s, (p, q)| (
+    let a = if q > zero { (p + s) / q } else { (p + s + one) / q };
+    let p = a * q - p;
+    let q = (d - p*p) / q;
+    (a, (p, q))
+);
