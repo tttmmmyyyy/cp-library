@@ -5,16 +5,21 @@ import CPLib.Arithmetic::{
     _calc_primitive_root, _inv_gcd, add_mod, calc_gcd, calc_lp_table, calc_prime_list, calc_prime_table, 
     calc_pythagorean_triples, calc_totient, calc_totient_table, ext_gcd, factorize, factorize_flat, 
     factorize_via_lp_table, floor_sum, inv_mod, is_prime, isqrt, iterate_general_pell_solutions, 
+    calc_general_pell_representatives, calc_pell_fundamental_solution, 
     lift_crt, mul_mod, pmod, pow_mod, pow_mod_u, power, sub_mod
 };
 import EZS::{cd, run_o, run_wi_oec, Context::default};
 import Random::{generate_I64_nonneg, generate_U64, init_by_seed};
 import Std::{
-    loop, Array, F64, I64, IO, U64, Array::{@, @size, sort, to_iter}, 
-    Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, I32::maximum, 
-    I64::{maximum, minimum, shift_left}, IO::println, 
-    Iterator::{collect_m, filter, fold, fold_m, map, range, take, to_array}, LessThan::max, 
-    LoopState::{break, continue}, Monad::pure, Option::is_some, String::{find, populate}, ToI64::i64, 
+    loop, Array, Bool, F64, I64, IO, U64, Array::{@, @size, sort, to_iter}, 
+    Array::{find_by, get_sub}, Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, 
+    I32::maximum, I64::{abs, maximum, minimum, shift_left}, IO::println, 
+    Iterator::{
+        check_all, check_any, collect_m, count_up, filter, filter_map, flat_map, fold, fold_m, get_first, map, 
+        range, take, to_array
+    }, 
+    LessThan::max, LoopState::{break, continue}, Monad::pure, Option::{as_some, is_some, none, some}, 
+    String::{find, format, populate}, ToI64::i64, 
     ToString::to_string, ToU128::u128, ToU64::u64, U64::{maximum, shift_left, shift_right}
 };
 
@@ -647,23 +652,92 @@ test_out_of_range = (
 );
 
 test_pell : IO () = (
-    // let d = 15; let s = isqrt(d.u64).i64;
-    // let (x, y) = _pqa_fundamental_unit(d, s);
-    // "fundamental unit = {} + {} root({})".eprintfln((x, y, d));;
+    test_pell_fundamental_solution;;
+    test_pell_representatives;;
+    test_pell_solutions;;
+    pure()
+);
 
-    (iterate_general_pell_solutions(2, 4).take(10).to_array : Array (I64, I64)).to_string.println;;
+// `x^2 - d y^2`
+_pell_norm : I64 -> (I64, I64) -> I64 = |d, (x, y)| x * x - d * y * y;
 
-    // let t = (1, 1);
-    // let g = (1, 0, 0, 1)
-    // let res = _pqa_step(3, 1, t);
-    // "res = {}".eprintfln((res,));;
-    // let (a, t) = res;
-    // let g = _pqa_step_g(g, a);
-    // "g = {}".eprintfln((g,));;
-    // let res = _pqa_step(3, 1, t);
-    // "res = {}".eprintfln((res,));;
-    // let (a, t) = res;
-    // let g = _pqa_step_g(g, a);
-    // "g = {}".eprintfln((g,));;    
+// `[2, n)` に含まれる平方数でない整数
+_non_square_ds : I64 -> Array I64 = |n| (
+    range(2, n).filter(|d| let s = isqrt(d.u64).i64; s * s != d).to_array
+);
+
+// `x + y root(d)` と `u + v root(d)` の比が単数かどうか
+_pell_same_class : I64 -> (I64, I64) -> (I64, I64) -> Bool = |d, (x, y), (u, v)| (
+    // (x + y root(d)) / (u + v root(d)) = (x + y root(d)) (u - v root(d)) / N(u + v root(d))
+    let n = _pell_norm(d, (u, v));
+    let p = x * u - d * y * v;
+    let q = y * u - x * v;
+    if p % n != 0 || q % n != 0 { false };
+    _pell_norm(d, (p / n, q / n)).abs == 1
+);
+
+// `|x^2 - d y^2| = m` を満たす非負の整数解のうち、`y <= y_max` のもの
+_pell_brute_solutions : I64 -> I64 -> I64 -> Array (I64, I64) = |d, m, y_max| (
+    range(0, y_max + 1).flat_map(|y|
+        [d * y * y + m, d * y * y - m].to_iter.filter_map(|t|
+            if t < 0 { none() };
+            let x = isqrt(t.u64).i64;
+            if x * x != t { none() };
+            (x, y).some
+        )
+    ).to_array
+);
+
+// 基本解を、`|x^2 - d y^2| = 1` を満たす最小の `y >= 1` を総当たりで探したものと比べる
+test_pell_fundamental_solution : IO () = (
+    _non_square_ds(101).to_iter.fold_m((), |d, _|
+        let actual : (I64, I64) = calc_pell_fundamental_solution(d);
+        let expected = count_up(1).filter_map(|y|
+            [d * y * y + 1, d * y * y - 1].to_iter.filter_map(|t|
+                let x = isqrt(t.u64).i64;
+                if x * x != t { none() };
+                (x, y).some
+            ).get_first
+        ).get_first.as_some;
+        assert_eq(|_|"calc_pell_fundamental_solution d={}".format((d,)), actual, expected)
+    )
+);
+
+// 代表解が、解であること、互いに単数倍で移り合わないこと、総当たりで見つけた解をすべて単数倍で表せることを確かめる
+test_pell_representatives : IO () = (
+    _non_square_ds(41).to_iter.fold_m((), |d, _|
+        range(1, 61).fold_m((), |m, _|
+            let reps : Array (I64, I64) = calc_general_pell_representatives(d, m);
+            let n = reps.@size;
+            let msg = |what| "calc_general_pell_representatives d={} m={}: {}".format((d, m, what));
+            assert(|_|msg("norm"), reps.to_iter.check_all(|r| _pell_norm(d, r).abs == m));;
+            assert(|_|msg("distinct classes"), range(0, n).check_all(|i|
+                range(0, i).check_all(|j| !_pell_same_class(d, reps.@(i), reps.@(j)))
+            ));;
+            assert(|_|msg("coverage"), _pell_brute_solutions(d, m, 200).to_iter.check_all(|(x, y)|
+                [(x, y), (x, -y)].to_iter.check_all(|b| reps.to_iter.check_any(|r| _pell_same_class(d, b, r)))
+            ))
+        )
+    )
+);
+
+// 総当たりで見つけた小さい解がすべて出るまでの出力が、重複のない非負の解であることを確かめる
+test_pell_solutions : IO () = (
+    _non_square_ds(31).to_iter.fold_m((), |d, _|
+        range(1, 41).fold_m((), |m, _|
+            let msg = |what| "iterate_general_pell_solutions d={} m={}: {}".format((d, m, what));
+            let brute = _pell_brute_solutions(d, m, 50);
+            // 解が大きくなると I64 があふれるので、小さい解が出そろうまでの出力だけを確かめる
+            let sols : Array (I64, I64) = iterate_general_pell_solutions(d, m).take(64).to_array;
+            let idxs = brute.to_iter.map(|b| sols.find_by(|s| s == b)).to_array;
+            assert(|_|msg("coverage"), idxs.to_iter.check_all(is_some));;
+            let len = idxs.to_iter.fold(0, |i, len| max(i.as_some + 1, len));
+            let prefix = sols.get_sub(0, len);
+            assert(|_|msg("valid"), prefix.to_iter.check_all(|(x, y)| x >= 0 && y >= 0 && _pell_norm(d, (x, y)).abs == m));;
+            assert(|_|msg("distinct"), range(0, len).check_all(|i| range(0, i).check_all(|j| prefix.@(i) != prefix.@(j))))
+        )
+    );;
+    assert_eq(|_|"iterate_general_pell_solutions no solution 1", (iterate_general_pell_solutions(2, 3).take(5).to_array : Array (I64, I64)), []);;
+    assert_eq(|_|"iterate_general_pell_solutions no solution 2", (iterate_general_pell_solutions(10, 3).take(5).to_array : Array (I64, I64)), []);;
     pure()
 );
