@@ -23,30 +23,30 @@ import Std::{
 
 test : IO ();
 test = (
-    // test_pmod;;
-    // test_mod_arithmetic;;
-    // test_isqrt;;
-    // test_gcd;;
-    // test_ext_gcd;;
-    // test_pow_mod;;
-    // test_power;;
-    // test_inv_mod;;
-    // test_prime_table;;
-    // test_prime_list;;
-    // test_linear_sieve;;
-    // test_factorize_via_lp_table;;
-    // test_factorize_flat;;
-    // test_factorize;;
-    // test_euler_tortient;;
-    // test_euler_tortient_table;;
-    // test_miller_rabin_u64;;
-    // test_miller_rabin_u32;;
-    // test_inv_gcd;;
-    // test_crt;;
-    // test_calc_primitive_root;;
-    // test_pythagorean_triples;;
-    // test_floor_sum;;
-    // test_out_of_range;;
+    test_pmod;;
+    test_mod_arithmetic;;
+    test_isqrt;;
+    test_gcd;;
+    test_ext_gcd;;
+    test_pow_mod;;
+    test_power;;
+    test_inv_mod;;
+    test_prime_table;;
+    test_prime_list;;
+    test_linear_sieve;;
+    test_factorize_via_lp_table;;
+    test_factorize_flat;;
+    test_factorize;;
+    test_euler_tortient;;
+    test_euler_tortient_table;;
+    test_miller_rabin_u64;;
+    test_miller_rabin_u32;;
+    test_inv_gcd;;
+    test_crt;;
+    test_calc_primitive_root;;
+    test_pythagorean_triples;;
+    test_floor_sum;;
+    test_out_of_range;;
     test_pell;;
 
     pure()
