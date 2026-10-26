@@ -5,7 +5,7 @@ import CPLib.ZP::{zp, P1000000007, P998244353, PrimeProvider, ZP};
 import Std::{
     Array, IO, Array::{@, @size, to_iter}, Debug::{assert_eq, consumed_time_while_lazy}, 
     I64::{maximum, minimum, shift_left}, IO::println, Iterator::{fold, fold_m, map, range, to_array}, 
-    Monad::pure, String::populate, ToString::to_string
+    Monad::pure, String::format, ToString::to_string
 };
 
 // https://atcoder.jp/contests/language-test-202505/submissions/68393185
@@ -73,7 +73,7 @@ test_zp = (
     let (z, time) = consumed_time_while_lazy(|_| convolve_zp(x, y));
     let ans_n1 = range(0, n).fold(zp(0), |i, acc| acc + x.@(i) * y.@(n-1-i));
     assert_eq(|_|"[test_zp] case 15", z.@(n-1), ans_n1);;
-    println $ "[CPLib.Convolution.Test] convolve_zp({}): {}".populate([n.to_string, time.to_string]);;
+    println $ "[CPLib.Convolution.Test] convolve_zp({}): {}".format((n, time));;
 
     pure()
 );

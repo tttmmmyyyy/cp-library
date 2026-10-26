@@ -5,7 +5,7 @@ import EZS::{cd, run_o, run_wi_oec, Context::default};
 import Random::{generate_I64_nonneg, init_by_seed, Random};
 import Std::{
     Array, I64, IO, Array::{fill, mod, push_back, set, sort_by, to_iter, @, @size}, Debug::{assert_eq, consumed_time_while_lazy}, 
-    Functor::map, IO::println, Iterator::{fold, fold_m, range}, Monad::pure, Option::is_some, String::{find, populate}, ToString::to_string, 
+    Functor::map, IO::println, Iterator::{fold, fold_m, range}, Monad::pure, Option::is_some, String::{find, format}, ToString::to_string, 
     Tuple2::@1
 };
 
@@ -142,7 +142,7 @@ test_speed = (
     )));
     let (uf, grps) = uf.get_groups;
     assert_eq(|_|"test_speed", grps.@size, 16102);;
-    println $ "[CPLib.UnionFind.Test] UnionFind({}): {}".populate([n.to_string, time.to_string]);;
+    println $ "[CPLib.UnionFind.Test] UnionFind({}): {}".format((n, time));;
 
     pure()
 );

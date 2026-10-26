@@ -6,7 +6,7 @@ import EZS::{cd, run_o, run_wi_oec, Context::default};
 import Random::{generate_I64_nonneg, init_by_seed};
 import Std::{
     Array, I64, IO, Array::{fill, push_back, set, sort_by, to_iter, @, @size}, Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, 
-    IO::println, Iterator::{fold, fold_m, map, range, to_array}, LessThan::min, Monad::pure, Option::is_some, String::{find, populate}, ToString::to_string
+    IO::println, Iterator::{fold, fold_m, map, range, to_array}, LessThan::min, Monad::pure, Option::is_some, String::{find, format}, ToString::to_string
 };
 
 test : IO ();
@@ -191,7 +191,7 @@ test_dijkstra_speed = (
     );
     let (dist, time) = consumed_time_while_lazy(|_| graph.build.dijkstra(0));
     assert_eq(|_|"test_dijkstra_speed", dist.@(1), 391);;
-    println $ "[CPLib.Graph.Test] dijkstra({}): {}".populate([n.to_string, time.to_string]);;
+    println $ "[CPLib.Graph.Test] dijkstra({}): {}".format((n, time));;
     pure()
 );
 
@@ -316,7 +316,7 @@ test_scc_speed = (
     // 強連結成分を計算
     let (sccs, time) = consumed_time_while_lazy(|_| graph.build.calc_sccs);
     assert_eq(|_|"test_scc_speed", sccs.@size, 99999);;
-    println("[CPLib.Graph.Test] calc_sccs({}): {}".populate([n.to_string, time.to_string]));;
+    println("[CPLib.Graph.Test] calc_sccs({}): {}".format((n, time)));;
     pure()
 );
 

@@ -7,7 +7,7 @@ import Std::{
     Array, I64,
     loop, IO, Array::{empty, fill, pop_back, push_back, sort_by, @, @size}, Debug::{assert, assert_eq, consumed_time_while_lazy}, 
     FromBytes::from_bytes, Functor::{forget, map}, IO::println, Iterator::{fold, fold_m, map, range, to_array}, LoopState::{break, continue}, 
-    Monad::pure, Option::is_some, Result::as_ok, String::{find, get_bytes, populate}, ToI32::i32, ToI64::i64, ToString::to_string, 
+    Monad::pure, Option::is_some, Result::as_ok, String::{find, get_bytes, format}, ToI32::i32, ToI64::i64, ToString::to_string, 
     ToU8::u8
 };
 
@@ -132,7 +132,7 @@ test_z_speed = (
     let s = fill(n, 0);
     let (z, time) = consumed_time_while_lazy(|_| s.calc_z_array_any);
     assert_eq(|_|"test_z_speed", z.@(n - 1), 1);;
-    println("[CPLib.String.Test] calc_z_array_any({}): {}".populate([n.to_string, time.to_string]))
+    println("[CPLib.String.Test] calc_z_array_any({}): {}".format((n, time)))
 );
 
 // 空の文字列と空の配列のLCP arrayは空

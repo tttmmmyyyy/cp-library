@@ -4,7 +4,7 @@ import CPLib.IO::{stof, stofa, stoi, stoia, stoui, stouia};
 import EZS::{cd, run_o, run_wi_o, run_wi_oec, Context::default};
 import Std::{
     F64, IO, U8, Debug::{assert, assert_eq}, IO::{eprintln, read_file_string, IOFail::to_result}, 
-    Monad::pure, Option::is_some, Result::{as_ok, is_ok}, String::{find, populate}
+    Monad::pure, Option::is_some, Result::{as_ok, is_ok}, String::{find, format}
 };
 
 test : IO ();
@@ -25,7 +25,7 @@ test_io : IO () = (
     let ezs = EZS::Context::default;
     let input_path = "io/io-test/input.txt";
     let input = *read_file_string(input_path).to_result;
-    assert(|_|"Failed to read \"{}\"".populate([input_path]), input.is_ok);;
+    assert(|_|"Failed to read \"{}\"".format((input_path,)), input.is_ok);;
     let input = input.as_ok;
     ezs.cd("io/io-test");;
     ezs.run_o(["fix", "deps", "update"]);;
