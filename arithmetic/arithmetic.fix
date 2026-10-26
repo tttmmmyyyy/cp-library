@@ -5,9 +5,9 @@ import Std::{
     loop, undefined, Add, Array, Bool, Div, Eq, I128, I64, Iterator, LessThan, LessThanOrEq, Mul, 
     Multiplicative, Neg, One, Option, Sub, U128, U32, U64, U8, Zero, Add::add, 
     Array::{@, @size, empty, fill, is_empty, push_back, set, to_iter}, I128::abs, 
-    I64::{abs, bit_and, shift_right}, Indexable::{iget, imod}, 
+    I64::{abs, bit_and, shift_left, shift_right}, Indexable::{iget, imod}, 
     Iterator::{
-        check_all, count_up, filter, filter_map, flat_map, flatten, fold, generate, get_first, loop_iter, 
+        check_all, count_up, filter, filter_map, flat_map, flatten, fold, generate, get_first, loop_iter, map, 
         loop_iter_s, push_front, range, range_step, take_while, to_array, to_dyn, Item
     }, 
     LoopState::{break, continue, is_break}, One::one, Option::{as_some, is_none, is_some, none, some}, 
@@ -908,7 +908,8 @@ _pqa_step : I64 -> I64 -> (I64, I64) -> (I64, (I64, I64)) = |d, s, (p, q)| (
     );
     let a = if q > zero { floor_div(p + s, q) } else { floor_div(-(p + s + one), -q) };
     let p = a * q - p;
-    let q = (d - p*p) / q;
+    // p は |m| 程度まで大きくなりうるので、p^2 は I128 で計算する。商は I64 に収まる。
+    let q = ((d.i128 - p.i128 * p.i128) / q.i128).i64;
     (a, (p, q))
 );
 
@@ -1035,6 +1036,124 @@ calc_pell_fundamental_solution : [a : Integer] I64 -> (a, a) = |d| (
     (x, y)
 );
 
+// 素数`p`を法とする`a`の平方根を1つ求める（Tonelli–Shanks法）
+//
+// 平方根がなければ`none()`を返す。
+//
+// 制約：`p`は素数
+//
+// 計算量：O(log(p)^2)（平方非剰余を探す部分は期待値）
+//
+// # Parameters
+// - `a`: 整数
+// - `p`: 法（素数）
+_calc_sqrt_mod_prime : I64 -> I64 -> Option I64 = |a, p| (
+    let a = a.pmod(p);
+    if a == 0 || p == 2 { a.some };
+    if a.pow_mod((p - 1) / 2, p) != 1 { none() };
+    if p % 4 == 3 { a.pow_mod((p + 1) / 4, p).some };
+    // p - 1 = q 2^s, q は奇数
+    let (q, s) = loop((p - 1, 0), |(q, s)|
+        if q % 2 != 0 { break $ (q, s) };
+        continue $ (q / 2, s + 1)
+    );
+    let z = count_up(2).filter(|z| z.pow_mod((p - 1) / 2, p) == p - 1).get_first.as_some;
+    // 不変条件：r^2 = a t (mod p)、c^(2^(m-1)) = -1、t^(2^(m-1)) = 1
+    loop((s, z.pow_mod(q, p), a.pow_mod(q, p), a.pow_mod((q + 1) / 2, p)), |(m, c, t, r)|
+        if t == 1 { break $ r.some };
+        // t^(2^i) = 1 となる最小の i（0 < i < m）
+        let i = loop((1, mul_mod(t, t, p)), |(i, t2)|
+            if t2 == 1 { break $ i };
+            continue $ (i + 1, mul_mod(t2, t2, p))
+        );
+        let b = range(0, m - i - 1).fold(c, |_, b| mul_mod(b, b, p));
+        let b2 = mul_mod(b, b, p);
+        continue $ (i, b2, mul_mod(t, b2, p), mul_mod(r, b, p))
+    )
+);
+
+// 素数`p`と互いに素な`u`について、`p^k`を法とする`u`の平方根をすべて求める
+//
+// 制約：`p`は素数、`u`と`p`は互いに素、`k >= 1`
+//
+// # Parameters
+// - `u`: 整数
+// - `p`: 素数
+// - `k`: 指数
+_calc_sqrts_mod_prime_power_unit : I64 -> I64 -> I64 -> Array I64 = |u, p, k| (
+    if p == 2 {
+        // 2^j を法とする平方根の集合を、j = 1 から順に 2^(j+1) を法とするものへ持ち上げる。集合の大きさは 4 以下。
+        range(1, k).fold([1], |j, rs|
+            let mj = 1.shift_left(j);
+            let mj1 = 2 * mj;
+            let u1 = u.pmod(mj1);
+            rs.to_iter.flat_map(|r| [r, r + mj].to_iter).filter(|c| mul_mod(c, c, mj1) == u1).to_array
+        )
+    };
+    match _calc_sqrt_mod_prime(u, p) {
+        none() => [],
+        some(r) => (
+            // Hensel の補題で p^j から p^(j+1) へ持ち上げる
+            let (r, pk) = range(1, k).fold((r, p), |_, (r, pj)|
+                let pj1 = pj * p;
+                let f = (mul_mod(r, r, pj1) - u).pmod(pj1);
+                let r = (r - mul_mod(f, mul_mod(2, r, pj1).inv_mod(pj1), pj1)).pmod(pj1);
+                (r, pj1)
+            );
+            [r, pk - r]
+        )
+    }
+);
+
+// 素数`p`について、`p^k`を法とする`a`の平方根をすべて求める
+//
+// 制約：`p`は素数、`k >= 1`
+//
+// # Parameters
+// - `a`: 整数
+// - `p`: 素数
+// - `k`: 指数
+_calc_sqrts_mod_prime_power : I64 -> I64 -> I64 -> Array I64 = |a, p, k| (
+    let pk = p.power(k);
+    let a = a.pmod(pk);
+    // a = 0 なら、z = 0 (mod p^ceil(k/2)) となる z がすべて平方根
+    if a == 0 {
+        let h = p.power((k + 1) / 2);
+        range(0, pk / h).map(|t| t * h).to_array
+    };
+    // a = p^v u（u と p は互いに素）。v が奇数なら平方根はない。
+    let (v, u) = loop((0, a), |(v, u)|
+        if u % p != 0 { break $ (v, u) };
+        continue $ (v + 1, u / p)
+    );
+    if v % 2 != 0 { [] };
+    // z = p^w y（w = v/2）とおくと y^2 = u (mod p^(k-v))。y は p^(k-w) を法として決まるので、
+    // p^(k-v) を法とする根 y0 ごとに y = y0 + p^(k-v) t（0 <= t < p^w）がある。
+    let w = v / 2;
+    let pw = p.power(w);
+    let pkv = p.power(k - v);
+    _calc_sqrts_mod_prime_power_unit(u, p, k - v).to_iter.flat_map(|y0|
+        range(0, pw).map(|t| pw * (y0 + pkv * t))
+    ).to_array
+);
+
+// 素因数分解が`factors`である法`m`について、`m`を法とする`a`の平方根をすべて求める
+//
+// 平方根を`[0, m)`の範囲で返す。`factors`が空（`m = 1`）なら`[0]`を返す。
+//
+// # Parameters
+// - `a`: 整数
+// - `factors`: `m`の素因数分解。`(p, k)`の配列で、`p`は相異なる素数、`k >= 1`。
+_calc_sqrts_mod_factors : I64 -> Array (I64, I64) -> Array I64 = |a, factors| (
+    let (zs, _) = factors.to_iter.fold(([0], 1), |(p, k), (zs, m)|
+        let pk = p.power(k);
+        let ys = _calc_sqrts_mod_prime_power(a, p, k);
+        let zs = zs.to_iter.flat_map(|z| ys.to_iter.map(|y| let (r, _) = lift_crt([z, y], [m, pk]); r)).to_array;
+        (zs, m * pk)
+    );
+    zs
+);
+
 // 一般ペル方程式 x^2 - d y^2 = ±m の代表解のリストを求める
 // 
 // ペル方程式 x^2 - d y^2 = ±1 の基本解を e とする。
@@ -1051,10 +1170,20 @@ calc_general_pell_representatives : [a : Integer] I64 -> I64 -> Array (a, a) = |
     if m == 0 { undefined("[CPLib.Arithmetic, pell equation solver] m is zero!") };
     let s = _check_pell_d(d);
     let m = m.abs;
-    // x, y が互いに素なケースに帰着する：e | x,y なら、(x/e)^2 - d (y/e)^2 = m / (e^2) なので、m / (e^2) ごとに解いて、x, y を e 倍する
-    count_up(1).take_while(|e| e*e <= m).filter(|e| m % (e*e) == 0).flat_map(|e|
-        let m = m / (e*e);
-        range(0, m).filter(|z| (z*z - d) % m == 0).filter_map(|z|
+    // x, y が互いに素なケースに帰着する：e | x,y なら、(x/e)^2 - d (y/e)^2 = m / (e^2) なので、m / (e^2) ごとに解いて、x, y を e 倍する。
+    // m の素因数分解から、e^2 | m となる e と、m / (e^2) の素因数分解の組をすべて作る。
+    let cases = m.factorize.to_iter.fold([(1, [])], |(p, k), cases|
+        let k = k.i64;
+        cases.to_iter.flat_map(|(e, fs)|
+            range(0, k / 2 + 1).map(|f|
+                let fs = if k - 2 * f > 0 { fs.push_back((p, k - 2 * f)) } else { fs };
+                (e * p.power(f), fs)
+            )
+        ).to_array
+    );
+    cases.to_iter.flat_map(|(e, fs)|
+        let m = fs.to_iter.fold(1, |(p, k), m| m * p.power(k));
+        _calc_sqrts_mod_factors(d, fs).to_iter.filter_map(|z|
             let t = (z, m);
             match _pqa(d, s, t) {
                 none() => none(),

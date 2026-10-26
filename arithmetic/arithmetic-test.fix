@@ -5,7 +5,7 @@ import CPLib.Arithmetic::{
     _calc_primitive_root, _inv_gcd, add_mod, calc_gcd, calc_lp_table, calc_prime_list, calc_prime_table, 
     calc_pythagorean_triples, calc_totient, calc_totient_table, ext_gcd, factorize, factorize_flat, 
     factorize_via_lp_table, floor_sum, inv_mod, is_prime, isqrt, iterate_general_pell_solutions, 
-    calc_general_pell_representatives, calc_pell_fundamental_solution, 
+    calc_general_pell_representatives, calc_pell_fundamental_solution, _calc_sqrt_mod_prime, _calc_sqrts_mod_factors, 
     lift_crt, mul_mod, pmod, pow_mod, pow_mod_u, power, sub_mod
 };
 import EZS::{cd, run_o, run_wi_oec, Context::default};
@@ -18,7 +18,7 @@ import Std::{
         check_all, check_any, collect_m, count_up, filter, filter_map, flat_map, fold, fold_m, get_first, map, 
         range, take, to_array
     }, 
-    LessThan::max, LoopState::{break, continue}, Monad::pure, Option::{as_some, is_some, none, some}, 
+    LessThan::max, LoopState::{break, continue}, Monad::pure, Option::{as_some, is_none, is_some, none, some}, 
     String::{find, format, populate}, ToI64::i64, 
     ToString::to_string, ToU128::u128, ToU64::u64, U64::{maximum, shift_left, shift_right}
 };
@@ -651,7 +651,29 @@ test_out_of_range = (
     ezs.cd("../..")
 );
 
+// 平方根を、総当たりで求めたものと比べる
+test_sqrt_mod : IO () = (
+    range(1, 301).fold_m((), |m, _|
+        let factors = m.factorize.to_iter.map(|(p, k)| (p, k.i64)).to_array;
+        range(0, m).fold_m((), |a, _|
+            let expected = range(0, m).filter(|z| z * z % m == a).to_array;
+            assert_eq(|_|"_calc_sqrts_mod_factors a={} m={}".format((a, m)), _calc_sqrts_mod_factors(a, factors).sort, expected)
+        )
+    );;
+    [998244353, 1000000007, 4611686018427387847].to_iter.fold_m((), |p, _|
+        range(0, 200).fold_m((), |a, _|
+            let a = mul_mod(a, 123456789123, p);
+            let r = _calc_sqrt_mod_prime(a, p);
+            let is_qr = a == 0 || a.pow_mod((p - 1) / 2, p) == 1;
+            assert_eq(|_|"_calc_sqrt_mod_prime a={} p={}".format((a, p)), r.is_some, is_qr);;
+            if r.is_none { pure() };
+            assert_eq(|_|"_calc_sqrt_mod_prime a={} p={} square".format((a, p)), mul_mod(r.as_some, r.as_some, p), a)
+        )
+    )
+);
+
 test_pell : IO () = (
+    test_sqrt_mod;;
     test_pell_fundamental_solution;;
     test_pell_representatives;;
     test_pell_solutions;;
