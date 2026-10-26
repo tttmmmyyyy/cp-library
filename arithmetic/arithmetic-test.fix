@@ -13,7 +13,7 @@ import Std::{
     loop, F64, IO, U64, Array::{sort, to_iter, @, @size}, 
     Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, I32::maximum, 
     I64::{maximum, minimum, shift_left}, IO::println, Iterator::{collect_m, filter, fold, fold_m, map, range}, 
-    LessThan::max, LoopState::{break, continue}, Monad::pure, Option::is_some, String::{find, populate}, ToI64::i64, 
+    LessThan::max, LoopState::{break, continue}, Monad::pure, Option::is_some, String::{find, format}, ToI64::i64, 
     ToString::to_string, ToU128::u128, ToU32::u32, ToU64::u64, U32::{maximum, shift_left}, U64::{maximum, shift_left, shift_right}
 };
 
@@ -324,7 +324,7 @@ test_prime_list = (
     let (res, time) = consumed_time_while_lazy(|_| calc_prime_list(n));
 
     assert_eq(|_|"test_prime_list 2", res.@size, 5761455);;
-    println $ "[CPLib.Arithmetic.Test] calc_prime_list({}): {}".populate([n.to_string, time.to_string]);;
+    println $ "[CPLib.Arithmetic.Test] calc_prime_list({}): {}".format((n, time));;
     pure()
 );
 
@@ -397,7 +397,7 @@ test_crt = (
         let x = x.i64;
         let r0 = x.pmod(m0);
         let r1 = x.pmod(m1);
-        // "{} {} {} {}".populate([r0, r1, m0, m1].map(to_string)).println;;
+        // "{} {} {} {}".format((r0, r1, m0, m1)).println;;
         let (y, z) = lift_crt([r0, r1], [m0, m1]);
         let lcm = m0 / calc_gcd(m0, m1) * m1;
         assert_eq(|_|"[test_crt] z is lcm", z, lcm);;
@@ -419,7 +419,7 @@ test_floor_sum = (
         range(1, 20).fold_m((), |m, _|
             range(-20, 21).fold_m((), |a, _|
                 range(-20, 21).fold_m((), |b, _|
-                    assert_eq(|_|"test_floor_sum n={} m={} a={} b={}".populate([n.to_string, m.to_string, a.to_string, b.to_string]), 
+                    assert_eq(|_|"test_floor_sum n={} m={} a={} b={}".format((n, m, a, b)), 
                         floor_sum(n, m, a, b), naive(n, m, a, b))
                 )
             )
@@ -436,7 +436,7 @@ test_calc_primitive_root = (
     // TODO: add (999999999999999989, 3)
     [(2, 1), (3, 2), (5, 2), (7, 3), (11, 2), (13, 2), (17, 3), (19, 2), (1e9 + 7, 5), (1e9 + 9, 13), (998244353, 3)].to_iter.map(|(p, ans)|
         let r = _calc_primitive_root(p);
-        assert_eq(|_|"[test_calc_primitive_root] {}".populate([p.to_string]), r, ans)
+        assert_eq(|_|"[test_calc_primitive_root] {}".format((p,)), r, ans)
     ).collect_m;;
     pure()
 
@@ -635,10 +635,10 @@ test_out_of_range = (
         "[CPLib.Arithmetic::lift_crt] `ms` has an element less than 1"
     ];
     range(0, 3).fold_m((), |case, _|
-        let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], case.to_string);
+        let (_, err, code) = *ezs.run_wi_oec(["fix", "run"], case.to_string);
         assert_eq(|_|"case " + case.to_string + ": " + err, code != 0_U8 && err.find(messages.@(case), 0).is_some, true)
     );;
-    let (out, _, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], "3");
+    let (out, _, code) = *ezs.run_wi_oec(["fix", "run"], "3");
     assert_eq(|_|"in range: " + out, code == 0_U8 && out.find("(2, (8, 15))", 0).is_some, true);;
     // 後のテストのために、作業ディレクトリをライブラリのルートに戻す
     ezs.cd("../..")

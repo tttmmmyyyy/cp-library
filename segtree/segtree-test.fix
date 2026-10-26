@@ -8,7 +8,7 @@ import Std::{
     Bool, Eq, I64, IO, String, Array::{fill, push_back, set, to_iter, @}, 
     Debug::{assert_eq, consumed_time_while_lazy}, Functor::map, I64::minimum, IO::println, 
     Iterator::{fold, fold_m, map, range, to_array}, LessThan::max, Monad::pure, Option::is_some, 
-    String::{find, from_U8, get_bytes, populate, @size}, ToString::to_string, ToU8::u8
+    String::{find, from_U8, get_bytes, format, @size}, ToString::to_string, ToU8::u8
 };
 
 // https://atcoder.jp/contests/language-test-202505/submissions/68392568
@@ -249,7 +249,7 @@ test_speed = (
         (tree, rng, fold_sum)
     )));
     assert_eq(|_|"test_speed", fold_sum, 9223241343006558035);;
-    println $ "[CPLib.Segtree.Test] Segtree({}): {}".populate([n.to_string, time.to_string]);;
+    println $ "[CPLib.Segtree.Test] Segtree({}): {}".format((n, time));;
 
     pure $ ()
 );
@@ -304,10 +304,10 @@ test_out_of_range = (
         let func_count = if t < 2 { 5 } else { 7 };
         range(0, func_count).fold_m((), |f, _|
             let expected = "[CPLib." + trees.@(t) + "::" + funcs.@(f) + "]";
-            let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], t.to_string + " " + f.to_string);
+            let (_, err, code) = *ezs.run_wi_oec(["fix", "run"], t.to_string + " " + f.to_string);
             assert_eq(|_|expected + ": " + err, code != 0_U8 && err.find(expected, 0).is_some, true)
         );;
-        let (out, _, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], t.to_string + " 7");
+        let (out, _, code) = *ezs.run_wi_oec(["fix", "run"], t.to_string + " 7");
         let expected = if t < 2 { "6" } else { "3" };
         assert_eq(|_|"in range " + t.to_string + ": " + out, code == 0_U8 && out.find(expected, 0).is_some, true)
     );;

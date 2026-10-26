@@ -4,7 +4,7 @@ import CPLib.IO::{stof, stofa, stoi, stoia, stoui, stouia};
 import EZS::{cd, run_o, run_wi_o, run_wi_oec, Context::default};
 import Std::{
     F64, IO, U8, Debug::{assert, assert_eq}, IO::{eprintln, read_file_string, IOFail::to_result}, 
-    Monad::pure, Option::is_some, Result::{as_ok, is_ok}, String::{find, populate}
+    Monad::pure, Option::is_some, Result::{as_ok, is_ok}, String::{find, format}
 };
 
 test : IO ();
@@ -25,18 +25,18 @@ test_io : IO () = (
     let ezs = EZS::Context::default;
     let input_path = "io/io-test/input.txt";
     let input = *read_file_string(input_path).to_result;
-    assert(|_|"Failed to read \"{}\"".populate([input_path]), input.is_ok);;
+    assert(|_|"Failed to read \"{}\"".format((input_path,)), input.is_ok);;
     let input = input.as_ok;
     ezs.cd("io/io-test");;
     ezs.run_o(["fix", "deps", "update"]);;
-    let output = *ezs.run_wi_o(["fix", "run", "--allow-preliminary-commands"], input);
+    let output = *ezs.run_wi_o(["fix", "run"], input);
     let found = output.find("PASS", 0).is_some;
     assert(|_|"IO test failed", found);;
 
     // 入力が尽きたときと、読もうとした形の字句が無いときは、理由を書いて止まる
-    let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], "31 41");
+    let (_, err, code) = *ezs.run_wi_oec(["fix", "run"], "31 41");
     assert(|_|"IO test failed: end of input", code != 0_U8 && err.find("unexpected end of input while reading an integer", 0).is_some);;
-    let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], "31 41 x");
+    let (_, err, code) = *ezs.run_wi_oec(["fix", "run"], "31 41 x");
     assert(|_|"IO test failed: unexpected character", code != 0_U8 && err.find("unexpected character 'x' while reading an integer", 0).is_some);;
     // 後のテストのために、作業ディレクトリをライブラリのルートに戻す
     ezs.cd("../..");;

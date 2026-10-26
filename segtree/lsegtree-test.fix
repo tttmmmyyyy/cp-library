@@ -8,7 +8,7 @@ import Std::{
     Bool, Eq, I64, IO, String, ToString, Array::{fill, push_back, set, @}, 
     Debug::{assert_eq, consumed_time_while_lazy}, FromBytes::from_bytes, Functor::map, I64::minimum, IO::println, 
     Iterator::{fold, fold_m, map, range, to_array}, Array::{to_iter, @size}, LessThan::{max, min}, Monad::pure, Result::as_ok, 
-    String::{from_U8, get_bytes, get_sub, populate, @size}, ToI64::i64, ToString::to_string, 
+    String::{from_U8, get_bytes, get_sub, format, @size}, ToI64::i64, ToString::to_string, 
     ToU8::u8
 };
 
@@ -70,7 +70,7 @@ impl ShiftAlphabet : Monoid {
     );
 }
 impl ShiftAlphabet : ToString {
-    to_string = |a| "({}, {})".populate([a.@a.to_string, a.@b.to_string]);
+    to_string = |a| "({}, {})".format((a.@a, a.@b));
 }
 
 // 作用の定義
@@ -257,7 +257,7 @@ test_speed = (
     )));
     assert_eq(|_|"test_speed", fold_sum, 18331863592552);;
     assert_eq(|_|"test_speed search", search_ok, true);;
-    println $ "[CPLib.LSegtree.Test] LSegtree({}): {}".populate([n.to_string, time.to_string]);;
+    println $ "[CPLib.LSegtree.Test] LSegtree({}): {}".format((n, time));;
 
     pure $ ()
 );

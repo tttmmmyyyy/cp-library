@@ -6,7 +6,7 @@ import EZS::{cd, run_o, run_wi_oec, Context::default};
 import Random::{generate_I64_nonneg, init_by_seed};
 import Std::{
     Array, I64, IO, Array::{fill, push_back, set, sort_by, to_iter, @, @size}, Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, 
-    IO::println, Iterator::{fold, fold_m, map, range, to_array}, LessThan::min, Monad::pure, Option::is_some, String::{find, populate}, ToString::to_string
+    IO::println, Iterator::{fold, fold_m, map, range, to_array}, LessThan::min, Monad::pure, Option::is_some, String::{find, format}, ToString::to_string
 };
 
 test : IO ();
@@ -32,12 +32,12 @@ test_build_out_of_range = (
     ezs.cd("graph/out-of-range");;
     ezs.run_o(["fix", "deps", "update"]);;
     range(0, 2).fold_m((), |case, _|
-        let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands", "--check-integer-operations"], case.to_string);
+        let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--check-integer-operations"], case.to_string);
         assert_eq(|_|"out of range " + case.to_string + ": " + err, code != 0_U8 && err.find("[CPLib.Graph::GraphBuilder::build] found an edge whose vertex is out of range", 0).is_some, true)
     );;
-    let (out, _, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands", "--check-integer-operations"], "2");
+    let (out, _, code) = *ezs.run_wi_oec(["fix", "run", "--check-integer-operations"], "2");
     assert_eq(|_|"in range: " + out, code == 0_U8 && out.find("2", 0).is_some, true);;
-    let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands", "--check-integer-operations"], "3");
+    let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--check-integer-operations"], "3");
     assert_eq(|_|"too many vertices: " + err, code != 0_U8 && err.find("[CPLib.Graph::GraphBuilder::create] got 2^31 or more vertices", 0).is_some, true);;
     // 後のテストのために、作業ディレクトリをライブラリのルートに戻す
     ezs.cd("../..")
@@ -191,7 +191,7 @@ test_dijkstra_speed = (
     );
     let (dist, time) = consumed_time_while_lazy(|_| graph.build.dijkstra(0));
     assert_eq(|_|"test_dijkstra_speed", dist.@(1), 391);;
-    println $ "[CPLib.Graph.Test] dijkstra({}): {}".populate([n.to_string, time.to_string]);;
+    println $ "[CPLib.Graph.Test] dijkstra({}): {}".format((n, time));;
     pure()
 );
 
@@ -316,7 +316,7 @@ test_scc_speed = (
     // 強連結成分を計算
     let (sccs, time) = consumed_time_while_lazy(|_| graph.build.calc_sccs);
     assert_eq(|_|"test_scc_speed", sccs.@size, 99999);;
-    println("[CPLib.Graph.Test] calc_sccs({}): {}".populate([n.to_string, time.to_string]));;
+    println("[CPLib.Graph.Test] calc_sccs({}): {}".format((n, time)));;
     pure()
 );
 
@@ -326,11 +326,11 @@ test_bellman_ford_negative_cycle = (
     let ezs = EZS::Context::default;
     ezs.cd("graph/negative-cycle");;
     ezs.run_o(["fix", "deps", "update"]);;
-    let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], "0");
+    let (_, err, code) = *ezs.run_wi_oec(["fix", "run"], "0");
     assert_eq(|_|"reachable: " + err, code != 0_U8 && err.find("[CPLib.Graph::bellman_ford] a negative cycle is reachable from `start`", 0).is_some, true);;
-    let (out, _, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], "1");
+    let (out, _, code) = *ezs.run_wi_oec(["fix", "run"], "1");
     assert_eq(|_|"unreachable: " + out, code == 0_U8 && out.find("[0, 2, 9223372036854775807]", 0).is_some, true);;
-    let (out, _, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], "2");
+    let (out, _, code) = *ezs.run_wi_oec(["fix", "run"], "2");
     assert_eq(|_|"no negative cycle: " + out, code == 0_U8 && out.find("[0, 2, -2]", 0).is_some, true);;
     // 後のテストのために、作業ディレクトリをライブラリのルートに戻す
     ezs.cd("../..")
