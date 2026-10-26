@@ -29,14 +29,14 @@ test_io : IO () = (
     let input = input.as_ok;
     ezs.cd("io/io-test");;
     ezs.run_o(["fix", "deps", "update"]);;
-    let output = *ezs.run_wi_o(["fix", "run", "--allow-preliminary-commands"], input);
+    let output = *ezs.run_wi_o(["fix", "run"], input);
     let found = output.find("PASS", 0).is_some;
     assert(|_|"IO test failed", found);;
 
     // 入力が尽きたときと、読もうとした形の字句が無いときは、理由を書いて止まる
-    let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], "31 41");
+    let (_, err, code) = *ezs.run_wi_oec(["fix", "run"], "31 41");
     assert(|_|"IO test failed: end of input", code != 0_U8 && err.find("unexpected end of input while reading an integer", 0).is_some);;
-    let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], "31 41 x");
+    let (_, err, code) = *ezs.run_wi_oec(["fix", "run"], "31 41 x");
     assert(|_|"IO test failed: unexpected character", code != 0_U8 && err.find("unexpected character 'x' while reading an integer", 0).is_some);;
     // 後のテストのために、作業ディレクトリをライブラリのルートに戻す
     ezs.cd("../..");;

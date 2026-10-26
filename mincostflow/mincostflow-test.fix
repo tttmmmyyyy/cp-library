@@ -147,9 +147,9 @@ test_negative_cycle = (
     let ezs = EZS::Context::default;
     ezs.cd("mincostflow/negative-cycle");;
     ezs.run_o(["fix", "deps", "update"]);;
-    let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands", "--check-integer-operations"], "0");
+    let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--check-integer-operations"], "0");
     assert_eq(|_|"negative cycle: " + err, code != 0_U8 && err.find("a cycle of negative cost is reachable from s", 0).is_some, true);;
-    let (out, _, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands", "--check-integer-operations"], "1");
+    let (out, _, code) = *ezs.run_wi_oec(["fix", "run", "--check-integer-operations"], "1");
     assert_eq(|_|"limit 0: " + out, code == 0_U8 && out.find("(0, 0)", 0).is_some, true);;
     // 後のテストのために、作業ディレクトリをライブラリのルートに戻す
     ezs.cd("../..")

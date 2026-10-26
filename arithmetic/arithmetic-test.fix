@@ -635,10 +635,10 @@ test_out_of_range = (
         "[CPLib.Arithmetic::lift_crt] `ms` has an element less than 1"
     ];
     range(0, 3).fold_m((), |case, _|
-        let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], case.to_string);
+        let (_, err, code) = *ezs.run_wi_oec(["fix", "run"], case.to_string);
         assert_eq(|_|"case " + case.to_string + ": " + err, code != 0_U8 && err.find(messages.@(case), 0).is_some, true)
     );;
-    let (out, _, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], "3");
+    let (out, _, code) = *ezs.run_wi_oec(["fix", "run"], "3");
     assert_eq(|_|"in range: " + out, code == 0_U8 && out.find("(2, (8, 15))", 0).is_some, true);;
     // 後のテストのために、作業ディレクトリをライブラリのルートに戻す
     ezs.cd("../..")
