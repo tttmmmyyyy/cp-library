@@ -2,7 +2,7 @@ module CPLib.Bipartite.Test;
 
 import CPLib.Bipartite::{
     BipartiteGraph::{add_edge, calc_flow, create}, 
-    BipartiteGraphFlow::{calc_max_indep_set, get_max_matching, calc_min_edge_cover, calc_min_vertex_cover}
+    BipartiteGraphFlow::{calc_max_indep_set, calc_min_edge_cover, calc_min_vertex_cover, get_max_matching}
 };
 import Random::{generate_I64_nonneg, init_by_seed};
 import Std::{

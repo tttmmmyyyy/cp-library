@@ -1,12 +1,17 @@
 module CPLib.Graph.Test;
 
-import CPLib.Graph::{bellman_ford, calc_scc_ids, calc_sccs, dijkstra, get_out_degree, reverse, to_iter_edges, @size, Edge, GraphBuilder, GraphBuilder::{add_edge, build, create}};
+import CPLib.Graph::{
+    @size, bellman_ford, calc_scc_ids, calc_sccs, dijkstra, get_out_degree, reverse, to_iter_edges, Edge, 
+    GraphBuilder, GraphBuilder::{add_edge, build, create}
+};
 import CPLib.Trait::Inf::inf;
 import EZS::{cd, run_o, run_wi_oec, Context::default};
 import Random::{generate_I64_nonneg, init_by_seed};
 import Std::{
-    Array, I64, IO, Array::{fill, push_back, set, sort_by, to_iter, @, @size}, Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, 
-    IO::println, Iterator::{fold, fold_m, map, range, to_array}, LessThan::min, Monad::pure, Option::is_some, String::{find, populate}, ToString::to_string
+    Array, I64, IO, Array::{@, @size, fill, push_back, set, sort_by, to_iter}, 
+    Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, IO::println, 
+    Iterator::{fold, fold_m, map, range, to_array}, LessThan::min, Monad::pure, Option::is_some, 
+    String::{find, populate}, ToString::to_string
 };
 
 test : IO ();

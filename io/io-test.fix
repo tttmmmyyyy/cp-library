@@ -3,7 +3,7 @@ module CPLib.IO.Test;
 import CPLib.IO::{stof, stofa, stoi, stoia, stoui, stouia};
 import EZS::{cd, run_o, run_wi_o, run_wi_oec, Context::default};
 import Std::{
-    F64, IO, U8, Debug::{assert, assert_eq}, IO::{eprintln, read_file_string, IOFail::to_result}, 
+    F64, IO, Debug::{assert, assert_eq}, IO::{eprintln, read_file_string, IOFail::to_result}, 
     Monad::pure, Option::is_some, Result::{as_ok, is_ok}, String::{find, populate}
 };
 

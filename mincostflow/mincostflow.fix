@@ -18,10 +18,9 @@ module CPLib.MinCostFlow;
 import BinaryHeap::{BinaryHeap::{get_size, get_top, pop, push}, MinBinaryHeap::empty};
 import CPLib.Graph::{_NodeDistance, _NodeDistance::make};
 import Std::{
-    loop, undefined, Array, Bool, I64,
-    Array::{fill, mod, pop_back, push_back, set, to_iter, @, @size}, I64::bit_xor, Indexable::ixchg,
-    Iterator::{fold, map, range, to_array}, LessThan::{max, min}, LoopState::{break, continue}, Option::as_some,
-    Tuple2::{@0, @1}, I64::{abs, maximum, minimum}
+    loop, undefined, Array, I64, Array::{@, @size, fill, mod, pop_back, push_back, set, to_iter}, 
+    I64::{abs, bit_xor, maximum, minimum}, Indexable::ixchg, Iterator::{fold, map, range, to_array}, 
+    LessThan::{max, min}, LoopState::{break, continue}, Option::as_some, Tuple2::{@0, @1}
 };
 
 // 最小費用流問題のグラフの型

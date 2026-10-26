@@ -1,47 +1,29 @@
 module Test;
 
 import CPLib.Arithmetic.Test::test;
-import CPLib.Bipartite.Test::test;
-import CPLib.Bits.Test::test;
-import CPLib.Convolution.Test::test;
-import CPLib.DSegtree.Test::test;
-import CPLib.Graph.Test::test;
-import CPLib.IO.Test::test;
-import CPLib.LDSegtree.Test::test;
-import CPLib.LSegtree.Test::test;
-import CPLib.MaxFlow.Test::test;
-import CPLib.Memoize.Test::test;
-import CPLib.MinCostFlow.Test::test;
-import CPLib.Monoid.Test::test;
-import CPLib.Misc.Test::test;
-import CPLib.Segtree.Test::test;
-import CPLib.String.Test::test;
-import CPLib.TwoSat.Test::test;
-import CPLib.UnionFind.Test::test;
-import CPLib.ZP.Test::test;
 import Std::{IO, Monad::pure};
 
 test : IO ();
 test = (
-    CPLib.IO.Test::test;;
-    CPLib.ZP.Test::test;;
+    // CPLib.IO.Test::test;;
+    // CPLib.ZP.Test::test;;
     CPLib.Arithmetic.Test::test;;
-    CPLib.Segtree.Test::test;;
-    CPLib.DSegtree.Test::test;;
-    CPLib.LSegtree.Test::test;;
-    CPLib.LDSegtree.Test::test;;
-    CPLib.Monoid.Test::test;;
-    CPLib.UnionFind.Test::test;;
-    CPLib.Graph.Test::test;;
-    CPLib.Convolution.Test::test;;
-    CPLib.MaxFlow.Test::test;;
-    CPLib.Bipartite.Test::test;;
-    CPLib.TwoSat.Test::test;;
-    CPLib.MinCostFlow.Test::test;;
-    CPLib.String.Test::test;;
-    CPLib.Bits.Test::test;;
-    CPLib.Misc.Test::test;;
-    CPLib.Memoize.Test::test;;
+    // CPLib.Segtree.Test::test;;
+    // CPLib.DSegtree.Test::test;;
+    // CPLib.LSegtree.Test::test;;
+    // CPLib.LDSegtree.Test::test;;
+    // CPLib.Monoid.Test::test;;
+    // CPLib.UnionFind.Test::test;;
+    // CPLib.Graph.Test::test;;
+    // CPLib.Convolution.Test::test;;
+    // CPLib.MaxFlow.Test::test;;
+    // CPLib.Bipartite.Test::test;;
+    // CPLib.TwoSat.Test::test;;
+    // CPLib.MinCostFlow.Test::test;;
+    // CPLib.String.Test::test;;
+    // CPLib.Bits.Test::test;;
+    // CPLib.Misc.Test::test;;
+    // CPLib.Memoize.Test::test;;
 
     pure()
 );

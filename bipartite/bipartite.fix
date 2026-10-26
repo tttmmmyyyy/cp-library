@@ -12,9 +12,12 @@
 // ```
 module CPLib.Bipartite;
 
-import CPLib.MaxFlow::{MaxFlowEdgeId, MaxFlowGraph, MaxFlowGraph::{add_edge, add_edge_id, create, get_flow, calc_min_cut, maximize_flow}};
+import CPLib.MaxFlow::{
+    MaxFlowEdgeId, MaxFlowGraph, 
+    MaxFlowGraph::{add_edge, add_edge_id, calc_min_cut, create, get_flow, maximize_flow}
+};
 import Std::{
-    undefined, Array, Bool, I64, Array::{empty, fill, push_back, set, to_iter, @, @size}, Functor::map, 
+    undefined, Array, Bool, I64, Array::{@, @size, empty, fill, push_back, set, to_iter}, Functor::map, 
     Iterator::{count_up, fold, map, range, to_array, zip}
 };
 

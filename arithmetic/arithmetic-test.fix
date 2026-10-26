@@ -2,19 +2,20 @@ module CPLib.Arithmetic.Test;
 
 import BoolArray::BoolArray::@;
 import CPLib.Arithmetic::{
-    add_mod, calc_gcd, calc_prime_list, calc_prime_table, calc_totient, calc_totient_table, 
-    ext_gcd, factorize, floor_sum, factorize_flat, factorize_via_lp_table, inv_mod, is_prime, isqrt, 
-    lift_crt, calc_lp_table, mul_mod, pmod, pow_mod, pow_mod_u, power, calc_pythagorean_triples, sub_mod, _calc_primitive_root, 
-    _inv_gcd
+    _calc_primitive_root, _inv_gcd, add_mod, calc_gcd, calc_lp_table, calc_prime_list, calc_prime_table, 
+    calc_pythagorean_triples, calc_totient, calc_totient_table, ext_gcd, factorize, factorize_flat, 
+    factorize_via_lp_table, floor_sum, inv_mod, is_prime, isqrt, iterate_general_pell_solutions, 
+    lift_crt, mul_mod, pmod, pow_mod, pow_mod_u, power, sub_mod
 };
-import Random::{generate_I64_nonneg, generate_U64, init_by_seed};
 import EZS::{cd, run_o, run_wi_oec, Context::default};
+import Random::{generate_I64_nonneg, generate_U64, init_by_seed};
 import Std::{
-    loop, F64, IO, U64, Array::{sort, to_iter, @, @size}, 
+    loop, Array, F64, I64, IO, U64, Array::{@, @size, sort, to_iter}, 
     Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, I32::maximum, 
-    I64::{maximum, minimum, shift_left}, IO::println, Iterator::{collect_m, filter, fold, fold_m, map, range}, 
-    LessThan::max, LoopState::{break, continue}, Monad::pure, Option::is_some, String::{find, populate}, ToI64::i64, 
-    ToString::to_string, ToU128::u128, ToU32::u32, ToU64::u64, U32::{maximum, shift_left}, U64::{maximum, shift_left, shift_right}
+    I64::{maximum, minimum, shift_left}, IO::println, 
+    Iterator::{collect_m, filter, fold, fold_m, map, range, take, to_array}, LessThan::max, 
+    LoopState::{break, continue}, Monad::pure, Option::is_some, String::{find, populate}, ToI64::i64, 
+    ToString::to_string, ToU128::u128, ToU64::u64, U64::{maximum, shift_left, shift_right}
 };
 
 // floor_math:
@@ -22,30 +23,31 @@ import Std::{
 
 test : IO ();
 test = (
-    test_pmod;;
-    test_mod_arithmetic;;
-    test_isqrt;;
-    test_gcd;;
-    test_ext_gcd;;
-    test_pow_mod;;
-    test_power;;
-    test_inv_mod;;
-    test_prime_table;;
-    test_prime_list;;
-    test_linear_sieve;;
-    test_factorize_via_lp_table;;
-    test_factorize_flat;;
-    test_factorize;;
-    test_euler_tortient;;
-    test_euler_tortient_table;;
-    test_miller_rabin_u64;;
-    test_miller_rabin_u32;;
-    test_inv_gcd;;
-    test_crt;;
-    test_calc_primitive_root;;
-    test_pythagorean_triples;;
-    test_floor_sum;;
-    test_out_of_range;;
+    // test_pmod;;
+    // test_mod_arithmetic;;
+    // test_isqrt;;
+    // test_gcd;;
+    // test_ext_gcd;;
+    // test_pow_mod;;
+    // test_power;;
+    // test_inv_mod;;
+    // test_prime_table;;
+    // test_prime_list;;
+    // test_linear_sieve;;
+    // test_factorize_via_lp_table;;
+    // test_factorize_flat;;
+    // test_factorize;;
+    // test_euler_tortient;;
+    // test_euler_tortient_table;;
+    // test_miller_rabin_u64;;
+    // test_miller_rabin_u32;;
+    // test_inv_gcd;;
+    // test_crt;;
+    // test_calc_primitive_root;;
+    // test_pythagorean_triples;;
+    // test_floor_sum;;
+    // test_out_of_range;;
+    test_pell;;
 
     pure()
 );
@@ -642,4 +644,26 @@ test_out_of_range = (
     assert_eq(|_|"in range: " + out, code == 0_U8 && out.find("(2, (8, 15))", 0).is_some, true);;
     // 後のテストのために、作業ディレクトリをライブラリのルートに戻す
     ezs.cd("../..")
+);
+
+test_pell : IO () = (
+    // let d = 15; let s = isqrt(d.u64).i64;
+    // let (x, y) = _pqa_fundamental_unit(d, s);
+    // "fundamental unit = {} + {} root({})".eprintfln((x, y, d));;
+
+    (iterate_general_pell_solutions(2, 4).take(10).to_array : Array (I64, I64)).to_string.println;;
+
+    // let t = (1, 1);
+    // let g = (1, 0, 0, 1)
+    // let res = _pqa_step(3, 1, t);
+    // "res = {}".eprintfln((res,));;
+    // let (a, t) = res;
+    // let g = _pqa_step_g(g, a);
+    // "g = {}".eprintfln((g,));;
+    // let res = _pqa_step(3, 1, t);
+    // "res = {}".eprintfln((res,));;
+    // let (a, t) = res;
+    // let g = _pqa_step_g(g, a);
+    // "g = {}".eprintfln((g,));;    
+    pure()
 );

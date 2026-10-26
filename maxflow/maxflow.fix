@@ -17,8 +17,9 @@ module CPLib.MaxFlow;
 
 import Std::{
     loop, undefined, Array, Bool, I64, 
-    Array::{empty, fill, mod, pop_back, push_back, set, to_iter, truncate, @, @size}, I64::bit_xor, Indexable::ixchg, 
-    Iterator::{fold, map, range, to_array}, LessThan::min, LoopState::{break, continue}, Tuple2::@0, I64::maximum
+    Array::{@, @size, empty, fill, mod, pop_back, push_back, set, to_iter, truncate}, 
+    I64::{bit_xor, maximum}, Indexable::ixchg, Iterator::{fold, map, range, to_array}, LessThan::min, 
+    LoopState::{break, continue}, Tuple2::@0
 };
 
 // 最大フロー問題のグラフの型

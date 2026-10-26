@@ -13,8 +13,8 @@
 module CPLib.UnionFind;
 
 import Std::{
-    loop, undefined, Array, Bool, I32, I64, Array::{fill, mod, push_back, set, @, @size}, Iterator::{fold, range}, 
-    I32::maximum, LoopState::{break, continue}, ToI32::i32, ToI64::i64, Tuple2::@0
+    loop, undefined, Array, Bool, I32, I64, Array::{@, @size, fill, mod, push_back, set}, I32::maximum, 
+    Iterator::{fold, range}, LoopState::{break, continue}, ToI32::i32, ToI64::i64, Tuple2::@0
 };
 
 type UnionFind = struct {

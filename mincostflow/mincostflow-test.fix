@@ -1,19 +1,20 @@
 module CPLib.MinCostFlow.Test;
 
 import CPLib.MinCostFlow::{
-    MinCostFlowEdge, MinCostFlowGraph, MinCostFlowEdge::{@cap, @cost, @flow, @from, @to}, 
+    MinCostFlowEdge::{@cap, @cost, @flow, @from, @to}, 
     MinCostFlowGraph::{
-        add_edge, add_edge_id, maximize_flow_min_cost_slope, maximize_flow_min_cost_slope_with_limit, create, get_edge, get_edges, get_flow, 
-        maximize_flow_min_cost, maximize_flow_min_cost_with_limit
+        add_edge, add_edge_id, create, get_edge, get_edges, get_flow, maximize_flow_min_cost, 
+        maximize_flow_min_cost_slope, maximize_flow_min_cost_slope_with_limit, 
+        maximize_flow_min_cost_with_limit
     }
 };
 import EZS::{cd, run_o, run_wi_oec, Context::default};
 import Random::{generate_I64_nonneg, init_by_seed, Random};
 import Std::{
-    loop, Array, Bool, I64, IO, U8, Array::{fill, mod, push_back, set, to_iter, @, @size}, Debug::assert_eq, 
-    Functor::map, Iterator::{fold, fold_m, range}, LessThan::min, LoopState::{break, continue}, Monad::pure, Option, 
-    Option::{as_some, is_none, is_some, none, some}, Tuple2::{@0, @1}, Tuple4::{@2, @3}, 
-    String::find, ToString::to_string
+    loop, Array, Bool, I64, IO, Option, Array::{@, @size, fill, mod, push_back, set, to_iter}, 
+    Debug::assert_eq, Functor::map, Iterator::{fold, fold_m, range}, LessThan::min, 
+    LoopState::{break, continue}, Monad::pure, Option::{as_some, is_none, is_some, none, some}, 
+    String::find, ToString::to_string, Tuple2::@0, Tuple4::{@2, @3}
 };
 
 // https://atcoder.jp/contests/language-test-202505/submissions/68408186

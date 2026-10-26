@@ -6,8 +6,9 @@ import CPLib.ZP::{
     FFTDirection::{forward, inverse}, PrimeProvider::value, ZP::{@prime, @value}
 };
 import Std::{
-    Array, I64, IO, Array::{push_back, to_iter, @, @size}, Debug::assert_eq, Functor::{forget, map}, 
-    Iterator::{filter, fold, fold_m, map, product, range, to_array}, Monad::pure, ToI64::i64, ToString::to_string
+    Array, IO, Array::{@, @size, push_back, to_iter}, Debug::assert_eq, Functor::{forget, map}, 
+    Iterator::{filter, fold, fold_m, map, product, range, to_array}, Monad::pure, ToI64::i64, 
+    ToString::to_string
 };
 
 // 合成数の法10

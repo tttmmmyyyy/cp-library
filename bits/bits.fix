@@ -2,16 +2,18 @@
 module CPLib.Bits;
 
 import Std::{
-    undefined, Bool, Eq, I16, I32, I64, I8, Iterator, String, U16, U32, U64, U8, Array::{fill, set}, 
-    FromBytes::from_bytes, I16::{bit_and, bit_not, bit_or, bit_xor, count_ones, shift_left, shift_right}, 
+    undefined, Bool, Eq, I16, I32, I64, I8, Iterator, One, String, U16, U32, U64, U8, Zero, 
+    Array::{fill, set}, FromBytes::from_bytes, 
+    I16::{bit_and, bit_not, bit_or, bit_xor, count_ones, shift_left, shift_right}, 
     I32::{bit_and, bit_not, bit_or, bit_xor, count_ones, shift_left, shift_right}, 
     I64::{bit_and, bit_not, bit_or, bit_xor, count_ones, shift_left, shift_right}, 
-    I8::{bit_and, bit_not, bit_or, bit_xor, count_ones, shift_left, shift_right}, Iterator::{fold, range}, 
-    One, One::one, Option::{none, some}, Result::as_ok, ToI16::i16, ToI32::i32, ToI64::i64, ToI8::i8, ToU16::u16, 
-    ToU32::u32, ToU64::u64, ToU8::u8, Zero, Zero::zero, U16::{bit_and, bit_not, bit_or, bit_xor, count_ones, shift_left, shift_right}, 
+    I8::{bit_and, bit_not, bit_or, bit_xor, count_ones, shift_left, shift_right}, 
+    Iterator::{fold, range}, One::one, Option::{none, some}, Result::as_ok, ToI16::i16, ToI32::i32, 
+    ToI64::i64, ToI8::i8, ToU16::u16, ToU32::u32, ToU64::u64, ToU8::u8, 
+    U16::{bit_and, bit_not, bit_or, bit_xor, count_ones, shift_left, shift_right}, 
     U32::{bit_and, bit_not, bit_or, bit_xor, count_ones, shift_left, shift_right}, 
     U64::{bit_and, bit_not, bit_or, bit_xor, count_ones, shift_left, shift_right}, 
-    U8::{bit_and, bit_not, bit_or, bit_xor, count_ones, shift_left, shift_right}
+    U8::{bit_and, bit_not, bit_or, bit_xor, count_ones, shift_left, shift_right}, Zero::zero
 };
 
 trait a : Bits {

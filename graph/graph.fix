@@ -15,10 +15,10 @@ module CPLib.Graph;
 import BinaryHeap::{BinaryHeap::{get_size, get_top, pop, push}, MinBinaryHeap::empty};
 import CPLib.Trait::{Inf, Inf::inf};
 import Std::{
-    loop, undefined, Additive, Array, Eq, I32, I64, Iterator, LessThan, U64, Iterator::Item, 
-    Array::{empty, fill, from_map, mod, pop_back, push_back, set, to_iter, @, @size}, 
-    Functor::map, I32::maximum, Iterator::{fold, map, range}, LessThan::{max, min}, LoopState::{break, continue}, Option::as_some, 
-    ToI32::i32, ToI64::i64, ToU64::u64, Tuple2::{@0, @1}, Zero::zero
+    loop, undefined, Additive, Array, Eq, I32, I64, Iterator, LessThan, U64, 
+    Array::{@, @size, empty, fill, from_map, mod, pop_back, push_back, set, to_iter}, Functor::map, 
+    I32::maximum, Iterator::{fold, map, range, Item}, LessThan::{max, min}, LoopState::{break, continue}, 
+    Option::as_some, ToI32::i32, ToI64::i64, ToU64::u64, Tuple2::{@0, @1}, Zero::zero
 };
 
 // 辺を足していく途中のグラフ

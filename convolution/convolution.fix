@@ -1,14 +1,15 @@
 module CPLib.Convolution;
 
-import CPLib.Arithmetic::{pmod, _inv_gcd};
+import CPLib.Arithmetic::{_inv_gcd, pmod};
 import CPLib.ZP::{
-    inv, zp, P167772161, P469762049, P754974721, PrimeProvider, ZP, _butterfly, _butterfly_inv, 
-    _calc_next_pot, PrimeProvider::value, ZP::{@prime, @value}
+    _butterfly, _butterfly_inv, _calc_next_pot, inv, zp, P167772161, P469762049, P754974721, 
+    PrimeProvider, ZP, PrimeProvider::value, ZP::{@prime, @value}
 };
 import Std::{
     undefined, Array, I64, 
-    Array::{fill, push_back, reserve, truncate, @, @size, unsafe_set_bounds_unchecked}, 
-    Functor::map, I64::{bit_and, shift_left}, Iterator::{fold, range}, LessThan::min, ToI64::i64, ToU64::u64, Tuple2::@1
+    Array::{@, @size, fill, push_back, reserve, truncate, unsafe_set_bounds_unchecked}, Functor::map, 
+    I64::{bit_and, shift_left}, Iterator::{fold, range}, LessThan::min, ToI64::i64, ToU64::u64, 
+    Tuple2::@1
 };
 
 // 2つの配列の畳み込みを計算する

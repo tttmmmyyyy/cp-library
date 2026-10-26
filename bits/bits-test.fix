@@ -1,13 +1,17 @@
 module CPLib.Bits.Test;
 
-// 利用者と同じくモジュールをまるごとimportして、Stdの名前と曖昧にならないことも確かめる
-import CPLib.Bits;
+import CPLib.Bits::{
+    bit_check, bit_clear, bit_combinations, bit_flip, bit_set, bit_subsets, to_string_bits, 
+    Bits::popcount
+};
 import EZS::{cd, run_o, run_wi_oec, Context::default};
 import Std::{
-    I64, IO, U8, Array::{@, @size}, Debug::assert_eq, Functor::map, I64::shift_left, Iterator::{fold_m, range, to_array}, Monad::pure, 
-    One::one, Option::is_some, String::find, ToString::to_string, Zero::zero
+    I64, IO, U8, Array::@size, Debug::assert_eq, Functor::map, I64::shift_left, 
+    Iterator::{fold_m, range, to_array}, Monad::pure, One::one, Option::is_some, String::find, 
+    ToString::to_string, Zero::zero
 };
 
+// 利用者と同じくモジュールをまるごとimportして、Stdの名前と曖昧にならないことも確かめる
 test : IO () = (
     test_bit_combinations;;
     test_bit_subsets;;

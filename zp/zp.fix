@@ -38,13 +38,12 @@ import CPLib.Arithmetic::{calc_primitive_root, power};
 import Std::{
     loop, undefined, Add, Array, Div, Eq, I64, Mul, Neg, One, Sub, ToString, U32, U64, Zero, 
     Array::{
-        fill, push_back, reserve, set, @, @size, unsafe_get_bounds_unchecked,
-        unsafe_set_bounds_unchecked, unsafe_swap_bounds_unchecked
+        @, @size, fill, push_back, reserve, set, unsafe_get_bounds_unchecked, unsafe_set_bounds_unchecked, 
+        unsafe_swap_bounds_unchecked
     }, 
     Functor::map, I64::{bit_and, bit_not, bit_xor, count_trailing_zeros, shift_left, shift_right}, 
-    Iterator::{fold, range}, One::one, 
-    LoopState::{break, continue}, ToI64::i64, ToString::to_string, ToU32::u32, ToU64::u64, 
-    U64::{bit_and, bit_or, shift_right}
+    Iterator::{fold, range}, LoopState::{break, continue}, One::one, ToI64::i64, ToString::to_string, 
+    ToU32::u32, ToU64::u64, U64::{bit_or, shift_right}
 };
 
 // 素数`p`を法とする整数の環

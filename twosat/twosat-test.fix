@@ -1,12 +1,12 @@
 module CPLib.TwoSat.Test;
 
 import CPLib.TwoSat::{add_clause, create, solve};
-import Random::{generate_I64_nonneg, init_by_seed};
 import EZS::{cd, run_o, run_wi_oec, Context::default};
+import Random::{generate_I64_nonneg, init_by_seed};
 import Std::{
-    Array, Bool, I64, IO, Array::{push_back, to_iter, @}, Debug::{assert, assert_eq}, Functor::forget, I64::{bit_and, shift_left, shift_right},
-    Iterator::{fold, fold_m, range}, Monad::pure, Option::{as_some, is_none, is_some},
-    String::find, ToString::to_string
+    Bool, I64, IO, Array::{@, push_back, to_iter}, Debug::{assert, assert_eq}, Functor::forget, 
+    I64::{bit_and, shift_left, shift_right}, Iterator::{fold, fold_m, range}, Monad::pure, 
+    Option::{as_some, is_none, is_some}, String::find, ToString::to_string
 };
 
 // https://atcoder.jp/contests/language-test-202505/submissions/68186286

@@ -1,9 +1,8 @@
 module CPLib.Misc;
 
 import Std::{
-    loop, Array, I64, LessThanOrEq, Option, 
-    Array::{@, swap},
-    LoopState::{break, continue}, Option::{none, some}
+    loop, Array, I64, LessThanOrEq, Option, Array::{@, swap}, LoopState::{break, continue}, 
+    Option::{none, some}
 };
 
 // 配列のある区間`[begin, end)`を辞書順で次に大きい順列に並び替える。
