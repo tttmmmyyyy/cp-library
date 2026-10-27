@@ -3,7 +3,7 @@ module CPLib.Memoize.Test;
 import CPLib.Memoize::{memoize, run_with_array, run_with_hashmap, Memoize, Memory, Memory::{Key, Value}};
 import Std::{
     I64, IO, U64, Debug::{assert_eq, consumed_time_while_lazy}, IO::println, Iterator::{fold_m, range}, 
-    Monad::pure, String::populate, ToString::to_string, ToU64::u64
+    Monad::pure, String::format, ToU64::u64
 };
 
 // フィボナッチ数列 mod 2^64 を計算する
@@ -48,7 +48,7 @@ test_speed : IO () = (
     let fib_upward = range(0, n + 1).fold_m(0_U64, |k, _| fib(k));
     let (x, time) = consumed_time_while_lazy(|_| fib_upward.run_with_array(n + 1));
     assert_eq(|_|"test_speed", x, 2754320626097736315_U64);;
-    println $ "[CPLib.Memoize.Test] fib({}): {}".populate([n.to_string, time.to_string]);;
+    println $ "[CPLib.Memoize.Test] fib({}): {}".format((n, time));;
     pure()
 );
 

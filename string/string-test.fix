@@ -10,8 +10,8 @@ import Std::{
     loop, Array, I64, IO, Array::{@, empty, fill, pop_back, push_back, sort_by}, 
     Debug::{assert, assert_eq, consumed_time_while_lazy}, FromBytes::from_bytes, Functor::{forget, map}, 
     IO::println, Iterator::{fold, fold_m, map, range, to_array}, LoopState::{break, continue}, 
-    Monad::pure, Option::is_some, Result::as_ok, String::{find, get_bytes, populate}, ToI32::i32, 
-    ToI64::i64, ToString::to_string, ToU8::u8
+    Monad::pure, Option::is_some, Result::as_ok, String::{find, format, get_bytes}, ToI32::i32, 
+    ToI64::i64, ToU8::u8
 };
 
 // https://atcoder.jp/contests/language-test-202505/submissions/68577484
@@ -25,9 +25,9 @@ test_sa_upper_too_large = (
     let ezs = EZS::Context::default;
     ezs.cd("string/upper-too-large");;
     ezs.run_o(["fix", "deps", "update"]);;
-    let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], "0");
+    let (_, err, code) = *ezs.run_wi_oec(["fix", "run"], "0");
     assert_eq(|_|"too large: " + err, code != 0_U8 && err.find("[CPLib.String::calc_suffix_array_i64_upper] got an upper bound of 2^31 or more", 0).is_some, true);;
-    let (out, _, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], "1");
+    let (out, _, code) = *ezs.run_wi_oec(["fix", "run"], "1");
     assert_eq(|_|"small: " + out, code == 0_U8 && out.find("[1, 0]", 0).is_some, true);;
     // 後のテストのために、作業ディレクトリをライブラリのルートに戻す
     ezs.cd("../..")
@@ -135,7 +135,7 @@ test_z_speed = (
     let s = fill(n, 0);
     let (z, time) = consumed_time_while_lazy(|_| s.calc_z_array_any);
     assert_eq(|_|"test_z_speed", z.@(n - 1), 1);;
-    println("[CPLib.String.Test] calc_z_array_any({}): {}".populate([n.to_string, time.to_string]))
+    println("[CPLib.String.Test] calc_z_array_any({}): {}".format((n, time)))
 );
 
 // 空の文字列と空の配列のLCP arrayは空
