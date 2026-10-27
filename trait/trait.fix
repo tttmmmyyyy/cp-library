@@ -1,7 +1,7 @@
 module CPLib.Trait;
 
 import Std::{
-    Add, Div, Eq, I128, LessThan, LessThanOrEq, Mul, Neg, One, Rem, Sub, Zero, ToI128::i128, 
+    Add, Div, Eq, LessThan, LessThanOrEq, Mul, Neg, One, Rem, Sub, Zero, 
     F32, F64, I16, I32, I64, I8, U16, U32, U64, U8, F32::infinity, F64::infinity, 
     I16::{maximum, minimum}, I32::{maximum, minimum}, I64::{maximum, minimum}, I8::{maximum, minimum}, 
     U16::maximum, U32::maximum, U64::maximum, U8::maximum
@@ -120,21 +120,8 @@ impl F64 : NegInf {
     neg_inf = -F64::infinity;
 }
 
-// `I64`の値を埋め込める型
-trait a : FromI64 {
-    // `I64`の値`x`を表す値
-    from_i64 : I64 -> a;
-}
-
-impl I64 : FromI64 {
-    from_i64 = |x| x;
-}
-
-impl I128 : FromI64 {
-    from_i64 = |x| x.i128;
-}
-
 // 整数の型
 //
 // `/`と`%`は、`I64`と同じく0の方向へ切り捨てた商と、その余りを返すものとする。
-trait Integer = Add + Sub + Mul + Neg + Div + Rem + Zero + One + Eq + LessThan + LessThanOrEq + FromI64;
+// `I64`、`I128`のほか、多倍長整数（gmp-fix の`MPZ`など）も満たす。
+trait Integer = Add + Sub + Mul + Neg + Div + Rem + Zero + One + Eq + LessThan + LessThanOrEq;

@@ -1,7 +1,7 @@
 module CPLib.Arithmetic;
 
 import BoolArray::{BoolArray, BoolArray::{@, fill_true, get_size, make, set}};
-import CPLib.Trait::{FromI64, Integer, FromI64::from_i64};
+import CPLib.Trait::Integer;
 import Std::{
     loop, undefined, Add, Array, Bool, I128, I64, Iterator, Multiplicative, Option, String, U128, U32, 
     U64, U8, Add::add, 
@@ -883,6 +883,20 @@ DEPRECATED[pythagorean_triples, "Use `CPLib.Arithmetic::calc_pythagorean_triples
 // よって、t を連分数展開することで L(t) = r L(u) なる r, u の組を作り、L(u) = Z[w] となることがあるか（つまり u in Z[w] となるか）を見れば良い。
 // 連分数展開はいずれ簡約になり、そのあとは巡回するので、はじめて簡約になってから再訪するまでに u in Z[w] とならなければ、単項生成ではないことが言える。
 
+// `I64`の値`x`を、`Integer`の演算（0、1、足し算、引き算）だけを使って`a`の値にする
+//
+// 計算量：O(log |x|)回の`a`の演算
+//
+// # Parameters
+// - `x`: 整数
+_integer_from_i64 : [a : Integer] I64 -> a = |x| (
+    // -x が溢れないように、負の数は -(x + 1) - 1 として扱う
+    if x < 0 { zero - one - _integer_from_i64(-(x + 1)) };
+    if x == 0 { zero };
+    let h = _integer_from_i64(x / 2);
+    if x % 2 == 0 { h + h } else { h + h + one }
+);
+
 // PQaアルゴリズムの1ステップ
 // 
 // t = (p + w) / q と表示される無理数の連分数展開を1ステップ進める。
@@ -911,7 +925,7 @@ _pqa_step : I64 -> I64 -> (I64, I64) -> (I64, (I64, I64)) = |d, s, (p, q)| (
 // # Parameters
 // - `g` : 行列
 _pqa_step_g : [a : Integer] (a, a, a, a) -> I64 -> (a, a, a, a) = |g, a| (
-    let a = a.from_i64;
+    let a = _integer_from_i64(a);
     let (i, j, k, l) = g; 
     (a * i + j, i, a * k + l, k)
 );
@@ -977,7 +991,7 @@ _pqa_fundamental_unit : [a : Integer] I64 -> I64 -> (a, a) = |d, s| (
     let (a, t) = _pqa_step(d, s, (s, 1));
     let (_, (_, _, k, l)) = _pqa(d, s, _pqa_step_g(_pqa_identity, a), t).as_some;
     // 基本単数は kt + l
-    (k * s.from_i64 + l, k)
+    (k * _integer_from_i64(s) + l, k)
 );
 
 // `d`が正の平方数でない整数であることを検査し、`floor(root(d))`を返す
@@ -1183,9 +1197,9 @@ calc_general_pell_representatives : [a : Integer] I64 -> I64 -> Array (a, a) = |
                 none() => none(),
                 some((_u, (i, j, k, l))) => (
                     // t = gu, u is integral
-                    let z = z.from_i64;
-                    let m = m.from_i64;
-                    let e = e.from_i64;
+                    let z = _integer_from_i64(z);
+                    let m = _integer_from_i64(m);
+                    let e = _integer_from_i64(e);
                     let x = k*z - m*i;
                     let y = k;
                     (x*e, y*e).some
@@ -1217,7 +1231,8 @@ calc_general_pell_representatives : [a : Integer] I64 -> I64 -> Array (a, a) = |
 // assert(|_|"", sols.to_iter.check_all(|(x, y)| (x * x - 2 * y * y).abs == 7))
 // ```
 iterate_general_pell_solutions : [?it : Iterator, Item ?it = (a, a), a : Integer] I64 -> I64 -> ?it = |d, m| (
-    let multiply = |(x, y), (a, b)| let d = d.from_i64; (x*a + d*y*b, x*b + a*y);
+    let d_a = _integer_from_i64(d);
+    let multiply = |(x, y), (a, b)| (x*a + d_a*y*b, x*b + a*y);
     let normalize = |(x, y)| (
         let x = if x < zero { -x } else { x };
         let y = if y < zero { -y } else { y };
@@ -1227,7 +1242,7 @@ iterate_general_pell_solutions : [?it : Iterator, Item ?it = (a, a), a : Integer
     let rs = calc_general_pell_representatives(d, m);
     if rs.is_empty { [].to_iter.to_dyn };
     let e0 = calc_pell_fundamental_solution(d);
-    let e1 = let (x, y) = e0; let s = x*x - d.from_i64*y*y; (s*x, -s*y);
+    let e1 = let (x, y) = e0; let s = x*x - d_a*y*y; (s*x, -s*y);
     
     let es = generate((e0, e1), |(e0n, e1n)|
         let out = [e0n, e1n].to_iter;    

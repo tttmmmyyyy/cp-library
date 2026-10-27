@@ -5,13 +5,13 @@ import CPLib.Arithmetic::{
     _calc_primitive_root, _inv_gcd, add_mod, calc_gcd, calc_lp_table, calc_prime_list, calc_prime_table, 
     calc_pythagorean_triples, calc_totient, calc_totient_table, ext_gcd, factorize, factorize_flat, 
     factorize_via_lp_table, floor_sum, inv_mod, is_prime, isqrt, iterate_general_pell_solutions, 
-    calc_general_pell_representatives, calc_pell_fundamental_solution, _calc_sqrt_mod_prime, _calc_sqrts_mod_factors, 
+    calc_general_pell_representatives, calc_pell_fundamental_solution, _calc_sqrt_mod_prime, _calc_sqrts_mod_factors, _integer_from_i64, 
     lift_crt, mul_mod, pmod, pow_mod, pow_mod_u, power, sub_mod
 };
 import EZS::{cd, run_o, run_wi_oec, Context::default};
 import Random::{generate_I64_nonneg, generate_U64, init_by_seed};
 import Std::{
-    loop, Array, Bool, F64, I64, IO, U64, Array::{@, @size, sort, to_iter}, 
+    loop, Array, Bool, F64, I128, I64, IO, U64, Array::{@, @size, sort, to_iter}, 
     Array::{find_by, get_sub}, Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, 
     I32::maximum, I64::{abs, maximum, minimum, shift_left}, IO::println, 
     Iterator::{
@@ -20,7 +20,7 @@ import Std::{
     }, 
     LessThan::max, LoopState::{break, continue}, Monad::pure, Option::{as_some, is_none, is_some, none, some}, 
     String::{find, format, populate}, ToI64::i64, 
-    ToString::to_string, ToU128::u128, ToU64::u64, U64::{maximum, shift_left, shift_right}
+    ToI128::i128, ToString::to_string, ToU128::u128, ToU64::u64, U64::{maximum, shift_left, shift_right}
 };
 
 // floor_math:
@@ -655,6 +655,14 @@ test_out_of_range = (
     ezs.cd("../..")
 );
 
+// `Integer`の演算だけで`I64`の値を作る変換が、元の値を保つことを確かめる
+test_integer_from_i64 : IO () = (
+    [0, 1, -1, 2, -2, 12345, -98765, I64::maximum, I64::minimum].to_iter.fold_m((), |x, _|
+        assert_eq(|_|"_integer_from_i64 I64 {}".format((x,)), (_integer_from_i64(x) : I64), x);;
+        assert_eq(|_|"_integer_from_i64 I128 {}".format((x,)), (_integer_from_i64(x) : I128), x.i128)
+    )
+);
+
 // 平方根を、総当たりで求めたものと比べる
 test_sqrt_mod : IO () = (
     range(1, 301).fold_m((), |m, _|
@@ -677,6 +685,7 @@ test_sqrt_mod : IO () = (
 );
 
 test_pell : IO () = (
+    test_integer_from_i64;;
     test_sqrt_mod;;
     test_pell_fundamental_solution;;
     test_pell_representatives;;
