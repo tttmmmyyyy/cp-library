@@ -2,11 +2,12 @@ module CPLib.Arithmetic.Test;
 
 import BoolArray::BoolArray::@;
 import CPLib.Arithmetic::{
-    _calc_primitive_root, _inv_gcd, add_mod, calc_gcd, calc_lp_table, calc_prime_list, calc_prime_table, 
-    calc_pythagorean_triples, calc_totient, calc_totient_table, ext_gcd, factorize, factorize_flat, 
-    factorize_via_lp_table, floor_sum, inv_mod, is_prime, isqrt, iterate_general_pell_solutions, 
-    calc_general_pell_representatives, calc_pell_fundamental_solution, _calc_sqrt_mod_prime, _calc_sqrts_mod_factors, _integer_from_i64, 
-    lift_crt, mul_mod, pmod, pow_mod, pow_mod_u, power, sub_mod
+    add_mod, calc_gcd, calc_general_pell_representatives, calc_general_pell_solutions,
+    calc_lp_table, calc_pell_fundamental_solution, calc_prime_list, calc_prime_table,
+    _calc_primitive_root, calc_pythagorean_triples, _calc_sqrt_mod_prime, _calc_sqrts_mod_factors,
+    calc_totient, calc_totient_table, ext_gcd, factorize, factorize_flat, factorize_via_lp_table,
+    floor_sum, _integer_from_i64, _inv_gcd, inv_mod, is_prime, isqrt, lift_crt, mul_mod, pmod,
+    pow_mod, pow_mod_u, power, sub_mod
 };
 import EZS::{cd, run_o, run_wi_oec, Context::default};
 import Random::{generate_I64_nonneg, generate_U64, init_by_seed};
@@ -797,11 +798,11 @@ test_pell_representatives : IO () = (
 test_pell_solutions : IO () = (
     _non_square_ds(31).to_iter.fold_m((), |d, _|
         range(1, 41).fold_m((), |m, _|
-            let msg = |what| "iterate_general_pell_solutions d={} m={}: {}".format((d, m, what));
+            let msg = |what| "calc_general_pell_solutions d={} m={}: {}".format((d, m, what));
             let brute = _pell_brute_solutions(d, m, 50);
             // 解が大きくなると I64 があふれるので、小さい解が出そろうまでの個数だけ取り出す
             let sols : Array (I64, I64) = loop(1, |k|
-                let sols = iterate_general_pell_solutions(d, m).take(k).to_array;
+                let sols = calc_general_pell_solutions(d, m).take(k).to_array;
                 if k >= 64 || brute.to_iter.check_all(|b| sols.find_by(|s| s == b).is_some) { break $ sols };
                 continue $ k + 1
             );
@@ -811,7 +812,7 @@ test_pell_solutions : IO () = (
             assert(|_|msg("distinct"), range(0, n).check_all(|i| range(0, i).check_all(|j| sols.@(i) != sols.@(j))))
         )
     );;
-    assert_eq(|_|"iterate_general_pell_solutions no solution 1", (iterate_general_pell_solutions(2, 3).take(5).to_array : Array (I64, I64)), []);;
-    assert_eq(|_|"iterate_general_pell_solutions no solution 2", (iterate_general_pell_solutions(10, 3).take(5).to_array : Array (I64, I64)), []);;
+    assert_eq(|_|"calc_general_pell_solutions no solution 1", (calc_general_pell_solutions(2, 3).take(5).to_array : Array (I64, I64)), []);;
+    assert_eq(|_|"calc_general_pell_solutions no solution 2", (calc_general_pell_solutions(10, 3).take(5).to_array : Array (I64, I64)), []);;
     pure()
 );
