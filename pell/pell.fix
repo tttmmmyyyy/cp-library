@@ -94,11 +94,11 @@ _integer_from_i64 : [a : Integer] I64 -> a = |x| (
 // - `s` : w = root(d) の整数部分
 // - `pq`: `(p, q)`。 q != 0, q | (d - p^2)
 _pqa_step : I64 -> I64 -> (I64, I64) -> (I64, (I64, I64)) = |d, s, (p, q)| (
-    // flooor(x / y) を計算する。y > 0 を仮定
+    // floor(x / y) を計算する。y > 0 を仮定
     let floor_div : I64 -> I64 -> I64 = |x, y| (
-        if x >= zero { x / y } else { (x - y + one) / y } 
+        if x >= 0 { x / y } else { (x - y + 1) / y }
     );
-    let a = if q > zero { floor_div(p + s, q) } else { floor_div(-(p + s + one), -q) };
+    let a = if q > 0 { floor_div(p + s, q) } else { floor_div(-(p + s + one), -q) };
     let p = a * q - p;
     // p は |m| 程度まで大きくなりうるので、p^2 は I128 で計算する。商は I64 に収まる。
     let q = ((d.i128 - p.i128 * p.i128) / q.i128).i64;
@@ -235,7 +235,7 @@ calc_pell_fundamental_solution : [a : Integer] I64 -> (a, a) = |d| (
 //
 // 制約：d > 0、dは平方数でない、m != 0
 //
-// 計算量：O(|m|^(1/4) log(|m|)^2 + N (log(|m|) + r))回の演算（前の項は期待値）。N は、e^2 が |m| を割り切る e すべてにわたる、z^2 = d (mod |m|/e^2) の解 z の個数の和。
+// 計算量：O(E |m|^(1/4) log(|m|) + N (log(|m|) + r))回の演算（前の項は期待値）。E は e^2 が |m| を割り切る正の整数 e の個数、N は、そのような e すべてにわたる、z^2 = d (mod |m|/e^2) の解 z の個数の和。
 // r は root(d) の連分数展開の周期の長さで、r = O(root(d) log(d))。
 // 
 // # Parameters
@@ -263,7 +263,7 @@ calc_general_pell_representatives : [a : Integer] I64 -> I64 -> Array (a, a) = |
             match _pqa(d, s, _pqa_identity, t) {
                 none() => none(),
                 some((_u, (i, j, k, l))) => (
-                    // t = gu, u is integral
+                    // t = g u で、u は Z[w] の元
                     let z = _integer_from_i64(z);
                     let m = _integer_from_i64(m);
                     let e = _integer_from_i64(e);

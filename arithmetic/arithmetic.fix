@@ -1022,11 +1022,12 @@ _calc_sqrts_mod_prime_power : I64 -> I64 -> I64 -> Array I64 = |a, p, k| (
 calc_sqrts_mod : I64 -> I64 -> Array I64 = |m, a| (
     if m < 1 { undefined("[CPLib.Arithmetic::calc_sqrts_mod] `m` is less than 1") };
     // 素数べきごとに平方根を求め、中国剰余定理で組み合わせる
-    let (zs, _) = m.factorize.to_iter.fold(([0], 1), |(p, k), (zs, m)|
+    // zs は、それまでに処理した素数べきの積 n を法とする平方根
+    let (zs, _) = m.factorize.to_iter.fold(([0], 1), |(p, k), (zs, n)|
         let pk = p.power(k.i64);
         let ys = _calc_sqrts_mod_prime_power(a, p, k.i64);
-        let zs = zs.to_iter.flat_map(|z| ys.to_iter.map(|y| let (r, _) = lift_crt([z, y], [m, pk]); r)).to_array;
-        (zs, m * pk)
+        let zs = zs.to_iter.flat_map(|z| ys.to_iter.map(|y| let (r, _) = lift_crt([z, y], [n, pk]); r)).to_array;
+        (zs, n * pk)
     );
     zs.sort
 );

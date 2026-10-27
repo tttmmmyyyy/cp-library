@@ -664,7 +664,7 @@ test_linear_sieve = (
 );
 
 // 制約を満たさない引数を渡すと、`pow_mod`（負の指数）、`lift_crt`（長さの違う配列、1未満の法）、
-// ペル方程式の関数（平方数か正でない`d`、0の`m`）が理由を書いて止まる
+// `calc_sqrts_mod`（1未満の法）が理由を書いて止まる
 test_out_of_range : IO ();
 test_out_of_range = (
     let ezs = EZS::Context::default;
@@ -699,7 +699,7 @@ test_sqrt_mod : IO () = (
     [(1000000007 * 998244353, 4), (1.shift_left(60), 4), (3 * 5 * 7 * 11 * 13 * 17 * 19 * 23 * 29 * 31 * 37, 2048)].to_iter.fold_m((), |(m, n), _|
         range(1, 20).fold_m((), |i, _|
             let z = mul_mod(i, 123456789123457, m).pmod(m);
-            let z = if z % 2 == 0 { z + 1 } else { z }; // 2^60 では奇数の z だけを使う
+            let z = if z % 2 == 0 { z + 1 } else { z }; // 2^60 と互いに素になるよう、z を奇数にする
             if calc_gcd(z, m) != 1 { pure() };
             let a = mul_mod(z, z, m);
             let roots = a.calc_sqrts_mod(m);

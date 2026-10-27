@@ -26,6 +26,7 @@ test : IO () = (
     pure()
 );
 
+// 制約を満たさない引数を渡すと、ペル方程式の関数（平方数か正でない`d`、0の`m`）が理由を書いて止まる
 test_out_of_range : IO () = (
     let ezs = EZS::Context::default;
     ezs.cd("pell/out-of-range");;
