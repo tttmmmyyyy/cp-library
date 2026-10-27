@@ -1,0 +1,140 @@
+module CPLib.Pell.Test;
+
+import CPLib.Arithmetic::isqrt;
+import CPLib.Pell::{
+    _integer_from_i64, calc_general_pell_representatives, calc_general_pell_solutions, 
+    calc_pell_fundamental_solution
+};
+import EZS::{cd, run_o, run_wi_oec, Context::default};
+import Std::{
+    loop, Array, Bool, I128, I64, IO, Array::{@, @size, find_by, to_iter}, Debug::{assert, assert_eq}, 
+    I64::{abs, maximum, minimum}, 
+    Iterator::{
+        check_all, check_any, count_up, filter, filter_map, flat_map, fold_m, get_first, range, take, 
+        to_array
+    }, 
+    LoopState::{break, continue}, Monad::pure, Option::{as_some, is_some, none, some}, 
+    String::{find, format}, ToI128::i128, ToI64::i64, ToString::to_string, ToU64::u64
+};
+
+test : IO () = (
+    test_integer_from_i64;;
+    test_pell_fundamental_solution;;
+    test_pell_representatives;;
+    test_pell_solutions;;
+    test_out_of_range;;
+    pure()
+);
+
+test_out_of_range : IO () = (
+    let ezs = EZS::Context::default;
+    ezs.cd("pell/out-of-range");;
+    ezs.run_o(["fix", "deps", "update"]);;
+    let messages = [
+        "[CPLib.Pell::calc_pell_fundamental_solution] `d` is a square number",
+        "[CPLib.Pell::calc_general_pell_representatives] `d` is not positive",
+        "[CPLib.Pell::calc_general_pell_representatives] `m` is zero"
+    ];
+    range(0, messages.@size).fold_m((), |case, _|
+        let (_, err, code) = *ezs.run_wi_oec(["fix", "run"], case.to_string);
+        assert_eq(|_|"case " + case.to_string + ": " + err, code != 0_U8 && err.find(messages.@(case), 0).is_some, true)
+    );;
+    let (out, _, code) = *ezs.run_wi_oec(["fix", "run"], messages.@size.to_string);
+    assert_eq(|_|"in range: " + out, code == 0_U8 && out.find("((8, 3), [(-3, 1), (3, 1)])", 0).is_some, true);;
+    // 後のテストのために、作業ディレクトリをライブラリのルートに戻す
+    ezs.cd("../..")
+);
+
+// `Integer`の演算だけで`I64`の値を作る変換が、元の値を保つことを確かめる
+test_integer_from_i64 : IO () = (
+    [0, 1, -1, 2, -2, 12345, -98765, I64::maximum, I64::minimum].to_iter.fold_m((), |x, _|
+        assert_eq(|_|"_integer_from_i64 I64 {}".format((x,)), (_integer_from_i64(x) : I64), x);;
+        assert_eq(|_|"_integer_from_i64 I128 {}".format((x,)), (_integer_from_i64(x) : I128), x.i128)
+    )
+);
+
+// `x^2 - d y^2`
+_pell_norm : I64 -> (I64, I64) -> I64 = |d, (x, y)| x * x - d * y * y;
+
+// `[2, n)` に含まれる平方数でない整数
+_non_square_ds : I64 -> Array I64 = |n| (
+    range(2, n).filter(|d| let s = isqrt(d.u64).i64; s * s != d).to_array
+);
+
+// `x + y root(d)` と `u + v root(d)` の比が単数かどうか
+_pell_same_class : I64 -> (I64, I64) -> (I64, I64) -> Bool = |d, (x, y), (u, v)| (
+    // (x + y root(d)) / (u + v root(d)) = (x + y root(d)) (u - v root(d)) / N(u + v root(d))
+    let n = _pell_norm(d, (u, v));
+    let p = x * u - d * y * v;
+    let q = y * u - x * v;
+    if p % n != 0 || q % n != 0 { false };
+    _pell_norm(d, (p / n, q / n)).abs == 1
+);
+
+// `|x^2 - d y^2| = m` を満たす非負の整数解のうち、`y <= y_max` のもの
+_pell_brute_solutions : I64 -> I64 -> I64 -> Array (I64, I64) = |d, m, y_max| (
+    range(0, y_max + 1).flat_map(|y|
+        [d * y * y + m, d * y * y - m].to_iter.filter_map(|t|
+            if t < 0 { none() };
+            let x = isqrt(t.u64).i64;
+            if x * x != t { none() };
+            (x, y).some
+        )
+    ).to_array
+);
+
+// 基本解を、`|x^2 - d y^2| = 1` を満たす最小の `y >= 1` を総当たりで探したものと比べる
+test_pell_fundamental_solution : IO () = (
+    _non_square_ds(101).to_iter.fold_m((), |d, _|
+        let actual : (I64, I64) = calc_pell_fundamental_solution(d);
+        let expected = count_up(1).filter_map(|y|
+            [d * y * y + 1, d * y * y - 1].to_iter.filter_map(|t|
+                let x = isqrt(t.u64).i64;
+                if x * x != t { none() };
+                (x, y).some
+            ).get_first
+        ).get_first.as_some;
+        assert_eq(|_|"calc_pell_fundamental_solution d={}".format((d,)), actual, expected)
+    )
+);
+
+// 代表解が、解であること、互いに単数倍で移り合わないこと、総当たりで見つけた解をすべて単数倍で表せることを確かめる
+test_pell_representatives : IO () = (
+    _non_square_ds(41).to_iter.fold_m((), |d, _|
+        range(1, 61).fold_m((), |m, _|
+            let reps : Array (I64, I64) = calc_general_pell_representatives(d, m);
+            let n = reps.@size;
+            let msg = |what| "calc_general_pell_representatives d={} m={}: {}".format((d, m, what));
+            assert(|_|msg("norm"), reps.to_iter.check_all(|r| _pell_norm(d, r).abs == m));;
+            assert(|_|msg("distinct classes"), range(0, n).check_all(|i|
+                range(0, i).check_all(|j| !_pell_same_class(d, reps.@(i), reps.@(j)))
+            ));;
+            assert(|_|msg("coverage"), _pell_brute_solutions(d, m, 200).to_iter.check_all(|(x, y)|
+                [(x, y), (x, -y)].to_iter.check_all(|b| reps.to_iter.check_any(|r| _pell_same_class(d, b, r)))
+            ))
+        )
+    )
+);
+
+// 総当たりで見つけた小さい解がすべて出るまでの出力が、重複のない非負の解であることを確かめる
+test_pell_solutions : IO () = (
+    _non_square_ds(31).to_iter.fold_m((), |d, _|
+        range(1, 41).fold_m((), |m, _|
+            let msg = |what| "calc_general_pell_solutions d={} m={}: {}".format((d, m, what));
+            let brute = _pell_brute_solutions(d, m, 50);
+            // 解が大きくなると I64 があふれるので、小さい解が出そろうまでの個数だけ取り出す
+            let sols : Array (I64, I64) = loop(1, |k|
+                let sols = calc_general_pell_solutions(d, m).take(k).to_array;
+                if k >= 64 || brute.to_iter.check_all(|b| sols.find_by(|s| s == b).is_some) { break $ sols };
+                continue $ k + 1
+            );
+            let n = sols.@size;
+            assert(|_|msg("coverage"), brute.to_iter.check_all(|b| sols.find_by(|s| s == b).is_some));;
+            assert(|_|msg("valid"), sols.to_iter.check_all(|(x, y)| x >= 0 && y >= 0 && _pell_norm(d, (x, y)).abs == m));;
+            assert(|_|msg("distinct"), range(0, n).check_all(|i| range(0, i).check_all(|j| sols.@(i) != sols.@(j))))
+        )
+    );;
+    assert_eq(|_|"calc_general_pell_solutions no solution 1", (calc_general_pell_solutions(2, 3).take(5).to_array : Array (I64, I64)), []);;
+    assert_eq(|_|"calc_general_pell_solutions no solution 2", (calc_general_pell_solutions(10, 3).take(5).to_array : Array (I64, I64)), []);;
+    pure()
+);

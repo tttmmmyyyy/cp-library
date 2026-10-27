@@ -1,0 +1,331 @@
+// 一般ペル方程式 x^2 - d y^2 = ±m を解く関数を与えるモジュール。
+//
+// - `calc_pell_fundamental_solution`：ペル方程式 x^2 - d y^2 = ±1 の基本解
+// - `calc_general_pell_representatives`：x^2 - d y^2 = ±m の代表解のリスト。すべての解は、代表解に基本解のべきを掛けて得られる。
+// - `calc_general_pell_solutions`：x^2 - d y^2 = ±m の非負の解をすべて列挙するイテレータ
+//
+// 解の型は、型パラメータ`a : Integer`で選ぶ。解は指数的に大きくなるので、`I64`に収まらないときは多倍長整数の型（gmp-fix の`MPZ`など）を使う。
+//
+// 使用例：
+// ```fix
+// // x^2 - 2 y^2 = ±1 の基本解は 1 + root(2)
+// assert_eq(|_|"", (calc_pell_fundamental_solution(2) : (I64, I64)), (1, 1));;
+// // x^2 - 2 y^2 = ±7 の非負の解を4つ
+// let sols : Array (I64, I64) = calc_general_pell_solutions(2, 7).take(4).to_array;
+// assert(|_|"", sols.to_iter.check_all(|(x, y)| (x * x - 2 * y * y).abs == 7))
+// ```
+//
+// ## アルゴリズム
+//
+// 正の非平方数dに対し、w = root(d) とする。
+//
+// Z[w] の単数は、符号を除いて eps^n (n は整数) という形である。epsは基本単数。
+//
+// t in Q[w] が簡約であるとは、1 < t, -1 < t' < 0 であることをいう（t'は共役）。
+//
+// t in Q[w] \ Q に対し、対応する格子を L(t) = Z + tZ と定義する。
+//
+// t in Q[w] の連分数展開 t(0) = t, t(i) = a(i) + 1/t(i+1) （a(i) は t(i) の整数部分）は、途中から簡約になり、初めて簡約になった場所から巡回する（Lagrange, Galois）。
+//
+// t を連分数展開して u になったとき、展開は t = g u (1次分数変換) となる g in GL2(Z) を与え、ここから L(t) = r L(u) となる r in Q[w] が得られる。
+//
+// 定理（格子 L(t) の極小点を使って示せる）：
+// t, u in Q[w] が簡約で、r in Q[w], |r| <= 1 に対し L(t) = r L(u) となっているとする。
+// このとき、ある i について t(i) = u であり、r はこの連分数展開から上の方法で（符号を除いて）得られる。
+//
+// ### ペル方程式 x^2 - dy^2 = ±1
+//
+// これは Z[w] の単元（ノルムが±1の元）を求める問題である。これは Z[w] = r Z[w] となる元 r に他ならない。
+// Z[w] = L(s + w) (s = floor(w)) であり、s + w は簡約である。
+// よって、s + w を連分数展開すると、|r| <= 1 な単数がすべて得られる。特に、r = 1 を除いて初めて得たそのような r は基本単数の逆数であり、その逆数が基本単数である。
+//
+// ### 一般ペル方程式 x^2 - dy^2 = ±m
+//
+// m を m / (平方数) に取り替えることで、x, y が互いに素な解（原始解）を求める問題に帰着できる。
+//
+// 以下の集合の対応がある：
+//
+// ```
+//   { x^2 - dy^2 = ±m の原始解の単元倍による軌道 }
+// = { Z[w] のイデアル I で、原始的で、指数 |Z[w]/I| が |m| で、単項生成なもの } ※ イデアルが原始的とは、k Z[w] (k > 0 は整数) に含まれないイデアルのこと。
+// ⊂ { Z[w] のイデアル I で、原始的で、指数 |Z[w]/I| が |m| なもの }
+// = { 環準同型 Z[w] -> Z/m } ※ Kernelで対応
+// = { z in Z/m : z^2 = d } ※ w の行き先で対応
+// ```
+//
+// z in Z/m : z^2 = d をとったとき、対応するイデアルは I(z) = |m|Z + (z + w)Z である。
+// これが単項生成であるかどうかを判定し、生成元をひとつ求め、すべての単元を乗算すればよい。
+//
+// t = (z + w)/|m| とおくと、I(z) = |m| L(t) であり、I(z) が単項生成であるとは、L(t) = r Z[w] となる r in Q[w] があることに他ならない。
+// よって、t を連分数展開することで L(t) = r L(u) なる r, u の組を作り、L(u) = Z[w] となることがあるか（つまり u in Z[w] となるか）を見れば良い。
+// 連分数展開はいずれ簡約になり、そのあとは巡回するので、はじめて簡約になってから再訪するまでに u in Z[w] とならなければ、単項生成ではないことが言える。
+module CPLib.Pell;
+
+import CPLib.Arithmetic::{calc_sqrts_mod, factorize, isqrt, power};
+import CPLib.Trait::Integer;
+import Std::{
+    loop, undefined, Array, Bool, I64, Iterator, Option, String, Array::{is_empty, to_iter}, I64::abs, 
+    Iterator::{filter_map, flat_map, flatten, fold, generate, map, push_front, range, to_array, to_dyn, Item}, 
+    LoopState::{break, continue}, One::one, Option::{as_some, is_none, is_some, none, some}, 
+    ToI128::i128, ToI64::i64, ToU64::u64, Zero::zero
+};
+
+// `I64`の値`x`を、`Integer`の演算（0、1、足し算、引き算）だけを使って`a`の値にする
+//
+// 計算量：O(log |x|)回の`a`の演算
+//
+// # Parameters
+// - `x`: 整数
+_integer_from_i64 : [a : Integer] I64 -> a = |x| (
+    // -x が溢れないように、負の数は -(x + 1) - 1 として扱う
+    if x < 0 { zero - one - _integer_from_i64(-(x + 1)) };
+    if x == 0 { zero };
+    let h = _integer_from_i64(x / 2);
+    if x % 2 == 0 { h + h } else { h + h + one }
+);
+
+// PQaアルゴリズムの1ステップ
+// 
+// t = (p + w) / q と表示される無理数の連分数展開を1ステップ進める。
+// 整数部分 a と次の無理数 u を表示する (p, q) を返す。t = a + 1/u。
+// 
+// # Parameters
+// - `d` : 平方数でない正の自然数
+// - `s` : w = root(d) の整数部分
+// - `pq`: `(p, q)`。 q != 0, q | (d - p^2)
+_pqa_step : I64 -> I64 -> (I64, I64) -> (I64, (I64, I64)) = |d, s, (p, q)| (
+    // flooor(x / y) を計算する。y > 0 を仮定
+    let floor_div : I64 -> I64 -> I64 = |x, y| (
+        if x >= zero { x / y } else { (x - y + one) / y } 
+    );
+    let a = if q > zero { floor_div(p + s, q) } else { floor_div(-(p + s + one), -q) };
+    let p = a * q - p;
+    // p は |m| 程度まで大きくなりうるので、p^2 は I128 で計算する。商は I64 に収まる。
+    let q = ((d.i128 - p.i128 * p.i128) / q.i128).i64;
+    (a, (p, q))
+);
+
+// PQaアルゴリズムの1ステップ：行列の更新
+// 
+// g = (i, j, k, l) に右から (a, 1, 1, 0) を乗算する
+// 
+// # Parameters
+// - `g` : 行列
+_pqa_step_g : [a : Integer] (a, a, a, a) -> I64 -> (a, a, a, a) = |g, a| (
+    let a = _integer_from_i64(a);
+    let (i, j, k, l) = g; 
+    (a * i + j, i, a * k + l, k)
+);
+
+// t = (p + w) / q が簡約かどうか判定する
+// 
+// # Parameters
+// - `s` : w = root(d) の整数部分
+// - `pq`: `(p, q)`。 q != 0
+_pqa_reduced : I64 -> (I64, I64) -> Bool = |s, (p, q)| (
+    0 < q && 0 < p && p <= s && s - p < q && q <= s + p
+);
+
+// PQaアルゴリズム
+// 
+// |q| = 1 となるまで t = (p + w) / q の連分数展開を行う。
+// |q| = 1 とならない場合は `none()` を返す。
+// |q| = 1 となったときは、以下のものを返す：
+// - 止まったときの無理数 u = (p + w) / q に対応する (p, q)。|q| = 1。
+// - t0 = h u （1次分数変換）となるような行列 h = g0 g。ここで g0 は引数で受け取った行列、g は t = g u となる行列。
+// 
+// はじめから |q| = 1 の場合は、t そのものと g0 を返す。
+// 
+// # Parameters
+// - `d` : 平方数でない正の整数
+// - `s` : w = root(d) の整数部分
+// - `g0` : 展開の前に掛けておく行列 (i, j, k, l)
+// - `pq`: `(p, q)`。 q != 0, q | (d - p^2)
+_pqa : [a : Integer] I64 -> I64 -> (a, a, a, a) -> (I64, I64) -> Option ((I64, I64), (a, a, a, a)) = |d, s, g, t| (
+    // red は最初に得られた簡約な t。
+    // 簡約な2次無理数を連分数展開するといずれ自身に戻ってくるので、
+    // t が red に戻ってきたら、展開が巡回し始めたとわかる。
+    loop((t, g, none()), |(t, g, red)|
+        let (p, q) = t;
+        if q.abs == 1 { (t, g).some.break };
+        if red.is_some && red.as_some == t { // 以前訪れた簡約な t に戻ったら
+            none().break
+        };
+        let red = if red.is_none && _pqa_reduced(s, t) { t.some } else { red };
+        let (a, t) = _pqa_step(d, s, t);
+        let g = _pqa_step_g(g, a);
+        (t, g, red).continue
+    )
+);
+
+// 単位行列
+_pqa_identity : [a : Integer] (a, a, a, a) = (one, zero, zero, one);
+
+// PQa アルゴリズムを使って、Z[w] の基本単数を求める
+// 
+// # Parameters
+// - `d` : 平方数でない正の整数
+// - `s` : w = root(d) の整数部分
+// 
+// # Returns
+// ある基本単数 a + bw に対する (a, b)
+_pqa_fundamental_unit : [a : Integer] I64 -> I64 -> (a, a) = |d, s| (
+    // t = s + w は簡約で、q = 1 を満たす。よって t の連分数展開は必ず t に戻る。
+    // 初めて |q| = 1 となる u = (p + w) / q で終わったとき、t = gu となる g から L(t) = r L(u) <=> Z[w] = r Z[w] となり、r は単数である。
+    // さらに、定理より、Z[w] = r Z[w] となるような r はすべて t = s + w の連分数展開から作られるので、
+    // 「初めて|q| = 1 となる」のところで止まれば、基本単数が得られる。
+    // t 自身が |q| = 1 を満たすので、1 ステップ進めてから `_pqa` に渡す。
+    let (a, t) = _pqa_step(d, s, (s, 1));
+    let (_, (_, _, k, l)) = _pqa(d, s, _pqa_step_g(_pqa_identity, a), t).as_some;
+    // 基本単数は kt + l
+    (k * _integer_from_i64(s) + l, k)
+);
+
+// `d`が正の平方数でない整数であることを検査し、`floor(root(d))`を返す
+//
+// # Parameters
+// - `name`: エラーメッセージに書く関数名
+// - `d`: 検査する整数
+_check_pell_d : String -> I64 -> I64 = |name, d| (
+    if d <= 0 { undefined("[CPLib.Pell::" + name + "] `d` is not positive") };
+    let s = d.u64.isqrt.i64;
+    if s * s == d { undefined("[CPLib.Pell::" + name + "] `d` is a square number") };
+    s
+);
+
+// ペル方程式 x^2 - d y^2 = ±1 の基本解を求める
+// 
+// 戻り値を e とするとき、解の全体は、符号をのぞき、e^n （nは整数）である。
+// ここで、解 (x, y) を実数 x + y root(d) と同一視している。
+// 
+// 型`a`には、解を表せる大きさの整数の型を指定する。`I64`では、`d`によっては基本解が収まらない（例：d = 526 の基本解は x = 84056091546952933775 で、`I64`の最大値を超える）。
+// 戻り値の型を多倍長整数の型（gmp-fix の`MPZ`など）にすれば、どの`d`でも基本解が求まる。例：`(calc_pell_fundamental_solution(526) : (MPZ, MPZ))`。
+//
+// 制約：d > 0、dは平方数でない
+//
+// 計算量：O(r)回の`a`の演算。r は root(d) の連分数展開の周期の長さで、r = O(root(d) log(d))。
+// 
+// # Parameters
+// - `d` : x^2 - d y^2 = ±1 の d
+// 
+// # Returns
+// x > 0, y > 0 を満たす (x, y)。x + y root(d) は x^2 - d y^2 = ±1 の解のうち 1 より大きい最小のもの。
+//
+// # Examples
+// ```fix
+// assert_eq(|_|"", (calc_pell_fundamental_solution(2) : (I64, I64)), (1, 1));; // 1^2 - 2 * 1^2 = -1
+// assert_eq(|_|"", (calc_pell_fundamental_solution(7) : (I64, I64)), (8, 3)) // 8^2 - 7 * 3^2 = 1
+// ```
+calc_pell_fundamental_solution : [a : Integer] I64 -> (a, a) = |d| (
+    let s = _check_pell_d("calc_pell_fundamental_solution", d);
+    _pqa_fundamental_unit(d, s)
+);
+
+// 一般ペル方程式 x^2 - d y^2 = ±m の代表解のリストを求める
+// 
+// ペル方程式 x^2 - d y^2 = ±1 の基本解を e とする。
+// 一般ペル方程式 x^2 - d y^2 = ±m の解は、符号をのぞき、代表解のどれか r から r e^n （nは整数）として一意に得られる。
+// ここで、解 (x, y) を実数 x + y root(d) と同一視している。
+// 
+// 代表解のリストに、ある代表解 x + y root(d) と、その共役 x - y root(d) を単数倍したものの両方が現れることがある。
+// これは無駄ではなく、e^n を乗算することですべての解を生成するためには、両方が必要である。
+//
+// 型`a`には、代表解を表せる大きさの整数の型を指定する。代表解は基本解と同程度に大きくなることがあり、`I64`に収まるとは限らない。
+// 戻り値の型を多倍長整数の型（gmp-fix の`MPZ`など）にすれば、どの`d`、`m`でも代表解が求まる。例：`(calc_general_pell_representatives(526, 7) : Array (MPZ, MPZ))`。
+//
+// 制約：d > 0、dは平方数でない、m != 0
+//
+// 計算量：O(|m|^(1/4) log(|m|)^2 + N (log(|m|) + r))回の演算（前の項は期待値）。N は、e^2 が |m| を割り切る e すべてにわたる、z^2 = d (mod |m|/e^2) の解 z の個数の和。
+// r は root(d) の連分数展開の周期の長さで、r = O(root(d) log(d))。
+// 
+// # Parameters
+// - `d` : x^2 - d y^2 = ±m の d
+// - `m` : x^2 - d y^2 = ±m の m
+//
+// # Examples
+// ```fix
+// // x^2 - 2 y^2 = ±7 の解は、3 + root(2) と -3 + root(2) の単数倍
+// assert_eq(|_|"", (calc_general_pell_representatives(2, 7) : Array (I64, I64)).sort, [(-3, 1), (3, 1)])
+// ```
+calc_general_pell_representatives : [a : Integer] I64 -> I64 -> Array (a, a) = |d, m| (
+    let s = _check_pell_d("calc_general_pell_representatives", d);
+    if m == 0 { undefined("[CPLib.Pell::calc_general_pell_representatives] `m` is zero") };
+    let m = m.abs;
+    // x, y が互いに素なケースに帰着する：e | x,y なら、(x/e)^2 - d (y/e)^2 = m / (e^2) なので、m / (e^2) ごとに解いて、x, y を e 倍する。
+    // m の素因数分解から、e^2 | m となる e をすべて作る。
+    let es = m.factorize.to_iter.fold([1], |(p, k), es|
+        es.to_iter.flat_map(|e| range(0, k.i64 / 2 + 1).map(|f| e * p.power(f))).to_array
+    );
+    es.to_iter.flat_map(|e|
+        let m = m / (e * e);
+        d.calc_sqrts_mod(m).to_iter.filter_map(|z|
+            let t = (z, m);
+            match _pqa(d, s, _pqa_identity, t) {
+                none() => none(),
+                some((_u, (i, j, k, l))) => (
+                    // t = gu, u is integral
+                    let z = _integer_from_i64(z);
+                    let m = _integer_from_i64(m);
+                    let e = _integer_from_i64(e);
+                    let x = k*z - m*i;
+                    let y = k;
+                    (x*e, y*e).some
+                )
+            }
+        )
+    ).to_array
+);
+
+// 一般ペル方程式 x^2 - d y^2 = ±m の非負の解をすべて列挙するイテレータを作る
+//
+// x >= 0, y >= 0 を満たす解 (x, y) を、重複なく、すべて列挙する。解が無限にあれば無限に続き、なければ空である。
+// 解は大きさの順には並ばない。
+//
+// 解は指数的に大きくなる。型`a`の範囲を超える大きさの解に達すると、演算がオーバーフローする。
+// `I64`では、オーバーフローした値が出るか、`--check-integer-operations`を付けてビルドしたときはプログラムが止まる。
+// 範囲を超える解まで列挙したいときは、要素の型を多倍長整数の型（gmp-fix の`MPZ`など）にする。例：`(calc_general_pell_solutions(2, 7).take(100).to_array : Array (MPZ, MPZ))`。
+//
+// 制約：d > 0、dは平方数でない、m != 0
+//
+// 計算量：最初の要素を得るまでに、`calc_general_pell_representatives`と`calc_pell_fundamental_solution`の計算。
+// その後は、1要素あたり、代表解の個数に比例する回数の`a`の演算（ならし）。
+//
+// # Parameters
+// - `d` : x^2 - d y^2 = ±m の d
+// - `m` : x^2 - d y^2 = ±m の m
+//
+// # Examples
+// ```fix
+// let sols : Array (I64, I64) = calc_general_pell_solutions(2, 7).take(4).to_array;
+// assert(|_|"", sols.to_iter.check_all(|(x, y)| (x * x - 2 * y * y).abs == 7))
+// ```
+calc_general_pell_solutions : [?it : Iterator, Item ?it = (a, a), a : Integer] I64 -> I64 -> ?it = |d, m| (
+    let d_a = _integer_from_i64(d);
+    let multiply = |(x, y), (a, b)| (x*a + d_a*y*b, x*b + a*y);
+    let normalize = |(x, y)| (
+        let x = if x < zero { -x } else { x };
+        let y = if y < zero { -y } else { y };
+        (x, y)
+    );
+
+    let rs = calc_general_pell_representatives(d, m);
+    if rs.is_empty { [].to_iter.to_dyn };
+    let e0 = calc_pell_fundamental_solution(d);
+    let e1 = let (x, y) = e0; let s = x*x - d_a*y*y; (s*x, -s*y);
+    
+    let es = generate((e0, e1), |(e0n, e1n)|
+        let out = [e0n, e1n].to_iter;    
+        let state = (e0n.multiply(e0), e1n.multiply(e1));
+        (state, out).some
+    ).flatten.push_front((one, zero));
+
+    es.flat_map(|e|
+        rs.to_iter.filter_map(|r|
+            let xy = e.multiply(r);
+            let (x, y) = xy;
+            // x, y の符号が異なるものは、列挙したい解の共役なので除く（x * y は I64 で溢れうるので、符号で比べる）
+            if (x < zero && y > zero) || (x > zero && y < zero) { none() };
+            xy.normalize.some
+        )
+    ).to_dyn
+);

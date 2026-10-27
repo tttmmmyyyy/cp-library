@@ -2,26 +2,21 @@ module CPLib.Arithmetic.Test;
 
 import BoolArray::BoolArray::@;
 import CPLib.Arithmetic::{
-    add_mod, calc_gcd, calc_general_pell_representatives, calc_general_pell_solutions,
-    calc_lp_table, calc_pell_fundamental_solution, calc_prime_list, calc_prime_table,
-    _calc_primitive_root, calc_pythagorean_triples, _calc_sqrt_mod_prime, _calc_sqrts_mod_factors,
-    calc_totient, calc_totient_table, ext_gcd, factorize, factorize_flat, factorize_via_lp_table,
-    floor_sum, _integer_from_i64, _inv_gcd, inv_mod, is_prime, isqrt, lift_crt, mul_mod, pmod,
-    pow_mod, pow_mod_u, power, sub_mod
+    _calc_primitive_root, _inv_gcd, add_mod, calc_gcd, calc_lp_table, calc_prime_list, calc_prime_table, 
+    calc_pythagorean_triples, calc_sqrt_mod_prime, calc_sqrts_mod, calc_totient, calc_totient_table, 
+    ext_gcd, factorize, factorize_flat, factorize_via_lp_table, floor_sum, inv_mod, is_prime, isqrt, 
+    lift_crt, mul_mod, pmod, pow_mod, pow_mod_u, power, sub_mod
 };
 import EZS::{cd, run_o, run_wi_oec, Context::default};
 import Random::{generate_I64_nonneg, generate_U64, init_by_seed};
 import Std::{
-    loop, Array, Bool, F64, I128, I64, IO, U64, U8, Array::{@, @size, sort, to_iter}, 
-    Array::{find_by, get_sub, push_back}, Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, 
-    I32::maximum, I64::{abs, maximum, minimum, shift_left}, IO::println, 
-    Iterator::{
-        check_all, check_any, collect_m, count_up, filter, filter_map, flat_map, fold, fold_m, get_first, map, 
-        range, take, to_array
-    }, 
-    LessThan::max, LoopState::{break, continue}, Monad::pure, Option::{as_some, is_none, is_some, none, some}, 
-    String::{find, format, populate}, ToI64::i64, 
-    ToI128::i128, ToString::to_string, ToU128::u128, ToU64::u64, U64::{maximum, shift_left, shift_right}
+    loop, Array, F64, I64, IO, U64, U8, Array::{@, @size, find_by, push_back, sort, to_iter}, 
+    Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, I32::maximum, 
+    I64::{maximum, minimum, shift_left}, IO::println, 
+    Iterator::{check_all, collect_m, filter, flat_map, fold, fold_m, map, range, to_array}, 
+    LessThan::max, LoopState::{break, continue}, Monad::pure, Option::{as_some, is_none, is_some}, 
+    String::{find, format, populate}, ToI64::i64, ToString::to_string, ToU128::u128, ToU64::u64, 
+    U64::{maximum, shift_left, shift_right}
 };
 
 // floor_math:
@@ -53,8 +48,8 @@ test = (
     test_calc_primitive_root;;
     test_pythagorean_triples;;
     test_floor_sum;;
+    test_sqrt_mod;;
     test_out_of_range;;
-    test_pell;;
 
     pure()
 );
@@ -679,140 +674,49 @@ test_out_of_range = (
         "[CPLib.Arithmetic::pow_mod] `e` is negative",
         "[CPLib.Arithmetic::lift_crt] `rs` and `ms` have different sizes",
         "[CPLib.Arithmetic::lift_crt] `ms` has an element less than 1",
-        "[CPLib.Arithmetic::calc_pell_fundamental_solution] `d` is a square number",
-        "[CPLib.Arithmetic::calc_general_pell_representatives] `d` is not positive",
-        "[CPLib.Arithmetic::calc_general_pell_representatives] `m` is zero"
+        "[CPLib.Arithmetic::calc_sqrts_mod] `m` is less than 1"
     ];
-    range(0, 6).fold_m((), |case, _|
-        let (_, err, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], case.to_string);
+    range(0, messages.@size).fold_m((), |case, _|
+        let (_, err, code) = *ezs.run_wi_oec(["fix", "run"], case.to_string);
         assert_eq(|_|"case " + case.to_string + ": " + err, code != 0_U8 && err.find(messages.@(case), 0).is_some, true)
     );;
-    let (out, _, code) = *ezs.run_wi_oec(["fix", "run", "--allow-preliminary-commands"], "6");
-    assert_eq(|_|"in range: " + out, code == 0_U8 && out.find("(2, (8, 15))", 0).is_some, true);;
+    let (out, _, code) = *ezs.run_wi_oec(["fix", "run"], messages.@size.to_string);
+    assert_eq(|_|"in range: " + out, code == 0_U8 && out.find("(2, (8, 15), [3, 7])", 0).is_some, true);;
     // 後のテストのために、作業ディレクトリをライブラリのルートに戻す
     ezs.cd("../..")
-);
-
-// `Integer`の演算だけで`I64`の値を作る変換が、元の値を保つことを確かめる
-test_integer_from_i64 : IO () = (
-    [0, 1, -1, 2, -2, 12345, -98765, I64::maximum, I64::minimum].to_iter.fold_m((), |x, _|
-        assert_eq(|_|"_integer_from_i64 I64 {}".format((x,)), (_integer_from_i64(x) : I64), x);;
-        assert_eq(|_|"_integer_from_i64 I128 {}".format((x,)), (_integer_from_i64(x) : I128), x.i128)
-    )
 );
 
 // 平方根を、総当たりで求めたものと比べる
 test_sqrt_mod : IO () = (
     range(1, 301).fold_m((), |m, _|
-        let factors = m.factorize.to_iter.map(|(p, k)| (p, k.i64)).to_array;
         range(0, m).fold_m((), |a, _|
             let expected = range(0, m).filter(|z| z * z % m == a).to_array;
-            assert_eq(|_|"_calc_sqrts_mod_factors a={} m={}".format((a, m)), _calc_sqrts_mod_factors(a, factors).sort, expected)
+            assert_eq(|_|"calc_sqrts_mod a={} m={}".format((a, m)), a.calc_sqrts_mod(m), expected)
+        )
+    );;
+    assert_eq(|_|"calc_sqrts_mod negative a", (-1).calc_sqrts_mod(10), [3, 7]);;
+    // 大きい法では、平方数 z^2 の平方根が z を含み、どれも 2 乗すると z^2 になることを確かめる
+    [(1000000007 * 998244353, 4), (1.shift_left(60), 4), (3 * 5 * 7 * 11 * 13 * 17 * 19 * 23 * 29 * 31 * 37, 2048)].to_iter.fold_m((), |(m, n), _|
+        range(1, 20).fold_m((), |i, _|
+            let z = mul_mod(i, 123456789123457, m).pmod(m);
+            let z = if z % 2 == 0 { z + 1 } else { z }; // 2^60 では奇数の z だけを使う
+            if calc_gcd(z, m) != 1 { pure() };
+            let a = mul_mod(z, z, m);
+            let roots = a.calc_sqrts_mod(m);
+            let msg = |what| "calc_sqrts_mod m={} z={}: {}".format((m, z, what));
+            assert_eq(|_|msg("count"), roots.@size, n);;
+            assert(|_|msg("contains z"), roots.find_by(|r| r == z).is_some);;
+            assert(|_|msg("squares"), roots.to_iter.check_all(|r| mul_mod(r, r, m) == a))
         )
     );;
     [998244353, 1000000007, 4611686018427387847].to_iter.fold_m((), |p, _|
         range(0, 200).fold_m((), |a, _|
             let a = mul_mod(a, 123456789123, p);
-            let r = _calc_sqrt_mod_prime(a, p);
+            let r = a.calc_sqrt_mod_prime(p);
             let is_qr = a == 0 || a.pow_mod((p - 1) / 2, p) == 1;
-            assert_eq(|_|"_calc_sqrt_mod_prime a={} p={}".format((a, p)), r.is_some, is_qr);;
+            assert_eq(|_|"calc_sqrt_mod_prime a={} p={}".format((a, p)), r.is_some, is_qr);;
             if r.is_none { pure() };
-            assert_eq(|_|"_calc_sqrt_mod_prime a={} p={} square".format((a, p)), mul_mod(r.as_some, r.as_some, p), a)
+            assert_eq(|_|"calc_sqrt_mod_prime a={} p={} square".format((a, p)), mul_mod(r.as_some, r.as_some, p), a)
         )
     )
-);
-
-test_pell : IO () = (
-    test_integer_from_i64;;
-    test_sqrt_mod;;
-    test_pell_fundamental_solution;;
-    test_pell_representatives;;
-    test_pell_solutions;;
-    pure()
-);
-
-// `x^2 - d y^2`
-_pell_norm : I64 -> (I64, I64) -> I64 = |d, (x, y)| x * x - d * y * y;
-
-// `[2, n)` に含まれる平方数でない整数
-_non_square_ds : I64 -> Array I64 = |n| (
-    range(2, n).filter(|d| let s = isqrt(d.u64).i64; s * s != d).to_array
-);
-
-// `x + y root(d)` と `u + v root(d)` の比が単数かどうか
-_pell_same_class : I64 -> (I64, I64) -> (I64, I64) -> Bool = |d, (x, y), (u, v)| (
-    // (x + y root(d)) / (u + v root(d)) = (x + y root(d)) (u - v root(d)) / N(u + v root(d))
-    let n = _pell_norm(d, (u, v));
-    let p = x * u - d * y * v;
-    let q = y * u - x * v;
-    if p % n != 0 || q % n != 0 { false };
-    _pell_norm(d, (p / n, q / n)).abs == 1
-);
-
-// `|x^2 - d y^2| = m` を満たす非負の整数解のうち、`y <= y_max` のもの
-_pell_brute_solutions : I64 -> I64 -> I64 -> Array (I64, I64) = |d, m, y_max| (
-    range(0, y_max + 1).flat_map(|y|
-        [d * y * y + m, d * y * y - m].to_iter.filter_map(|t|
-            if t < 0 { none() };
-            let x = isqrt(t.u64).i64;
-            if x * x != t { none() };
-            (x, y).some
-        )
-    ).to_array
-);
-
-// 基本解を、`|x^2 - d y^2| = 1` を満たす最小の `y >= 1` を総当たりで探したものと比べる
-test_pell_fundamental_solution : IO () = (
-    _non_square_ds(101).to_iter.fold_m((), |d, _|
-        let actual : (I64, I64) = calc_pell_fundamental_solution(d);
-        let expected = count_up(1).filter_map(|y|
-            [d * y * y + 1, d * y * y - 1].to_iter.filter_map(|t|
-                let x = isqrt(t.u64).i64;
-                if x * x != t { none() };
-                (x, y).some
-            ).get_first
-        ).get_first.as_some;
-        assert_eq(|_|"calc_pell_fundamental_solution d={}".format((d,)), actual, expected)
-    )
-);
-
-// 代表解が、解であること、互いに単数倍で移り合わないこと、総当たりで見つけた解をすべて単数倍で表せることを確かめる
-test_pell_representatives : IO () = (
-    _non_square_ds(41).to_iter.fold_m((), |d, _|
-        range(1, 61).fold_m((), |m, _|
-            let reps : Array (I64, I64) = calc_general_pell_representatives(d, m);
-            let n = reps.@size;
-            let msg = |what| "calc_general_pell_representatives d={} m={}: {}".format((d, m, what));
-            assert(|_|msg("norm"), reps.to_iter.check_all(|r| _pell_norm(d, r).abs == m));;
-            assert(|_|msg("distinct classes"), range(0, n).check_all(|i|
-                range(0, i).check_all(|j| !_pell_same_class(d, reps.@(i), reps.@(j)))
-            ));;
-            assert(|_|msg("coverage"), _pell_brute_solutions(d, m, 200).to_iter.check_all(|(x, y)|
-                [(x, y), (x, -y)].to_iter.check_all(|b| reps.to_iter.check_any(|r| _pell_same_class(d, b, r)))
-            ))
-        )
-    )
-);
-
-// 総当たりで見つけた小さい解がすべて出るまでの出力が、重複のない非負の解であることを確かめる
-test_pell_solutions : IO () = (
-    _non_square_ds(31).to_iter.fold_m((), |d, _|
-        range(1, 41).fold_m((), |m, _|
-            let msg = |what| "calc_general_pell_solutions d={} m={}: {}".format((d, m, what));
-            let brute = _pell_brute_solutions(d, m, 50);
-            // 解が大きくなると I64 があふれるので、小さい解が出そろうまでの個数だけ取り出す
-            let sols : Array (I64, I64) = loop(1, |k|
-                let sols = calc_general_pell_solutions(d, m).take(k).to_array;
-                if k >= 64 || brute.to_iter.check_all(|b| sols.find_by(|s| s == b).is_some) { break $ sols };
-                continue $ k + 1
-            );
-            let n = sols.@size;
-            assert(|_|msg("coverage"), brute.to_iter.check_all(|b| sols.find_by(|s| s == b).is_some));;
-            assert(|_|msg("valid"), sols.to_iter.check_all(|(x, y)| x >= 0 && y >= 0 && _pell_norm(d, (x, y)).abs == m));;
-            assert(|_|msg("distinct"), range(0, n).check_all(|i| range(0, i).check_all(|j| sols.@(i) != sols.@(j))))
-        )
-    );;
-    assert_eq(|_|"calc_general_pell_solutions no solution 1", (calc_general_pell_solutions(2, 3).take(5).to_array : Array (I64, I64)), []);;
-    assert_eq(|_|"calc_general_pell_solutions no solution 2", (calc_general_pell_solutions(10, 3).take(5).to_array : Array (I64, I64)), []);;
-    pure()
 );

@@ -1,0 +1,17 @@
+// 標準入力で選んだ引数で関数を呼ぶ。0：calc_pell_fundamental_solutionのdが平方数、
+// 1：calc_general_pell_representativesのdが正でない、2：calc_general_pell_representativesのmが0、3：範囲内
+module Main;
+
+import CPLib.IO::read_i;
+import CPLib.Pell::{calc_general_pell_representatives, calc_pell_fundamental_solution};
+
+main : IO ();
+main = (
+    let case = *read_i;
+    if case == 0 { println((calc_pell_fundamental_solution(4) : (I64, I64)).to_string) };
+    if case == 1 { println((calc_general_pell_representatives(-2, 7) : Array (I64, I64)).to_string) };
+    if case == 2 { println((calc_general_pell_representatives(2, 0) : Array (I64, I64)).to_string) };
+    let fundamental : (I64, I64) = calc_pell_fundamental_solution(7);
+    let reps : Array (I64, I64) = calc_general_pell_representatives(2, 7);
+    println((fundamental, reps.sort).to_string)
+);

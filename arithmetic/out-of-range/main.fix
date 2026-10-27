@@ -1,11 +1,10 @@
 // 標準入力で選んだ引数で関数を呼ぶ。0：pow_modの指数が負、1：lift_crtの配列の長さが違う、2：lift_crtの法が0、
-// 3：calc_pell_fundamental_solutionのdが平方数、4：calc_general_pell_representativesのdが正でない、
-// 5：calc_general_pell_representativesのmが0、6：範囲内
+// 3：calc_sqrts_modの法が0、4：範囲内
 module Main;
 
-import CPLib.Arithmetic::{calc_general_pell_representatives, calc_pell_fundamental_solution, lift_crt, pow_mod};
+import CPLib.Arithmetic::{calc_sqrts_mod, lift_crt, pow_mod};
 import CPLib.IO::read_i;
-import Std::{Array, I64, IO, IO::println, ToString::to_string};
+import Std::{IO, IO::println, ToString::to_string};
 
 main : IO ();
 main = (
@@ -13,8 +12,6 @@ main = (
     if case == 0 { println(3.pow_mod(-1, 7).to_string) };
     if case == 1 { println(lift_crt([1], [3, 5]).to_string) };
     if case == 2 { println(lift_crt([1, 0], [3, 0]).to_string) };
-    if case == 3 { println((calc_pell_fundamental_solution(4) : (I64, I64)).to_string) };
-    if case == 4 { println((calc_general_pell_representatives(-2, 7) : Array (I64, I64)).to_string) };
-    if case == 5 { println((calc_general_pell_representatives(2, 0) : Array (I64, I64)).to_string) };
-    println((3.pow_mod(2, 7), lift_crt([2, 3], [3, 5])).to_string)
+    if case == 3 { println(9.calc_sqrts_mod(0).to_string) };
+    println((3.pow_mod(2, 7), lift_crt([2, 3], [3, 5]), 9.calc_sqrts_mod(10)).to_string)
 );

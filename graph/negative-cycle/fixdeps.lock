@@ -1,4 +1,4 @@
-proj_file_hash = "a797d07f6d98a155eaa46cb132bfa13b"
+proj_file_hash = "524e91f8f74ecde683c3ea75872d772b"
 
 [[dependencies]]
 name = "binary-heap"
