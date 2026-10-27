@@ -762,14 +762,16 @@ test_pell_solutions : IO () = (
         range(1, 41).fold_m((), |m, _|
             let msg = |what| "iterate_general_pell_solutions d={} m={}: {}".format((d, m, what));
             let brute = _pell_brute_solutions(d, m, 50);
-            // 解が大きくなると I64 があふれるので、小さい解が出そろうまでの出力だけを確かめる
-            let sols : Array (I64, I64) = iterate_general_pell_solutions(d, m).take(64).to_array;
-            let idxs = brute.to_iter.map(|b| sols.find_by(|s| s == b)).to_array;
-            assert(|_|msg("coverage"), idxs.to_iter.check_all(is_some));;
-            let len = idxs.to_iter.fold(0, |i, len| max(i.as_some + 1, len));
-            let prefix = sols.get_sub(0, len);
-            assert(|_|msg("valid"), prefix.to_iter.check_all(|(x, y)| x >= 0 && y >= 0 && _pell_norm(d, (x, y)).abs == m));;
-            assert(|_|msg("distinct"), range(0, len).check_all(|i| range(0, i).check_all(|j| prefix.@(i) != prefix.@(j))))
+            // 解が大きくなると I64 があふれるので、小さい解が出そろうまでの個数だけ取り出す
+            let sols : Array (I64, I64) = loop(1, |k|
+                let sols = iterate_general_pell_solutions(d, m).take(k).to_array;
+                if k >= 64 || brute.to_iter.check_all(|b| sols.find_by(|s| s == b).is_some) { break $ sols };
+                continue $ k + 1
+            );
+            let n = sols.@size;
+            assert(|_|msg("coverage"), brute.to_iter.check_all(|b| sols.find_by(|s| s == b).is_some));;
+            assert(|_|msg("valid"), sols.to_iter.check_all(|(x, y)| x >= 0 && y >= 0 && _pell_norm(d, (x, y)).abs == m));;
+            assert(|_|msg("distinct"), range(0, n).check_all(|i| range(0, i).check_all(|j| sols.@(i) != sols.@(j))))
         )
     );;
     assert_eq(|_|"iterate_general_pell_solutions no solution 1", (iterate_general_pell_solutions(2, 3).take(5).to_array : Array (I64, I64)), []);;
