@@ -11,8 +11,8 @@ import CPLib.Arithmetic::{
 import EZS::{cd, run_o, run_wi_oec, Context::default};
 import Random::{generate_I64_nonneg, generate_U64, init_by_seed};
 import Std::{
-    loop, Array, Bool, F64, I128, I64, IO, U64, Array::{@, @size, sort, to_iter}, 
-    Array::{find_by, get_sub}, Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, 
+    loop, Array, Bool, F64, I128, I64, IO, U64, U8, Array::{@, @size, sort, to_iter}, 
+    Array::{find_by, get_sub, push_back}, Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, 
     I32::maximum, I64::{abs, maximum, minimum, shift_left}, IO::println, 
     Iterator::{
         check_all, check_any, collect_m, count_up, filter, filter_map, flat_map, fold, fold_m, get_first, map, 
@@ -42,6 +42,7 @@ test = (
     test_factorize_via_lp_table;;
     test_factorize_flat;;
     test_factorize;;
+    test_factorize_random;;
     test_euler_tortient;;
     test_euler_tortient_table;;
     test_miller_rabin_u64;;
@@ -539,6 +540,42 @@ test_factorize = (
     assert_eq(|_|"factorize 811765718798", factorize(2 * 405882859399), [(2, 1_U8), (405882859399, 1_U8)]);;
     assert_eq(|_|"factorize 4294967311", factorize(4294967311), [(4294967311, 1_U8)]);;
     pure()
+);
+
+// 試し割りによる素因数分解（テストの参照用）
+_factorize_by_trial_division : I64 -> Array (I64, U8) = |n| (
+    let (n, fs) = loop((2, n, []), |(d, n, fs)|
+        if d > n / d { break $ (n, fs) };
+        if n % d != 0 { continue $ (d + 1, n, fs) };
+        let (n, e) = loop((n, 0_U8), |(n, e)|
+            if n % d != 0 { break $ (n, e) };
+            continue $ (n / d, e + 1_U8)
+        );
+        continue $ (d + 1, n, fs.push_back((d, e)))
+    );
+    if n > 1 { fs.push_back((n, 1_U8)) } else { fs }
+);
+
+// 素因数分解を、乱数で選んだ数で確かめる。10^12 以下は試し割りと比べ、10^18 以下は積と素数性を確かめる。
+test_factorize_random : IO () = (
+    let check = |n| (
+        let fs = factorize(n);
+        assert(|_|"factorize {} product".format((n,)), fs.to_iter.fold(1, |(p, e), x| x * p.power(e.i64)) == n);;
+        assert(|_|"factorize {} prime".format((n,)), fs.to_iter.check_all(|(p, _)| p.u64.is_prime));;
+        assert_eq(|_|"factorize_flat {}".format((n,)), factorize_flat(n), fs.to_iter.flat_map(|(p, e)| range(0, e.i64).map(|_| p)).to_array)
+    );
+    [
+        999999999989, 1000000007 * 998244353, 999999999999999989, 576460752303423488,
+        2 * 3 * 5 * 7 * 11 * 13 * 17 * 19 * 23 * 29 * 31 * 37 * 41 * 43 * 47, 1000003 * 1000003 * 1000003,
+        4611686018427387847, I64::maximum
+    ].to_iter.fold_m((), |n, _| check(n));;
+    range(0, 2000).fold_m(init_by_seed(42_U64), |i, random|
+        let (random, n) = random.generate_I64_nonneg;
+        let n = n % (if i < 1000 { 1000000000000 } else { 1000000000000000000 }) + 1;
+        check(n);;
+        if i < 1000 { assert_eq(|_|"factorize {} trial".format((n,)), factorize(n), _factorize_by_trial_division(n));; pure(random) };
+        pure(random)
+    ).forget
 );
 
 test_euler_tortient : IO ();
