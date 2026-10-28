@@ -404,12 +404,12 @@ DEPRECATED[linear_sieve, "Use `CPLib.Arithmetic::calc_lp_table` instead."];
 
 // Pollard の ρ 法（Brent の変種）で、合成数`n`の、1 でも`n`でもない約数を1つ見つける
 //
-// 制約：`n`は奇数の合成数
+// 制約：`n`は合成数
 //
 // 計算量：O(n^(1/4) log(n))（期待値）
 //
 // # Parameters
-// - `n`: 奇数の合成数
+// - `n`: 合成数
 _find_divisor_rho : I64 -> I64 = |n| (
     // f(x) = x^2 + c (mod n) で作る列が mod p で巡回することを使う。約数が見つからなければ c を変える。
     count_up(1).filter_map(|c|
@@ -456,7 +456,7 @@ _find_divisor_rho : I64 -> I64 = |n| (
 // # Parameters
 // - `n`: 素因数分解する数
 _factorize_large_factors : I64 -> Array I64 = |n| (
-    // 素数になるまで約数で分ける。n は奇数なので、ρ 法の前提を満たす。
+    // 素数になるまで約数で分ける。ρ 法には合成数だけを渡す。
     loop(([n], []), |(stack, ps)|
         if stack.is_empty { break $ ps.sort };
         let k = stack.get_last.as_some;
