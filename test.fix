@@ -14,7 +14,6 @@ import CPLib.Memoize.Test::test;
 import CPLib.MinCostFlow.Test::test;
 import CPLib.Misc.Test::test;
 import CPLib.Monoid.Test::test;
-import CPLib.Pell.Test::test;
 import CPLib.Segtree.Test::test;
 import CPLib.String.Test::test;
 import CPLib.TwoSat.Test::test;
@@ -27,7 +26,6 @@ test = (
     CPLib.IO.Test::test;;
     CPLib.ZP.Test::test;;
     CPLib.Arithmetic.Test::test;;
-    CPLib.Pell.Test::test;;
     CPLib.Segtree.Test::test;;
     CPLib.DSegtree.Test::test;;
     CPLib.LSegtree.Test::test;;

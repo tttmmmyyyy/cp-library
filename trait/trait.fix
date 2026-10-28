@@ -1,10 +1,9 @@
 module CPLib.Trait;
 
 import Std::{
-    Add, Div, Eq, F32, F64, I16, I32, I64, I8, LessThan, LessThanOrEq, Mul, Neg, One, Rem, Sub, U16, U32, 
-    U64, U8, Zero, F32::infinity, F64::infinity, I16::{maximum, minimum}, I32::{maximum, minimum}, 
-    I64::{maximum, minimum}, I8::{maximum, minimum}, U16::maximum, U32::maximum, U64::maximum, 
-    U8::maximum
+    F32, F64, I16, I32, I64, I8, U16, U32, U64, U8, F32::infinity, F64::infinity, I16::{maximum, minimum}, 
+    I32::{maximum, minimum}, I64::{maximum, minimum}, I8::{maximum, minimum}, U16::maximum, U32::maximum, 
+    U64::maximum, U8::maximum
 };
 
 // モノイドのトレイト
@@ -119,9 +118,3 @@ impl F32 : NegInf {
 impl F64 : NegInf {
     neg_inf = -F64::infinity;
 }
-
-// 整数の型
-//
-// `/`と`%`は、`I64`と同じく0の方向へ切り捨てた商と、その余りを返すものとする。
-// `I64`、`I128`のほか、多倍長整数（gmp-fix の`MPZ`など）も満たす。
-trait Integer = Add + Sub + Mul + Neg + Div + Rem + Zero + One + Eq + LessThan + LessThanOrEq;
