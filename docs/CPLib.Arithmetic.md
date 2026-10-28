@@ -1,6 +1,6 @@
 # CPLib.Arithmetic
 
-Defined in cp-library@0.15.2
+Defined in cp-library@0.15.3
 
 ## Values
 
@@ -138,6 +138,55 @@ Type: `Std::I64 -> Std::Array (Std::I64, Std::I64, Std::I64)`
 
 - `c_max`: `c`の上限（inclusive）
 
+#### calc_sqrt_mod_prime
+
+Type: `Std::I64 -> Std::I64 -> Std::Option Std::I64`
+
+素数`p`を法とする`a`の平方根を1つ求める（Tonelli–Shanks法）
+
+z^2 = a (mod p) を満たす`[0, p)`の z を1つ返す。平方根がなければ`none()`を返す。
+
+制約：`p`は素数
+
+計算量：O(log(p)^2)（平方非剰余を探す部分は期待値）
+
+##### Parameters
+
+- `p`: 法（素数）
+- `a`: 整数
+
+##### Examples
+
+```fix
+let z = 2.calc_sqrt_mod_prime(7).as_some;
+assert_eq(|_|"", z * z % 7, 2);;
+assert_eq(|_|"", 3.calc_sqrt_mod_prime(7), none())
+```
+
+#### calc_sqrts_mod
+
+Type: `Std::I64 -> Std::I64 -> Std::Array Std::I64`
+
+`m`を法とする`a`の平方根をすべて求める
+
+z^2 = a (mod m) を満たす`[0, m)`の z をすべて、小さい順に返す。
+
+制約：m >= 1
+
+計算量：O(m^(1/4) log(m) + N log(m))（前の項は期待値）。N は平方根の個数。
+
+##### Parameters
+
+- `m`: 法
+- `a`: 整数
+
+##### Examples
+
+```fix
+assert_eq(|_|"", 1.calc_sqrts_mod(8), [1, 3, 5, 7]);;
+assert_eq(|_|"", 4.calc_sqrts_mod(12), [2, 4, 8, 10])
+```
+
 #### calc_totient
 
 Type: `Std::I64 -> Std::I64`
@@ -146,7 +195,7 @@ Type: `Std::I64 -> Std::I64`
 
 制約：n >= 1
 
-計算量：O(sqrt(n))
+計算量：O(n^(1/4) log(n))（期待値）
 
 ##### Parameters
 
@@ -231,11 +280,13 @@ assert_eq(|_|"", 12 * x + 18 * y, 6)
 
 Type: `Std::I64 -> Std::Array (Std::I64, Std::U8)`
 
-試し割りにより、数を素因数分解する（素因子と指数のペアの配列で返す）
+数を素因数分解する（素因子と指数のペアの配列で返す）
+
+1000 以下の素因数を試し割りで取り除いたあと、残りを Pollard の ρ 法で分ける。
 
 制約：n >= 1
 
-計算量：O(sqrt(n))
+計算量：O(n^(1/4) log(n))（期待値）
 
 ##### Parameters
 
@@ -251,11 +302,13 @@ Type: `Std::I64 -> Std::Array (Std::I64, Std::U8)`
 
 Type: `Std::I64 -> Std::Array Std::I64`
 
-試し割りにより、数を素因数分解する（素因子を重複ありのフラットな配列で返す）
+数を素因数分解する（素因子を重複ありのフラットな配列で返す）
+
+1000 以下の素因数を試し割りで取り除いたあと、残りを Pollard の ρ 法で分ける。
 
 制約：n >= 1
 
-計算量：O(sqrt(n))
+計算量：O(n^(1/4) log(n))（期待値）
 
 ##### Parameters
 

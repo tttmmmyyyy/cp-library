@@ -1,6 +1,6 @@
 # CPLib.TwoSat
 
-Defined in cp-library@0.15.2
+Defined in cp-library@0.15.3
 
 2-SAT問題
 
