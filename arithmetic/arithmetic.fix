@@ -449,13 +449,13 @@ _find_divisor_rho : I64 -> I64 = |n| (
     ).get_first.as_some
 );
 
-// 1000 以下の素因数を持たない`n`の素因数を、昇順に重複ありで返す（Pollard の ρ 法）
+// `n`の素因数を、昇順に重複ありで返す（Pollard の ρ 法）
 //
-// 制約：n >= 1、nは1000以下の素因数を持たない
+// 制約：n >= 1
 //
 // # Parameters
 // - `n`: 素因数分解する数
-_factorize_large_factors : I64 -> Array I64 = |n| (
+_factorize_rho : I64 -> Array I64 = |n| (
     // 素数になるまで約数で分ける。ρ 法には合成数だけを渡す。
     loop(([n], []), |(stack, ps)|
         if stack.is_empty { break $ ps.sort };
@@ -491,7 +491,7 @@ factorize_flat = |n| (
         continue $ (d, q, factors.push_back(d))
     );
     if d <= 1000 { if n > 1 { factors.push_back(n) } else { factors } };
-    factors.append(_factorize_large_factors(n))
+    factors.append(_factorize_rho(n))
 );
 
 // 数を素因数分解する（素因子と指数のペアの配列で返す）
@@ -522,7 +522,7 @@ factorize = |n| (
         continue $ (d + 1, n, factors.push_back((d, e)))
     );
     if d <= 1000 { if n > 1 { factors.push_back((n, 1_U8)) } else { factors } };
-    _factorize_large_factors(n).to_iter.fold(factors, |p, factors|
+    _factorize_rho(n).to_iter.fold(factors, |p, factors|
         let k = factors.@size;
         if k > 0 && (let (q, _) = factors.@(k - 1); q == p) { factors.mod(k - 1, |(q, e)| (q, e + 1_U8)) };
         factors.push_back((p, 1_U8))
