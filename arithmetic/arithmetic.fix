@@ -1020,9 +1020,20 @@ _calc_sqrts_mod_prime_power : I64 -> I64 -> I64 -> Array I64 = |a, p, k| (
 // ```
 calc_sqrts_mod : I64 -> I64 -> Array I64 = |m, a| (
     if m < 1 { undefined("[CPLib.Arithmetic::calc_sqrts_mod] `m` is less than 1") };
+    a._calc_sqrts_mod_factorized(m.factorize)
+);
+
+// 素因数分解が`factors`である数を法として、`a`の平方根をすべて、小さい順に返す
+//
+// 制約：`factors`は`factorize`の戻り値と同じ形（素因子が昇順で、指数が1以上）
+//
+// # Parameters
+// - `factors`: 法の素因数分解
+// - `a`: 整数
+_calc_sqrts_mod_factorized : Array (I64, U8) -> I64 -> Array I64 = |factors, a| (
     // 素数べきごとに平方根を求め、中国剰余定理で組み合わせる
     // zs は、それまでに処理した素数べきの積 n を法とする平方根
-    let (zs, _) = m.factorize.to_iter.fold(([0], 1), |(p, k), (zs, n)|
+    let (zs, _) = factors.to_iter.fold(([0], 1), |(p, k), (zs, n)|
         let pk = p.power(k.i64);
         let ys = _calc_sqrts_mod_prime_power(a, p, k.i64);
         let zs = zs.to_iter.flat_map(|z| ys.to_iter.map(|y| let (r, _) = lift_crt([z, y], [n, pk]); r)).to_array;

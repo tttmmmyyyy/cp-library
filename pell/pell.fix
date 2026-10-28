@@ -61,13 +61,13 @@
 // 連分数展開はいずれ簡約になり、そのあとは巡回するので、はじめて簡約になってから再訪するまでに u in Z[w] とならなければ、単項生成ではないことが言える。
 module CPLib.Pell;
 
-import CPLib.Arithmetic::{calc_sqrts_mod, factorize, isqrt, power};
+import CPLib.Arithmetic::{_calc_sqrts_mod_factorized, factorize, isqrt, power};
 import CPLib.Trait::Integer;
 import Std::{
-    loop, undefined, Array, Bool, I64, Iterator, Option, String, Array::{is_empty, to_iter}, I64::abs, 
+    loop, undefined, Array, Bool, I64, Iterator, Option, String, Array::{is_empty, push_back, to_iter}, I64::abs, 
     Iterator::{filter_map, flat_map, flatten, fold, generate, map, push_front, range, to_array, to_dyn, Item}, 
     LoopState::{break, continue}, One::one, Option::{as_some, is_none, is_some, none, some}, 
-    ToI128::i128, ToI64::i64, ToU64::u64, Zero::zero
+    ToI128::i128, ToI64::i64, ToU64::u64, ToU8::u8, Zero::zero
 };
 
 // `I64`の値`x`を、`Integer`の演算（0、1、足し算、引き算）だけを使って`a`の値にする
@@ -235,9 +235,6 @@ calc_pell_fundamental_solution : [a : Integer] I64 -> (a, a) = |d| (
 //
 // 制約：d > 0、dは平方数でない、m != 0
 //
-// 計算量：O(E |m|^(1/4) log(|m|) + N (log(|m|) + r))回の演算（前の項は期待値）。E は e^2 が |m| を割り切る正の整数 e の個数、N は、そのような e すべてにわたる、z^2 = d (mod |m|/e^2) の解 z の個数の和。
-// r は root(d) の連分数展開の周期の長さで、r = O(root(d) log(d))。
-// 
 // # Parameters
 // - `d` : x^2 - d y^2 = ±m の d
 // - `m` : x^2 - d y^2 = ±m の m
@@ -252,13 +249,16 @@ calc_general_pell_representatives : [a : Integer] I64 -> I64 -> Array (a, a) = |
     if m == 0 { undefined("[CPLib.Pell::calc_general_pell_representatives] `m` is zero") };
     let m = m.abs;
     // x, y が互いに素なケースに帰着する：e | x,y なら、(x/e)^2 - d (y/e)^2 = m / (e^2) なので、m / (e^2) ごとに解いて、x, y を e 倍する。
-    // m の素因数分解から、e^2 | m となる e をすべて作る。
-    let es = m.factorize.to_iter.fold([1], |(p, k), es|
-        es.to_iter.flat_map(|e| range(0, k.i64 / 2 + 1).map(|f| e * p.power(f))).to_array
+    // m の素因数分解から、e^2 | m となる e すべてについて、e と m / e^2 の素因数分解の組を作る。
+    let es = m.factorize.to_iter.fold([(1, [])], |(p, k), es|
+        es.to_iter.flat_map(|(e, factors)| range(0, k.i64 / 2 + 1).map(|f|
+            let k = k.i64 - 2 * f;
+            (e * p.power(f), if k == 0 { factors } else { factors.push_back((p, k.u8)) })
+        )).to_array
     );
-    es.to_iter.flat_map(|e|
+    es.to_iter.flat_map(|(e, factors)|
         let m = m / (e * e);
-        d.calc_sqrts_mod(m).to_iter.filter_map(|z|
+        d._calc_sqrts_mod_factorized(factors).to_iter.filter_map(|z|
             let t = (z, m);
             match _pqa(d, s, _pqa_identity, t) {
                 none() => none(),

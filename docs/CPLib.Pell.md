@@ -86,9 +86,6 @@ Type: `[a : CPLib.Trait::Integer] Std::I64 -> Std::I64 -> Std::Array (a, a)`
 
 制約：d > 0、dは平方数でない、m != 0
 
-計算量：O(E |m|^(1/4) log(|m|) + N (log(|m|) + r))回の演算（前の項は期待値）。E は e^2 が |m| を割り切る正の整数 e の個数、N は、そのような e すべてにわたる、z^2 = d (mod |m|/e^2) の解 z の個数の和。
-r は root(d) の連分数展開の周期の長さで、r = O(root(d) log(d))。
-
 ##### Parameters
 
 - `d` : x^2 - d y^2 = ±m の d
