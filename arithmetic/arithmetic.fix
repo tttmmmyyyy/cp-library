@@ -456,7 +456,7 @@ _find_divisor_rho : I64 -> I64 = |n| (
 // # Parameters
 // - `n`: 素因数分解する数
 _factorize_rho : I64 -> Array I64 = |n| (
-    // 素数になるまで約数で分ける。ρ 法には合成数だけを渡す。
+    // ρ 法で見つけた約数で、素数になるまで分解する。ρ 法には合成数だけを渡す。
     loop(([n], []), |(stack, ps)|
         if stack.is_empty { break $ ps.sort };
         let k = stack.get_last.as_some;
@@ -482,7 +482,7 @@ _factorize_rho : I64 -> Array I64 = |n| (
 // `n`が1の場合は空の配列を返す。
 factorize_flat : I64 -> Array I64;
 factorize_flat = |n| (
-    // 1000 以下の素因数を試し割りで取り除いたあと、残りを Pollard の ρ 法で分ける。
+    // 1000 以下の素因数を試し割りで取り除いたあと、残りを Pollard の ρ 法で素因数分解する。
     // 試し割りの途中で d^2 > n となれば、残りは 1 か素数
     let (d, n, factors) = loop((2, n, []), |(d, n, factors)|
         let q = n / d;
@@ -509,7 +509,7 @@ factorize_flat = |n| (
 // `n`が1の場合は空の配列を返す。
 factorize : I64 -> Array (I64, U8);
 factorize = |n| (
-    // 1000 以下の素因数を試し割りで取り除いたあと、残りを Pollard の ρ 法で分ける。
+    // 1000 以下の素因数を試し割りで取り除いたあと、残りを Pollard の ρ 法で素因数分解する。
     // 試し割りの途中で d^2 > n となれば、残りは 1 か素数
     let (d, n, factors) = loop((2, n, []), |(d, n, factors)|
         let q = n / d;
