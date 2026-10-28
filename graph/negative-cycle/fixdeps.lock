@@ -1,4 +1,4 @@
-proj_file_hash = "524e91f8f74ecde683c3ea75872d772b"
+proj_file_hash = "6cd03c34e266359e0c8eaa54e36bb3f4"
 
 [[dependencies]]
 name = "binary-heap"
@@ -20,7 +20,7 @@ rev = "bcfbde58e945e302751d81b34068885e26f7e611"
 
 [[dependencies]]
 name = "cp-library"
-version = "0.15.2"
+version = "0.15.3"
 path = "../../"
 
 [[dependencies]]

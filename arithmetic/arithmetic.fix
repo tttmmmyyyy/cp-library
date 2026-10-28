@@ -470,8 +470,6 @@ _factorize_large_factors : I64 -> Array I64 = |n| (
 
 // 数を素因数分解する（素因子を重複ありのフラットな配列で返す）
 //
-// 1000 以下の素因数を試し割りで取り除いたあと、残りを Pollard の ρ 法で分ける。
-//
 // 制約：n >= 1
 //
 // 計算量：O(n^(1/4) log(n))（期待値）
@@ -484,6 +482,7 @@ _factorize_large_factors : I64 -> Array I64 = |n| (
 // `n`が1の場合は空の配列を返す。
 factorize_flat : I64 -> Array I64;
 factorize_flat = |n| (
+    // 1000 以下の素因数を試し割りで取り除いたあと、残りを Pollard の ρ 法で分ける。
     // 試し割りの途中で d^2 > n となれば、残りは 1 か素数
     let (d, n, factors) = loop((2, n, []), |(d, n, factors)|
         let q = n / d;
@@ -496,8 +495,6 @@ factorize_flat = |n| (
 );
 
 // 数を素因数分解する（素因子と指数のペアの配列で返す）
-//
-// 1000 以下の素因数を試し割りで取り除いたあと、残りを Pollard の ρ 法で分ける。
 //
 // 制約：n >= 1
 //
@@ -512,6 +509,7 @@ factorize_flat = |n| (
 // `n`が1の場合は空の配列を返す。
 factorize : I64 -> Array (I64, U8);
 factorize = |n| (
+    // 1000 以下の素因数を試し割りで取り除いたあと、残りを Pollard の ρ 法で分ける。
     // 試し割りの途中で d^2 > n となれば、残りは 1 か素数
     let (d, n, factors) = loop((2, n, []), |(d, n, factors)|
         let q = n / d;
@@ -894,7 +892,7 @@ calc_pythagorean_triples : I64 -> Array (I64, I64, I64) = |c_max| (
 pythagorean_triples : I64 -> Array (I64, I64, I64) = calc_pythagorean_triples;
 DEPRECATED[pythagorean_triples, "Use `CPLib.Arithmetic::calc_pythagorean_triples` instead."];
 
-// 素数`p`を法とする`a`の平方根を1つ求める（Tonelli–Shanks法）
+// 素数`p`を法とする`a`の平方根を1つ求める
 //
 // z^2 = a (mod p) を満たす`[0, p)`の z を1つ返す。平方根がなければ`none()`を返す。
 //
@@ -913,6 +911,7 @@ DEPRECATED[pythagorean_triples, "Use `CPLib.Arithmetic::calc_pythagorean_triples
 // assert_eq(|_|"", 3.calc_sqrt_mod_prime(7), none())
 // ```
 calc_sqrt_mod_prime : I64 -> I64 -> Option I64 = |p, a| (
+    // Tonelli–Shanks 法
     let a = a.pmod(p);
     if a == 0 || p == 2 { a.some };
     if a.pow_mod((p - 1) / 2, p) != 1 { none() };

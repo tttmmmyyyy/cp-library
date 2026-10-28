@@ -142,7 +142,7 @@ Type: `Std::I64 -> Std::Array (Std::I64, Std::I64, Std::I64)`
 
 Type: `Std::I64 -> Std::I64 -> Std::Option Std::I64`
 
-素数`p`を法とする`a`の平方根を1つ求める（Tonelli–Shanks法）
+素数`p`を法とする`a`の平方根を1つ求める
 
 z^2 = a (mod p) を満たす`[0, p)`の z を1つ返す。平方根がなければ`none()`を返す。
 
@@ -282,8 +282,6 @@ Type: `Std::I64 -> Std::Array (Std::I64, Std::U8)`
 
 数を素因数分解する（素因子と指数のペアの配列で返す）
 
-1000 以下の素因数を試し割りで取り除いたあと、残りを Pollard の ρ 法で分ける。
-
 制約：n >= 1
 
 計算量：O(n^(1/4) log(n))（期待値）
@@ -303,8 +301,6 @@ Type: `Std::I64 -> Std::Array (Std::I64, Std::U8)`
 Type: `Std::I64 -> Std::Array Std::I64`
 
 数を素因数分解する（素因子を重複ありのフラットな配列で返す）
-
-1000 以下の素因数を試し割りで取り除いたあと、残りを Pollard の ρ 法で分ける。
 
 制約：n >= 1
 
