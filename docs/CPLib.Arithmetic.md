@@ -1,6 +1,6 @@
 # CPLib.Arithmetic
 
-Defined in cp-library@0.15.2
+Defined in cp-library@0.15.3
 
 ## Values
 
@@ -146,7 +146,7 @@ Type: `Std::I64 -> Std::I64`
 
 制約：n >= 1
 
-計算量：O(sqrt(n))
+計算量：O(n^(1/4) log(n))（期待値）
 
 ##### Parameters
 
@@ -231,11 +231,11 @@ assert_eq(|_|"", 12 * x + 18 * y, 6)
 
 Type: `Std::I64 -> Std::Array (Std::I64, Std::U8)`
 
-試し割りにより、数を素因数分解する（素因子と指数のペアの配列で返す）
+数を素因数分解する（素因子と指数のペアの配列で返す）
 
 制約：n >= 1
 
-計算量：O(sqrt(n))
+計算量：O(n^(1/4) log(n))（期待値）
 
 ##### Parameters
 
@@ -251,11 +251,11 @@ Type: `Std::I64 -> Std::Array (Std::I64, Std::U8)`
 
 Type: `Std::I64 -> Std::Array Std::I64`
 
-試し割りにより、数を素因数分解する（素因子を重複ありのフラットな配列で返す）
+数を素因数分解する（素因子を重複ありのフラットな配列で返す）
 
 制約：n >= 1
 
-計算量：O(sqrt(n))
+計算量：O(n^(1/4) log(n))（期待値）
 
 ##### Parameters
 

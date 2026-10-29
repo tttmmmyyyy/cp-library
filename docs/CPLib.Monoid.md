@@ -1,6 +1,6 @@
 # CPLib.Monoid
 
-Defined in cp-library@0.15.2
+Defined in cp-library@0.15.3
 
 セグメント木でよく使うモノイドと作用を提供するモジュール。
 

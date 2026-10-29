@@ -1,12 +1,21 @@
 module CPLib.Monoid.Test;
 
 import CPLib.Arithmetic::power;
-import CPLib.LSegtree;
-import CPLib.Monoid;
-import CPLib.Segtree;
+import CPLib.LSegtree::{act_range, build, create, fold, fold_all, set, LSegtree};
+import CPLib.Monoid::{
+    Max, Min, Product, RangeAdd, RangeAffine, RangeAssign, RangeMul, Sum, WeightedSum, Max::@v, Min::@v, 
+    Product::@v, RangeAssign::make, Sum::@v, WeightedSum::{@v, @w, make_single, set_v}
+};
+import CPLib.Segtree::{build, fold, fold_all, set};
 import CPLib.Trait::{Action, Monoid, Action::Set, Monoid::unit, NegInf::neg_inf};
 import CPLib.ZP::{zp, P998244353, ZP};
 import Random::{generate_I64_nonneg, init_by_seed, Random};
+import Std::{
+    Eq, F32, F64, I16, I32, I64, I8, IO, String, ToString, U16, U32, U64, U8, 
+    Array::{@, mod, push_back, set, to_iter}, Debug::assert_eq, F32::infinity, F64::infinity, 
+    Functor::{forget, map}, I16::minimum, I32::minimum, I64::{maximum, minimum}, I8::minimum, 
+    Iterator::{fold, fold_m, map, range, to_array}, LessThan::{max, min}, Monad::pure, Option::none
+};
 
 type Mint = ZP P998244353;
 

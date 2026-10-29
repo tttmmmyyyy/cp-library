@@ -15,7 +15,7 @@
 module CPLib.DSegtree;
 
 import Std::{
-    loop, undefined, Array, Bool, I64, Array::{fill, set, @, @size}, I64::{shift_left, shift_right}, 
+    loop, undefined, Array, Bool, I64, Array::{@, @size, fill, set}, I64::{shift_left, shift_right}, 
     Iterator::{fold, range, range_step}, LoopState::{break, continue}
 };
 

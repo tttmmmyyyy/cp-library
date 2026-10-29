@@ -5,10 +5,9 @@
 module CPLib.IO;
 
 import Std::{
-    undefined, Array, F64, FromString, I64, IO, Ptr, String, U64, U8, FromString::from_string, Iterator, 
-    Iterator::{collect_m, generate, map, range, to_array, Item}, Monad::pure, Option::{none, some}, 
-    Ptr::add_offset, Result::{err, ok}, String::{borrow_c_str, get_sub, strip_spaces, unsafe_from_c_str_ptr_io}, 
-    ToI64::i64
+    undefined, Array, F64, FromString, I64, IO, Iterator, String, U64, U8, FromString::from_string, 
+    Iterator::{collect_m, generate, map, range, to_array, Item}, Option::{none, some}, Ptr::add_offset, 
+    String::{borrow_c_str, get_sub, strip_spaces, unsafe_from_c_str_ptr_io}, ToI64::i64
 };
 
 // 文字列をパースして`I64`整数に変換する

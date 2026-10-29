@@ -48,9 +48,9 @@
 // ```
 module CPLib.Monoid;
 
-import CPLib.Trait::{Action, Inf, Monoid, NegInf, Action::{act, Set}, Inf::inf, Monoid::{op, unit}, NegInf::neg_inf};
+import CPLib.Trait::{Action, Inf, Monoid, NegInf, Inf::inf, NegInf::neg_inf};
 import Std::{
-    Add, LessThan, Mul, One, Option, Zero, LessThan::{max, min}, One::one, Option::{is_some, none, some},
+    Add, LessThan, Mul, One, Option, Zero, LessThan::{max, min}, One::one, Option::{is_some, none, some}, 
     Zero::zero
 };
 

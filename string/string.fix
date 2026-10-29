@@ -16,9 +16,9 @@ module CPLib.String;
 
 import Std::{
     loop, undefined, Array, Eq, I32, I64, LessThan, String, Add::add, 
-    Array::{empty, fill, mod, pop_back, push_back, set, sort_by, to_iter, @, @size}, Functor::map, I32::maximum, 
-    Iterator::{fold, range, range_step, to_array}, LessThan::min, LoopState::{break, continue}, 
-    String::get_bytes, ToI32::i32, ToI64::i64, Tuple2::@0
+    Array::{@, @size, empty, fill, mod, pop_back, push_back, set, sort_by, to_iter}, Functor::map, 
+    I32::maximum, Iterator::{fold, range, range_step, to_array}, LessThan::min, 
+    LoopState::{break, continue}, String::get_bytes, ToI32::i32, ToI64::i64, Tuple2::@0
 };
 
 // 文字列のsuffix arrayを計算する

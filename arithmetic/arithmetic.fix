@@ -1,12 +1,17 @@
 module CPLib.Arithmetic;
 
-import BoolArray::{BoolArray, BoolArray::{fill_true, get_size, make, set, @}};
+import BoolArray::{BoolArray, BoolArray::{@, fill_true, get_size, make, set}};
 import Std::{
-    loop, undefined, Array, Bool, I128, I64, U128, U32, U64, U8, U128::shift_right, Add::add, 
-    Array::{empty, fill, push_back, set, to_iter, @, @size}, I128::abs, I64::{abs, bit_and, shift_right}, Indexable::{iget, imod}, 
-    Iterator::{check_all, filter_map, fold, get_first, loop_iter, loop_iter_s, range, range_step}, 
-    LoopState::{break, continue, is_break, is_continue}, Multiplicative, One::one, Option::{as_some, none, some}, ToI128::i128, ToI64::i64, 
-    ToU128::u128, ToU32::u32, ToU64::u64, ToU8::u8, Tuple2::{act_0, act_1}, U64::{bit_and, count_leading_zeros, shift_left, shift_right}
+    loop, undefined, Array, Bool, I128, I64, Multiplicative, U128, U32, U64, U8, Add::add, 
+    Array::{@, @size, append, empty, fill, get_last, is_empty, mod, pop_back, push_back, set, sort, to_iter}, 
+    I128::abs, I64::{abs, bit_and, shift_right}, Indexable::{iget, imod}, 
+    Iterator::{
+        check_all, count_up, filter_map, fold, get_first, loop_iter, loop_iter_s, map, range, range_step, 
+        to_array
+    }, 
+    LessThan::min, LoopState::{break, continue, is_break}, One::one, Option::{as_some, none, some}, 
+    ToI128::i128, ToI64::i64, ToU128::u128, ToU32::u32, ToU64::u64, ToU8::u8, Tuple2::{act_0, act_1}, 
+    U128::shift_right, U64::{bit_and, count_leading_zeros, shift_left, shift_right}
 };
 
 // `x`を`m`で割った余りを非負で返す
@@ -397,11 +402,77 @@ calc_lp_table = |n| (
 linear_sieve : U32 -> (Array U32, Array U32) = calc_lp_table;
 DEPRECATED[linear_sieve, "Use `CPLib.Arithmetic::calc_lp_table` instead."];
 
-// 試し割りにより、数を素因数分解する（素因子を重複ありのフラットな配列で返す）
+// Pollard の ρ 法（Brent の変種）で、合成数`n`の、1 でも`n`でもない約数を1つ見つける
+//
+// 制約：`n`は合成数
+//
+// 計算量：O(n^(1/4) log(n))（期待値）
+//
+// # Parameters
+// - `n`: 合成数
+_find_divisor_rho : I64 -> I64 = |n| (
+    // f(x) = x^2 + c (mod n) で作る列が mod p で巡回することを使う。約数が見つからなければ c を変える。
+    count_up(1).filter_map(|c|
+        let f = |x| add_mod(mul_mod(x, x, n), c, n);
+        // 1 回の gcd でまとめて調べる |x - y| の個数
+        let batch = 128;
+        // x を固定して y を r ステップ進め、|x - y| の積の gcd を batch ステップごとにとる。r は倍々にする。
+        let (x, ys, g) = loop((2, 1), |(y, r)|
+            let x = y;
+            let y = range(0, r).fold(y, |_, y| f(y));
+            let (y, found) = loop((0, y, 1), |(k, y, q)|
+                if k >= r { break $ (y, none()) };
+                let ys = y;
+                let (y, q) = range(0, min(batch, r - k)).fold((y, q), |_, (y, q)|
+                    let y = f(y);
+                    (y, mul_mod(q, (x - y).abs, n))
+                );
+                let g = calc_gcd(q, n);
+                if g != 1 { break $ (y, (ys, g).some) };
+                continue $ (k + batch, y, q)
+            );
+            match found {
+                none() => continue $ (y, 2 * r),
+                some((ys, g)) => break $ (x, ys, g)
+            }
+        );
+        // 積が n の倍数になって g = n となったら、まとめる前の位置から 1 ステップずつ調べ直す
+        let g = if g != n { g } else {
+            loop(ys, |ys|
+                let ys = f(ys);
+                let g = calc_gcd((x - ys).abs, n);
+                if g != 1 { break $ g };
+                continue $ ys
+            )
+        };
+        if g == n { none() } else { g.some }
+    ).get_first.as_some
+);
+
+// `n`の素因数を、昇順に重複ありで返す（Pollard の ρ 法）
 //
 // 制約：n >= 1
 //
-// 計算量：O(sqrt(n))
+// # Parameters
+// - `n`: 素因数分解する数
+_factorize_rho : I64 -> Array I64 = |n| (
+    // ρ 法で見つけた約数で、素数になるまで分解する。ρ 法には合成数だけを渡す。
+    loop(([n], []), |(stack, ps)|
+        if stack.is_empty { break $ ps.sort };
+        let k = stack.get_last.as_some;
+        let stack = stack.pop_back;
+        if k == 1 { continue $ (stack, ps) };
+        if k.u64.is_prime { continue $ (stack, ps.push_back(k)) };
+        let g = _find_divisor_rho(k);
+        continue $ (stack.push_back(g).push_back(k / g), ps)
+    )
+);
+
+// 数を素因数分解する（素因子を重複ありのフラットな配列で返す）
+//
+// 制約：n >= 1
+//
+// 計算量：O(n^(1/4) log(n))（期待値）
 //
 // # Parameters
 // - `n`: 素因数分解する数
@@ -411,20 +482,23 @@ DEPRECATED[linear_sieve, "Use `CPLib.Arithmetic::calc_lp_table` instead."];
 // `n`が1の場合は空の配列を返す。
 factorize_flat : I64 -> Array I64;
 factorize_flat = |n| (
+    // 1000 以下の素因数を試し割りで取り除いたあと、残りを Pollard の ρ 法で素因数分解する。
+    // 試し割りの途中で d^2 > n となれば、残りは 1 か素数
     let (d, n, factors) = loop((2, n, []), |(d, n, factors)|
         let q = n / d;
-        if d > q { break $ (d, n, factors) };
+        if d > q || d > 1000 { break $ (d, n, factors) };
         if n - q * d != 0 { continue $ (d + 1, n, factors) };
         continue $ (d, q, factors.push_back(d))
     );
-    if n > 1 { factors.push_back(n) } else { factors }
+    if d <= 1000 { if n > 1 { factors.push_back(n) } else { factors } };
+    factors.append(_factorize_rho(n))
 );
 
-// 試し割りにより、数を素因数分解する（素因子と指数のペアの配列で返す）
+// 数を素因数分解する（素因子と指数のペアの配列で返す）
 //
 // 制約：n >= 1
 //
-// 計算量：O(sqrt(n))
+// 計算量：O(n^(1/4) log(n))（期待値）
 //
 // # Parameters
 // - `n`: 素因数分解する数
@@ -435,9 +509,11 @@ factorize_flat = |n| (
 // `n`が1の場合は空の配列を返す。
 factorize : I64 -> Array (I64, U8);
 factorize = |n| (
+    // 1000 以下の素因数を試し割りで取り除いたあと、残りを Pollard の ρ 法で素因数分解する。
+    // 試し割りの途中で d^2 > n となれば、残りは 1 か素数
     let (d, n, factors) = loop((2, n, []), |(d, n, factors)|
         let q = n / d;
-        if d > q { break $ (d, n, factors) };
+        if d > q || d > 1000 { break $ (d, n, factors) };
         if n - q * d != 0 { continue $ (d + 1, n, factors) };
         let (n, e) = loop((n, 0_U8), |(n, e)|
             if n % d != 0 { break $ (n, e) };
@@ -445,32 +521,24 @@ factorize = |n| (
         );
         continue $ (d + 1, n, factors.push_back((d, e)))
     );
-    if n > 1 { factors.push_back((n, 1_U8)) } else { factors }
+    if d <= 1000 { if n > 1 { factors.push_back((n, 1_U8)) } else { factors } };
+    _factorize_rho(n).to_iter.fold(factors, |p, factors|
+        let k = factors.@size;
+        if k > 0 && (let (q, _) = factors.@(k - 1); q == p) { factors.mod(k - 1, |(q, e)| (q, e + 1_U8)) };
+        factors.push_back((p, 1_U8))
+    )
 );
 
 // オイラーのトーシェント関数 φ(n) を計算する
 //
 // 制約：n >= 1
 //
-// 計算量：O(sqrt(n))
+// 計算量：O(n^(1/4) log(n))（期待値）
 //
 // # Parameters
 // - `n`: 正の整数
 calc_totient : I64 -> I64;
-calc_totient = |n| (
-    if n == 1 { 1 };
-    let (d, n, tot) = loop((2, n, 1), |(d, n, tot)|
-        let m = n / d;
-        if d > m { break $ (d, n, tot) };
-        if n - m * d != 0 { continue $ (d + 1, n, tot) };
-        let (q, n) = loop((1, n), |(q, n)|
-            if n % d != 0 { break $ (q, n) };
-            continue $ (q * d, n / d)
-        );
-        continue $ (d + 1, n, tot * (q - q / d))
-    );
-    if n > 1 { tot * (n - 1) } else { tot }
-);
+calc_totient = |n| factorize(n).to_iter.fold(n, |(p, _), tot| tot / p * (p - 1));
 
 // `calc_totient`の別名（非推奨）
 euler_tortient : I64 -> I64 = calc_totient;
@@ -700,17 +768,7 @@ _calc_primitive_root = |p| (
     // 各 1 <= g <= p-1 ごとに、g が原子根であるかを調べる。
     // 全ての φ(p) = p-1 の素因子qに対し g^(φ(p) / q) != 1 であるならば、gは原子根である。
 
-    let factors = loop((2, p-1, []), |(q, n, factors)|
-        let m = n / q;
-        if q > m { break $ if n > 1 { factors.push_back(n) } else { factors } };
-        if n - m * q != 0 { continue $ (q + 1, n, factors) };
-        let factors = factors.push_back(q);
-        let n = loop(n, |n|
-            if n % q != 0 { break $ n };
-            continue $ n / q
-        );
-        continue $ (q + 1, n, factors)
-    );
+    let factors = factorize(p - 1).to_iter.map(|(q, _)| q).to_array;
 
     range(1, p).filter_map(|g|
         let ok = factors.to_iter.check_all(|q|

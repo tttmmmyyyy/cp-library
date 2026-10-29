@@ -13,7 +13,7 @@
 * Mod Int
   * `CPLib.ZP` : 静的な（すなわち、コンパイル時に決まる）素数を法とする整数の剰余環（体）の演算を提供します。またnumber theoretic transform（NTT）も提供します。
 * 整数論
-  * `CPLib.Arithmetic` : mod演算、整数の平方根、べき乗、GCD、拡張ユークリッドの互除法、pow_mod、inv_mod、中国剰余定理、素数リスト（篩）、素因数分解、素数判定（Miller-Rabin法）、オイラーのトーシェント関数、原始根、floor_sum、ピタゴラス数
+  * `CPLib.Arithmetic` : mod演算、整数の平方根、べき乗、GCD、拡張ユークリッドの互除法、pow_mod、inv_mod、中国剰余定理、素数リスト（篩）、素因数分解（Pollardのρ法）、素数判定（Miller-Rabin法）、オイラーのトーシェント関数、原始根、floor_sum、ピタゴラス数
 * セグメント木
   * `CPLib.Segtree` : 静的にモノイド構造が決まる場合のセグメント木。
   * `CPLib.DSegtree` : 動的にモノイド構造が決まる場合のセグメント木。

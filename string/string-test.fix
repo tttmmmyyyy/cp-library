@@ -1,14 +1,17 @@
 module CPLib.String.Test;
 
-import CPLib.String::{calc_lcp_array, calc_lcp_array_any, calc_suffix_array, calc_suffix_array_any, calc_suffix_array_i64, calc_z_array, calc_z_array_any, _sa_doubling};
+import CPLib.String::{
+    _sa_doubling, calc_lcp_array, calc_lcp_array_any, calc_suffix_array, calc_suffix_array_any, 
+    calc_suffix_array_i64, calc_z_array, calc_z_array_any
+};
 import EZS::{cd, run_o, run_wi_oec, Context::default};
 import Random::{generate_U64, init_by_seed};
 import Std::{
-    Array, I64,
-    loop, IO, Array::{empty, fill, pop_back, push_back, sort_by, @, @size}, Debug::{assert, assert_eq, consumed_time_while_lazy}, 
-    FromBytes::from_bytes, Functor::{forget, map}, IO::println, Iterator::{fold, fold_m, map, range, to_array}, LoopState::{break, continue}, 
-    Monad::pure, Option::is_some, Result::as_ok, String::{find, get_bytes, format}, ToI32::i32, ToI64::i64, ToString::to_string, 
-    ToU8::u8
+    loop, Array, I64, IO, Array::{@, empty, fill, pop_back, push_back, sort_by}, 
+    Debug::{assert, assert_eq, consumed_time_while_lazy}, FromBytes::from_bytes, Functor::{forget, map}, 
+    IO::println, Iterator::{fold, fold_m, map, range, to_array}, LoopState::{break, continue}, 
+    Monad::pure, Option::is_some, Result::as_ok, String::{find, format, get_bytes}, ToI32::i32, 
+    ToI64::i64, ToU8::u8
 };
 
 // https://atcoder.jp/contests/language-test-202505/submissions/68577484

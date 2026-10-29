@@ -34,7 +34,10 @@ module CPLib.Memoize;
 
 import Hash::HashKey;
 import HashMap::{empty, find, insert, HashMap};
-import Std::{Array, I64, Lazy, Monad, Option, Array::{fill, set, @}, Monad::pure, Option::{none, some}, Tuple2::@1};
+import Std::{
+    Array, I64, Lazy, Monad, Option, Array::{@, fill, set}, Monad::pure, Option::{none, some}, 
+    Tuple2::@1
+};
 
 // メモ化モナド
 // 

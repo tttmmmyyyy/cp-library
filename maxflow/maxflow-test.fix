@@ -1,14 +1,18 @@
 module CPLib.MaxFlow.Test;
 
 import CPLib.MaxFlow::{
-    MaxFlowEdge, MaxFlowGraph, MaxFlowEdge::{@cap, @flow, @from, @to}, 
-    MaxFlowGraph::{add_edge, add_edge_id, change_edge, create, get_edge, get_edges, get_flow, calc_min_cut, maximize_flow, maximize_flow_with_limit}
+    MaxFlowEdge, MaxFlowEdge::{@cap, @flow, @from, @to}, 
+    MaxFlowGraph::{
+        add_edge, add_edge_id, calc_min_cut, change_edge, create, get_edge, get_edges, get_flow, 
+        maximize_flow, maximize_flow_with_limit
+    }
 };
 import Random::{generate_I64_nonneg, init_by_seed, Random};
 import Std::{
-    loop, Array, Bool, I64, IO, Array::{fill, mod, push_back, set, to_iter, @, @size}, Debug::{assert, assert_eq}, 
-    Iterator::{fold, fold_m, map, range, to_array}, LessThan::{max, min}, LoopState::{break, continue}, Monad::pure, 
-    ToString::to_string, I64::{bit_and, maximum, shift_left}
+    loop, Array, Bool, I64, IO, Array::{@, @size, fill, mod, push_back, set, to_iter}, 
+    Debug::{assert, assert_eq}, I64::{bit_and, maximum, shift_left}, 
+    Iterator::{fold, fold_m, map, range, to_array}, LessThan::{max, min}, LoopState::{break, continue}, 
+    Monad::pure, ToString::to_string
 };
 
 test : IO ();
