@@ -138,55 +138,6 @@ Type: `Std::I64 -> Std::Array (Std::I64, Std::I64, Std::I64)`
 
 - `c_max`: `c`の上限（inclusive）
 
-#### calc_sqrt_mod_prime
-
-Type: `Std::I64 -> Std::I64 -> Std::Option Std::I64`
-
-素数`p`を法とする`a`の平方根を1つ求める
-
-z^2 = a (mod p) を満たす`[0, p)`の z を1つ返す。平方根がなければ`none()`を返す。
-
-制約：`p`は素数
-
-計算量：O(log(p)^2)（平方非剰余を探す部分は期待値）
-
-##### Parameters
-
-- `p`: 法（素数）
-- `a`: 整数
-
-##### Examples
-
-```fix
-let z = 2.calc_sqrt_mod_prime(7).as_some;
-assert_eq(|_|"", z * z % 7, 2);;
-assert_eq(|_|"", 3.calc_sqrt_mod_prime(7), none())
-```
-
-#### calc_sqrts_mod
-
-Type: `Std::I64 -> Std::I64 -> Std::Array Std::I64`
-
-`m`を法とする`a`の平方根をすべて求める
-
-z^2 = a (mod m) を満たす`[0, m)`の z をすべて、小さい順に返す。
-
-制約：m >= 1
-
-計算量：O(m^(1/4) log(m) + N log(m))（前の項は期待値）。N は平方根の個数。
-
-##### Parameters
-
-- `m`: 法
-- `a`: 整数
-
-##### Examples
-
-```fix
-assert_eq(|_|"", 1.calc_sqrts_mod(8), [1, 3, 5, 7]);;
-assert_eq(|_|"", 4.calc_sqrts_mod(12), [2, 4, 8, 10])
-```
-
 #### calc_totient
 
 Type: `Std::I64 -> Std::I64`

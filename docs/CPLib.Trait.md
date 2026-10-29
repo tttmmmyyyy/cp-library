@@ -83,15 +83,6 @@ Type: `a -> CPLib.Trait::Action::Set a -> CPLib.Trait::Action::Set a`
 
 Type: `a`
 
-#### trait `Integer = Std::Add + Std::Sub + Std::Mul + Std::Neg + Std::Div + Std::Rem + Std::Zero + Std::One + Std::Eq + Std::LessThan + Std::LessThanOrEq`
-
-Kind: `*`
-
-整数の型
-
-`/`と`%`は、`I64`と同じく0の方向へ切り捨てた商と、その余りを返すものとする。
-`I64`、`I128`のほか、多倍長整数（gmp-fix の`MPZ`など）も満たす。
-
 #### trait `a : Monoid`
 
 モノイドのトレイト

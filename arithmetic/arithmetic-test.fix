@@ -3,20 +3,19 @@ module CPLib.Arithmetic.Test;
 import BoolArray::BoolArray::@;
 import CPLib.Arithmetic::{
     _calc_primitive_root, _inv_gcd, add_mod, calc_gcd, calc_lp_table, calc_prime_list, calc_prime_table, 
-    calc_pythagorean_triples, calc_sqrt_mod_prime, calc_sqrts_mod, calc_totient, calc_totient_table, 
-    ext_gcd, factorize, factorize_flat, factorize_via_lp_table, floor_sum, inv_mod, is_prime, isqrt, 
-    lift_crt, mul_mod, pmod, pow_mod, pow_mod_u, power, sub_mod
+    calc_pythagorean_triples, calc_totient, calc_totient_table, ext_gcd, factorize, factorize_flat, 
+    factorize_via_lp_table, floor_sum, inv_mod, is_prime, isqrt, lift_crt, mul_mod, pmod, pow_mod, 
+    pow_mod_u, power, sub_mod
 };
 import EZS::{cd, run_o, run_wi_oec, Context::default};
 import Random::{generate_I64_nonneg, generate_U64, init_by_seed};
 import Std::{
-    loop, Array, F64, I64, IO, U64, U8, Array::{@, @size, find_by, push_back, sort, to_iter}, 
+    loop, Array, F64, I64, IO, U64, U8, Array::{@, @size, push_back, sort, to_iter}, 
     Debug::{assert, assert_eq, consumed_time_while_lazy}, Functor::{forget, map}, I32::maximum, 
     I64::{maximum, minimum, shift_left}, IO::println, 
     Iterator::{check_all, collect_m, filter, flat_map, fold, fold_m, map, range, to_array}, 
-    LessThan::max, LoopState::{break, continue}, Monad::pure, Option::{as_some, is_none, is_some}, 
-    String::{find, format}, ToI64::i64, ToString::to_string, ToU128::u128, ToU64::u64, 
-    U64::{maximum, shift_left, shift_right}
+    LessThan::max, LoopState::{break, continue}, Monad::pure, Option::is_some, String::{find, format}, 
+    ToI64::i64, ToString::to_string, ToU128::u128, ToU64::u64, U64::{maximum, shift_left, shift_right}
 };
 
 // floor_math:
@@ -48,7 +47,6 @@ test = (
     test_calc_primitive_root;;
     test_pythagorean_triples;;
     test_floor_sum;;
-    test_sqrt_mod;;
     test_out_of_range;;
 
     pure()
@@ -663,8 +661,7 @@ test_linear_sieve = (
     pure()
 );
 
-// 制約を満たさない引数を渡すと、`pow_mod`（負の指数）、`lift_crt`（長さの違う配列、1未満の法）、
-// `calc_sqrts_mod`（1未満の法）が理由を書いて止まる
+// 制約を満たさない引数を渡すと、`pow_mod`（負の指数）と`lift_crt`（長さの違う配列、1未満の法）が理由を書いて止まる
 test_out_of_range : IO ();
 test_out_of_range = (
     let ezs = EZS::Context::default;
@@ -673,50 +670,14 @@ test_out_of_range = (
     let messages = [
         "[CPLib.Arithmetic::pow_mod] `e` is negative",
         "[CPLib.Arithmetic::lift_crt] `rs` and `ms` have different sizes",
-        "[CPLib.Arithmetic::lift_crt] `ms` has an element less than 1",
-        "[CPLib.Arithmetic::calc_sqrts_mod] `m` is less than 1"
+        "[CPLib.Arithmetic::lift_crt] `ms` has an element less than 1"
     ];
     range(0, messages.@size).fold_m((), |case, _|
         let (_, err, code) = *ezs.run_wi_oec(["fix", "run"], case.to_string);
         assert_eq(|_|"case " + case.to_string + ": " + err, code != 0_U8 && err.find(messages.@(case), 0).is_some, true)
     );;
     let (out, _, code) = *ezs.run_wi_oec(["fix", "run"], messages.@size.to_string);
-    assert_eq(|_|"in range: " + out, code == 0_U8 && out.find("(2, (8, 15), [3, 7])", 0).is_some, true);;
+    assert_eq(|_|"in range: " + out, code == 0_U8 && out.find("(2, (8, 15))", 0).is_some, true);;
     // 後のテストのために、作業ディレクトリをライブラリのルートに戻す
     ezs.cd("../..")
-);
-
-// 平方根を、総当たりで求めたものと比べる
-test_sqrt_mod : IO () = (
-    range(1, 301).fold_m((), |m, _|
-        range(0, m).fold_m((), |a, _|
-            let expected = range(0, m).filter(|z| z * z % m == a).to_array;
-            assert_eq(|_|"calc_sqrts_mod a={} m={}".format((a, m)), a.calc_sqrts_mod(m), expected)
-        )
-    );;
-    assert_eq(|_|"calc_sqrts_mod negative a", (-1).calc_sqrts_mod(10), [3, 7]);;
-    // 大きい法では、平方数 z^2 の平方根が z を含み、どれも 2 乗すると z^2 になることを確かめる
-    [(1000000007 * 998244353, 4), (1.shift_left(60), 4), (3 * 5 * 7 * 11 * 13 * 17 * 19 * 23 * 29 * 31 * 37, 2048)].to_iter.fold_m((), |(m, n), _|
-        range(1, 20).fold_m((), |i, _|
-            let z = mul_mod(i, 123456789123457, m).pmod(m);
-            let z = if z % 2 == 0 { z + 1 } else { z }; // 2^60 と互いに素になるよう、z を奇数にする
-            if calc_gcd(z, m) != 1 { pure() };
-            let a = mul_mod(z, z, m);
-            let roots = a.calc_sqrts_mod(m);
-            let msg = |what| "calc_sqrts_mod m={} z={}: {}".format((m, z, what));
-            assert_eq(|_|msg("count"), roots.@size, n);;
-            assert(|_|msg("contains z"), roots.find_by(|r| r == z).is_some);;
-            assert(|_|msg("squares"), roots.to_iter.check_all(|r| mul_mod(r, r, m) == a))
-        )
-    );;
-    [998244353, 1000000007, 4611686018427387847].to_iter.fold_m((), |p, _|
-        range(0, 200).fold_m((), |a, _|
-            let a = mul_mod(a, 123456789123, p);
-            let r = a.calc_sqrt_mod_prime(p);
-            let is_qr = a == 0 || a.pow_mod((p - 1) / 2, p) == 1;
-            assert_eq(|_|"calc_sqrt_mod_prime a={} p={}".format((a, p)), r.is_some, is_qr);;
-            if r.is_none { pure() };
-            assert_eq(|_|"calc_sqrt_mod_prime a={} p={} square".format((a, p)), mul_mod(r.as_some, r.as_some, p), a)
-        )
-    )
 );
