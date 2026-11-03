@@ -7,8 +7,8 @@ import CPLib.ZP::{
 };
 import Std::{
     Array, IO, Array::{@, @size, push_back, to_iter}, Debug::assert_eq, Functor::{forget, map}, 
-    Iterator::{filter, fold, fold_m, map, product, range, to_array}, Monad::pure, ToI64::i64, 
-    ToString::to_string
+    Iterator::{filter, fold, fold_m, map, product, range, to_array}, Monad::pure, String::format, 
+    ToI64::i64, ToString::to_string
 };
 
 // 合成数の法10
@@ -29,6 +29,7 @@ impl P17 : PrimeProvider {
 test : IO ();
 test = (
     test_basic;;
+    test_text;;
     test_power;;
     test_power_composite;;
     test_primitive_root;;
@@ -90,6 +91,18 @@ test_basic = (
 
     pure()
 
+);
+
+// `to_string`と`format`が、0以上p未満の代表元を10進数で書く
+test_text : IO ();
+test_text = (
+    range(-20, 20).fold_m((), |x, _|
+        let z = zp(x) : ZP P17;
+        let expected = x.pmod(17).to_string;
+        assert_eq(|_|"test_text to_string " + x.to_string, z.to_string, expected);;
+        assert_eq(|_|"test_text format " + x.to_string, "{}".format((z,)), expected)
+    ).forget;;
+    assert_eq(|_|"test_text format large", "{}".format((zp(-1) : ZP P1000000007,)), "1000000006")
 );
 
 // 法が合成数でも、`power`が底を指数の回数だけ掛けた値を返すことのテスト

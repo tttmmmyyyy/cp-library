@@ -50,8 +50,8 @@ module CPLib.Monoid;
 
 import CPLib.Trait::{Action, Inf, Monoid, NegInf, Inf::inf, NegInf::neg_inf};
 import Std::{
-    Add, LessThan, Mul, One, Option, Zero, LessThan::{max, min}, One::one, Option::{is_some, none, some}, 
-    Zero::zero
+    Add, Format, LessThan, Mul, One, Option, ToString, Zero, Format::write_text, LessThan::{max, min}, 
+    One::one, Option::{is_some, none, some}, ToString::to_string, Zero::zero
 };
 
 // 和のモノイド
@@ -64,12 +64,40 @@ impl [e : Zero, e : Add] Sum e : Monoid {
     op = |x, y| Sum { v : x.@v + y.@v };
 }
 
+// `Sum { v : 3 }`の形で書きます。
+impl [e : ToString] Sum e : ToString {
+    to_string = |x| "Sum { v : " + x.@v.to_string + " }";
+}
+
+// `to_string`と同じ文字列を書きます。
+impl [e : Format] Sum e : Format {
+    write_text = |x, out| (
+        let out = *out.write_text("Sum { v : ");
+        let out = *out.write_text(x.@v);
+        out.write_text(" }")
+    );
+}
+
 // 積のモノイド
 type Product e = struct { v : e };
 
 impl [e : One, e : Mul] Product e : Monoid {
     unit = Product { v : one };
     op = |x, y| Product { v : x.@v * y.@v };
+}
+
+// `Product { v : 3 }`の形で書きます。
+impl [e : ToString] Product e : ToString {
+    to_string = |x| "Product { v : " + x.@v.to_string + " }";
+}
+
+// `to_string`と同じ文字列を書きます。
+impl [e : Format] Product e : Format {
+    write_text = |x, out| (
+        let out = *out.write_text("Product { v : ");
+        let out = *out.write_text(x.@v);
+        out.write_text(" }")
+    );
 }
 
 // 最小値のモノイド
@@ -82,6 +110,20 @@ impl [e : LessThan, e : Inf] Min e : Monoid {
     op = |x, y| Min { v : min(x.@v, y.@v) };
 }
 
+// `Min { v : 3 }`の形で書きます。
+impl [e : ToString] Min e : ToString {
+    to_string = |x| "Min { v : " + x.@v.to_string + " }";
+}
+
+// `to_string`と同じ文字列を書きます。
+impl [e : Format] Min e : Format {
+    write_text = |x, out| (
+        let out = *out.write_text("Min { v : ");
+        let out = *out.write_text(x.@v);
+        out.write_text(" }")
+    );
+}
+
 // 最大値のモノイド
 //
 // 単位元は`neg_inf`です。
@@ -90,6 +132,20 @@ type Max e = struct { v : e };
 impl [e : LessThan, e : NegInf] Max e : Monoid {
     unit = Max { v : neg_inf };
     op = |x, y| Max { v : max(x.@v, y.@v) };
+}
+
+// `Max { v : 3 }`の形で書きます。
+impl [e : ToString] Max e : ToString {
+    to_string = |x| "Max { v : " + x.@v.to_string + " }";
+}
+
+// `to_string`と同じ文字列を書きます。
+impl [e : Format] Max e : Format {
+    write_text = |x, out| (
+        let out = *out.write_text("Max { v : ");
+        let out = *out.write_text(x.@v);
+        out.write_text(" }")
+    );
 }
 
 // 重みつきの和のモノイド
@@ -115,6 +171,22 @@ namespace WeightedSum {
 impl [e : Zero, e : Add] WeightedSum e : Monoid {
     unit = WeightedSum { v : zero, w : zero };
     op = |x, y| WeightedSum { v : x.@v + y.@v, w : x.@w + y.@w };
+}
+
+// `WeightedSum { v : 10, w : 2 }`の形で書きます。
+impl [e : ToString] WeightedSum e : ToString {
+    to_string = |x| "WeightedSum { v : " + x.@v.to_string + ", w : " + x.@w.to_string + " }";
+}
+
+// `to_string`と同じ文字列を書きます。
+impl [e : Format] WeightedSum e : Format {
+    write_text = |x, out| (
+        let out = *out.write_text("WeightedSum { v : ");
+        let out = *out.write_text(x.@v);
+        let out = *out.write_text(", w : ");
+        let out = *out.write_text(x.@w);
+        out.write_text(" }")
+    );
 }
 
 // 区間加算の作用
