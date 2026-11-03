@@ -1,6 +1,6 @@
 # CPLib.ZP
 
-Defined in cp-library@0.15.3
+Defined in cp-library@0.15.4
 
 素数`p`を法とする整数の環の型`ZP p`を与えるモジュール。
 
@@ -224,6 +224,10 @@ Type: `p -> Std::U32`
 ### impl `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::ZP p : Std::Div`
 
 ### impl `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::ZP p : Std::Eq`
+
+### impl `CPLib.ZP::ZP p : Std::Format`
+
+`to_string`と同じく、0以上p未満の代表元を10進数で書きます。
 
 ### impl `[p : CPLib.ZP::PrimeProvider] CPLib.ZP::ZP p : Std::Mul`
 

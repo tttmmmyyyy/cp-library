@@ -1,6 +1,6 @@
 # CPLib.Graph
 
-Defined in cp-library@0.15.3
+Defined in cp-library@0.15.4
 
 グラフの表現と基本的なアルゴリズム
 

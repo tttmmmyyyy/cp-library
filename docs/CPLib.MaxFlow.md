@@ -1,6 +1,6 @@
 # CPLib.MaxFlow
 
-Defined in cp-library@0.15.3
+Defined in cp-library@0.15.4
 
 最大フロー問題、最小カット問題
 

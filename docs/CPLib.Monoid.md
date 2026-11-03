@@ -1,6 +1,6 @@
 # CPLib.Monoid
 
-Defined in cp-library@0.15.3
+Defined in cp-library@0.15.4
 
 セグメント木でよく使うモノイドと作用を提供するモジュール。
 
@@ -208,9 +208,33 @@ Type: `e`
 
 ### impl `[e : Std::LessThan, e : CPLib.Trait::NegInf] CPLib.Monoid::Max e : CPLib.Trait::Monoid`
 
+### impl `[e : Std::Format] CPLib.Monoid::Max e : Std::Format`
+
+`to_string`と同じ文字列を書きます。
+
+### impl `[e : Std::ToString] CPLib.Monoid::Max e : Std::ToString`
+
+`Max { v : 3 }`の形で書きます。
+
 ### impl `[e : Std::LessThan, e : CPLib.Trait::Inf] CPLib.Monoid::Min e : CPLib.Trait::Monoid`
 
+### impl `[e : Std::Format] CPLib.Monoid::Min e : Std::Format`
+
+`to_string`と同じ文字列を書きます。
+
+### impl `[e : Std::ToString] CPLib.Monoid::Min e : Std::ToString`
+
+`Min { v : 3 }`の形で書きます。
+
 ### impl `[e : Std::One, e : Std::Mul] CPLib.Monoid::Product e : CPLib.Trait::Monoid`
+
+### impl `[e : Std::Format] CPLib.Monoid::Product e : Std::Format`
+
+`to_string`と同じ文字列を書きます。
+
+### impl `[e : Std::ToString] CPLib.Monoid::Product e : Std::ToString`
+
+`Product { v : 3 }`の形で書きます。
 
 ### impl `[e : Std::Add] CPLib.Monoid::RangeAdd CPLib.Monoid::Max e : CPLib.Trait::Action`
 
@@ -248,4 +272,20 @@ Type: `e`
 
 ### impl `[e : Std::Zero, e : Std::Add] CPLib.Monoid::Sum e : CPLib.Trait::Monoid`
 
+### impl `[e : Std::Format] CPLib.Monoid::Sum e : Std::Format`
+
+`to_string`と同じ文字列を書きます。
+
+### impl `[e : Std::ToString] CPLib.Monoid::Sum e : Std::ToString`
+
+`Sum { v : 3 }`の形で書きます。
+
 ### impl `[e : Std::Zero, e : Std::Add] CPLib.Monoid::WeightedSum e : CPLib.Trait::Monoid`
+
+### impl `[e : Std::Format] CPLib.Monoid::WeightedSum e : Std::Format`
+
+`to_string`と同じ文字列を書きます。
+
+### impl `[e : Std::ToString] CPLib.Monoid::WeightedSum e : Std::ToString`
+
+`WeightedSum { v : 10, w : 2 }`の形で書きます。
