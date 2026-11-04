@@ -1,4 +1,4 @@
-proj_file_hash = "a0dffc12e2d8296e4b17781b45d144cc"
+proj_file_hash = "456d7be32f2b2bd8cbac4a17eac920e4"
 
 [[dependencies]]
 name = "binary-heap"
@@ -11,12 +11,12 @@ rev = "aa7af02bb6c93050ec05d3d80693c0a6568e309d"
 
 [[dependencies]]
 name = "bool-array"
-version = "0.1.2"
-path = ".fixlang/deps/bool-array_0.1.2"
+version = "0.2.0"
+path = ".fixlang/deps/bool-array_0.2.0"
 
 [dependencies.git]
 repo = "https://github.com/tttmmmyyyy/bool-array.git"
-rev = "bcfbde58e945e302751d81b34068885e26f7e611"
+rev = "e46c2c8f7e25281fb479a98f705bc88d79f89c1b"
 
 [[dependencies]]
 name = "hash"
