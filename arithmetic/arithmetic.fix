@@ -1,6 +1,6 @@
 module CPLib.Arithmetic;
 
-import BoolArray::{BoolArray, BoolArray::{@, fill_true, get_size, make, set}};
+import BoolArray::{BoolArray, BoolArray::{@, fill, set}};
 import Std::{
     loop, undefined, Array, Bool, I128, I64, Multiplicative, U128, U32, U64, U8, Add::add, 
     Array::{@, @size, append, empty, fill, get_last, is_empty, mod, pop_back, push_back, set, sort, to_iter}, 
@@ -312,7 +312,7 @@ inv_mod = |m, a| (
 // 
 // 注意：戻り値の要素に`@(n)`でアクセスするには`import BoolArray;`が必要です。
 //
-// 制約：n >= 1
+// 制約：n >= 0
 //
 // 計算量：O(n log log n)
 //
@@ -329,9 +329,8 @@ inv_mod = |m, a| (
 // ```
 calc_prime_table : I64 -> BoolArray;
 calc_prime_table = |size| (
-    let table = BoolArray::make(size).fill_true;
-    let size = table.get_size;
-    let table = table.set(0, false).set(1, false);
+    let table = BoolArray::fill(size, true);
+    let table = range(0, size.min(2)).fold(table, |i, table| table.set(i, false));
     let table = range(2, size).loop_iter(table, |n, table|
         if n > (size - 1) / n { break $ table };
         if !table.@(n) { continue $ table };
@@ -347,7 +346,7 @@ DEPRECATED[create_prime_table, "Use `CPLib.Arithmetic::calc_prime_table` instead
 
 // [0, n)の範囲での素数リストを作成する
 //
-// 制約：n >= 1
+// 制約：n >= 0
 //
 // 計算量：O(n log log n)
 //
@@ -382,7 +381,7 @@ DEPRECATED[create_prime_list, "Use `CPLib.Arithmetic::calc_prime_list` instead."
 calc_lp_table : U32 -> (Array U32, Array U32);
 calc_lp_table = |n| (
     let n = n.i64;
-    let lp = fill(n, 0_U32);
+    let lp = Array::fill(n, 0_U32);
     let ps = empty(n / 10);
     range(2, n).fold((lp, ps), |i, (lp, ps)|
         let (lp, ps) = if lp.@(i) == 0_U32 { (lp.set(i, i.u32), ps.push_back(i.u32)) } else { (lp, ps) };
@@ -554,7 +553,7 @@ DEPRECATED[euler_tortient, "Use `CPLib.Arithmetic::calc_totient` instead."];
 // - `n`: 表の上限（exclusive）
 calc_totient_table : I64 -> Array I64;
 calc_totient_table = |n| (
-    let table = fill(n, 0);
+    let table = Array::fill(n, 0);
     let table = range(0, n).fold(table, |i, table| table.set(i, i));
     range(2, n).fold(table, |i, table|
         if table.@(i) != i { table };

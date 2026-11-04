@@ -1,6 +1,6 @@
 # CPLib.Arithmetic
 
-Defined in cp-library@0.15.3
+Defined in cp-library@0.16.0
 
 ## Values
 
@@ -67,7 +67,7 @@ Type: `Std::I64 -> Std::Array Std::U32`
 
 [0, n)の範囲での素数リストを作成する
 
-制約：n >= 1
+制約：n >= 0
 
 計算量：O(n log log n)
 
@@ -85,7 +85,7 @@ Type: `Std::I64 -> BoolArray::BoolArray`
 
 注意：戻り値の要素に`@(n)`でアクセスするには`import BoolArray;`が必要です。
 
-制約：n >= 1
+制約：n >= 0
 
 計算量：O(n log log n)
 
