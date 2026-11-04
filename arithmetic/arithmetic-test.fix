@@ -1,6 +1,6 @@
 module CPLib.Arithmetic.Test;
 
-import BoolArray::BoolArray::@;
+import BoolArray::BoolArray::{@, @size};
 import CPLib.Arithmetic::{
     _calc_primitive_root, _inv_gcd, add_mod, calc_gcd, calc_lp_table, calc_prime_list, calc_prime_table, 
     calc_pythagorean_triples, calc_totient, calc_totient_table, ext_gcd, factorize, factorize_flat, 
@@ -316,6 +316,15 @@ test_prime_table = (
     assert_eq(|_|"test_prime_table 17", prime_table.@(17), true);;
     assert_eq(|_|"test_prime_table 18", prime_table.@(18), false);;
     assert_eq(|_|"test_prime_table 19", prime_table.@(19), true);;
+    // 表の要素数はちょうど n で、n が 0 から 3 でも作れる
+    range(0, 4).fold_m((), |n, _| (
+        let table = calc_prime_table(n);
+        assert_eq(|_|"test_prime_table size " + n.to_string, table.@size, n);;
+        range(0, n).fold_m((), |i, _| assert_eq(|_|"test_prime_table " + n.to_string + " " + i.to_string, table.@(i), i >= 2))
+    ));;
+    assert_eq(|_|"test_prime_list 0", calc_prime_list(0), []);;
+    assert_eq(|_|"test_prime_list 2", calc_prime_list(2), []);;
+    assert_eq(|_|"test_prime_list 3", calc_prime_list(3), [2_U32]);;
     pure()
 );
 

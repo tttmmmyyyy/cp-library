@@ -1,6 +1,6 @@
 # CPLib.ZP
 
-Defined in cp-library@0.15.3
+Defined in cp-library@0.16.0
 
 素数`p`を法とする整数の環の型`ZP p`を与えるモジュール。
 

@@ -1,6 +1,6 @@
 # CPLib.Segtree
 
-Defined in cp-library@0.15.3
+Defined in cp-library@0.16.0
 
 セグメント木の実装
 

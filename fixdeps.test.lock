@@ -1,4 +1,4 @@
-proj_file_hash = "0117739c504a7bd2ffec2427d4d8ed2c"
+proj_file_hash = "b47fc64f44dff5697c871f4c5c0cdea1"
 
 [[dependencies]]
 name = "binary-heap"
@@ -11,12 +11,12 @@ rev = "aa7af02bb6c93050ec05d3d80693c0a6568e309d"
 
 [[dependencies]]
 name = "bool-array"
-version = "0.1.2"
-path = ".fixlang/deps/bool-array_0.1.2"
+version = "0.2.0"
+path = ".fixlang/deps/bool-array_0.2.0"
 
 [dependencies.git]
 repo = "https://github.com/tttmmmyyyy/bool-array.git"
-rev = "bcfbde58e945e302751d81b34068885e26f7e611"
+rev = "e46c2c8f7e25281fb479a98f705bc88d79f89c1b"
 
 [[dependencies]]
 name = "ez-scripting"
@@ -65,9 +65,9 @@ rev = "fa520558c0ae040eff99896a743a0e2820748c5e"
 
 [[dependencies]]
 name = "subprocess"
-version = "2.0.0"
-path = ".fixlang/deps/subprocess_2.0.0"
+version = "2.0.1"
+path = ".fixlang/deps/subprocess_2.0.1"
 
 [dependencies.git]
 repo = "https://github.com/tttmmmyyyy/fixlang-subprocess.git"
-rev = "b610e67529defe6fdd8adf8f7d420667d6e40b64"
+rev = "f83c50645e22c8373795b6b4598459ec9d763621"
