@@ -55,7 +55,7 @@ module CPLib.LSegtree;
 import CPLib.Trait::{Action, Monoid, Action::{act, Set}, Monoid::{op, unit}};
 import Std::{
     loop, undefined, Array, Bool, I64, Array::{@, @size, fill, set}, Functor::map,
-    I64::{count_leading_zeros, count_trailing_zeros, shift_left, shift_right}, 
+    I64::{bit_xor, count_leading_zeros, count_trailing_zeros, shift_left, shift_right}, 
     Iterator::{fold, range, range_step}, LoopState::{break, continue}, Option::{map_or, none, some}
 };
 
@@ -127,22 +127,21 @@ _apply_at = |k, a, tree| (
     tree.mod__lazy(|lazy| lazy.set(k, Monoid::op(lazy.@(k), a))) // 右作用
 );
 
-// 内部ノード`k`の作用を子に伝搬する
-_propagate_at : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> LSegtree m a -> LSegtree m a;
-_propagate_at = |k, tree| (
-    let a = tree.@_lazy.@(k);
-    let tree = tree._apply_at(k * 2, a)._apply_at(k * 2 + 1, a);
-    tree.mod__lazy(set(k, Monoid::unit))
-);
-
-// ノード`k`の祖先すべてで、根から順に作用を子に伝搬する
+// ノード`k`の祖先がまだ伝搬していない作用を、根から順に子に伝搬する
+//
+// 祖先の作用を単位元にし、`k`と、祖先の子のうち`k`の祖先でないものに、作用を適用する。
+// 祖先の値は計算し直さないので、呼んだ後で`_recalc_above(k)`を呼ぶ。
 _propagate_above : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> LSegtree m a -> LSegtree m a;
 _propagate_above = |k, tree| (
     let height = 63 - k.count_leading_zeros; // kの根からの深さ
-    range_step(height, 0, -1).fold(tree, |h, tree|
+    let (tree, a) = range_step(height, 0, -1).fold((tree, Monoid::unit), |h, (tree, a)|
         let j = k.shift_right(h); // kからh個親のノード
-        tree._propagate_at(j)
-    )
+        let a = Monoid::op(tree.@_lazy.@(j), a); // jとその祖先がまだ伝搬していない作用の合成
+        let tree = tree.mod__lazy(set(j, Monoid::unit));
+        let sibling = k.shift_right(h - 1).bit_xor(1); // jの子のうちkの祖先でないもの
+        (tree._apply_at(sibling, a), a)
+    );
+    tree._apply_at(k, a)
 );
 
 // ノード`k`の祖先すべての値を、下から順に子の値から計算し直す
