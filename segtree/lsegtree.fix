@@ -54,9 +54,9 @@ module CPLib.LSegtree;
 
 import CPLib.Trait::{Action, Monoid, Action::{act, Set}, Monoid::{op, unit}};
 import Std::{
-    loop, undefined, Array, Bool, I64, Array::{@, @size, fill, set}, 
-    I64::{count_leading_zeros, count_trailing_zeros, shift_left, shift_right}, 
-    Iterator::{fold, range, range_step}, LoopState::{break, continue}
+    loop, undefined, Array, Bool, I64, Array::{@, @size, fill, set}, Functor::map,
+    I64::{bit_xor, count_leading_zeros, count_trailing_zeros, shift_left, shift_right}, 
+    Iterator::{fold, range, range_step}, LoopState::{break, continue}, Option::{map_or, none, some}
 };
 
 // この実装にあたっては、[maspyさんの記事](https://maspypy.com/segment-tree-%e3%81%ae%e3%81%8a%e5%8b%89%e5%bc%b72) を参考にしました。良質な解説をありがとうございます。
@@ -69,12 +69,12 @@ type LSegtree m a = struct {
     _n : I64,
     // ノードの値の配列
     // 
-    // 1-indexedで運用する：長さは`2n`、第0インデックスは使用しない。ノード`k`の子は`2k`と`2k+1`、要素`i`は葉`n+i`。
+    // 1-indexedで運用する：長さは`2n`、第0インデックスはノードを表さない。ノード`k`の子は`2k`と`2k+1`、要素`i`は葉`n+i`。
     // 葉の値は要素の値である。内部ノード`k`の値は`act(_lazy[k], op(_elems[2k], _elems[2k+1]))`に等しい。
     _elems : Array m,
     // 内部ノードの、子にまだ伝搬していない作用の配列
     // 
-    // 1-indexedで運用する：長さは`n`、第0インデックスは使用しない。
+    // 1-indexedで運用する：長さは`n`、第0インデックスはノードを表さず、単位元のまま保つ。
     _lazy : Array a,
 };
 
@@ -127,22 +127,36 @@ _apply_at = |k, a, tree| (
     tree.mod__lazy(|lazy| lazy.set(k, Monoid::op(lazy.@(k), a))) // 右作用
 );
 
-// 内部ノード`k`の作用を子に伝搬する
-_propagate_at : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> LSegtree m a -> LSegtree m a;
-_propagate_at = |k, tree| (
-    let a = tree.@_lazy.@(k);
-    let tree = tree._apply_at(k * 2, a)._apply_at(k * 2 + 1, a);
-    tree.mod__lazy(set(k, Monoid::unit))
+// ノード`k`の祖先のうちノード`top`より下にあるものがまだ伝搬していない作用を、上から順に子に伝搬する
+//
+// `top`は`k`か`k`の祖先か0で、`top`とその祖先が作用を持たないときに呼ぶ。`top`が0なら`k`の祖先すべてに伝搬する。
+// 伝搬した祖先の作用を単位元にし、`k`と、伝搬した祖先の子のうち`k`でも`k`の祖先でもないものに、作用を適用する。
+// 祖先の値は計算し直さないので、呼んだ後で`_recalc_above(k)`を呼ぶ。
+_propagate_above : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> I64 -> LSegtree m a -> LSegtree m a;
+_propagate_above = |top, k, tree| (
+    let height = _depth(k) - _depth(top) - 1; // kから、topの子までの段数
+    loop((height, tree, Monoid::unit), |(h, tree, a)|
+        if h <= 0 { break $ tree._apply_at(k, a) };
+        let j = k.shift_right(h); // kからh個親のノード
+        let a = Monoid::op(tree.@_lazy.@(j), a); // jとその祖先がまだ伝搬していない作用の合成
+        let tree = tree.mod__lazy(set(j, Monoid::unit));
+        let sibling = k.shift_right(h - 1).bit_xor(1); // jの子のうちkでもkの祖先でもないもの
+        continue $ (h - 1, tree._apply_at(sibling, a), a)
+    )
 );
 
-// ノード`k`の祖先すべてで、根から順に作用を子に伝搬する
-_propagate_above : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> LSegtree m a -> LSegtree m a;
-_propagate_above = |k, tree| (
-    let height = 63 - k.count_leading_zeros; // kの根からの深さ
-    range_step(height, 0, -1).fold(tree, |h, tree|
-        let j = k.shift_right(h); // kからh個親のノード
-        tree._propagate_at(j)
-    )
+// ノード`k`の根からの深さ。`k`が0なら-1
+_depth : I64 -> I64;
+_depth = |k| 63 - k.count_leading_zeros;
+
+// ノード`x`と`y`の共通の祖先 (`x`と`y`自身を含む) のうち最も深いもの。どちらかが0なら0
+_lowest_common_ancestor : I64 -> I64 -> I64;
+_lowest_common_ancestor = |x, y| (
+    // 深い方を、浅い方と同じ深さの祖先に置き換える
+    let dx = _depth(x);
+    let dy = _depth(y);
+    let (x, y) = if dx > dy { (x.shift_right(dx - dy), y) } else { (x, y.shift_right(dy - dx)) };
+    x.shift_right(64 - x.bit_xor(y).count_leading_zeros)
 );
 
 // ノード`k`の祖先すべての値を、下から順に子の値から計算し直す
@@ -187,9 +201,19 @@ _fold_nodes = |l, r, tree| (
 _pending_above : [a : Monoid] I64 -> LSegtree m a -> Array a;
 _pending_above = |j, tree| (
     let lazy = tree.@_lazy;
-    let height = 63 - j.count_leading_zeros; // jの根からの深さ
+    let height = _depth(j);
     range_step(height - 1, -1, -1).fold(fill(height + 1, Monoid::unit), |h, pending|
         pending.set(h, Monoid::op(lazy.@(j.shift_right(h + 1)), pending.@(h + 1)))
+    )
+);
+
+// ノード`k`の祖先がまだ伝搬していない作用を、深いノードから順に`x`に適用する
+_act_above : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> LSegtree m a -> m -> m;
+_act_above = |k, tree, x| (
+    let lazy = tree.@_lazy;
+    loop((k.shift_right(1), x), |(k, x)|
+        if k == 0 { break $ x };
+        continue $ (k.shift_right(1), act(lazy.@(k), x))
     )
 );
 
@@ -238,7 +262,7 @@ set : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> m -> LSegtree m a -
 set = |i, value, tree| (
     if !(0 <= i && i < tree.@_n) { undefined("[CPLib.LSegtree::set] `i` is out of [0, n)") };
     let i = i + tree.@_n;
-    let tree = tree._propagate_above(i);
+    let tree = tree._propagate_above(0, i);
     let tree = tree.mod__elems(set(i, value));
     tree._recalc_above(i)
 );
@@ -259,7 +283,7 @@ act_at : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> a -> LSegtree m 
 act_at = |i, a, tree| (
     if !(0 <= i && i < tree.@_n) { undefined("[CPLib.LSegtree::act_at] `i` is out of [0, n)") };
     let i = i + tree.@_n;
-    let tree = tree._propagate_above(i);
+    let tree = tree._propagate_above(0, i);
     // 葉は遅延作用を持たないので、値に直接作用を適用する
     let tree = tree.mod__elems(|elems| elems.set(i, act(a, elems.@(i))));
     tree._recalc_above(i)
@@ -283,22 +307,29 @@ fold = |l, r, tree| (
     let l = l + n;
     let r = r + n;
     let elems = tree.@_elems;
-    // 木を書き換えずに、読むノードの値に、祖先がまだ伝搬していない作用を適用して読む。
-    // 段hで左端の側に読むノードは、葉lのh段上の祖先か、その兄弟である。どちらの祖先も、葉lの祖先のうちh段より上のものである。
-    // 右端の側に読むノードも同じく、葉r - 1のh段上の祖先か、その兄弟である。
-    let pending_l = tree._pending_above(l);
-    let pending_r = tree._pending_above(r - 1);
-    let (acc_l, acc_r) = loop((l, r, 0, Monoid::unit, Monoid::unit), |(l, r, h, acc_l, acc_r)|
-        if l >= r { break $ (acc_l, acc_r) };
-        let (l, acc_l) = if l % 2 == 0 { (l, acc_l) } else {
-            (l + 1, Monoid::op(acc_l, act(pending_l.@(h), elems.@(l))))
+    let lazy = tree.@_lazy;
+    // 木を書き換えずに、左端の側と右端の側で読んだノードの値をそれぞれ畳み込み、その畳み込みに、
+    // 読んだノードの祖先がまだ伝搬していない作用を、深いノードから順に適用していく。
+    // 段を上がった後、左端の側で読んだノードはすべてノードl - 1の子孫、右端の側で読んだノードはすべてノードrの子孫である。
+    // `act`は単位元を単位元に移すとは限らないので、まだノードを読んでいない側には作用を適用しない。
+    let (l, r, acc_l, acc_r) = loop((l, r, none(), none()), |(l, r, acc_l, acc_r)|
+        if l >= r { break $ (l, r, acc_l, acc_r) };
+        let acc_l = if l % 2 == 0 { acc_l } else {
+            let x = elems.@(l);
+            some $ acc_l.map_or(x, |acc| Monoid::op(acc, x))
         };
-        let (r, acc_r) = if r % 2 == 0 { (r, acc_r) } else {
-            let r = r - 1;
-            (r, Monoid::op(act(pending_r.@(h), elems.@(r)), acc_r))
+        let acc_r = if r % 2 == 0 { acc_r } else {
+            let x = elems.@(r - 1);
+            some $ acc_r.map_or(x, |acc| Monoid::op(x, acc))
         };
-        continue $ (l.shift_right(1), r.shift_right(1), h + 1, acc_l, acc_r)
+        let l = (l + 1).shift_right(1);
+        let r = r.shift_right(1);
+        let acc_l = acc_l.map(|acc| act(lazy.@(l - 1), acc));
+        let acc_r = acc_r.map(|acc| act(lazy.@(r), acc));
+        continue $ (l, r, acc_l, acc_r)
     );
+    let acc_l = acc_l.map_or(Monoid::unit, tree._act_above(l - 1));
+    let acc_r = acc_r.map_or(Monoid::unit, tree._act_above(r));
     Monoid::op(acc_l, acc_r)
 );
 
@@ -321,8 +352,10 @@ act_range = |l, r, a, tree| (
     let r = r + tree.@_n;
     let l0 = l.shift_right(l.count_trailing_zeros);
     let r0 = r.shift_right(r.count_trailing_zeros) - 1;
-    let tree = tree._propagate_above(l0);
-    let tree = tree._propagate_above(r0);
+    let tree = tree._propagate_above(0, l0);
+    // l0の祖先は作用を持たなくなったので、r0の祖先には、l0の親との共通の祖先より下のものだけ伝搬すればよい。
+    // l0自身はまだ作用を持ちうるので、l0の親を使う。
+    let tree = tree._propagate_above(_lowest_common_ancestor(l0.shift_right(1), r0), r0);
 
     let tree = loop((l, r, tree), |(l, r, tree)|
         if l >= r { break $ tree };

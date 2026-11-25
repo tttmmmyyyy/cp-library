@@ -27,6 +27,7 @@ test = (
     );
     test_empty;;
     test_init;;
+    test_fold_unit_moved;;
     let rng = *test_search(rng);
     let _ = *test_search_large(rng);
 
@@ -104,6 +105,26 @@ test_empty = (
     let tree = tree.act_range(0, 0, ShiftAlphabet::make(3, 1));
     let v = tree.fold(0, 0);
     assert_eq(|_|"ldsegtree empty", v, "")
+);
+
+// 作用が単位元を単位元でない値に移すとき、作用を持つノードの隣の区間を畳み込める
+//
+// 加算の作用は最大値モノイドの単位元`minimum`を`minimum + a`に移す。
+test_fold_unit_moved : IO ();
+test_fold_unit_moved = (
+    range(1, 17).fold_m((), |n, _|
+        range(0, n + 1).fold_m((), |k, _|
+            let tree = LDSegtree::create(n, minimum, |(x, y)| max(x, y), 0, |(a, b)| a + b, |(a, x)| x + a);
+            let tree = tree.act_range(0, k, 10);
+            let arr = range(0, n).map(|i| if i < k { minimum + 10 } else { minimum }).to_array;
+            range(0, n + 1).fold_m((), |l, _|
+                range(l, n + 1).fold_m((), |r, _|
+                    let naive = range(l, r).fold(minimum, |i, acc| max(acc, arr.@(i)));
+                    assert_eq(|_|"ldsegtree fold unit moved", tree.fold(l, r), naive)
+                )
+            )
+        )
+    )
 );
 
 // 非推奨の`init`は作用を値が先の`(m, a) -> m`で受け取る。値と作用が同じ型で、引数の順を取り違えると答えが変わる作用で確かめる
