@@ -132,13 +132,13 @@ set = |i, value, tree| (
     let i = i + n;
     let tree = tree.mod__elems(set(i, value));
     // `i`の祖先ノードを下から順にすべて更新
-    loop((i / 2, tree), |(p, tree)|
+    loop((i.shift_right(1), tree), |(p, tree)|
         if p == 0 { break $ tree }; // 根（添字1）を更新したら終了
         let left = tree.@_elems.@(p * 2);
         let right = tree.@_elems.@(p * 2 + 1);
         let value = Monoid::op(left, right);
         let tree = tree.mod__elems(set(p, value));
-        continue $ (p / 2, tree)
+        continue $ (p.shift_right(1), tree)
     )
 );
 
@@ -172,9 +172,7 @@ fold = |l, r, tree| (
             let acc_r = Monoid::op(tree.@_elems.@(r), acc_r);
             (r, acc_r)
         };
-        let l = l / 2;
-        let r = r / 2;
-        continue $ (l, r, acc_l, acc_r)
+        continue $ (l.shift_right(1), r.shift_right(1), acc_l, acc_r)
     );
     Monoid::op(acc_l, acc_r)
 );
