@@ -54,9 +54,9 @@ module CPLib.LSegtree;
 
 import CPLib.Trait::{Action, Monoid, Action::{act, Set}, Monoid::{op, unit}};
 import Std::{
-    loop, undefined, Array, Bool, I64, Array::{@, @size, fill, set}, 
+    loop, undefined, Array, Bool, I64, Array::{@, @size, fill, set}, Functor::map,
     I64::{count_leading_zeros, count_trailing_zeros, shift_left, shift_right}, 
-    Iterator::{fold, range, range_step}, LoopState::{break, continue}
+    Iterator::{fold, range, range_step}, LoopState::{break, continue}, Option::{map_or, none, some}
 };
 
 // この実装にあたっては、[maspyさんの記事](https://maspypy.com/segment-tree-%e3%81%ae%e3%81%8a%e5%8b%89%e5%bc%b72) を参考にしました。良質な解説をありがとうございます。
@@ -193,6 +193,16 @@ _pending_above = |j, tree| (
     )
 );
 
+// ノード`k`の祖先がまだ伝搬していない作用を、深いノードから順に`x`に適用する
+_act_above : [m : Monoid, a : Monoid, a : Action, Set a = m] I64 -> LSegtree m a -> m -> m;
+_act_above = |k, tree, x| (
+    let lazy = tree.@_lazy;
+    loop((k.shift_right(1), x), |(k, x)|
+        if k == 0 { break $ x };
+        continue $ (k.shift_right(1), act(lazy.@(k), x))
+    )
+);
+
 // セグメント木の要素数を取得する
 //
 // 計算量：O(1)
@@ -283,22 +293,29 @@ fold = |l, r, tree| (
     let l = l + n;
     let r = r + n;
     let elems = tree.@_elems;
-    // 木を書き換えずに、読むノードの値に、祖先がまだ伝搬していない作用を適用して読む。
-    // 段hで左端の側に読むノードは、葉lのh段上の祖先か、その兄弟である。どちらの祖先も、葉lの祖先のうちh段より上のものである。
-    // 右端の側に読むノードも同じく、葉r - 1のh段上の祖先か、その兄弟である。
-    let pending_l = tree._pending_above(l);
-    let pending_r = tree._pending_above(r - 1);
-    let (acc_l, acc_r) = loop((l, r, 0, Monoid::unit, Monoid::unit), |(l, r, h, acc_l, acc_r)|
-        if l >= r { break $ (acc_l, acc_r) };
-        let (l, acc_l) = if l % 2 == 0 { (l, acc_l) } else {
-            (l + 1, Monoid::op(acc_l, act(pending_l.@(h), elems.@(l))))
+    let lazy = tree.@_lazy;
+    // 木を書き換えずに、左端の側と右端の側で読んだノードの値をそれぞれ畳み込み、その畳み込みに、
+    // 読んだノードの祖先がまだ伝搬していない作用を、深いノードから順に適用していく。
+    // 段を上がった後、左端の側で読んだノードはすべてノードl - 1の子孫、右端の側で読んだノードはすべてノードrの子孫である。
+    // `act`は単位元を単位元に移すとは限らないので、まだノードを読んでいない側には作用を適用しない。
+    let (l, r, acc_l, acc_r) = loop((l, r, none(), none()), |(l, r, acc_l, acc_r)|
+        if l >= r { break $ (l, r, acc_l, acc_r) };
+        let acc_l = if l % 2 == 0 { acc_l } else {
+            let x = elems.@(l);
+            some $ acc_l.map_or(x, |acc| Monoid::op(acc, x))
         };
-        let (r, acc_r) = if r % 2 == 0 { (r, acc_r) } else {
-            let r = r - 1;
-            (r, Monoid::op(act(pending_r.@(h), elems.@(r)), acc_r))
+        let acc_r = if r % 2 == 0 { acc_r } else {
+            let x = elems.@(r - 1);
+            some $ acc_r.map_or(x, |acc| Monoid::op(x, acc))
         };
-        continue $ (l.shift_right(1), r.shift_right(1), h + 1, acc_l, acc_r)
+        let l = (l + 1).shift_right(1);
+        let r = r.shift_right(1);
+        let acc_l = acc_l.map(|acc| act(lazy.@(l - 1), acc));
+        let acc_r = acc_r.map(|acc| act(lazy.@(r), acc));
+        continue $ (l, r, acc_l, acc_r)
     );
+    let acc_l = acc_l.map_or(Monoid::unit, tree._act_above(l - 1));
+    let acc_r = acc_r.map_or(Monoid::unit, tree._act_above(r));
     Monoid::op(acc_l, acc_r)
 );
 
